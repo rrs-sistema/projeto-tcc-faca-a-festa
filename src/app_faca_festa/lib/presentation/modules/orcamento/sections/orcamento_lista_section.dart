@@ -158,6 +158,15 @@ extension _OrcamentoListaSection on _OrcamentoScreenState {
               ],
             ),
             children: [
+              if (orcamento.custoSugeridoCalculadora != null)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(Icons.calculate_outlined, color: primary),
+                  title: Text(
+                      'Proposta da calculadora: ${_reais(orcamento.custoSugeridoCalculadora!)}'),
+                  subtitle: const Text(
+                      'Confira esta proposta antes de ajustar o orçamento. O valor atual foi preservado.'),
+                ),
               ...gastos,
               const SizedBox(height: 4),
               Row(
@@ -169,6 +178,7 @@ extension _OrcamentoListaSection on _OrcamentoScreenState {
                         elevation: 0,
                         backgroundColor: primary.withValues(alpha: 0.1),
                         foregroundColor: primary,
+                        iconColor: primary,
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10)),
                         padding: const EdgeInsets.symmetric(
@@ -338,8 +348,7 @@ extension _OrcamentoListaSection on _OrcamentoScreenState {
                     Biblioteca.showConfirmDialog(
                       context,
                       title: 'Marcar como pago',
-                      message:
-                          'Confirma que $nome foi pago por inteiro?',
+                      message: 'Confirma que $nome foi pago por inteiro?',
                       confirmLabel: 'Pagar',
                       color: themeController.primaryColor.value,
                       onConfirm: () async {

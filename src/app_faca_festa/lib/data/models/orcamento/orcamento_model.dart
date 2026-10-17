@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:app_faca_festa/domain/entities/orcamento.dart';
 
-
 /// ===========================================================
 /// 🔹 Modelo OrcamentoModel completo com melhorias
 /// ===========================================================
@@ -21,6 +20,8 @@ class OrcamentoModel extends Orcamento {
     super.idCategoria,
     super.idTipoPagamento,
     super.custoEstimado,
+    super.custoSugeridoCalculadora,
+    super.quantidadeSugeridaCalculadora,
     super.orcamentoFechado = false,
     super.anotacoes,
     super.status = StatusOrcamento.pendente,
@@ -44,6 +45,10 @@ class OrcamentoModel extends Orcamento {
       'nome_solicitante': nomeSolicitante,
       'id_tipo_pagamento': idTipoPagamento,
       'custo_estimado': custoEstimado,
+      if (custoSugeridoCalculadora != null)
+        'custo_sugerido_calculadora': custoSugeridoCalculadora,
+      if (quantidadeSugeridaCalculadora != null)
+        'quantidade_sugerida_calculadora': quantidadeSugeridaCalculadora,
       'orcamento_fechado': orcamentoFechado,
       'anotacoes': anotacoes,
       'status': status.firestoreValue,
@@ -71,6 +76,10 @@ class OrcamentoModel extends Orcamento {
       custoEstimado: (map['custo_estimado'] is num)
           ? (map['custo_estimado'] as num).toDouble()
           : null,
+      custoSugeridoCalculadora:
+          (map['custo_sugerido_calculadora'] as num?)?.toDouble(),
+      quantidadeSugeridaCalculadora:
+          (map['quantidade_sugerida_calculadora'] as num?)?.toDouble(),
       orcamentoFechado: map['orcamento_fechado'] ?? false,
       anotacoes: map['anotacoes'],
       status: StatusOrcamento.fromString(map['status']),
@@ -94,6 +103,8 @@ class OrcamentoModel extends Orcamento {
       idCategoria: entity.idCategoria,
       idTipoPagamento: entity.idTipoPagamento,
       custoEstimado: entity.custoEstimado,
+      custoSugeridoCalculadora: entity.custoSugeridoCalculadora,
+      quantidadeSugeridaCalculadora: entity.quantidadeSugeridaCalculadora,
       orcamentoFechado: entity.orcamentoFechado,
       anotacoes: entity.anotacoes,
       status: entity.status,
@@ -150,6 +161,8 @@ class OrcamentoModel extends Orcamento {
       idCategoria: idCategoria ?? this.idCategoria,
       idTipoPagamento: idTipoPagamento ?? this.idTipoPagamento,
       custoEstimado: custoEstimado ?? this.custoEstimado,
+      custoSugeridoCalculadora: custoSugeridoCalculadora,
+      quantidadeSugeridaCalculadora: quantidadeSugeridaCalculadora,
       orcamentoFechado: orcamentoFechado ?? this.orcamentoFechado,
       anotacoes: anotacoes ?? this.anotacoes,
       status: status ?? this.status,

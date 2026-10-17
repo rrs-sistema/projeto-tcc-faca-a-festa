@@ -17,10 +17,11 @@ class _SectionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE8EDF2)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.03),
@@ -44,7 +45,7 @@ class _SectionCard extends StatelessWidget {
                 child: Text(
                   title,
                   style: GoogleFonts.poppins(
-                    fontSize: 13,
+                    fontSize: 15,
                     fontWeight: FontWeight.w800,
                     color: const Color(0xFF111827),
                   ),
@@ -142,35 +143,10 @@ class _AnaliseIACompacta extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: _IndicadorIA(
-                label: 'Conforto',
-                value: _formatPercent(data.indiceConforto),
-                color: primary,
-              ),
-            ),
-            const SizedBox(width: 6),
-            Expanded(
-              child: _IndicadorIA(
-                label: 'Risco',
-                value: _formatPercent(data.indiceRiscoFaltarItens),
-                color: data.indiceRiscoFaltarItens >= 70
-                    ? Colors.redAccent
-                    : Colors.orange,
-              ),
-            ),
-            const SizedBox(width: 6),
-            Expanded(
-              child: _IndicadorIA(
-                label: 'Economia',
-                value: _formatPercent(data.indiceEconomia),
-                color: primary,
-              ),
-            ),
-          ],
-        ),
+        if (data.sugestoes.isEmpty)
+          const Text('Nenhum ajuste identificado nos dados avaliados.'),
+        const Text('Orientações baseadas nos dados disponíveis.',
+            style: TextStyle(fontSize: 12, color: Color(0xFF475569))),
         const SizedBox(height: 8),
         Text(
           resumo,
@@ -242,11 +218,6 @@ class _AnaliseIACompacta extends StatelessWidget {
     );
   }
 
-  static String _formatPercent(double value) {
-    final normalized = value.clamp(0, 100).round();
-    return '$normalized%';
-  }
-
   static Color _corSugestao(
     SugestaoCalculadoraIA sugestao,
     Color primary,
@@ -284,53 +255,6 @@ class _AnaliseIACompacta extends StatelessWidget {
       case TipoSugestaoCalculadoraIA.planejamento:
         return Icons.event_note_rounded;
     }
-  }
-}
-
-class _IndicadorIA extends StatelessWidget {
-  final String label;
-  final String value;
-  final Color color;
-
-  const _IndicadorIA({
-    required this.label,
-    required this.value,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 6),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.07),
-        borderRadius: BorderRadius.circular(9),
-      ),
-      child: Column(
-        children: [
-          Text(
-            value,
-            style: GoogleFonts.poppins(
-              fontSize: 12.5,
-              fontWeight: FontWeight.w900,
-              color: color,
-              height: 1,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.poppins(
-              fontSize: 9.5,
-              fontWeight: FontWeight.w700,
-              color: Colors.grey.shade600,
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }
 
@@ -422,39 +346,8 @@ class _AnaliseIADetalhesSheet extends StatelessWidget {
             child: ListView(
               padding: const EdgeInsets.fromLTRB(14, 12, 14, 20),
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: _IndicadorIA(
-                        label: 'Conforto',
-                        value: _AnaliseIACompacta._formatPercent(
-                            analise.indiceConforto),
-                        color: primary,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _IndicadorIA(
-                        label: 'Risco',
-                        value: _AnaliseIACompacta._formatPercent(
-                          analise.indiceRiscoFaltarItens,
-                        ),
-                        color: analise.indiceRiscoFaltarItens >= 70
-                            ? Colors.redAccent
-                            : Colors.orange,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _IndicadorIA(
-                        label: 'Economia',
-                        value: _AnaliseIACompacta._formatPercent(
-                            analise.indiceEconomia),
-                        color: primary,
-                      ),
-                    ),
-                  ],
-                ),
+                const Text('As recomendações são orientações de planejamento. '
+                    'Não representam probabilidades de falta ou de economia.'),
                 const SizedBox(height: 12),
                 _DetalheBloco(
                   title: 'Resumo',
@@ -600,69 +493,113 @@ class _SugestaoIATile extends StatelessWidget {
 
 class _ResultadoItemTile extends StatelessWidget {
   final CalculadoraFestaItem item;
+  final ItemEstimativaFinanceira? regra;
+  final ItemListaCompras? compra;
+  final String? faixa;
   final Color primary;
+  final VoidCallback? onDetalhes;
 
   const _ResultadoItemTile({
     required this.item,
+    this.regra,
+    this.compra,
+    this.faixa,
     required this.primary,
+    this.onDetalhes,
   });
 
   @override
   Widget build(BuildContext context) {
+    final falta = compra?.falta;
+    final quantidadeExibida =
+        falta == null ? item.quantidadeFormatada : compra!.quantidade(falta);
+    final custoExibido = falta == null
+        ? item.custoEstimadoFormatado
+        : item.valorUnitarioMedio > 0
+            ? item
+                .copyWith(custoEstimado: falta * item.valorUnitarioMedio)
+                .custoEstimadoFormatado
+            : 'Preço pendente';
+    final estado = regra?.premissas['estado']?.toString();
+    final estadoDefinido = const ['cru', 'seco', 'pronto'].contains(estado);
     return Container(
-      margin: const EdgeInsets.only(bottom: 6),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: primary.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: primary.withValues(alpha: 0.1)),
+        color: const Color(0xFFF8FAF9),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFDFE7E2)),
       ),
-      child: Row(
-        children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: primary.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(_resolverIconeItem(item), color: primary, size: 16),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 8, 8, 12),
+        child:
+            Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Row(children: [
+            Icon(_resolverIconeItem(item), color: primary, size: 20),
+            const SizedBox(width: 8),
+            Expanded(
+                child: Text(item.nome,
+                    style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF172B21)))),
+            if (onDetalhes != null)
+              IconButton(
+                  onPressed: onDetalhes,
+                  tooltip: 'Ver cálculo e ajustar ${item.nome}',
+                  color: primary,
+                  icon: const Icon(Icons.tune_rounded, size: 20)),
+          ]),
+          Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 12,
+              runSpacing: 4,
               children: [
+                Text(quantidadeExibida,
+                    style: GoogleFonts.poppins(
+                        color: primary,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800)),
                 Text(
-                  item.nome,
-                  style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF111827),
-                  ),
-                ),
-                Text(
-                  item.regraAplicada.trim().isEmpty
-                      ? 'Sugestão da calculadora'
-                      : 'Sugestão · ${item.regraAplicada}',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.poppins(
-                      fontSize: 10, color: Colors.grey.shade600),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            item.quantidadeFormatada,
-            style: GoogleFonts.poppins(
-              color: primary,
-              fontSize: 13,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-        ],
+                    falta != null && falta <= 0
+                        ? 'Sem compra adicional'
+                        : item.valorUnitarioMedio <= 0
+                            ? 'Preço pendente'
+                            : custoExibido,
+                    style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: const Color(0xFF526259))),
+              ]),
+          Text(compra?.titulo ?? 'Estimativa total',
+              style:
+                  const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+          if (falta == null)
+            const Text(
+                'Total antes de descontar o disponível. Confira a compra restante na lista.',
+                style: TextStyle(fontSize: 11)),
+          if (regra != null) ...[
+            const SizedBox(height: 4),
+            Text(
+                '${regra!.porcaoReferenciaFormatada} / '
+                '${regra!.descartavel ? 'pessoa' : 'adulto equivalente'} / serviço',
+                style: GoogleFonts.poppins(
+                    fontSize: 12, color: const Color(0xFF475569))),
+            const SizedBox(height: 3),
+            Text(
+                '${estadoDefinido ? estado : 'Confirmar cru/seco ou pronto'}'
+                ' · ${regra!.numeroServicos.toString().replaceAll(RegExp(r"\.0$"), "")} serviço(s)',
+                style: GoogleFonts.poppins(
+                    fontSize: 11,
+                    color: estadoDefinido
+                        ? const Color(0xFF526259)
+                        : const Color(0xFF80591A))),
+          ],
+          if (faixa != null) ...[
+            const SizedBox(height: 4),
+            Text(faixa!, style: GoogleFonts.poppins(fontSize: 12)),
+          ],
+        ]),
       ),
     );
   }
@@ -725,4 +662,172 @@ String _formatMoney(double value) {
     (_) => '.',
   );
   return 'R\$ $integer,${parts.last}';
+}
+
+class _ModoPlanejamento extends StatelessWidget {
+  const _ModoPlanejamento(
+      {required this.titulo,
+      required this.descricao,
+      required this.icon,
+      required this.primary,
+      required this.selecionado,
+      required this.onTap});
+  final String titulo, descricao;
+  final IconData icon;
+  final Color primary;
+  final bool selecionado;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final foreground = selecionado ? Colors.white : const Color(0xFF334155);
+    return Semantics(
+      selected: selecionado,
+      enabled: onTap != null,
+      button: true,
+      child: Material(
+        color: selecionado ? primary : const Color(0xFFF8FAFC),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+            side: BorderSide(
+                color: selecionado ? primary : const Color(0xFF94A3B8))),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            child: Row(children: [
+              Icon(icon, color: foreground, size: 24),
+              const SizedBox(width: 12),
+              Expanded(
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                    Text(titulo,
+                        style: TextStyle(
+                            color: foreground,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 2),
+                    Text(descricao,
+                        style: TextStyle(
+                            color: foreground, fontSize: 12, height: 1.3)),
+                    if (onTap == null) ...[
+                      const SizedBox(height: 6),
+                      Text('Indisponível no momento',
+                          style: TextStyle(
+                              color: foreground,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600)),
+                    ],
+                  ])),
+              const SizedBox(width: 8),
+              Icon(
+                  selecionado
+                      ? Icons.check_circle
+                      : onTap == null
+                          ? Icons.lock_outline
+                          : Icons.radio_button_unchecked,
+                  color: foreground,
+                  size: 22),
+            ]),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Modal de planejamento com conteúdo rolável e ações sempre acessíveis.
+class _PlanejamentoDialog extends StatelessWidget {
+  const _PlanejamentoDialog(
+      {required this.title,
+      required this.icon,
+      required this.primary,
+      required this.child,
+      required this.confirmLabel,
+      required this.cancelLabel,
+      required this.onConfirm,
+      required this.onCancel});
+  final String title, confirmLabel, cancelLabel;
+  final IconData icon;
+  final Color primary;
+  final Widget child;
+  final VoidCallback onConfirm, onCancel;
+
+  @override
+  Widget build(BuildContext context) => Dialog(
+      backgroundColor: Colors.white,
+      surfaceTintColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+            maxWidth: 560, maxHeight: MediaQuery.sizeOf(context).height * .85),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
+              child: Row(children: [
+                Container(
+                    padding: const EdgeInsets.all(9),
+                    decoration: BoxDecoration(
+                        color: primary.withValues(alpha: .08),
+                        borderRadius: BorderRadius.circular(12)),
+                    child: Icon(icon, color: primary, size: 21)),
+                const SizedBox(width: 10),
+                Expanded(
+                    child: Text(title,
+                        style: GoogleFonts.poppins(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF172B21)))),
+                IconButton(
+                    tooltip: 'Fechar',
+                    onPressed: onCancel,
+                    icon: const Icon(Icons.close_rounded, size: 21)),
+              ])),
+          const Divider(height: 1, color: Color(0xFFE8EDF2)),
+          Flexible(
+              child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: DefaultTextStyle.merge(
+                      style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          height: 1.45,
+                          color: const Color(0xFF475569)),
+                      child: child))),
+          const Divider(height: 1, color: Color(0xFFE8EDF2)),
+          Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    FilledButton(
+                        style: FilledButton.styleFrom(
+                            backgroundColor: primary,
+                            foregroundColor:
+                                ThemeData.estimateBrightnessForColor(primary) ==
+                                        Brightness.dark
+                                    ? Colors.white
+                                    : Colors.black,
+                            minimumSize: const Size.fromHeight(48),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12))),
+                        onPressed: onConfirm,
+                        child: Text(confirmLabel,
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.poppins(
+                                fontSize: 13, fontWeight: FontWeight.w700))),
+                    TextButton(
+                        style: TextButton.styleFrom(
+                            foregroundColor: const Color(0xFF475569),
+                            minimumSize: const Size.fromHeight(48)),
+                        onPressed: onCancel,
+                        child: Text(cancelLabel,
+                            style: GoogleFonts.poppins(
+                                fontSize: 13, fontWeight: FontWeight.w600))),
+                  ])),
+        ]),
+      ));
 }

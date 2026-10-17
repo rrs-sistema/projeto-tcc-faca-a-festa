@@ -56,6 +56,7 @@ extension _InspiracaoAdminFormPlanejamento on _InspiracaoAdminFormPageState {
                   style: FilledButton.styleFrom(
                     backgroundColor: _primary,
                     foregroundColor: Colors.white,
+                    iconColor: Colors.white,
                     padding: const EdgeInsets.symmetric(
                         horizontal: 12, vertical: 10),
                     shape: RoundedRectangleBorder(
@@ -344,6 +345,7 @@ extension _InspiracaoAdminFormPlanejamento on _InspiracaoAdminFormPageState {
                   style: FilledButton.styleFrom(
                     backgroundColor: _secondary,
                     foregroundColor: Colors.white,
+                    iconColor: Colors.white,
                     padding: const EdgeInsets.symmetric(
                         horizontal: 12, vertical: 10),
                     shape: RoundedRectangleBorder(
@@ -818,6 +820,7 @@ extension _InspiracaoAdminFormPlanejamento on _InspiracaoAdminFormPageState {
                                   onPressed: () => Get.back(),
                                   style: OutlinedButton.styleFrom(
                                     foregroundColor: _dark,
+                                    iconColor: _dark,
                                     side: BorderSide(
                                         color: _dark.withValues(alpha: 0.16)),
                                     shape: RoundedRectangleBorder(
@@ -871,6 +874,7 @@ extension _InspiracaoAdminFormPlanejamento on _InspiracaoAdminFormPageState {
                                   style: FilledButton.styleFrom(
                                     backgroundColor: _primary,
                                     foregroundColor: Colors.white,
+                                    iconColor: Colors.white,
                                     shape: RoundedRectangleBorder(
                                         borderRadius:
                                             BorderRadius.circular(16)),
@@ -913,19 +917,19 @@ extension _InspiracaoAdminFormPlanejamento on _InspiracaoAdminFormPageState {
     final descricaoController =
         TextEditingController(text: item?.descricao ?? '');
     final custoEstimadoController = TextEditingController(
-      text: _formatarNumeroParaCampo(item?.custoEstimado ?? 0),
+      text: NumericInput.dinheiro(item?.custoEstimado ?? 0),
     );
     final custoMinimoController = TextEditingController(
-      text: _formatarNumeroParaCampo(item?.custoMinimo ?? 0),
+      text: NumericInput.dinheiro(item?.custoMinimo ?? 0),
     );
     final custoMaximoController = TextEditingController(
-      text: _formatarNumeroParaCampo(item?.custoMaximo ?? 0),
+      text: NumericInput.dinheiro(item?.custoMaximo ?? 0),
     );
     final quantidadeBaseController = TextEditingController(
       text: _formatarNumeroParaCampo(item?.quantidadeBase ?? 1.0),
     );
     final custoPorConvidadoController = TextEditingController(
-      text: _formatarNumeroParaCampo(item?.custoPorConvidado ?? 0),
+      text: NumericInput.dinheiro(item?.custoPorConvidado ?? 0),
     );
     final ordemController = TextEditingController(
       text: (item?.ordem ??
@@ -1083,7 +1087,7 @@ extension _InspiracaoAdminFormPlanejamento on _InspiracaoAdminFormPageState {
                                 keyboardType:
                                     const TextInputType.numberWithOptions(
                                         decimal: true),
-                                inputFormatters: [_decimalInputFormatter()],
+                                inputFormatters: [NumericInput.moeda()],
                                 validator: _moneyValidator('Custo estimado'),
                               ),
                               _buildTextField(
@@ -1094,7 +1098,7 @@ extension _InspiracaoAdminFormPlanejamento on _InspiracaoAdminFormPageState {
                                 keyboardType:
                                     const TextInputType.numberWithOptions(
                                         decimal: true),
-                                inputFormatters: [_decimalInputFormatter()],
+                                inputFormatters: [NumericInput.moeda()],
                                 validator: _moneyValidator('Custo mínimo'),
                               ),
                               _buildTextField(
@@ -1105,7 +1109,7 @@ extension _InspiracaoAdminFormPlanejamento on _InspiracaoAdminFormPageState {
                                 keyboardType:
                                     const TextInputType.numberWithOptions(
                                         decimal: true),
-                                inputFormatters: [_decimalInputFormatter()],
+                                inputFormatters: [NumericInput.moeda()],
                                 validator: _moneyValidator('Custo máximo'),
                               ),
                               _buildTextField(
@@ -1116,7 +1120,7 @@ extension _InspiracaoAdminFormPlanejamento on _InspiracaoAdminFormPageState {
                                 keyboardType:
                                     const TextInputType.numberWithOptions(
                                         decimal: true),
-                                inputFormatters: [_decimalInputFormatter()],
+                                inputFormatters: [NumericInput.moeda()],
                                 validator:
                                     _moneyValidator('Custo por convidado'),
                               ),
@@ -1147,7 +1151,7 @@ extension _InspiracaoAdminFormPlanejamento on _InspiracaoAdminFormPageState {
                                 keyboardType:
                                     const TextInputType.numberWithOptions(
                                         decimal: true),
-                                inputFormatters: [_decimalInputFormatter()],
+                                inputFormatters: [NumericInput.decimal()],
                                 validator: _decimalValidator('Quantidade base'),
                               ),
                               _buildTextField(
@@ -1189,6 +1193,7 @@ extension _InspiracaoAdminFormPlanejamento on _InspiracaoAdminFormPageState {
                                   onPressed: () => Get.back(),
                                   style: OutlinedButton.styleFrom(
                                     foregroundColor: _dark,
+                                    iconColor: _dark,
                                     side: BorderSide(
                                         color: _dark.withValues(alpha: 0.16)),
                                     shape: RoundedRectangleBorder(
@@ -1251,6 +1256,7 @@ extension _InspiracaoAdminFormPlanejamento on _InspiracaoAdminFormPageState {
                                   style: FilledButton.styleFrom(
                                     backgroundColor: _secondary,
                                     foregroundColor: Colors.white,
+                                    iconColor: Colors.white,
                                     shape: RoundedRectangleBorder(
                                         borderRadius:
                                             BorderRadius.circular(16)),
@@ -1299,10 +1305,6 @@ extension _InspiracaoAdminFormPlanejamento on _InspiracaoAdminFormPageState {
     }
   }
 
-  TextInputFormatter _decimalInputFormatter() {
-    return FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'));
-  }
-
   String? Function(String?) _moneyValidator(String label) {
     return (value) {
       final text = (value ?? '').trim();
@@ -1330,18 +1332,7 @@ extension _InspiracaoAdminFormPlanejamento on _InspiracaoAdminFormPageState {
   }
 
   double? _tryParseDoubleBr(String value) {
-    var text =
-        value.replaceAll('R\$', '').replaceAll(RegExp(r'\s+'), '').trim();
-
-    if (text.isEmpty) {
-      return 0.0;
-    }
-
-    if (text.contains(',')) {
-      text = text.replaceAll('.', '').replaceAll(',', '.');
-    }
-
-    return double.tryParse(text);
+    return NumericInput.parse(value);
   }
 
   double _parseDoubleBr(String value) {
@@ -1367,8 +1358,6 @@ extension _InspiracaoAdminFormPlanejamento on _InspiracaoAdminFormPageState {
   }
 
   String _formatarNumeroParaCampo(double value) {
-    if (value == 0) return '0';
-    final text = value.toStringAsFixed(2).replaceAll('.', ',');
-    return text.endsWith(',00') ? text.substring(0, text.length - 3) : text;
+    return NumericInput.quantidade(value);
   }
 }

@@ -18,7 +18,7 @@ class ConvidadoRemoteDatasource {
         .limit(1)
         .get();
     if (snapshot.docs.isEmpty) return null;
-    return ConvidadoModel.fromMap(snapshot.docs.first.data());
+    return _fromDocument(snapshot.docs.first);
   }
 
   Future<ConvidadoModel?> buscarPrimeiroPorEvento(String idEvento) async {
@@ -27,7 +27,7 @@ class ConvidadoRemoteDatasource {
         .limit(1)
         .get();
     if (snapshot.docs.isEmpty) return null;
-    return ConvidadoModel.fromMap(snapshot.docs.first.data());
+    return _fromDocument(snapshot.docs.first);
   }
 
   Future<ConvidadoModel?> buscarPorToken(String token) async {
@@ -36,14 +36,14 @@ class ConvidadoRemoteDatasource {
 
     final document = await _convidados.doc(tokenLimpo).get();
     if (document.exists && document.data() != null) {
-      return ConvidadoModel.fromMap(document.data()!);
+      return _fromDocument(document);
     }
 
     for (final campo in const ['convite_token', 'token_convite', 'token']) {
       final snapshot =
           await _convidados.where(campo, isEqualTo: tokenLimpo).limit(1).get();
       if (snapshot.docs.isNotEmpty) {
-        return ConvidadoModel.fromMap(snapshot.docs.first.data());
+        return _fromDocument(snapshot.docs.first);
       }
     }
     return null;
@@ -51,10 +51,19 @@ class ConvidadoRemoteDatasource {
 
   Stream<List<ConvidadoModel>> observarPorEvento(String idEvento) {
     return _convidados.where('id_evento', isEqualTo: idEvento).snapshots().map(
-          (snapshot) => snapshot.docs
-              .map((document) => ConvidadoModel.fromMap(document.data()))
-              .toList(),
+          (snapshot) =>
+              snapshot.docs.map((document) => _fromDocument(document)).toList(),
         );
+  }
+
+  ConvidadoModel _fromDocument(
+    DocumentSnapshot<Map<String, dynamic>> document,
+  ) {
+    final data = document.data()!;
+    return ConvidadoModel.fromMap({
+      ...data,
+      'id_convidado': document.id,
+    });
   }
 
   Future<void> salvar(ConvidadoModel convidado) {

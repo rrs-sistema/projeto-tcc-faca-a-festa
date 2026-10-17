@@ -154,6 +154,7 @@ class FiltroFornecedorBottomSheet extends StatelessWidget {
                       label: const Text('Buscar em qualquer lugar'),
                       style: TextButton.styleFrom(
                         foregroundColor: primary,
+                        iconColor: primary,
                         textStyle: GoogleFonts.poppins(
                           fontWeight: FontWeight.w700,
                         ),
@@ -194,6 +195,7 @@ class FiltroFornecedorBottomSheet extends StatelessWidget {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: primary,
                         foregroundColor: onPrimary,
+                        iconColor: onPrimary,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),

@@ -377,6 +377,7 @@ class _BannerCapaCropPageState extends State<BannerCapaCropPage> {
                               child: OutlinedButton(
                                 style: OutlinedButton.styleFrom(
                                   foregroundColor: Colors.white,
+                                  iconColor: Colors.white,
                                   side: BorderSide(
                                     color: Colors.white.withValues(alpha: 0.35),
                                   ),

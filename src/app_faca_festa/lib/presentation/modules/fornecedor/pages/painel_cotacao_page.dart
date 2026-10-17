@@ -61,9 +61,13 @@ class PainelCotacaoPage extends StatelessWidget {
       backgroundColor: Colors.grey.shade100,
       appBar: _buildElegantAppBar(gradient),
       body: Obx(() {
-        final cotacoes = cotacaoCtrl.cotacoes;
-        final contratados = cotacaoCtrl.contratadosCount.value;
-        final total = cotacaoCtrl.totalCount.value;
+        final cotacoes = cotacaoCtrl.cotacoesDoEvento(
+          eventoCtrl.eventoAtualEntidade?.idEvento,
+        );
+        final contratados = cotacoes
+            .where((cotacao) => cotacao.status == StatusCotacao.concluida)
+            .length;
+        final total = cotacoes.length;
         final progresso = total == 0 ? 0.0 : contratados / total;
 
         return ListView(
@@ -220,7 +224,7 @@ class PainelCotacaoPage extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          "Pedidos de preço",
+                          "Cotações",
                           textAlign: TextAlign.center,
                           style: GoogleFonts.poppins(
                             fontWeight: FontWeight.w700,
@@ -288,7 +292,7 @@ class PainelCotacaoPage extends StatelessWidget {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                'Seus pedidos de preço',
+                'Suas cotações',
                 style: GoogleFonts.poppins(
                   fontWeight: FontWeight.w800,
                   fontSize: 15,
@@ -412,31 +416,31 @@ class PainelCotacaoPage extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Wrap(
-                    spacing: 6,
-                    runSpacing: 4,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
+                        spacing: 6,
+                        runSpacing: 4,
+                        crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
-                          Icon(Icons.calendar_today_rounded,
-                              size: 12, color: Colors.grey.shade600),
-                          const SizedBox(width: 4),
-                          Flexible(
-                            child: Text(
-                              "Em ${DateFormat("dd/MM/yy").format(cotacao.dataCadastro)}",
-                              style: GoogleFonts.poppins(
-                                fontSize: 11,
-                                color: Colors.grey.shade600,
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.calendar_today_rounded,
+                                  size: 12, color: Colors.grey.shade600),
+                              const SizedBox(width: 4),
+                              Flexible(
+                                child: Text(
+                                  "Em ${DateFormat("dd/MM/yy").format(cotacao.dataCadastro)}",
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 11,
+                                    color: Colors.grey.shade600,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                            ],
                           ),
+                          _buildStatusMiniBadge(cotacao.status),
                         ],
                       ),
-                      _buildStatusMiniBadge(cotacao.status),
-                    ],
-                  ),
                       const SizedBox(height: 4),
                       Text(
                         cotacao.status.proximoPasso,

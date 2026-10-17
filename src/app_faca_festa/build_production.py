@@ -32,6 +32,7 @@ Requisitos:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import os
 import re
 import shutil
@@ -54,6 +55,12 @@ WIN_EXE = (
     ROOT / "build" / "windows" / "x64" / "runner" / "Release" / "app_faca_festa.exe"
 )
 HOSTING_URL = "https://faca-a-festa.web.app"
+SELECTED_VERSION: tuple[str, str] | None = None
+
+
+def version_arguments() -> list[str]:
+    name, build = SELECTED_VERSION or read_version()
+    return ["--build-name", name, "--build-number", build, "--no-pub"]
 
 
 def log(msg: str) -> None:
@@ -74,6 +81,7 @@ def run(
     *,
     cwd: Path | None = None,
     check: bool = True,
+    env: dict[str, str] | None = None,
 ) -> subprocess.CompletedProcess[str]:
     printable = subprocess.list2cmdline(cmd)
     print(f"$ {printable}", flush=True)
@@ -86,6 +94,7 @@ def run(
         errors="replace",
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
+        env=env,
     )
     elapsed = time.time() - started
     if proc.stdout:
@@ -337,26 +346,40 @@ def step_pub_get(flutter: str) -> None:
 
 def step_windows(flutter: str, version_name: str, version_build: str) -> Path:
     sync_iss(version_name, version_build)
-    clear_generated_plugin_files()
+    fingerprint = windows_source_fingerprint()
     run_flutter_build_with_retries(
-        [flutter, "build", "windows", "--release"],
+        [flutter, "build", "windows", "--release", "--no-pub", "--build-name", version_name, "--build-number", version_build],
         label="Build Windows (--release)",
     )
 
     if not WIN_EXE.is_file():
         fail(f"Executável Windows não gerado: {WIN_EXE}")
+    if windows_source_fingerprint() != fingerprint:
+        fail("As fontes mudaram durante o build Windows. Execute novamente com --no-bump antes de empacotar/publicar.")
+
+    required = ["faca_festa_update_helper.exe", "WinSparkle.dll", "flutter_windows.dll", "data/app.so", "data/icudtl.dat", "data/WinSparkle-LICENSE.txt"]
+    for name in required:
+        if not (WIN_EXE.parent / name).is_file():
+            fail(f"Build Windows incompleto: {name}")
+    authenticode_sign([WIN_EXE, WIN_EXE.parent / "faca_festa_update_helper.exe"])
 
     iscc = find_iscc()
+    runtime = ROOT / "dist/VC_redist.x64.exe"
+    if runtime.is_file():
+        run(["powershell.exe", "-NoProfile", "-Command",
+             "Import-Module ($PSHOME + '/Modules/Microsoft.PowerShell.Security/Microsoft.PowerShell.Security.psd1'); $s=Get-AuthenticodeSignature -LiteralPath $env:FACA_FESTA_VC_RUNTIME; if($s.Status -ne 'Valid' -or $s.SignerCertificate.Subject -notmatch 'Microsoft Corporation'){exit 1}"],
+            env={**os.environ, "FACA_FESTA_VC_RUNTIME": str(runtime)})
     log(f"Compilando instalador com {iscc}")
     run([str(iscc), str(ISS_PATH)])
 
     today = date.today().isoformat()
-    expected = SETUP_OUT_DIR / today / f"{SETUP_PREFIX}{version_name}.exe"
+    expected = SETUP_OUT_DIR / today / f"{SETUP_PREFIX}{version_name}.{version_build}.exe"
     if expected.is_file():
+        authenticode_sign([expected])
         return expected
 
     matches = sorted(
-        SETUP_OUT_DIR.glob(f"**/{SETUP_PREFIX}{version_name}.exe"),
+        SETUP_OUT_DIR.glob(f"**/{SETUP_PREFIX}{version_name}.{version_build}.exe"),
         key=lambda p: p.stat().st_mtime,
         reverse=True,
     )
@@ -365,12 +388,37 @@ def step_windows(flutter: str, version_name: str, version_build: str) -> Path:
     return matches[0]
 
 
+def windows_source_fingerprint() -> str:
+    digest = hashlib.sha256()
+    sources = [PUBSPEC, ROOT / "windows/CMakeLists.txt", ROOT / "windows/runner/CMakeLists.txt"]
+    sources += list((ROOT / "lib").rglob("*.dart"))
+    sources += [p for p in (ROOT / "windows/runner").rglob("*") if p.suffix in (".cpp", ".h", ".rc")]
+    for source in sorted(sources):
+        digest.update(str(source.relative_to(ROOT)).encode())
+        digest.update(source.read_bytes())
+    return digest.hexdigest()
+
+
+def authenticode_sign(paths: list[Path]) -> None:
+    certificate = os.environ.get("FACA_FESTA_AUTHENTICODE_CERT_SHA1")
+    if not certificate:
+        log("Sem certificado Authenticode configurado. Ed25519 não substitui a assinatura reconhecida pelo Windows.")
+        return
+    signtool = os.environ.get("FACA_FESTA_SIGNTOOL") or which("signtool")
+    timestamp = os.environ.get("FACA_FESTA_AUTHENTICODE_TIMESTAMP_URL")
+    if not signtool or not timestamp:
+        fail("Configure FACA_FESTA_SIGNTOOL e FACA_FESTA_AUTHENTICODE_TIMESTAMP_URL para o certificado.")
+    for path in paths:
+        run([signtool, "sign", "/sha1", certificate, "/fd", "SHA256", "/tr", timestamp, "/td", "SHA256", str(path)])
+        run([signtool, "verify", "/pa", str(path)])
+
+
 def step_web(flutter: str, deploy: bool) -> None:
     log("Build Web (--release, --no-tree-shake-icons)")
     if WEB_DIR.exists():
         shutil.rmtree(WEB_DIR, ignore_errors=True)
     run_flutter_build_with_retries(
-        [flutter, "build", "web", "--release", "--no-tree-shake-icons"],
+        [flutter, "build", "web", "--release", "--no-tree-shake-icons", *version_arguments()],
         label="Build Web (--release)",
     )
 
@@ -385,7 +433,7 @@ def step_web(flutter: str, deploy: bool) -> None:
 
 def step_apk(flutter: str) -> Path:
     run_flutter_build_with_retries(
-        [flutter, "build", "apk", "--release"],
+        [flutter, "build", "apk", "--release", *version_arguments()],
         label="Build APK Android (--release)",
         attempts=3,
         wait_seconds=10.0,
@@ -397,7 +445,7 @@ def step_apk(flutter: str) -> Path:
 
 def step_bundle(flutter: str, version_name: str, version_build: str) -> Path:
     run_flutter_build_with_retries(
-        [flutter, "build", "appbundle", "--release"],
+        [flutter, "build", "appbundle", "--release", "--no-pub", "--build-name", version_name, "--build-number", version_build],
         label="Build App Bundle Android (--release)",
         attempts=3,
         wait_seconds=10.0,
@@ -471,6 +519,7 @@ def resolve_bump_kind(args: argparse.Namespace) -> str | None:
 
 
 def main() -> None:
+    global SELECTED_VERSION
     if os.name != "nt":
         fail("Este script é destinado ao Windows (CMD/PowerShell).")
 
@@ -489,8 +538,10 @@ def main() -> None:
             "bundle": False,
         }
 
-    if args.deploy and not targets["web"]:
-        fail("--deploy exige --web (ou --all / padrão).")
+    if args.deploy and not (targets["web"] or targets["windows"]):
+        fail("--deploy exige --windows ou --web.")
+    if args.deploy and not targets["web"] and not (WEB_DIR / "index.html").is_file():
+        fail("Para publicar somente desktop, primeiro gere o Web local com --web; não será recompilado.")
 
     old_name, old_build = read_version()
     bump_kind = resolve_bump_kind(args)
@@ -508,6 +559,10 @@ def main() -> None:
         write_version(version_name, version_build)
         sync_iss(version_name, version_build)
 
+    if not 0 < int(version_build) <= 65535 or any(v > 65535 for v in parse_semver(version_name)):
+        fail("Versão/build excede os campos do instalador Windows.")
+    SELECTED_VERSION = (version_name, version_build)
+
     log(f"Projeto: {ROOT}")
 
     flutter = ensure_flutter()
@@ -521,7 +576,7 @@ def main() -> None:
         results.append(f"Setup Windows: {setup}")
 
     if targets["web"]:
-        step_web(flutter, deploy=args.deploy)
+        step_web(flutter, deploy=False)
         results.append(f"Web: {WEB_DIR}")
         if args.deploy:
             results.append(f"Hosting: {HOSTING_URL}")
@@ -535,6 +590,61 @@ def main() -> None:
         aab = step_bundle(flutter, version_name, version_build)
         size_mb = aab.stat().st_size / (1024 * 1024)
         results.append(f"AAB (Play Store): {aab} ({size_mb:.1f} MB)")
+
+    # All selected platforms succeeded. Stage/sign once; never rebuild here.
+    if targets["windows"]:
+        node = which("node") or fail("Node.js necessário para assinar o pacote desktop.")
+        run(["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(ROOT / "tool/get_winsparkle.ps1")])
+        command = [node, str(ROOT / "tool/desktop_release.cjs"), f"--installer={setup}"]
+        if args.deploy:
+            command.append("--publish")
+        run(command)
+        results.append("Catálogo desktop assinado: release/desktop-feed/desktop")
+
+    if args.deploy and targets["apk"]:
+        node = which("node") or fail("Node.js necessário para publicar Android.")
+        run([node, str(ROOT / "tool/android_release.cjs"), f"--apk={APK_PATH}", "--publish"])
+
+    if args.deploy:
+        if targets["windows"]:
+            shutil.copytree(ROOT / "release/desktop-feed/desktop", WEB_DIR / "desktop", dirs_exist_ok=True, ignore=shutil.ignore_patterns("packages"))
+        else:
+            # Preserve the desktop feed on a web-only deploy. Never deploy stale
+            # local manifests over a newer publication.
+            from urllib.request import urlopen
+            feed_dir = WEB_DIR / "desktop/updates"
+            feed_dir.mkdir(parents=True, exist_ok=True)
+            for filename in ("latest.json", "appcast.xml"):
+                try:
+                    with urlopen(f"{HOSTING_URL}/desktop/updates/{filename}", timeout=15) as response:
+                        (feed_dir / filename).write_bytes(response.read())
+                except Exception as exc:
+                    fail(f"Não foi possível preservar catálogo desktop publicado: {exc}. Use --windows --web --deploy na primeira publicação.")
+        if targets["apk"]:
+            shutil.copytree(ROOT / "release/android-feed/android", WEB_DIR / "android", dirs_exist_ok=True, ignore=shutil.ignore_patterns("packages"))
+        else:
+            # Mantém o APK público atual em publicações somente web/Windows.
+            import json
+            from urllib.request import urlopen
+            from urllib.error import HTTPError
+            try:
+                with urlopen(f"{HOSTING_URL}/android/latest.json", timeout=15) as response:
+                    content = response.read()
+                    if "application/json" in response.headers.get("Content-Type", ""):
+                        current = json.loads(content)
+                        if current.get("identity") != "faca-festa-android":
+                            fail("Catálogo Android publicado inválido.")
+                        android_dir = WEB_DIR / "android"
+                        android_dir.mkdir(parents=True, exist_ok=True)
+                        (android_dir / "latest.json").write_bytes(content)
+            except HTTPError as exc:
+                if exc.code != 404:
+                    fail(f"Não foi possível preservar catálogo Android: {exc}")
+            except Exception as exc:
+                fail(f"Não foi possível preservar catálogo Android: {exc}")
+        log("Todos os builds concluídos; publicando Hosting web + downloads")
+        run([ensure_firebase(), "deploy", "--project", "faca-a-festa", "--only", "hosting"])
+        results.append(f"Download permanente: {HOSTING_URL}/desktop/")
 
     print("\n" + "=" * 60)
     print("PRODUÇÃO CONCLUÍDA")

@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/core/utils/numeric_input.dart';
 import 'dart:collection';
 
 import 'package:flutter/material.dart';
@@ -773,6 +774,7 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
             style: FilledButton.styleFrom(
               backgroundColor: _danger,
               foregroundColor: Colors.white,
+              iconColor: Colors.white,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14)),
             ),

@@ -407,6 +407,7 @@ class _EnviarConvitesScreenState extends State<EnviarConvitesScreen> {
                                 style: TextStyle(fontSize: 12)),
                             style: TextButton.styleFrom(
                                 foregroundColor: Colors.white,
+                                iconColor: Colors.white,
                                 padding: EdgeInsets.zero),
                           ),
                         ],
@@ -419,6 +420,7 @@ class _EnviarConvitesScreenState extends State<EnviarConvitesScreen> {
                               style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.white,
                                   foregroundColor: primary,
+                                  iconColor: primary,
                                   padding:
                                       const EdgeInsets.symmetric(vertical: 12),
                                   shape: RoundedRectangleBorder(
@@ -439,6 +441,7 @@ class _EnviarConvitesScreenState extends State<EnviarConvitesScreen> {
                               style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.white,
                                   foregroundColor: primary,
+                                  iconColor: primary,
                                   padding:
                                       const EdgeInsets.symmetric(vertical: 12),
                                   shape: RoundedRectangleBorder(
@@ -462,6 +465,7 @@ class _EnviarConvitesScreenState extends State<EnviarConvitesScreen> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.white,
                             foregroundColor: primary,
+                            iconColor: primary,
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -667,6 +671,7 @@ class _EnviarConvitesScreenState extends State<EnviarConvitesScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: themeController.primaryColor.value,
               foregroundColor: Colors.white,
+              iconColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),

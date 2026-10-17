@@ -1,0 +1,10 @@
+const assert = require('assert/strict');
+const {assertAdvance,hash} = require('./desktop_release.cjs');
+const current={identity:'faca-festa-windows-x64',version:'1.0.5',build:7,sha256:hash(Buffer.from('signed bytes'))};
+assertAdvance(current,{...current,build:8});
+assertAdvance(current,current);
+assert.throws(()=>assertAdvance(current,{...current,build:6}));
+assert.throws(()=>assertAdvance(current,{...current,sha256:hash(Buffer.from('tampered'))}));
+assert.throws(()=>assertAdvance({...current,identity:'cardapio'},current));
+assert.throws(()=>assertAdvance(current,{...current,version:'1.0.6'}));
+console.log('OK: release monotonicity, identity and immutable build checks.');

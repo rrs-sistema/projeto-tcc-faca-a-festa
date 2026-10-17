@@ -52,7 +52,10 @@ class OrcamentoRemoteDatasource {
     final dados = model.toMap();
     dados['id_solicitante'] ??= _auth.currentUser?.uid;
 
-    return _db.collection('orcamento').doc(model.idOrcamento).set(dados);
+    return _db
+        .collection('orcamento')
+        .doc(model.idOrcamento)
+        .set(dados, SetOptions(merge: true));
   }
 
   Future<void> confirmarReserva({

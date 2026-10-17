@@ -95,23 +95,51 @@ class FestaBottomBar extends StatelessWidget {
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 6, vertical: 6),
-                      child: Row(
-                        children: [
-                          for (var i = 0; i < items.length; i++)
-                            Expanded(
-                              child: _FestaNavButton(
-                                item: items[i],
-                                selected:
-                                    !items[i].isAction && currentIndex == i,
-                                primary: primary,
-                                gradient: gradient,
-                                onTap: () {
-                                  HapticFeedback.selectionClick();
-                                  onTap(i);
-                                },
-                              ),
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          final botoes = Row(
+                            children: [
+                              for (var i = 0; i < items.length; i++)
+                                Expanded(
+                                  child: _FestaNavButton(
+                                    item: items[i],
+                                    selected:
+                                        !items[i].isAction && currentIndex == i,
+                                    primary: primary,
+                                    gradient: gradient,
+                                    onTap: () {
+                                      HapticFeedback.selectionClick();
+                                      onTap(i);
+                                    },
+                                  ),
+                                ),
+                            ],
+                          );
+                          if (constraints.maxWidth < 720) return botoes;
+                          return Align(
+                            alignment: Alignment.center,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                for (var i = 0; i < items.length; i++)
+                                  SizedBox(
+                                    width: 168,
+                                    child: _FestaNavButton(
+                                      item: items[i],
+                                      selected: !items[i].isAction &&
+                                          currentIndex == i,
+                                      primary: primary,
+                                      gradient: gradient,
+                                      onTap: () {
+                                        HapticFeedback.selectionClick();
+                                        onTap(i);
+                                      },
+                                    ),
+                                  ),
+                              ],
                             ),
-                        ],
+                          );
+                        },
                       ),
                     ),
                   ),
@@ -148,65 +176,71 @@ class _FestaNavButton extends StatelessWidget {
       button: true,
       selected: selected,
       label: selected ? '${item.label}, selecionado' : item.label,
-      child: Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 2),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(20),
-          splashColor: primary.withValues(alpha: 0.12),
-          highlightColor: primary.withValues(alpha: 0.06),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 280),
-            curve: Curves.easeOutCubic,
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-            decoration: BoxDecoration(
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 2),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: onTap,
               borderRadius: BorderRadius.circular(20),
-              gradient: selected ? gradient : null,
-              boxShadow: selected
-                  ? [
-                      BoxShadow(
-                        color: primary.withValues(alpha: 0.34),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
-                      ),
-                    ]
-                  : null,
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  icon,
-                  size: selected ? 22 : 21,
-                  color:
-                      selected ? Colors.white : primary.withValues(alpha: 0.78),
+              splashColor: primary.withValues(alpha: 0.12),
+              highlightColor: primary.withValues(alpha: 0.06),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 280),
+                curve: Curves.easeOutCubic,
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  gradient: selected ? gradient : null,
+                  boxShadow: selected
+                      ? [
+                          BoxShadow(
+                            color: primary.withValues(alpha: 0.34),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ]
+                      : null,
                 ),
-                const SizedBox(height: 3),
-                AnimatedDefaultTextStyle(
-                  duration: const Duration(milliseconds: 220),
-                  curve: Curves.easeOutCubic,
-                  style: GoogleFonts.poppins(
-                    fontSize: 10.5,
-                    height: 1.05,
-                    fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
-                    color: selected ? Colors.white : const Color(0xFF64748B),
-                  ),
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(
-                      item.label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      icon,
+                      size: selected ? 22 : 21,
+                      color: selected
+                          ? Colors.white
+                          : primary.withValues(alpha: 0.78),
                     ),
-                  ),
+                    const SizedBox(height: 3),
+                    AnimatedDefaultTextStyle(
+                      duration: const Duration(milliseconds: 220),
+                      curve: Curves.easeOutCubic,
+                      style: GoogleFonts.poppins(
+                        fontSize: 10.5,
+                        height: 1.05,
+                        fontWeight:
+                            selected ? FontWeight.w700 : FontWeight.w600,
+                        color:
+                            selected ? Colors.white : const Color(0xFF64748B),
+                      ),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          item.label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),
-      ),
       ),
     );
   }

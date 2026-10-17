@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
+import 'package:app_faca_festa/data/services/estatisticas_publicas_service.dart';
 
 import 'package:app_faca_festa/presentation/modules/legal/pages/privacidade_screen.dart';
 
@@ -199,8 +201,8 @@ class AuthFestaLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final size = this.size ??
-        (MediaQuery.sizeOf(context).height < 740 ? 96.0 : 120.0);
+    final size =
+        this.size ?? (MediaQuery.sizeOf(context).height < 740 ? 96.0 : 120.0);
     return ClipOval(
       child: Image.asset(
         'assets/logo/logo-faca-festa.png',
@@ -268,11 +270,32 @@ class AuthFestaTitle extends StatelessWidget {
   }
 }
 
-class AuthFestaSocialProof extends StatelessWidget {
-  const AuthFestaSocialProof({super.key});
+class AuthFestaSocialProof extends StatefulWidget {
+  const AuthFestaSocialProof({super.key, this.carregar});
+
+  final Future<EstatisticasPublicas?> Function()? carregar;
+
+  @override
+  State<AuthFestaSocialProof> createState() => _AuthFestaSocialProofState();
+}
+
+class _AuthFestaSocialProofState extends State<AuthFestaSocialProof> {
+  late final Future<EstatisticasPublicas?> _estatisticas =
+      (widget.carregar ?? EstatisticasPublicasService.carregar)();
 
   @override
   Widget build(BuildContext context) {
+    return FutureBuilder<EstatisticasPublicas?>(
+      future: _estatisticas,
+      builder: (context, snapshot) {
+        final dados = snapshot.data;
+        if (dados == null) return const SizedBox.shrink();
+        return _buildDados(dados);
+      },
+    );
+  }
+
+  Widget _buildDados(EstatisticasPublicas dados) {
     final texto = GoogleFonts.poppins(
       fontSize: 11.5,
       fontWeight: FontWeight.w600,
@@ -284,40 +307,29 @@ class AuthFestaSocialProof extends StatelessWidget {
       spacing: 10,
       runSpacing: 8,
       children: [
-        SizedBox(
-          width: 52,
-          height: 22,
-          child: Stack(
+        Text(
+          '${NumberFormat.decimalPattern('pt_BR').format(dados.totalEventos)} '
+          '${dados.totalEventos == 1 ? 'evento cadastrado' : 'eventos cadastrados'}',
+          style: texto,
+        ),
+        if (dados.totalAvaliacoes > 0 && dados.mediaFornecedores != null)
+          Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              for (var i = 0; i < AuthFestaBrand.avataresProva.length; i++)
-                Positioned(
-                  left: i * 14.0,
-                  child: Container(
-                    width: 22,
-                    height: 22,
-                    decoration: BoxDecoration(
-                      color: AuthFestaBrand.avataresProva[i],
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2),
-                    ),
-                  ),
-                ),
+              const Icon(
+                Icons.star_rounded,
+                size: 16,
+                color: AuthFestaBrand.estrela,
+              ),
+              const SizedBox(width: 2),
+              Text(
+                '${NumberFormat('0.0', 'pt_BR').format(dados.mediaFornecedores)} '
+                'dos fornecedores (${dados.totalAvaliacoes} '
+                '${dados.totalAvaliacoes == 1 ? 'avaliação' : 'avaliações'})',
+                style: texto.copyWith(fontWeight: FontWeight.w700),
+              ),
             ],
           ),
-        ),
-        Text('+12.000 eventos realizados', style: texto),
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              Icons.star_rounded,
-              size: 16,
-              color: AuthFestaBrand.estrela,
-            ),
-            const SizedBox(width: 2),
-            Text('4.9', style: texto.copyWith(fontWeight: FontWeight.w700)),
-          ],
-        ),
       ],
     );
   }
@@ -485,6 +497,7 @@ class AuthFestaContaButton extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           side: const BorderSide(color: Color(0xFFF0E6EC)),
           foregroundColor: AuthFestaBrand.rosa,
+          iconColor: AuthFestaBrand.rosa,
           backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
@@ -536,6 +549,7 @@ class AuthFestaGoogleButton extends StatelessWidget {
         style: OutlinedButton.styleFrom(
           backgroundColor: Colors.white,
           foregroundColor: Colors.grey.shade800,
+          iconColor: Colors.grey.shade800,
           side: BorderSide(color: Colors.grey.shade200),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),

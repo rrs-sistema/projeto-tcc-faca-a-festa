@@ -368,6 +368,7 @@ Future<void> showAddOrcamentoBottomSheet(
                               },
                               style: TextButton.styleFrom(
                                 foregroundColor: textMuted,
+                                iconColor: textMuted,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(14),
                                 ),

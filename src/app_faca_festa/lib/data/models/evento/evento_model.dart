@@ -13,6 +13,7 @@ class EventoModel extends Evento {
     required super.nomeEvento,
     required super.localEvento,
     required super.data,
+    super.dataFim,
     super.nomePessoalPrincipal,
     super.idCidade,
     super.nomeCidade,
@@ -62,6 +63,7 @@ class EventoModel extends Evento {
       nomeEvento: evento.nomeEvento,
       localEvento: evento.localEvento,
       data: evento.data,
+      dataFim: evento.dataFim,
       nomePessoalPrincipal: evento.nomePessoalPrincipal,
       idCidade: evento.idCidade,
       nomeCidade: evento.nomeCidade,
@@ -119,6 +121,7 @@ class EventoModel extends Evento {
       'nome_evento': nomeEvento,
       'local_evento': localEvento,
       'data': Timestamp.fromDate(data),
+      if (dataFim != null) 'data_fim': Timestamp.fromDate(dataFim!),
       'hora': hora,
       'custo_estimado': custoEstimado,
       'total_convidados': totalConvidadosCalculado,
@@ -191,6 +194,7 @@ class EventoModel extends Evento {
           map['logradouro']?.toString() ??
           '',
       data: parseDate(map['data']) ?? DateTime.now(),
+      dataFim: parseDate(map['data_fim']),
       hora: map['hora']?.toString(),
       custoEstimado: map['custo_estimado'] != null
           ? (map['custo_estimado'] as num).toDouble()
@@ -288,6 +292,8 @@ class EventoModel extends Evento {
     bool limparNomePessoalPrincipal = false,
     String? localEvento,
     DateTime? data,
+    DateTime? dataFim,
+    bool limparDataFim = false,
     String? hora,
     bool limparHora = false,
     double? custoEstimado,
@@ -359,6 +365,7 @@ class EventoModel extends Evento {
       nomeEvento: nomeEvento ?? this.nomeEvento,
       localEvento: localEvento ?? this.localEvento,
       data: data ?? this.data,
+      dataFim: limparDataFim ? null : (dataFim ?? this.dataFim),
       hora: limparHora ? null : (hora ?? this.hora),
       custoEstimado:
           limparCustoEstimado ? null : (custoEstimado ?? this.custoEstimado),

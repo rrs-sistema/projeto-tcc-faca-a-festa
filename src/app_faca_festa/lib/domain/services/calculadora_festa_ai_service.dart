@@ -16,5 +16,6 @@ abstract class ICalculadoraFestaAIService {
     String? idCalculo,
     String? idEvento,
     String? idUsuario,
+    Map<String, dynamic>? contextoPlanejamento,
   });
 }

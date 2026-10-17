@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/core/utils/numeric_input.dart';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -689,6 +690,9 @@ class _TextField extends StatelessWidget {
       controller: controller,
       maxLines: maxLines,
       keyboardType: keyboardType,
+      inputFormatters: keyboardType?.index == TextInputType.number.index
+          ? NumericInput.inteiro
+          : null,
       validator: validator,
       textInputAction:
           maxLines > 1 ? TextInputAction.newline : TextInputAction.next,

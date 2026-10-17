@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/core/services/update_operations.dart';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -248,53 +249,57 @@ class AuditoriaFornecedorScreen extends StatelessWidget {
     );
   }
 
-  Future<void> _exportarPdf(AuditoriaController controller) async {
-    if (controller.visiveis.isEmpty) {
-      Get.snackbar(
-        'Auditoria',
-        'Não há registros visíveis para exportar.',
-        snackPosition: SnackPosition.BOTTOM,
-      );
-      return;
-    }
+  Future<void> _exportarPdf(AuditoriaController controller) {
+    return UpdateOperations.run(() async {
+      if (controller.visiveis.isEmpty) {
+        Get.snackbar(
+          'Auditoria',
+          'Não há registros visíveis para exportar.',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+        return;
+      }
 
-    final pdf = await controller.exportarPdfVisivel(
-      titulo: 'Auditoria dos serviços Faça a Festa',
-    );
-    await Share.shareXFiles(
-      [
-        XFile.fromData(
-          pdf,
-          mimeType: 'application/pdf',
-        ),
-      ],
-      subject: 'auditoria-servicos-faca-festa.pdf',
-      text: 'Relatório de auditoria dos serviços no Faça a Festa.',
-      fileNameOverrides: ['auditoria-servicos-faca-festa.pdf'],
-    );
+      final pdf = await controller.exportarPdfVisivel(
+        titulo: 'Auditoria dos serviços Faça a Festa',
+      );
+      await Share.shareXFiles(
+        [
+          XFile.fromData(
+            pdf,
+            mimeType: 'application/pdf',
+          ),
+        ],
+        subject: 'auditoria-servicos-faca-festa.pdf',
+        text: 'Relatório de auditoria dos serviços no Faça a Festa.',
+        fileNameOverrides: ['auditoria-servicos-faca-festa.pdf'],
+      );
+    });
   }
 
-  Future<void> _exportarCsv(AuditoriaController controller) async {
-    if (controller.visiveis.isEmpty) {
-      Get.snackbar(
-        'Auditoria',
-        'Não há registros visíveis para exportar.',
-        snackPosition: SnackPosition.BOTTOM,
-      );
-      return;
-    }
+  Future<void> _exportarCsv(AuditoriaController controller) {
+    return UpdateOperations.run(() async {
+      if (controller.visiveis.isEmpty) {
+        Get.snackbar(
+          'Auditoria',
+          'Não há registros visíveis para exportar.',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+        return;
+      }
 
-    final csv = controller.exportarCsvVisivel();
-    await Share.shareXFiles(
-      [
-        XFile.fromData(
-          Uint8List.fromList(utf8.encode(csv)),
-          mimeType: 'text/csv',
-        ),
-      ],
-      subject: 'auditoria-servicos-faca-festa.csv',
-      text: 'Exportação da auditoria dos serviços no Faça a Festa.',
-      fileNameOverrides: ['auditoria-servicos-faca-festa.csv'],
-    );
+      final csv = controller.exportarCsvVisivel();
+      await Share.shareXFiles(
+        [
+          XFile.fromData(
+            Uint8List.fromList(utf8.encode(csv)),
+            mimeType: 'text/csv',
+          ),
+        ],
+        subject: 'auditoria-servicos-faca-festa.csv',
+        text: 'Exportação da auditoria dos serviços no Faça a Festa.',
+        fileNameOverrides: ['auditoria-servicos-faca-festa.csv'],
+      );
+    });
   }
 }

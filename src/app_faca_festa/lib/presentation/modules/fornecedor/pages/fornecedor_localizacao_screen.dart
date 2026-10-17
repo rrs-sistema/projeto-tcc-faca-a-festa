@@ -316,6 +316,7 @@ class _FornecedorLocalizacaoScreenState
                   style: TextButton.styleFrom(
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     foregroundColor: primary,
+                    iconColor: primary,
                   ),
                   icon: loading
                       ? SizedBox(
@@ -917,6 +918,7 @@ class _FornecedorLocalizacaoScreenState
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.white,
                             foregroundColor: primary,
+                            iconColor: primary,
                             padding: const EdgeInsets.symmetric(horizontal: 10),
                             elevation: 0,
                             shape: RoundedRectangleBorder(

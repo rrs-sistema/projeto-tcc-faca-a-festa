@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/core/utils/numeric_input.dart';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
@@ -98,14 +99,7 @@ class Biblioteca {
   }
 
   static double toDouble(String value) {
-    return double.tryParse(
-          value
-              .replaceAll('R\$', '')
-              .replaceAll('.', '')
-              .replaceAll(',', '.')
-              .trim(),
-        ) ??
-        0.0;
+    return NumericInput.parse(value) ?? 0.0;
   }
 
   static String formatarPrecoGrid(double preco, double? promocao) {

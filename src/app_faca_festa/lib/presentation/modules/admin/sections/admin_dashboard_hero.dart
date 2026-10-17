@@ -111,6 +111,7 @@ class _ExecutiveHero extends StatelessWidget {
                           style: FilledButton.styleFrom(
                             backgroundColor: Colors.white,
                             foregroundColor: AdminPalette.dark,
+                            iconColor: AdminPalette.dark,
                             disabledBackgroundColor:
                                 Colors.white.withValues(alpha: 0.38),
                             disabledForegroundColor:

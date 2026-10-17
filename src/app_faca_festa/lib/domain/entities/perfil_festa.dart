@@ -58,7 +58,8 @@ class PerfilFesta {
     return const PerfilFesta(
       tipo: TipoPerfilFesta.economico,
       nome: 'Econômico',
-      descricao: 'Estimativa enxuta, com menor margem e custo médio reduzido.',
+      descricao:
+          'Porções e margem menores. Os preços informados são preservados.',
       multiplicadorQuantidade: 0.90,
       multiplicadorCusto: 0.90,
       margemSegurancaPadrao: 0.05,
@@ -81,7 +82,7 @@ class PerfilFesta {
       tipo: TipoPerfilFesta.premium,
       nome: 'Premium',
       descricao:
-          'Estimativa mais completa, com maior margem e custo médio elevado.',
+          'Porções e margem maiores. Os preços informados são preservados.',
       multiplicadorQuantidade: 1.20,
       multiplicadorCusto: 1.25,
       margemSegurancaPadrao: 0.15,

@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/core/utils/numeric_input.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -114,7 +115,7 @@ class _CalculadoraEventoItemFormContentState
           : _formatDouble(item.quantidadePorConvidadoEquivalente),
     );
     _valorController = TextEditingController(
-      text: item == null ? '0' : _formatDouble(item.valorUnitarioMedio),
+      text: NumericInput.dinheiro(item?.valorUnitarioMedio ?? 0),
     );
     _ordemController = TextEditingController(text: '${item?.ordem ?? 0}');
     _observacaoController = TextEditingController(text: item?.observacao ?? '');
@@ -559,11 +560,31 @@ class _CalculadoraEventoItemFormContentState
       controller: controller,
       maxLines: maxLines,
       keyboardType: keyboardType,
-      decoration: _decoration(label: label, icon: icon),
-      validator: requiredField
-          ? (value) => FormValidators.titulo(value,
-              campo: label.toLowerCase(), minimo: 2)
+      inputFormatters: keyboardType?.index == TextInputType.number.index
+          ? (controller == _valorController
+              ? [NumericInput.moeda()]
+              : keyboardType?.decimal == true
+                  ? [NumericInput.decimal()]
+                  : NumericInput.inteiro)
           : null,
+      decoration: _decoration(label: label, icon: icon),
+      validator: (value) {
+        if (keyboardType?.index == TextInputType.number.index) {
+          if (!requiredField && (value ?? '').trim().isEmpty) return null;
+          final number = NumericInput.parse(value);
+          if (number == null ||
+              (controller == _quantidadeController
+                  ? number <= 0
+                  : number < 0)) {
+            return 'Informe um valor válido para ${label.toLowerCase()}';
+          }
+          return null;
+        }
+        return requiredField
+            ? FormValidators.titulo(value,
+                campo: label.toLowerCase(), minimo: 2)
+            : null;
+      },
     );
   }
 
@@ -582,21 +603,11 @@ class _CalculadoraEventoItemFormContentState
   }
 
   double _parseDouble(String value) {
-    final normalized = value
-        .trim()
-        .replaceAll('R\$', '')
-        .replaceAll(' ', '')
-        .replaceAll('.', '')
-        .replaceAll(',', '.');
-
-    return double.tryParse(normalized) ?? 0.0;
+    return NumericInput.parse(value) ?? 0.0;
   }
 
   String _formatDouble(double value) {
-    final text = value.toStringAsFixed(2);
-    if (text.endsWith('00')) return value.toStringAsFixed(0);
-    if (text.endsWith('0')) return value.toStringAsFixed(1);
-    return text;
+    return NumericInput.quantidade(value);
   }
 
   String _normalizarOpcao(

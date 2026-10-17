@@ -25,6 +25,13 @@ bool FlutterWindow::OnCreate() {
     return false;
   }
   RegisterPlugins(flutter_controller_->engine());
+  desktop_updater_ = std::make_unique<DesktopUpdater>(
+      GetHandle(), flutter_controller_->engine()->messenger());
+  const std::string installed = FLUTTER_VERSION;
+  const std::wstring title = L"Faça a Festa " +
+      std::wstring(installed.begin(), installed.end()) + L" (build " +
+      std::to_wstring(FLUTTER_VERSION_BUILD) + L")";
+  SetWindowTextW(GetHandle(), title.c_str());
   SetChildContent(flutter_controller_->view()->GetNativeWindow());
 
   flutter_controller_->engine()->SetNextFrameCallback([&]() {
@@ -40,6 +47,7 @@ bool FlutterWindow::OnCreate() {
 }
 
 void FlutterWindow::OnDestroy() {
+  desktop_updater_.reset();
   if (flutter_controller_) {
     flutter_controller_ = nullptr;
   }
@@ -52,6 +60,10 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
                               WPARAM const wparam,
                               LPARAM const lparam) noexcept {
   // Give Flutter, including plugins, an opportunity to handle window messages.
+  if (message == DesktopUpdater::kEventMessage && desktop_updater_) {
+    desktop_updater_->DispatchEvent(wparam);
+    return 0;
+  }
   if (flutter_controller_) {
     std::optional<LRESULT> result =
         flutter_controller_->HandleTopLevelWindowProc(hwnd, message, wparam,

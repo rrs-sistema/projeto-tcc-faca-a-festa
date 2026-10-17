@@ -37,6 +37,7 @@ class FornecedorAiAnaliseLocal {
   String? _ultimaChaveCache;
   DateTime? _ultimaAtualizacao;
   bool _carregandoInterno = false;
+  _CargaAiPendente? _cargaPendente;
 
   void vincular({
     required Fornecedor? Function() fornecedorAtual,
@@ -63,7 +64,16 @@ class FornecedorAiAnaliseLocal {
       return;
     }
 
-    if (_carregandoInterno) return;
+    if (_carregandoInterno) {
+      _cargaPendente = _CargaAiPendente(
+        avaliacoes: avaliacoes,
+        cotacoes: cotacoes,
+        eventos: eventos,
+        interacoes: interacoes,
+        forceRefresh: forceRefresh,
+      );
+      return;
+    }
 
     final chaveAtual = _gerarChaveCache(
       fornecedor: f,
@@ -158,6 +168,17 @@ class FornecedorAiAnaliseLocal {
     } finally {
       isLoading.value = false;
       _carregandoInterno = false;
+      final pendente = _cargaPendente;
+      _cargaPendente = null;
+      if (pendente != null) {
+        await carregar(
+          avaliacoes: pendente.avaliacoes,
+          cotacoes: pendente.cotacoes,
+          eventos: pendente.eventos,
+          interacoes: pendente.interacoes,
+          forceRefresh: pendente.forceRefresh,
+        );
+      }
     }
   }
 
@@ -202,6 +223,7 @@ class FornecedorAiAnaliseLocal {
     _ultimaAtualizacao = null;
     _inicializada = false;
     _carregandoInterno = false;
+    _cargaPendente = null;
   }
 
   bool _podeUsarCache(String chaveAtual) {
@@ -454,4 +476,20 @@ class FornecedorAiAnaliseLocal {
       ),
     ]);
   }
+}
+
+class _CargaAiPendente {
+  const _CargaAiPendente({
+    required this.avaliacoes,
+    required this.cotacoes,
+    required this.eventos,
+    required this.interacoes,
+    required this.forceRefresh,
+  });
+
+  final List<AvaliacaoServico> avaliacoes;
+  final List<FornecedorAiCotacaoInput> cotacoes;
+  final List<Evento> eventos;
+  final List<FornecedorInteracao> interacoes;
+  final bool forceRefresh;
 }

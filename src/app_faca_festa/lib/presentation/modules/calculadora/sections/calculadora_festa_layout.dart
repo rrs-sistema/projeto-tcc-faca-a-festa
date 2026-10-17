@@ -45,7 +45,10 @@ extension _CalculadoraFestaLayout on _CalculadoraFestaScreenState {
           ),
           const SizedBox(height: 6),
           Text(
-            'Sugestões inteligentes baseadas no público e duração.',
+            eventoController.eventoAtualEntidade?.duracaoDias != null &&
+                    eventoController.eventoAtualEntidade!.duracaoDias > 1
+                ? 'Evento de ${eventoController.eventoAtualEntidade!.duracaoDias} dias. Calcule cada refeição e envie ao cardápio correspondente.'
+                : 'Sugestões inteligentes baseadas no público e duração.',
             style: GoogleFonts.poppins(
               color: Colors.white.withValues(alpha: 0.9),
               fontSize: 11.5,
@@ -60,17 +63,57 @@ extension _CalculadoraFestaLayout on _CalculadoraFestaScreenState {
   Widget _buildCardapioCard(Color primary) {
     return _SectionCard(
       title: 'Cardápio',
+      trailing: TextButton.icon(
+        onPressed: calculadoraController.possuiEventoVinculado
+            ? () => showModalBottomSheet<void>(
+                  context: context,
+                  isScrollControlled: true,
+                  builder: (_) => CadastroCardapioBottomSheet(
+                    idEvento: calculadoraController.idEventoAtual.value,
+                    controller: cardapioController,
+                    primaryColor: primary,
+                  ),
+                )
+            : null,
+        icon: const Icon(Icons.add),
+        label: const Text('Novo'),
+      ),
       icon: Icons.restaurant_menu_rounded,
       primary: primary,
       child: Obx(() {
-        final cardapios = cardapioController.cardapios;
+        final cardapios = cardapioController.cardapios
+            .where((item) =>
+                item.idEvento == calculadoraController.idEventoAtual.value &&
+                item.ativo)
+            .toList();
 
+        if (cardapioController.erro.value.isNotEmpty) {
+          return Text(cardapioController.erro.value);
+        }
+        if (cardapioController.carregando.value) {
+          return const LinearProgressIndicator();
+        }
         if (cardapios.isEmpty) {
-          return _EmptyMessage(
-            icon: Icons.no_meals_outlined,
-            text: 'Crie um cardápio antes de enviar.',
-            iconColor: primary,
-          );
+          return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _EmptyMessage(
+                    icon: Icons.no_meals_outlined,
+                    text: 'Crie um cardápio antes de enviar.'),
+                TextButton.icon(
+                    onPressed:
+                        calculadoraController.usandoContextoHistorico.value ||
+                                !calculadoraController.operacaoCarregada.value
+                            ? null
+                            : () => showDialog<void>(
+                                context: context,
+                                builder: (_) => Theme(
+                                    data: themeController.materialTheme,
+                                    child: CalculadoraEstoqueDialog(
+                                        controller: calculadoraController))),
+                    icon: const Icon(Icons.inventory_2_outlined),
+                    label: const Text('Estoque e reservas da festa')),
+              ]);
         }
 
         final selectedValue =
@@ -78,42 +121,106 @@ extension _CalculadoraFestaLayout on _CalculadoraFestaScreenState {
                 ? idCardapioSelecionado.value
                 : null;
 
-        return SizedBox(
-          height: 44, // Força uma altura menor no dropdown
-          child: DropdownButtonFormField<String>(
-            value: selectedValue,
-            isDense: true,
-            iconEnabledColor: primary,
-            iconDisabledColor: primary.withValues(alpha: 0.4),
-            decoration: InputDecoration(
-              labelText: 'Destino',
-              labelStyle: GoogleFonts.poppins(fontSize: 12),
-              prefixIcon: Icon(
-                Icons.restaurant_rounded,
-                size: 18,
-                color: primary,
+        return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SizedBox(
+                height: 60,
+                child: DropdownButtonFormField<String>(
+                  value: selectedValue,
+                  isDense: true,
+                  iconEnabledColor: primary,
+                  iconDisabledColor: primary.withValues(alpha: 0.4),
+                  decoration: InputDecoration(
+                    labelText: 'Cardápio da festa',
+                    labelStyle: GoogleFonts.poppins(fontSize: 12),
+                    prefixIcon: Icon(
+                      Icons.restaurant_rounded,
+                      size: 18,
+                      color: primary,
+                    ),
+                    contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(color: primary),
+                    ),
+                    filled: true,
+                    fillColor: Colors.grey.shade50,
+                  ),
+                  items: cardapios.map((cardapio) {
+                    return DropdownMenuItem<String>(
+                      value: cardapio.idCardapio,
+                      child: Text(cardapio.titulo,
+                          style: GoogleFonts.poppins(fontSize: 14)),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    calculadoraController.usandoContextoHistorico.value = false;
+                    _assinaturaCardapio = '';
+                    idCardapioSelecionado.value = value ?? '';
+                    _sincronizarCardapio();
+                  },
+                ),
               ),
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(color: primary),
+              const SizedBox(height: 4),
+              if (calculadoraController.pendenciasAlimentaresEvento.isNotEmpty)
+                Text(
+                    '${calculadoraController.pendenciasAlimentaresEvento.length} pendência(s) de alimentação: confira os grupos e suas porções.',
+                    style: const TextStyle(
+                        fontSize: 12, color: Color(0xFF80591A))),
+              ExpansionTile(
+                tilePadding: EdgeInsets.zero,
+                title: const Text('Público e estoque',
+                    style:
+                        TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                subtitle: Text(
+                    '${calculadoraController.convidadosEquivalentes.totalInformado} pessoas nesta refeição',
+                    style: const TextStyle(fontSize: 12)),
+                children: [
+                  TextButton.icon(
+                      onPressed:
+                          calculadoraController.usandoContextoHistorico.value ||
+                                  !calculadoraController.operacaoCarregada.value
+                              ? null
+                              : () => showDialog<void>(
+                                  context: context,
+                                  barrierDismissible: false,
+                                  builder: (_) => Theme(
+                                      data: themeController.materialTheme,
+                                      child: CalculadoraOperacaoDialog(
+                                          controller: calculadoraController))),
+                      icon: const Icon(Icons.groups_outlined, size: 18),
+                      label:
+                          const Text('Público e alimentação desta refeição')),
+                  TextButton.icon(
+                      onPressed:
+                          calculadoraController.usandoContextoHistorico.value ||
+                                  !calculadoraController.operacaoCarregada.value
+                              ? null
+                              : () => showDialog<void>(
+                                  context: context,
+                                  builder: (_) => Theme(
+                                      data: themeController.materialTheme,
+                                      child: CalculadoraEstoqueDialog(
+                                          controller: calculadoraController))),
+                      icon: const Icon(Icons.inventory_2_outlined, size: 18),
+                      label: const Text('Estoque e reservas da festa')),
+                ],
               ),
-              filled: true,
-              fillColor: Colors.grey.shade50,
-            ),
-            items: cardapios.map((cardapio) {
-              return DropdownMenuItem<String>(
-                value: cardapio.idCardapio,
-                child: Text(cardapio.titulo,
-                    style: GoogleFonts.poppins(fontSize: 12)),
-              );
-            }).toList(),
-            onChanged: (value) => idCardapioSelecionado.value = value ?? '',
-          ),
-        );
+              if (!calculadoraController.operacaoCarregada.value) ...[
+                Text(
+                    calculadoraController.erroOperacao.value.isEmpty
+                        ? 'Carregando planejamento da festa...'
+                        : calculadoraController.erroOperacao.value,
+                    style: const TextStyle(fontSize: 12)),
+                TextButton(
+                    onPressed: calculadoraController.iniciarOperacaoEvento,
+                    child: const Text('Atualizar planejamento')),
+              ],
+            ]);
       }),
     );
   }
@@ -123,49 +230,67 @@ extension _CalculadoraFestaLayout on _CalculadoraFestaScreenState {
       final salvando = calculadoraController.salvando.value;
       final enviando = calculadoraController.enviandoParaCardapio.value;
 
-      return Row(
-        // Colocando os botões lado a lado para economizar mais espaço
+      return Column(
         children: [
-          Expanded(
+          SizedBox(
+            width: double.infinity,
             child: SizedBox(
-              height: 44,
+              width: double.infinity,
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: primary,
                   foregroundColor: Colors.white,
+                  minimumSize: const Size(0, 52),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10)),
-                  padding: EdgeInsets.zero,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  disabledForegroundColor: const Color(0xFF475569),
+                  disabledBackgroundColor: const Color(0xFFE2E8F0),
                 ),
-                onPressed: salvando ? null : _salvarCalculo,
+                onPressed: salvando ||
+                        !calculadoraController.possuiResultado ||
+                        !calculadoraController.possuiEventoVinculado ||
+                        calculadoraController.carregandoItensBase.value
+                    ? null
+                    : _salvarCalculo,
                 icon: salvando
                     ? const SizedBox(
                         width: 14,
                         height: 14,
                         child: CircularProgressIndicator(
                             strokeWidth: 2, color: Colors.white))
-                    : const Icon(Icons.save_rounded, size: 18, color: Colors.white),
+                    : const Icon(Icons.save_rounded, size: 20),
                 label: Text(
                   salvando ? 'Salvando...' : 'Salvar',
                   style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.w800, fontSize: 12),
+                      fontWeight: FontWeight.w700, fontSize: 14),
                 ),
               ),
             ),
           ),
-          const SizedBox(width: 8),
-          Expanded(
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
             child: SizedBox(
-              height: 44,
+              width: double.infinity,
               child: OutlinedButton.icon(
                 style: OutlinedButton.styleFrom(
                   foregroundColor: primary,
+                  minimumSize: const Size(0, 52),
                   side: BorderSide(color: primary.withValues(alpha: 0.55)),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10)),
-                  padding: EdgeInsets.zero,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  disabledForegroundColor: const Color(0xFF475569),
+                  disabledBackgroundColor: const Color(0xFFE2E8F0),
                 ),
-                onPressed: enviando || idCardapioSelecionado.value.isEmpty
+                onPressed: enviando ||
+                        !calculadoraController.possuiResultado ||
+                        !calculadoraController.cardapioDisponivel.value ||
+                        calculadoraController.carregandoItensBase.value ||
+                        idCardapioSelecionado.value.isEmpty
                     ? null
                     : _enviarParaCardapio,
                 icon: enviando
@@ -174,12 +299,11 @@ extension _CalculadoraFestaLayout on _CalculadoraFestaScreenState {
                         height: 14,
                         child: CircularProgressIndicator(
                             strokeWidth: 2, color: primary))
-                    : Icon(Icons.playlist_add_check_rounded,
-                        size: 18, color: primary),
+                    : const Icon(Icons.playlist_add_check_rounded, size: 20),
                 label: Text(
-                  enviando ? 'Enviando...' : 'Adicionar',
+                  enviando ? 'Enviando...' : 'Revisar e aplicar',
                   style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.w800, fontSize: 12),
+                      fontWeight: FontWeight.w700, fontSize: 14),
                 ),
               ),
             ),

@@ -1,4 +1,4 @@
-import 'package:currency_text_input_formatter/currency_text_input_formatter.dart';
+import 'package:app_faca_festa/core/utils/numeric_input.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
@@ -61,14 +61,7 @@ class FormMasks {
     );
   }
 
-  static CurrencyTextInputFormatter dinheiro() {
-    return CurrencyTextInputFormatter.currency(
-      locale: 'pt_BR',
-      symbol: 'R\$',
-      decimalDigits: 2,
-      enableNegative: false,
-    );
-  }
+  static TextInputFormatter dinheiro() => NumericInput.moeda();
 
   static List<TextInputFormatter> inteiro({int maxDigits = 6}) {
     return [

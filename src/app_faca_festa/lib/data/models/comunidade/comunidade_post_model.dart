@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:app_faca_festa/domain/entities/comunidade.dart';
 
-
 class ComunidadePostModel extends ComunidadePost {
   ComunidadePostModel({
     required super.id,

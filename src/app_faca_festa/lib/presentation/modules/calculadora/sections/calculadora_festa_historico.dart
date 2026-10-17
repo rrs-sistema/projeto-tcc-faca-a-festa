@@ -30,14 +30,15 @@ extension _CalculadoraFestaHistorico on _CalculadoraFestaScreenState {
         child: OutlinedButton.icon(
           style: OutlinedButton.styleFrom(
             foregroundColor: primary,
+            iconColor: primary,
             side: BorderSide(color: primary.withValues(alpha: 0.45)),
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             padding: EdgeInsets.zero,
           ),
           onPressed: _abrirMinhasSimulacoes,
-          icon: Icon(Icons.auto_awesome_motion_rounded,
-              size: 18, color: primary),
+          icon:
+              Icon(Icons.auto_awesome_motion_rounded, size: 18, color: primary),
           label: Text(
             'Abrir minhas simulações',
             style:

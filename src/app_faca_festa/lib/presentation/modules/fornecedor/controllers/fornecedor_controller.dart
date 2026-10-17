@@ -98,7 +98,7 @@ class FornecedorController extends GetxController {
       usuarioEhFornecedor: _usuarioLogadoEhFornecedor,
       aoAtualizar: (atualizado) {
         if (atualizado.aptoParaOperar) {
-          ai.carregarAiFornecedorComDadosAtuais();
+          ai.carregarAiDasSolicitacoesPendentes();
         } else {
           ai.limparAiFornecedor();
         }
@@ -347,8 +347,26 @@ class FornecedorController extends GetxController {
   Future<void> escutarServicosFornecedor(String idFornecedor) =>
       catalogo.escutar(idFornecedor);
 
-  Future<void> listarServicosFornecedor(String idFornecedor) =>
-      catalogo.listarComDetalhes(idFornecedor);
+  Future<void> listarServicosFornecedor(
+    String idFornecedor, {
+    bool atualizarIa = true,
+  }) =>
+      catalogo.listarComDetalhes(
+        idFornecedor,
+        atualizarIa: atualizarIa,
+      );
+
+  /// Busca estatísticas, catálogo e pedidos antes de recalcular a IA.
+  /// Na primeira abertura a análise rodava com essas listas ainda vazias.
+  Future<void> atualizarPainelOperacional() async {
+    final atual = fornecedor.value;
+    if (atual == null || !atual.aptoParaOperar) return;
+
+    await atualizarEstatisticasFornecedor();
+    await escutarSolicitacoesPendentes(atual.idFornecedor);
+    await listarServicosFornecedor(atual.idFornecedor, atualizarIa: false);
+    await ai.carregarAiDasSolicitacoesPendentes(forceRefresh: true);
+  }
 
   Future<void> carregarCatalogoServicos() => catalogo.carregarCatalogo();
 

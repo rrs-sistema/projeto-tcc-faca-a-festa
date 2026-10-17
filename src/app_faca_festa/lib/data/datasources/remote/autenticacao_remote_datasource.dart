@@ -499,8 +499,8 @@ class FirebaseAutenticacaoRemoteDatasource
         );
       }
       await GoogleSignIn.instance.signOut().timeout(
-        const Duration(seconds: 2),
-      );
+            const Duration(seconds: 2),
+          );
     } on TimeoutException {
       developer.log(
         '[AutenticacaoRemote] Google signOut excedeu o tempo; seguindo.',

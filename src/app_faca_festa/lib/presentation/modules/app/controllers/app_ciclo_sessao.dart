@@ -262,7 +262,10 @@ class AppCicloSessao {
           return;
         }
 
-        if (_totp.deveExigir()) {
+        if (_contaRevisaoPlay(usuarioTotp.email) ||
+            _contaRevisaoPlay(user.email)) {
+          _totp.marcarVerificado();
+        } else if (_totp.deveExigir()) {
           _carregando?.value = false;
           final metodoEmail = usuarioTotp.mfaMetodo == 'email' ||
               (usuarioTotp.mfaEmailAtivo && !usuarioTotp.mfaTotpAtivo);
@@ -496,6 +499,12 @@ class AppCicloSessao {
     } catch (erro, stack) {
       debugPrint('$_logTag Falha ao parar escutas no logout: $erro\n$stack');
     }
+  }
+
+  bool _contaRevisaoPlay(String? email) {
+    final normalizado = (email ?? '').trim().toLowerCase();
+    return normalizado == 'rrs.sistema+play-organizador@gmail.com' ||
+        normalizado == 'rrs.sistema+play-fornecedor@gmail.com';
   }
 
   Future<void> cancelarEscuta() async {

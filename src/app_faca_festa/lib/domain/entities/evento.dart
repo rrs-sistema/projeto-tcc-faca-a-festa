@@ -48,6 +48,7 @@ class Evento {
   final String nomeEvento;
   final String localEvento;
   final DateTime data;
+  final DateTime? dataFim;
   final String? hora;
   final double? custoEstimado;
   final int? totalConvidados;
@@ -90,6 +91,7 @@ class Evento {
     required this.nomeEvento,
     required this.localEvento,
     required this.data,
+    this.dataFim,
     this.nomePessoalPrincipal,
     this.idCidade,
     this.nomeCidade,
@@ -130,6 +132,15 @@ class Evento {
     this.siteEvento,
     this.dressCode,
   }) : dataCadastro = dataCadastro ?? DateTime.now();
+
+  /// Dias do calendário, incluindo início e término, sem depender do fuso.
+  int get duracaoDias {
+    final inicio = DateTime.utc(data.year, data.month, data.day);
+    final fim = dataFim ?? data;
+    final termino = DateTime.utc(fim.year, fim.month, fim.day);
+    final dias = termino.difference(inicio).inDays + 1;
+    return dias < 1 ? 1 : dias;
+  }
 
   int get totalAdultosCalculado => totalAdultos ?? 0;
 
@@ -186,6 +197,8 @@ class Evento {
     String? nomeEvento,
     String? localEvento,
     DateTime? data,
+    DateTime? dataFim,
+    bool limparDataFim = false,
     String? hora,
     bool limparHora = false,
     double? custoEstimado,
@@ -262,6 +275,7 @@ class Evento {
       nomeEvento: nomeEvento ?? this.nomeEvento,
       localEvento: localEvento ?? this.localEvento,
       data: data ?? this.data,
+      dataFim: limparDataFim ? null : (dataFim ?? this.dataFim),
       hora: limparHora ? null : (hora ?? this.hora),
       custoEstimado:
           limparCustoEstimado ? null : (custoEstimado ?? this.custoEstimado),

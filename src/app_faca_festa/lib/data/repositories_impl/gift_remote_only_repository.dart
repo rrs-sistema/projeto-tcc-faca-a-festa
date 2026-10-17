@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/core/services/update_operations.dart';
 import 'package:app_faca_festa/data/datasources/remote/gift_remote_datasource.dart';
 import 'package:app_faca_festa/data/models/gift/gift_contribution_model.dart';
 import 'package:app_faca_festa/data/models/gift/gift_model.dart';
@@ -22,17 +23,23 @@ class GiftRemoteOnlyRepository implements GiftRepository {
 
   @override
   Future<void> createGift(String eventoId, Gift gift) {
-    return remote.createGift(eventoId, GiftModel.fromEntity(gift));
+    return UpdateOperations.run(() async {
+      return remote.createGift(eventoId, GiftModel.fromEntity(gift));
+    });
   }
 
   @override
   Future<void> updateGift(String eventoId, Gift gift) {
-    return remote.updateGift(eventoId, GiftModel.fromEntity(gift));
+    return UpdateOperations.run(() async {
+      return remote.updateGift(eventoId, GiftModel.fromEntity(gift));
+    });
   }
 
   @override
   Future<void> deleteGift(String eventoId, String giftId) {
-    return remote.deleteGift(eventoId, giftId);
+    return UpdateOperations.run(() async {
+      return remote.deleteGift(eventoId, giftId);
+    });
   }
 
   @override
@@ -42,7 +49,9 @@ class GiftRemoteOnlyRepository implements GiftRepository {
     String nome,
     String uid,
   ) {
-    return remote.reservarGift(eventoId, giftId, nome, uid);
+    return UpdateOperations.run(() async {
+      return remote.reservarGift(eventoId, giftId, nome, uid);
+    });
   }
 
   @override
@@ -51,10 +60,12 @@ class GiftRemoteOnlyRepository implements GiftRepository {
     String giftId,
     GiftContribution contribution,
   ) {
-    return remote.saveContribution(
-      eventoId,
-      giftId,
-      GiftContributionModel.fromEntity(contribution),
-    );
+    return UpdateOperations.run(() async {
+      return remote.saveContribution(
+        eventoId,
+        giftId,
+        GiftContributionModel.fromEntity(contribution),
+      );
+    });
   }
 }

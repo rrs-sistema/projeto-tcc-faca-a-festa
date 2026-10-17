@@ -117,6 +117,7 @@ class FestaEmptyState extends StatelessWidget {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: cor,
                             foregroundColor: Colors.white,
+                            iconColor: Colors.white,
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),

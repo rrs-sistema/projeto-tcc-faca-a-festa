@@ -213,6 +213,7 @@ class _AcaoPrincipal extends StatelessWidget {
           style: ElevatedButton.styleFrom(
             backgroundColor: primary,
             foregroundColor: Colors.white,
+            iconColor: Colors.white,
             elevation: 0,
             shape: forma,
           ),
@@ -228,6 +229,7 @@ class _AcaoPrincipal extends StatelessWidget {
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
           foregroundColor: primary,
+          iconColor: primary,
           side: BorderSide(color: primary.withValues(alpha: 0.45)),
           shape: forma,
         ),

@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/core/services/update_operations.dart';
 import 'package:app_faca_festa/domain/entities/convidado.dart';
 import 'package:app_faca_festa/domain/repositories/convidado_repository.dart';
 import '../datasources/remote/convidado_remote_datasource.dart';
@@ -10,17 +11,23 @@ class ConvidadoRepositoryImpl implements ConvidadoRepository {
 
   @override
   Future<Convidado?> buscarPorId(String idConvidado) {
-    return remote.buscarPorId(idConvidado);
+    return UpdateOperations.run(() async {
+      return remote.buscarPorId(idConvidado);
+    });
   }
 
   @override
   Future<Convidado?> buscarPrimeiroPorEvento(String idEvento) {
-    return remote.buscarPrimeiroPorEvento(idEvento);
+    return UpdateOperations.run(() async {
+      return remote.buscarPrimeiroPorEvento(idEvento);
+    });
   }
 
   @override
   Future<Convidado?> buscarPorToken(String token) {
-    return remote.buscarPorToken(token);
+    return UpdateOperations.run(() async {
+      return remote.buscarPorToken(token);
+    });
   }
 
   @override
@@ -30,15 +37,19 @@ class ConvidadoRepositoryImpl implements ConvidadoRepository {
 
   @override
   Future<void> salvar(Convidado convidado) {
-    final model = convidado is ConvidadoModel
-        ? convidado
-        : ConvidadoModel.fromEntity(convidado);
-    return remote.salvar(model);
+    return UpdateOperations.run(() async {
+      final model = convidado is ConvidadoModel
+          ? convidado
+          : ConvidadoModel.fromEntity(convidado);
+      return remote.salvar(model);
+    });
   }
 
   @override
   Future<void> excluir(String idConvidado) {
-    return remote.excluir(idConvidado);
+    return UpdateOperations.run(() async {
+      return remote.excluir(idConvidado);
+    });
   }
 
   @override
@@ -47,16 +58,22 @@ class ConvidadoRepositoryImpl implements ConvidadoRepository {
     StatusConvidado status,
     DateTime dataResposta,
   ) {
-    return remote.atualizarStatus(idConvidado, status, dataResposta);
+    return UpdateOperations.run(() async {
+      return remote.atualizarStatus(idConvidado, status, dataResposta);
+    });
   }
 
   @override
   Future<MigracaoTipoConvidadoResultado> migrarTiposLegados() {
-    return remote.migrarTiposLegados();
+    return UpdateOperations.run(() async {
+      return remote.migrarTiposLegados();
+    });
   }
 
   @override
   Future<void> garantirTokensConvite(Map<String, String> tokensPorId) {
-    return remote.garantirTokensConvite(tokensPorId);
+    return UpdateOperations.run(() async {
+      return remote.garantirTokensConvite(tokensPorId);
+    });
   }
 }

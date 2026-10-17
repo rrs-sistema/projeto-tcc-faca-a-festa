@@ -251,6 +251,7 @@ extension _AreaConvidadoPresencaSection on _AreaConvidadoHomeScreenState {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: actionColor,
                     foregroundColor: Colors.white,
+                    iconColor: Colors.white,
                     elevation: 0,
                     padding: const EdgeInsets.symmetric(vertical: 13),
                     shape: RoundedRectangleBorder(

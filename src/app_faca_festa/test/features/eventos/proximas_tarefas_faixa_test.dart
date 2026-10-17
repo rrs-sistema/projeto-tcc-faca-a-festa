@@ -87,6 +87,8 @@ void main() {
 
     expect(find.text(HomeOrganizadorCopy.nenhumaTarefa), findsOneWidget);
     expect(find.text(HomeOrganizadorCopy.verTodasTarefas), findsNothing);
+    final adicionar = find.byIcon(Icons.add_rounded);
+    expect(IconTheme.of(tester.element(adicionar)).color, Colors.white);
     await tester.tap(find.text(HomeOrganizadorCopy.nenhumaTarefaAcao));
     await tester.pump();
     expect(nova, 1);

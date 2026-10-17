@@ -227,6 +227,7 @@ class InspiracaoDetalheScreen extends StatelessWidget {
                             controller.gerarChecklistDaInspiracao(inspiracao),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: primary,
+                      iconColor: primary,
                       side: BorderSide(
                           color: checklist
                               ? Colors.grey.shade300
@@ -254,6 +255,7 @@ class InspiracaoDetalheScreen extends StatelessWidget {
                             controller.gerarOrcamentoDaInspiracao(inspiracao),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: primary,
+                      iconColor: primary,
                       side: BorderSide(
                           color: orcamento
                               ? Colors.grey.shade300
@@ -643,6 +645,9 @@ class _FolhaDetalheInspiracaoState extends State<_FolhaDetalheInspiracao> {
                           .alternarFavorito(atual.id),
                       style: TextButton.styleFrom(
                         foregroundColor: atual.favorito
+                            ? Colors.amber.shade800
+                            : const Color(0xFF4B5563),
+                        iconColor: atual.favorito
                             ? Colors.amber.shade800
                             : const Color(0xFF4B5563),
                         padding: EdgeInsets.zero,

@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/core/services/update_operations.dart';
 import 'package:app_faca_festa/domain/entities/fornecedor_produto_servico.dart';
 import 'package:app_faca_festa/domain/entities/servico_produto.dart';
 import 'package:app_faca_festa/domain/repositories/servico_produto_repository.dart';
@@ -13,47 +14,63 @@ class ServicoProdutoRepositoryImpl implements ServicoProdutoRepository {
 
   @override
   Future<List<ServicoProduto>> listarServicos() {
-    return remote.listarServicos();
+    return UpdateOperations.run(() async {
+      return remote.listarServicos();
+    });
   }
 
   @override
   Future<List<ServicoProduto>> listarServicosAtivos() {
-    return remote.listarServicosAtivos();
+    return UpdateOperations.run(() async {
+      return remote.listarServicosAtivos();
+    });
   }
 
   @override
   Future<List<ServicoProduto>> listarServicosAtivosPorSubcategoria(
     String idSubcategoria,
   ) {
-    return remote.listarServicosAtivosPorSubcategoria(idSubcategoria);
+    return UpdateOperations.run(() async {
+      return remote.listarServicosAtivosPorSubcategoria(idSubcategoria);
+    });
   }
 
   @override
   Future<List<ServicoProduto>> listarServicosAtivosPorCategoriasFornecedor(
       String idFornecedor) {
-    return remote.listarServicosAtivosPorCategoriasFornecedor(idFornecedor);
+    return UpdateOperations.run(() async {
+      return remote.listarServicosAtivosPorCategoriasFornecedor(idFornecedor);
+    });
   }
 
   @override
   Future<List<FornecedorServicoDetalhadoDto>> listarServicosComDetalhes({
     String? idFornecedor,
   }) {
-    return remote.listarServicosComDetalhes(idFornecedor: idFornecedor);
+    return UpdateOperations.run(() async {
+      return remote.listarServicosComDetalhes(idFornecedor: idFornecedor);
+    });
   }
 
   @override
   Future<void> excluirServico(String id) {
-    return remote.excluirServico(id);
+    return UpdateOperations.run(() async {
+      return remote.excluirServico(id);
+    });
   }
 
   @override
   Future<void> salvarServico(ServicoProduto servico) {
-    return remote.salvarServico(ServicoProdutoModel.fromEntity(servico));
+    return UpdateOperations.run(() async {
+      return remote.salvarServico(ServicoProdutoModel.fromEntity(servico));
+    });
   }
 
   @override
   Future<int> popularCatalogoInicial() {
-    return remote.popularCatalogoInicial();
+    return UpdateOperations.run(() async {
+      return remote.popularCatalogoInicial();
+    });
   }
 
   @override
@@ -66,7 +83,9 @@ class ServicoProdutoRepositoryImpl implements ServicoProdutoRepository {
     String idFornecedor,
     String idSubcategoria,
   ) {
-    return remote.validarSubcategoriaFornecedor(idFornecedor, idSubcategoria);
+    return UpdateOperations.run(() async {
+      return remote.validarSubcategoriaFornecedor(idFornecedor, idSubcategoria);
+    });
   }
 
   @override
@@ -74,21 +93,27 @@ class ServicoProdutoRepositoryImpl implements ServicoProdutoRepository {
     String idFornecedor,
     String idSubcategoria,
   ) {
-    return remote.adicionarSubcategoriaAoFornecedor(
-      idFornecedor,
-      idSubcategoria,
-    );
+    return UpdateOperations.run(() async {
+      return remote.adicionarSubcategoriaAoFornecedor(
+        idFornecedor,
+        idSubcategoria,
+      );
+    });
   }
 
   @override
   Future<void> salvarVinculo(FornecedorProdutoServico vinculo) {
-    return remote.salvarVinculo(
-      FornecedorProdutoServicoModel.fromEntity(vinculo),
-    );
+    return UpdateOperations.run(() async {
+      return remote.salvarVinculo(
+        FornecedorProdutoServicoModel.fromEntity(vinculo),
+      );
+    });
   }
 
   @override
   Future<void> excluirVinculo(String id) {
-    return remote.excluirVinculo(id);
+    return UpdateOperations.run(() async {
+      return remote.excluirVinculo(id);
+    });
   }
 }

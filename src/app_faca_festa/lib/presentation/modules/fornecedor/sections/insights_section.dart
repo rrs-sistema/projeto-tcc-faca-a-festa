@@ -94,13 +94,14 @@ class InsightsSection extends StatelessWidget {
                         height: 18,
                         child: CircularProgressIndicator(strokeWidth: 2))
                     : OutlinedButton.icon(
-                        onPressed: () => controller.ai.recalcularAiFornecedor(),
+                        onPressed: () => controller.atualizarPainelOperacional(),
                         icon: const Icon(Icons.refresh_rounded, size: 16),
                         label: Text('Recalcular',
                             style: GoogleFonts.poppins(
                                 fontSize: 11.5, fontWeight: FontWeight.w800)),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: const Color(0xFF4F46E5),
+                          iconColor: const Color(0xFF4F46E5),
                           side: const BorderSide(color: Color(0xFFC7D2FE)),
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12)),

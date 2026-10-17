@@ -99,9 +99,7 @@ class AvaliacaoServicoRemoteDatasource {
         .orderBy('data', descending: true)
         .snapshots()
         .map(
-          (snapshot) => snapshot.docs
-              .map(AvaliacaoModel.fromSnapshot)
-              .toList(),
+          (snapshot) => snapshot.docs.map(AvaliacaoModel.fromSnapshot).toList(),
         );
   }
 

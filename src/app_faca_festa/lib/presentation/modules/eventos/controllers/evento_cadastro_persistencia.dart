@@ -25,6 +25,10 @@ extension EventoCadastroPersistencia on EventoCadastroController {
             evento.idTema == TemaFestaViewModel.slugOutro) &&
         (evento.tema ?? '').trim().isNotEmpty;
     dataFesta.text = DateFormat('dd/MM/yyyy', 'pt_BR').format(evento.data);
+    eventoVariosDias.value = evento.duracaoDias > 1;
+    dataFimFesta.text = eventoVariosDias.value
+        ? DateFormat('dd/MM/yyyy', 'pt_BR').format(evento.dataFim!)
+        : '';
     horaFesta.text = evento.hora ?? '';
     padrinhos.assignAll(evento.padrinhos ?? []);
 
@@ -162,13 +166,13 @@ extension EventoCadastroPersistencia on EventoCadastroController {
       return;
     }
 
-    if (horaStr.isEmpty) {
-      Get.snackbar(
-        'Atenção',
-        'Informe a hora do evento.',
-        backgroundColor: Colors.orange.shade600,
-        colorText: Colors.white,
-      );
+    final erroHora = validarHora(horaStr);
+    final erroTermino = validarTermino(dataFimFesta.text);
+    final erroCusto = validarCusto(custoEstimado.text);
+    final erroPlanejamento = erroHora ?? erroTermino ?? erroCusto;
+    if (erroPlanejamento != null) {
+      Get.snackbar('Atenção', erroPlanejamento,
+          backgroundColor: Colors.orange.shade600, colorText: Colors.white);
       return;
     }
 
@@ -187,26 +191,13 @@ extension EventoCadastroPersistencia on EventoCadastroController {
       }
     }
 
-    // ✅ VALIDAÇÃO DO CUSTO ESTIMADO
-    double valor = 0.0;
-    if (custoEstimado.text.isNotEmpty) {
-      valor = Biblioteca.toDouble(custoEstimado.text);
-    }
-
-    if (valor <= 1.0) {
-      Get.snackbar(
-        'Atenção',
-        'O custo estimado deve ser superior a R\$ 1,00.',
-        backgroundColor: Colors.orange.shade600,
-        colorText: Colors.white,
-      );
-      return;
-    }
+    final valor = custoEstimadoInformado;
 
     try {
       // ✅ Monta data/hora completa
-      final dataSelecionada = DateFormat('dd/MM/yyyy', 'pt_BR').parse(dataStr);
-      final partesHora = horaStr.split(':');
+      final dataSelecionada =
+          DateFormat('dd/MM/yyyy', 'pt_BR').parseStrict(dataStr);
+      final partesHora = horaStr.isEmpty ? ['0', '0'] : horaStr.split(':');
       final dataCompleta = DateTime(
         dataSelecionada.year,
         dataSelecionada.month,
@@ -214,6 +205,18 @@ extension EventoCadastroPersistencia on EventoCadastroController {
         int.tryParse(partesHora[0]) ?? 0,
         int.tryParse(partesHora[1]) ?? 0,
       );
+
+      final dataFim = !eventoVariosDias.value
+          ? null
+          : DateFormat('dd/MM/yyyy', 'pt_BR')
+              .parseStrict(dataFimFesta.text.trim());
+      final inicioDia = DateTime(
+          dataSelecionada.year, dataSelecionada.month, dataSelecionada.day);
+      if (dataFim != null && dataFim.isBefore(inicioDia)) {
+        Get.snackbar(
+            'Atenção', 'O término deve ser no mesmo dia ou depois do início.');
+        return;
+      }
 
       // ✅ Endereço
       final end = enderecoController.value;
@@ -280,7 +283,8 @@ extension EventoCadastroPersistencia on EventoCadastroController {
         localEvento: localEvento.text.trim(),
         custoEstimado: valor,
         data: dataCompleta,
-        hora: horaStr,
+        dataFim: dataFim,
+        hora: horaStr.isEmpty ? null : horaStr,
         ativo: true,
         status: StatusEvento.planejamento,
         descricao: descricao.text,
@@ -354,6 +358,8 @@ extension EventoCadastroPersistencia on EventoCadastroController {
     _imagemCapaUrl = null;
     _rotuloBanner = null;
     dataFesta.clear();
+    dataFimFesta.clear();
+    eventoVariosDias.value = false;
     horaFesta.clear();
     cidade.clear();
     uf.text = 'PR';

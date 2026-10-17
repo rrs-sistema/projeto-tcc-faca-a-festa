@@ -38,4 +38,9 @@ class SyncManager {
   void dispose() {
     _subscription?.cancel();
   }
+
+  Future<void> stop() async {
+    await _subscription?.cancel();
+    _subscription = null;
+  }
 }

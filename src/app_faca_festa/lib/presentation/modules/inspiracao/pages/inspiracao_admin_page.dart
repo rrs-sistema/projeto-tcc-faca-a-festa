@@ -247,6 +247,7 @@ class _InspiracaoAdminPageState extends State<InspiracaoAdminPage> {
             style: FilledButton.styleFrom(
               backgroundColor: Colors.white,
               foregroundColor: _primary,
+              iconColor: _primary,
               elevation: 0,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12)),
@@ -433,6 +434,7 @@ class _InspiracaoAdminPageState extends State<InspiracaoAdminPage> {
                   : null,
               style: OutlinedButton.styleFrom(
                 foregroundColor: _primary,
+                iconColor: _primary,
                 side: BorderSide(color: _primary.withValues(alpha: 0.34)),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10)),
@@ -660,6 +662,7 @@ class _InspiracaoAdminPageState extends State<InspiracaoAdminPage> {
             style: FilledButton.styleFrom(
                 backgroundColor: _danger,
                 foregroundColor: Colors.white,
+                iconColor: Colors.white,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10))),
             icon: const Icon(Icons.delete_rounded, size: 16),

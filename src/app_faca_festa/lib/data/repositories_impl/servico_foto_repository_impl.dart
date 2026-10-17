@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/core/services/update_operations.dart';
 import 'package:app_faca_festa/domain/entities/servico_foto.dart';
 import 'package:app_faca_festa/domain/repositories/servico_foto_repository.dart';
 import '../datasources/remote/servico_foto_remote_datasource.dart';
@@ -13,10 +14,12 @@ class ServicoFotoRepositoryImpl implements ServicoFotoRepository {
     required String idFornecedor,
     required String idProdutoServico,
   }) {
-    return remote.carregarFotos(
-      idFornecedor: idFornecedor,
-      idProdutoServico: idProdutoServico,
-    );
+    return UpdateOperations.run(() async {
+      return remote.carregarFotos(
+        idFornecedor: idFornecedor,
+        idProdutoServico: idProdutoServico,
+      );
+    });
   }
 
   @override
@@ -26,21 +29,27 @@ class ServicoFotoRepositoryImpl implements ServicoFotoRepository {
     required List<int> bytes,
     required String nomeArquivo,
   }) {
-    return remote.adicionarFotoArquivo(
-      idFornecedor: idFornecedor,
-      idProdutoServico: idProdutoServico,
-      bytes: bytes,
-      nomeArquivo: nomeArquivo,
-    );
+    return UpdateOperations.run(() async {
+      return remote.adicionarFotoArquivo(
+        idFornecedor: idFornecedor,
+        idProdutoServico: idProdutoServico,
+        bytes: bytes,
+        nomeArquivo: nomeArquivo,
+      );
+    });
   }
 
   @override
   Future<void> adicionarFotoDireto(ServicoFoto foto) {
-    return remote.adicionarFotoDireto(ServicoFotoModel.fromEntity(foto));
+    return UpdateOperations.run(() async {
+      return remote.adicionarFotoDireto(ServicoFotoModel.fromEntity(foto));
+    });
   }
 
   @override
   Future<void> removerFoto(ServicoFoto foto) {
-    return remote.removerFoto(ServicoFotoModel.fromEntity(foto));
+    return UpdateOperations.run(() async {
+      return remote.removerFoto(ServicoFotoModel.fromEntity(foto));
+    });
   }
 }

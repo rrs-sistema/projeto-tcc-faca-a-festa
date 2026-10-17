@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:app_faca_festa/presentation/modules/legal/widgets/vigia_aceite_politica.dart';
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import 'routes/app_routes.dart';
+import '../presentation/widgets/desktop_update_overlay.dart';
 
 class FacaFestaApp extends StatelessWidget {
   const FacaFestaApp({super.key});
@@ -36,7 +37,7 @@ class FacaFestaApp extends StatelessWidget {
           child: child ?? const EntradaAppPage(),
         );
         try {
-          return EasyLoading.init()(context, page);
+          return DesktopUpdateOverlay(child: EasyLoading.init()(context, page));
         } catch (_) {
           return page;
         }

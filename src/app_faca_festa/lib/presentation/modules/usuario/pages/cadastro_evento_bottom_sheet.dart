@@ -262,6 +262,7 @@ class _CadastroEventoSheetState extends State<_CadastroEventoSheet> {
                                   onPressed: _voltar,
                                   style: OutlinedButton.styleFrom(
                                     foregroundColor: primary,
+                                    iconColor: primary,
                                     side: BorderSide(
                                       color: primary.withValues(alpha: 0.45),
                                     ),
@@ -630,99 +631,209 @@ List<Widget> _buildCamposPorTipo(
 
   if (passo == 1) {
     return [
-    _SectionCard(
-      title: 'Planeamento',
-      icon: Icons.event_note_rounded,
-      child: Column(
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
+      _SectionCard(
+        title: 'Planejamento',
+        icon: Icons.event_note_rounded,
+        child: Column(
+          children: [
+            Obx(() => Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Duração do evento',
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF374151),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    SegmentedButton<bool>(
+                      expandedInsets: EdgeInsets.zero,
+                      showSelectedIcon: false,
+                      segments: const [
+                        ButtonSegment(
+                          value: false,
+                          icon: Icon(Icons.today_outlined, size: 18),
+                          label: Text('Um dia'),
+                        ),
+                        ButtonSegment(
+                          value: true,
+                          icon: Icon(Icons.date_range_outlined, size: 18),
+                          label: Text('Vários dias'),
+                        ),
+                      ],
+                      selected: {controller.eventoVariosDias.value},
+                      onSelectionChanged: (selection) =>
+                          controller.definirEventoVariosDias(selection.single),
+                      style: ButtonStyle(
+                        minimumSize: const WidgetStatePropertyAll(Size(0, 48)),
+                        padding: const WidgetStatePropertyAll(
+                          EdgeInsets.symmetric(horizontal: 8),
+                        ),
+                        textStyle: WidgetStatePropertyAll(
+                          GoogleFonts.poppins(
+                              fontSize: 12, fontWeight: FontWeight.w600),
+                        ),
+                        backgroundColor: WidgetStateProperty.resolveWith(
+                            (states) => states.contains(WidgetState.selected)
+                                ? primary
+                                : const Color(0xFFF8FAFC)),
+                        foregroundColor: WidgetStateProperty.resolveWith(
+                            (states) => states.contains(WidgetState.selected)
+                                ? Colors.white
+                                : const Color(0xFF374151)),
+                        iconColor: WidgetStateProperty.resolveWith((states) =>
+                            states.contains(WidgetState.selected)
+                                ? Colors.white
+                                : primary),
+                        side: WidgetStatePropertyAll(
+                          BorderSide(color: primary.withValues(alpha: 0.35)),
+                        ),
+                        shape: WidgetStatePropertyAll(
+                          RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
+                        ),
+                        visualDensity: VisualDensity.standard,
+                        tapTargetSize: MaterialTapTargetSize.padded,
+                      ),
+                    ),
+                  ],
+                )),
+            const SizedBox(height: 10),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: _CompactInputField(
+                    label: "Data do evento",
+                    icon: Icons.calendar_month_rounded,
+                    controller: controller.dataFesta,
+                    readOnly: true,
+                    onTap: () async {
+                      final agora = DateTime.now();
+                      final hoje = DateTime(agora.year, agora.month, agora.day);
+                      final selecionada = DateFormat('dd/MM/yyyy', 'pt_BR')
+                          .tryParseStrict(controller.dataFesta.text);
+                      final inicial = selecionada ?? hoje;
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: inicial,
+                        firstDate: inicial.isBefore(hoje) ? inicial : hoje,
+                        lastDate: DateTime((inicial.year > hoje.year
+                                ? inicial.year
+                                : hoje.year) +
+                            5),
+                        locale: const Locale('pt', 'BR'),
+                        initialEntryMode: DatePickerEntryMode.calendarOnly,
+                      );
+                      if (picked != null) {
+                        controller.dataFesta.text =
+                            DateFormat('dd/MM/yyyy', 'pt_BR').format(picked);
+                      }
+                    },
+                    validator: (v) =>
+                        FormValidators.data(v, campo: 'a data do evento'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _CompactInputField(
+                    label: "Hora (opcional)",
+                    icon: Icons.access_time_rounded,
+                    controller: controller.horaFesta,
+                    suffixIcon: IconButton(
+                      tooltip: 'Deixar horário a definir',
+                      icon: const Icon(Icons.close_rounded, size: 16),
+                      onPressed: controller.horaFesta.clear,
+                    ),
+                    readOnly: true,
+                    onTap: () async {
+                      final picked = await showTimePicker(
+                        context: context,
+                        initialTime: TimeOfDay.now(),
+                      );
+                      if (picked != null) {
+                        controller.horaFesta.text =
+                            "${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}";
+                      }
+                    },
+                    validator: controller.validarHora,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Obx(() {
+              if (!controller.eventoVariosDias.value) {
+                return const SizedBox.shrink();
+              }
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 10),
                 child: _CompactInputField(
-                  label: "Data do evento",
-                  icon: Icons.calendar_month_rounded,
-                  controller: controller.dataFesta,
+                  label: 'Data de término',
+                  icon: Icons.event_available_rounded,
+                  controller: controller.dataFimFesta,
                   readOnly: true,
                   onTap: () async {
-                    final hoje = DateTime.now();
+                    final formato = DateFormat('dd/MM/yyyy', 'pt_BR');
+                    final inicio =
+                        formato.tryParseStrict(controller.dataFesta.text) ??
+                            DateTime.now();
+                    final primeiroDia =
+                        DateTime(inicio.year, inicio.month, inicio.day + 1);
+                    final fim =
+                        formato.tryParseStrict(controller.dataFimFesta.text);
                     final picked = await showDatePicker(
                       context: context,
-                      initialDate: hoje.add(const Duration(days: 30)),
-                      firstDate: hoje.add(const Duration(days: 7)),
-                      lastDate: DateTime(hoje.year + 5),
+                      initialDate: fim != null && !fim.isBefore(primeiroDia)
+                          ? fim
+                          : primeiroDia,
+                      firstDate: primeiroDia,
+                      lastDate: DateTime(inicio.year + 5),
                       locale: const Locale('pt', 'BR'),
-                      initialEntryMode: DatePickerEntryMode.calendarOnly,
                     );
                     if (picked != null) {
-                      controller.dataFesta.text =
-                          DateFormat('dd/MM/yyyy', 'pt_BR').format(picked);
+                      controller.dataFimFesta.text = formato.format(picked);
                     }
                   },
-                  validator: (v) =>
-                      FormValidators.data(v, campo: 'a data do evento'),
+                  validator: controller.validarTermino,
                 ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _CompactInputField(
-                  label: "Hora",
-                  icon: Icons.access_time_rounded,
-                  controller: controller.horaFesta,
-                  readOnly: true,
-                  onTap: () async {
-                    final picked = await showTimePicker(
-                      context: context,
-                      initialTime: TimeOfDay.now(),
-                    );
-                    if (picked != null) {
-                      controller.horaFesta.text =
-                          "${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}";
-                    }
-                  },
-                  validator: (v) =>
-                      FormValidators.hora(v, campo: 'a hora do evento'),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          _CompactInputField(
-            label: "Custo estimado (R\$)",
-            icon: Icons.attach_money_rounded,
-            controller: controller.custoEstimado,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            inputFormatters: [dinheiroMask],
-            validator: (v) => FormValidators.dinheiro(
-              v,
-              campo: 'o custo estimado',
-              maiorQue: 1,
+              );
+            }),
+            _CompactInputField(
+              label: "Custo estimado (R\$) · opcional",
+              icon: Icons.attach_money_rounded,
+              controller: controller.custoEstimado,
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: [dinheiroMask],
+              validator: controller.validarCusto,
+              onChanged: (v) => controller.atualizarPreview(),
             ),
-            onChanged: (v) => controller.atualizarPreview(),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
-    const SizedBox(height: 10),
-    Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.grey.shade200),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+      const SizedBox(height: 10),
+      Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: Colors.grey.shade200),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: EnderecoSection(
+          cor: primary,
+          controller: controller.enderecoController.value,
+          titulo: 'Endereço do evento',
+        ),
       ),
-      child: EnderecoSection(
-        cor: primary,
-        controller: controller.enderecoController.value,
-        titulo: 'Endereço do evento',
-      ),
-    ),
     ];
   }
 
@@ -854,7 +965,7 @@ Widget _buildSecaoConvidadosEstimados(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'A quantidade total será calculada automaticamente.',
+          'Estimativa opcional. Você pode informar os convidados depois.',
           style: GoogleFonts.poppins(
             color: Colors.grey.shade600,
             fontSize: 11,
@@ -862,15 +973,6 @@ Widget _buildSecaoConvidadosEstimados(
         ),
         const SizedBox(height: 10),
         FormField<int>(
-          validator: (_) {
-            final total = _parseIntText(controller.totalAdultos.text) +
-                _parseIntText(controller.totalCriancas.text) +
-                _parseIntText(controller.totalBebes.text);
-            if (total < 1) {
-              return 'Informe pelo menos 1 convidado';
-            }
-            return null;
-          },
           builder: (state) {
             void aoMudar() {
               atualizarTotal();
@@ -995,6 +1097,7 @@ Widget _buildBotaoCalculadoraFesta(
           child: OutlinedButton.icon(
             style: OutlinedButton.styleFrom(
               foregroundColor: primary,
+              iconColor: primary,
               side: BorderSide(color: primary.withValues(alpha: 0.45)),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10)),
@@ -1048,6 +1151,7 @@ Widget _buildAcoes(Color primary, EventoCadastroController controller) {
             child: OutlinedButton.icon(
               style: OutlinedButton.styleFrom(
                 foregroundColor: primary,
+                iconColor: primary,
                 side: BorderSide(color: primary.withValues(alpha: 0.55)),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10)),
@@ -1071,6 +1175,7 @@ Widget _buildAcoes(Color primary, EventoCadastroController controller) {
               style: ElevatedButton.styleFrom(
                 backgroundColor: primary,
                 foregroundColor: Colors.white,
+                iconColor: Colors.white,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10)),
                 padding: EdgeInsets.zero,
@@ -1178,6 +1283,7 @@ class _CompactInputField extends StatelessWidget {
   final TextInputType? keyboardType;
   final FormFieldValidator<String>? validator;
   final List<TextInputFormatter>? inputFormatters;
+  final Widget? suffixIcon;
 
   const _CompactInputField({
     required this.controller,
@@ -1190,6 +1296,7 @@ class _CompactInputField extends StatelessWidget {
     this.keyboardType,
     this.validator,
     this.inputFormatters,
+    this.suffixIcon,
   });
 
   @override
@@ -1208,6 +1315,7 @@ class _CompactInputField extends StatelessWidget {
         labelText: label,
         labelStyle: GoogleFonts.poppins(fontSize: 11),
         prefixIcon: Icon(icon, size: 16),
+        suffixIcon: suffixIcon,
         isDense: true,
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 10, vertical: 10),

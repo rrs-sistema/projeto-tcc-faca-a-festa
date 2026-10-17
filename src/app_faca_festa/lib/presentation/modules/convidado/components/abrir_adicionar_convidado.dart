@@ -235,10 +235,9 @@ class _AdicionarConvidadoSheetState extends State<_AdicionarConvidadoSheet> {
     if (!mounted || grupoSelecionadoAtual() != null) return;
     if (!_podeCadastrarGrupoPadrao) return;
 
-    final eventoId = (idEvento ??
-            eventoController.eventoAtualEntidade?.idEvento ??
-            '')
-        .trim();
+    final eventoId =
+        (idEvento ?? eventoController.eventoAtualEntidade?.idEvento ?? '')
+            .trim();
     if (eventoId.isEmpty) return;
 
     if (mounted) setState(() => _garantindoGrupoPadrao = true);
@@ -405,7 +404,7 @@ class _AdicionarConvidadoSheetState extends State<_AdicionarConvidadoSheet> {
       showSnack(
         title: 'Agenda do celular',
         message:
-            'No celular você busca na agenda, a mesma lista que o WhatsApp usa.',
+            'No celular você busca os contatos salvos na agenda do aparelho.',
         color: Colors.orange.shade700,
       );
       return;
@@ -444,6 +443,7 @@ class _AdicionarConvidadoSheetState extends State<_AdicionarConvidadoSheet> {
           ),
           style: OutlinedButton.styleFrom(
             foregroundColor: primary,
+            iconColor: primary,
             side: BorderSide(color: primary.withValues(alpha: 0.35)),
             backgroundColor: primary.withValues(alpha: 0.06),
             padding: const EdgeInsets.symmetric(vertical: 12),
@@ -1000,6 +1000,30 @@ class _AdicionarConvidadoSheetState extends State<_AdicionarConvidadoSheet> {
                             icon: Icons.badge_outlined,
                             title: 'Dados do convidado'),
                         buildBotaoAgenda(),
+                        Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: primary.withValues(alpha: .06),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(Icons.info_outline,
+                                  size: 18, color: primary),
+                              const SizedBox(width: 8),
+                              const Expanded(
+                                  child: Text(
+                                'O contato está só no WhatsApp? Abra a conversa, toque no nome ou número da pessoa e procure Adicionar aos contatos ou Salvar na agenda. Se houver a opção, ative a sincronização com o celular. Depois volte aqui e toque em Buscar na agenda.',
+                                style: TextStyle(
+                                    fontSize: 12,
+                                    height: 1.5,
+                                    color: textMuted),
+                              )),
+                            ],
+                          ),
+                        ),
                         buildTextField(
                             controller: nomeCtrl,
                             label: 'Nome',
@@ -1063,7 +1087,8 @@ class _AdicionarConvidadoSheetState extends State<_AdicionarConvidadoSheet> {
                           }
                           return const Padding(
                             padding: EdgeInsets.only(top: 12),
-                            child: AvisoLgpdCard(texto: AvisoLgpdCard.dadosCrianca),
+                            child: AvisoLgpdCard(
+                                texto: AvisoLgpdCard.dadosCrianca),
                           );
                         }),
                         const SizedBox(height: 12),
@@ -1107,6 +1132,7 @@ class _AdicionarConvidadoSheetState extends State<_AdicionarConvidadoSheet> {
                                   fontWeight: FontWeight.w700, fontSize: 13)),
                           style: TextButton.styleFrom(
                               foregroundColor: textMuted,
+                              iconColor: textMuted,
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(14))),
                         ),

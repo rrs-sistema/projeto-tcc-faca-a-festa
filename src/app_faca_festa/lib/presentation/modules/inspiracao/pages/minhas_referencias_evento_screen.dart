@@ -470,6 +470,7 @@ class _MinhasReferenciasEventoScreenState
                             style: TextStyle(fontSize: 12)),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: primary,
+                          iconColor: primary,
                           side: BorderSide(
                               color: primary.withValues(alpha: 0.35)),
                           padding: const EdgeInsets.symmetric(vertical: 10),

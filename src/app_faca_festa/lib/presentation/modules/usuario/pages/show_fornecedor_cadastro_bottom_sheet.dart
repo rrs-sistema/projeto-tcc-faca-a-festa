@@ -191,6 +191,7 @@ Future<bool> showFornecedorCadastroBottomSheet(BuildContext context) async {
                                   child: OutlinedButton.icon(
                                     style: OutlinedButton.styleFrom(
                                       foregroundColor: primaryColor,
+                                      iconColor: primaryColor,
                                       side: BorderSide(
                                           color: primaryColor.withValues(
                                               alpha: 0.55)),
@@ -217,6 +218,7 @@ Future<bool> showFornecedorCadastroBottomSheet(BuildContext context) async {
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: primaryColor,
                                       foregroundColor: Colors.white,
+                                      iconColor: Colors.white,
                                       shape: RoundedRectangleBorder(
                                           borderRadius:
                                               BorderRadius.circular(10)),

@@ -63,6 +63,14 @@ class _FornecedorHomeScreenState extends State<FornecedorHomeScreen> {
   FornecedorController get controller => widget.controller;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      controller.atualizarPainelOperacional();
+    });
+  }
+
+  @override
   void dispose() {
     _scroll.dispose();
     super.dispose();
@@ -165,17 +173,7 @@ class _FornecedorHomeScreenState extends State<FornecedorHomeScreen> {
           body: SafeArea(
             bottom: false,
             child: RefreshIndicator(
-              onRefresh: () async {
-                await controller.atualizarEstatisticasFornecedor();
-                final atual = controller.fornecedor.value;
-                if (atual != null) {
-                  await controller
-                      .escutarSolicitacoesPendentes(atual.idFornecedor);
-                  await controller.listarServicosFornecedor(atual.idFornecedor);
-                  await controller.ai.carregarAiDasSolicitacoesPendentes(
-                      forceRefresh: true);
-                }
-              },
+              onRefresh: controller.atualizarPainelOperacional,
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   final width = constraints.maxWidth;
@@ -410,7 +408,7 @@ class _ProximaAcaoInteligenteSection extends StatelessWidget {
         );
         return;
       default:
-        controller.ai.recalcularAiFornecedor();
+        controller.atualizarPainelOperacional();
         Get.snackbar(
           'Painel inteligente',
           'Análise local atualizada. Nenhuma mensagem foi enviada automaticamente.',
@@ -537,6 +535,7 @@ class _PremiumActionShell extends StatelessWidget {
               elevation: 0,
               backgroundColor: color,
               foregroundColor: Colors.white,
+              iconColor: Colors.white,
               disabledBackgroundColor: color.withValues(alpha: 0.35),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(13)),

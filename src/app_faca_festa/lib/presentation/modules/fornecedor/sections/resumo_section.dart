@@ -180,7 +180,7 @@ class ResumoSection extends StatelessWidget {
                 child: CircularProgressIndicator(strokeWidth: 2),
               )
             : TextButton.icon(
-                onPressed: () => controller.ai.recalcularAiFornecedor(),
+                onPressed: () => controller.atualizarPainelOperacional(),
                 icon: const Icon(Icons.auto_awesome_rounded, size: 17),
                 label: Text(
                   'Atualizar IA',

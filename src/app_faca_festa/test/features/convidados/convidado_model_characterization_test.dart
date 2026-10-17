@@ -101,7 +101,7 @@ void main() {
     expect(model.emailDaConta, 'rosineideneide.neide@gmail.com');
   });
 
-  test('invite email alone does not make a guest eligible for tasks', () {
+  test('registered guest without account can receive tasks', () {
     final model = ConvidadoModel.fromMap({
       'id_convidado': 'convidado-3',
       'id_evento': 'evento-1',
@@ -112,10 +112,10 @@ void main() {
     });
 
     expect(model.temEmail, isTrue);
-    expect(model.podeSerResponsavelTarefa, isFalse);
+    expect(model.podeSerResponsavelTarefa, isTrue);
   });
 
-  test('linked status without uid still allows the guest to own a task', () {
+  test('guest without uid can receive tasks', () {
     final model = ConvidadoModel.fromMap({
       'id_convidado': 'convidado-4',
       'id_evento': 'evento-1',

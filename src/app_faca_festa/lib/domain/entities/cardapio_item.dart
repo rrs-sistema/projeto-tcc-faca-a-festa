@@ -1,4 +1,5 @@
 import 'cardapio.dart';
+import 'disponibilidade_cardapio.dart';
 
 enum TipoItemCardapio {
   comida,
@@ -40,6 +41,7 @@ class CardapioItem {
   final bool confirmado;
   final bool geradoPelaCalculadora;
   final String? observacao;
+  final DisponibilidadeCardapio? disponibilidade;
 
   const CardapioItem({
     required this.idItem,
@@ -54,6 +56,7 @@ class CardapioItem {
     this.confirmado = false,
     this.geradoPelaCalculadora = false,
     this.observacao,
+    this.disponibilidade,
   });
 
   CardapioItem copyWith({
@@ -69,6 +72,7 @@ class CardapioItem {
     bool? confirmado,
     bool? geradoPelaCalculadora,
     String? observacao,
+    DisponibilidadeCardapio? disponibilidade,
   }) {
     return CardapioItem(
       idItem: idItem ?? this.idItem,
@@ -84,6 +88,7 @@ class CardapioItem {
       geradoPelaCalculadora:
           geradoPelaCalculadora ?? this.geradoPelaCalculadora,
       observacao: observacao ?? this.observacao,
+      disponibilidade: disponibilidade ?? this.disponibilidade,
     );
   }
 }

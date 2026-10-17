@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:app_faca_festa/domain/entities/proxima_acao_fornecedor.dart';
 
-
 class ProximaAcaoFornecedorModel extends ProximaAcaoFornecedor {
   const ProximaAcaoFornecedorModel({
     required super.idAcao,
@@ -289,5 +288,4 @@ class ProximaAcaoFornecedorModel extends ProximaAcaoFornecedor {
 
     return null;
   }
-
 }

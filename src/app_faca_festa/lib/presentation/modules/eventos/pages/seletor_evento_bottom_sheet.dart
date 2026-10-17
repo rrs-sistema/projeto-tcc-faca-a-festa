@@ -168,6 +168,7 @@ class _SeletorEventoSheet extends StatelessWidget {
                       elevation: 0,
                       backgroundColor: primary,
                       foregroundColor: Colors.white,
+                      iconColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
                       ),

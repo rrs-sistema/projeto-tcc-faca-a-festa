@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/core/utils/numeric_input.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -309,6 +310,9 @@ class _CalculadoraItemBaseFormContentState
       controller: controller,
       maxLines: maxLines,
       keyboardType: keyboardType,
+      inputFormatters: keyboardType?.index == TextInputType.number.index
+          ? NumericInput.inteiro
+          : null,
       onChanged: onChanged,
       style: const TextStyle(fontSize: 13), // 🔹 Fonte menor
       textInputAction:

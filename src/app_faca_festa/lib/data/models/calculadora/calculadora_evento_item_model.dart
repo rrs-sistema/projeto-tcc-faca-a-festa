@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:app_faca_festa/domain/entities/calculadora_evento_item.dart';
 
-
 class CalculadoraEventoItemModel extends CalculadoraEventoItem {
   static const String collectionName = 'calculadora_evento_itens';
 
@@ -43,6 +42,7 @@ class CalculadoraEventoItemModel extends CalculadoraEventoItem {
     required super.observacao,
     required super.createdAt,
     required super.updatedAt,
+    super.premissas = const {},
   });
 
   factory CalculadoraEventoItemModel.fromEntity(CalculadoraEventoItem entity) {
@@ -52,6 +52,7 @@ class CalculadoraEventoItemModel extends CalculadoraEventoItem {
 
     return CalculadoraEventoItemModel(
       id: entity.id,
+      premissas: entity.premissas,
       idItemBase: entity.idItemBase,
       tipoEvento: entity.tipoEvento,
       nome: entity.nome,
@@ -76,6 +77,9 @@ class CalculadoraEventoItemModel extends CalculadoraEventoItem {
     final now = DateTime.now();
 
     return CalculadoraEventoItemModel(
+      premissas: map['premissas'] is Map
+          ? Map<String, dynamic>.from(map['premissas'] as Map)
+          : const {},
       id: _parseString(
         map[fieldId] ?? map['document_id'],
       ),
@@ -152,6 +156,7 @@ class CalculadoraEventoItemModel extends CalculadoraEventoItem {
   Map<String, dynamic> toMap() {
     return {
       fieldId: id,
+      'premissas': premissas,
       fieldIdItemBase: idItemBase,
       fieldTipoEvento: tipoEvento,
       fieldNome: nome,
@@ -178,6 +183,7 @@ class CalculadoraEventoItemModel extends CalculadoraEventoItem {
   @override
   CalculadoraEventoItemModel copyWith({
     String? id,
+    Map<String, dynamic>? premissas,
     String? idItemBase,
     String? tipoEvento,
     String? nome,
@@ -197,6 +203,7 @@ class CalculadoraEventoItemModel extends CalculadoraEventoItem {
   }) {
     return CalculadoraEventoItemModel(
       id: id ?? this.id,
+      premissas: premissas ?? this.premissas,
       idItemBase: idItemBase ?? this.idItemBase,
       tipoEvento: tipoEvento ?? this.tipoEvento,
       nome: nome ?? this.nome,

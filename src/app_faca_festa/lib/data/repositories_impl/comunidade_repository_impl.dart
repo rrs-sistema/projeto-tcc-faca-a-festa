@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/core/services/update_operations.dart';
 import 'package:app_faca_festa/domain/entities/comunidade.dart';
 import 'package:app_faca_festa/domain/repositories/comunidade_repository.dart';
 import '../datasources/remote/comunidade_remote_datasource.dart';
@@ -23,7 +24,9 @@ class ComunidadeRepositoryImpl implements ComunidadeRepository {
     required String autor,
     String? imagem,
   }) {
-    return remote.adicionarPost(texto, autor: autor, imagem: imagem);
+    return UpdateOperations.run(() async {
+      return remote.adicionarPost(texto, autor: autor, imagem: imagem);
+    });
   }
 
   @override
@@ -32,6 +35,8 @@ class ComunidadeRepositoryImpl implements ComunidadeRepository {
     String texto, {
     required String autor,
   }) {
-    return remote.adicionarComentario(postId, texto, autor: autor);
+    return UpdateOperations.run(() async {
+      return remote.adicionarComentario(postId, texto, autor: autor);
+    });
   }
 }

@@ -39,6 +39,7 @@ class ItemEstimativaFinanceira {
   final double quantidadePorConvidadoEquivalente;
   final double valorUnitarioMedio;
   final bool selecionado;
+  final Map<String, dynamic> premissas;
 
   const ItemEstimativaFinanceira({
     required this.id,
@@ -50,10 +51,12 @@ class ItemEstimativaFinanceira {
     required this.quantidadePorConvidadoEquivalente,
     required this.valorUnitarioMedio,
     this.selecionado = true,
+    this.premissas = const {},
   });
 
   ItemEstimativaFinanceira copyWith({
     String? id,
+    Map<String, dynamic>? premissas,
     String? categoria,
     String? nome,
     String? tipoItem,
@@ -65,6 +68,7 @@ class ItemEstimativaFinanceira {
   }) {
     return ItemEstimativaFinanceira(
       id: id ?? this.id,
+      premissas: premissas ?? this.premissas,
       categoria: categoria ?? this.categoria,
       nome: nome ?? this.nome,
       tipoItem: tipoItem ?? this.tipoItem,
@@ -77,17 +81,120 @@ class ItemEstimativaFinanceira {
     );
   }
 
+  Map<String, dynamic> toPlanejamento() => {
+        'id': id,
+        'categoria': categoria,
+        'nome': nome,
+        'tipo': tipoItem,
+        'publico': publicoAlvo,
+        'unidade': unidade.name,
+        'consumo': quantidadePorConvidadoEquivalente,
+        'preco': valorUnitarioMedio,
+        'selecionado': selecionado,
+        'premissas': premissas,
+      };
+
+  factory ItemEstimativaFinanceira.fromPlanejamento(Map<String, dynamic> m) =>
+      ItemEstimativaFinanceira(
+          id: m['id'] as String,
+          categoria: m['categoria'] as String,
+          nome: m['nome'] as String,
+          tipoItem: m['tipo'] as String,
+          publicoAlvo: m['publico'] as String,
+          unidade: UnidadeEstimativa.values
+              .firstWhere((u) => u.name == m['unidade']),
+          quantidadePorConvidadoEquivalente: (m['consumo'] as num).toDouble(),
+          valorUnitarioMedio: (m['preco'] as num).toDouble(),
+          selecionado: m['selecionado'] != false,
+          premissas: Map<String, dynamic>.from(m['premissas'] as Map? ?? {}));
+
+  double get rendimento => (premissas['rendimento'] as num?)?.toDouble() ?? 1;
+  double get tamanhoEmbalagem =>
+      (premissas['embalagem'] as num?)?.toDouble() ?? 0;
+  double get fatorComposicao =>
+      (premissas['fator_composicao'] as num?)?.toDouble() ?? 1;
+
+  bool get descartavel =>
+      tipoItem == 'descartavel' || categoria.toLowerCase().contains('descart');
+
+  // Uma refeição não se repete só porque a festa dura mais horas.
+  // A escala antiga fica disponível apenas como premissa explícita.
+  bool get ajustarPorDuracao => premissas['ajustar_por_duracao'] == true;
+  double get numeroServicos =>
+      (premissas['numero_servicos'] as num?)?.toDouble() ?? 1;
+
+  bool get dividirGrupo => premissas['dividir_grupo'] == true;
+  double get pesoCrianca =>
+      (premissas['peso_crianca'] as num?)?.toDouble() ?? .6;
+  double get pesoBebe => (premissas['peso_bebe'] as num?)?.toDouble() ?? .2;
+  double fatorPerfil(PerfilFesta perfil) =>
+      descartavel || premissas['ajustar_por_perfil'] == false
+          ? 1
+          : perfil.multiplicadorQuantidade;
+
+  double fatorDuracaoAplicado(int horas) =>
+      descartavel || !ajustarPorDuracao ? 1 : _fatorDuracao(horas);
+
+  ConvidadosEquivalentes publicoEfetivo(ConvidadosEquivalentes padrao) {
+    final p = premissas['publico_refeicao'];
+    if (p is! Map) return padrao;
+    return ConvidadosEquivalentes(
+        adultos: (p['adultos'] as num).toInt(),
+        criancas: (p['criancas'] as num).toInt(),
+        bebes: (p['bebes'] as num).toInt(),
+        pesoAdulto: padrao.pesoAdulto,
+        pesoCrianca: padrao.pesoCrianca,
+        pesoBebe: padrao.pesoBebe);
+  }
+
+  double publicoEquivalente(ConvidadosEquivalentes convidados) {
+    convidados = publicoEfetivo(convidados);
+    return switch (publicoAlvo.toLowerCase()) {
+      'adultos' =>
+        convidados.adultos * (descartavel ? 1 : convidados.pesoAdulto),
+      'criancas' || 'crianças' => convidados.criancas *
+          (descartavel
+              ? 1
+              : (premissas['peso_crianca'] as num?)?.toDouble() ??
+                  convidados.pesoCrianca),
+      'bebes' || 'bebês' => convidados.bebes *
+          (descartavel
+              ? 1
+              : (premissas['peso_bebe'] as num?)?.toDouble() ??
+                  convidados.pesoBebe),
+      _ => descartavel
+          ? convidados.totalInformado.toDouble()
+          : convidados.adultos * convidados.pesoAdulto +
+              convidados.criancas *
+                  ((premissas['peso_crianca'] as num?)?.toDouble() ??
+                      convidados.pesoCrianca) +
+              convidados.bebes *
+                  ((premissas['peso_bebe'] as num?)?.toDouble() ??
+                      convidados.pesoBebe),
+    };
+  }
+
+  String get porcaoReferenciaFormatada {
+    final medida = premissas['unidade_consumo'] ?? unidade.label;
+    final valor = quantidadePorConvidadoEquivalente;
+    if (medida == 'kg' || medida == 'L') {
+      return '${(valor * 1000).toStringAsFixed(0)} ${medida == 'kg' ? 'g' : 'ml'}';
+    }
+    return '${valor.toStringAsFixed(2).replaceAll('.', ',')} $medida';
+  }
+
   double calcularQuantidade({
     required ConvidadosEquivalentes convidados,
     required PerfilFesta perfil,
     int duracaoHoras = 4,
   }) {
-    final fatorDuracao = _fatorDuracao(duracaoHoras);
-
-    return convidados.totalEquivalente *
+    return publicoEquivalente(convidados) *
         quantidadePorConvidadoEquivalente *
-        perfil.multiplicadorQuantidade *
-        fatorDuracao;
+        fatorPerfil(perfil) *
+        fatorDuracaoAplicado(duracaoHoras) *
+        numeroServicos *
+        fatorComposicao /
+        rendimento;
   }
 
   double calcularQuantidadeComMargem({
@@ -106,18 +213,26 @@ class ItemEstimativaFinanceira {
     return quantidadeBase + (quantidadeBase * margem);
   }
 
-  int calcularQuantidadeArredondada({
+  double calcularQuantidadeArredondada({
     required ConvidadosEquivalentes convidados,
     required PerfilFesta perfil,
     int duracaoHoras = 4,
     double? margemPersonalizada,
   }) {
-    return calcularQuantidadeComMargem(
+    final quantidade = calcularQuantidadeComMargem(
       convidados: convidados,
       perfil: perfil,
       duracaoHoras: duracaoHoras,
       margemPersonalizada: margemPersonalizada,
-    ).ceil();
+    );
+    final passo =
+        unidade == UnidadeEstimativa.quilo || unidade == UnidadeEstimativa.litro
+            ? 100.0
+            : 1.0;
+    final arredondada = (quantidade * passo - 1e-9).ceil() / passo;
+    return tamanhoEmbalagem > 0
+        ? (arredondada / tamanhoEmbalagem - 1e-9).ceil() * tamanhoEmbalagem
+        : arredondada;
   }
 
   double calcularCusto({
@@ -128,14 +243,14 @@ class ItemEstimativaFinanceira {
   }) {
     if (!selecionado) return 0;
 
-    final quantidade = calcularQuantidadeComMargem(
+    final quantidade = calcularQuantidadeArredondada(
       convidados: convidados,
       perfil: perfil,
       duracaoHoras: duracaoHoras,
       margemPersonalizada: margemPersonalizada,
     );
 
-    return quantidade * valorUnitarioMedio * perfil.multiplicadorCusto;
+    return quantidade * valorUnitarioMedio;
   }
 
   static double _fatorDuracao(int duracaoHoras) {

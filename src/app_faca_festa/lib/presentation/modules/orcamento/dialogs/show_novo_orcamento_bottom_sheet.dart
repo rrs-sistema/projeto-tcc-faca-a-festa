@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/core/utils/numeric_input.dart';
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:app_faca_festa/core/utils/biblioteca.dart';
@@ -45,7 +46,7 @@ Future<void> showNovoOrcamentoBottomSheet({
       valorEstimado = orcamentoExistente.custoEstimado;
       final valorInicial = valorEstimado;
       if (valorInicial != null && valorInicial > 0) {
-        valorEstimadoCtrl.text = valorInicial.toStringAsFixed(2);
+        valorEstimadoCtrl.text = NumericInput.dinheiro(valorInicial);
       }
     }
   }

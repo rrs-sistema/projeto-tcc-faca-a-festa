@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/core/utils/numeric_input.dart';
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:google_fonts/google_fonts.dart';
@@ -14,7 +15,9 @@ Future<void> showResponderOrcamentoDialog(
   required OrcamentoController controller,
 }) async {
   final valorController = TextEditingController(
-    text: orcamento.custoEstimado?.toStringAsFixed(2) ?? '',
+    text: orcamento.custoEstimado == null
+        ? ''
+        : NumericInput.dinheiro(orcamento.custoEstimado!),
   );
   final anotacoesController =
       TextEditingController(text: orcamento.anotacoes ?? '');
@@ -67,6 +70,7 @@ Future<void> showResponderOrcamentoDialog(
                   controller: valorController,
                   keyboardType:
                       const TextInputType.numberWithOptions(decimal: true),
+                  inputFormatters: [NumericInput.moeda()],
                   validator: (value) => FormValidators.dinheiro(
                     value,
                     obrigatorio: true,

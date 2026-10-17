@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/core/services/update_operations.dart';
 import 'package:app_faca_festa/domain/entities/cardapio.dart';
 import 'package:app_faca_festa/domain/entities/cardapio_item.dart';
 import 'package:app_faca_festa/domain/repositories/cardapio_repository.dart';
@@ -28,26 +29,44 @@ class CardapioRepositoryImpl implements CardapioRepository {
       item is CardapioItemModel ? item : CardapioItemModel.fromEntity(item);
 
   @override
-  Future<void> salvarCardapio(Cardapio cardapio) =>
-      remote.salvarCardapio(_cardapioModel(cardapio));
+  Future<void> salvarCardapio(Cardapio cardapio) {
+    return UpdateOperations.run(() async {
+      return remote.salvarCardapio(_cardapioModel(cardapio));
+    });
+  }
 
   @override
-  Future<void> excluirCardapio(String idCardapio) =>
-      remote.excluirCardapio(idCardapio);
+  Future<void> excluirCardapio(String idCardapio) {
+    return UpdateOperations.run(() async {
+      return remote.excluirCardapio(idCardapio);
+    });
+  }
 
   @override
-  Future<void> salvarItem(String idCardapio, CardapioItem item) =>
-      remote.salvarItem(idCardapio, _itemModel(item));
+  Future<void> salvarItem(String idCardapio, CardapioItem item) {
+    return UpdateOperations.run(() async {
+      return remote.salvarItem(idCardapio, _itemModel(item));
+    });
+  }
 
   @override
-  Future<void> alternarConfirmado(String idCardapio, CardapioItem item) =>
-      remote.alternarConfirmado(idCardapio, _itemModel(item));
+  Future<void> alternarConfirmado(String idCardapio, CardapioItem item) {
+    return UpdateOperations.run(() async {
+      return remote.alternarConfirmado(idCardapio, _itemModel(item));
+    });
+  }
 
   @override
-  Future<void> excluirItem(String idCardapio, String idItem) =>
-      remote.excluirItem(idCardapio, idItem);
+  Future<void> excluirItem(String idCardapio, String idItem) {
+    return UpdateOperations.run(() async {
+      return remote.excluirItem(idCardapio, idItem);
+    });
+  }
 
   @override
-  Future<void> atualizarResumo(String idCardapio, ResumoCardapio resumo) =>
-      remote.atualizarResumo(idCardapio, resumo);
+  Future<void> atualizarResumo(String idCardapio, ResumoCardapio resumo) {
+    return UpdateOperations.run(() async {
+      return remote.atualizarResumo(idCardapio, resumo);
+    });
+  }
 }

@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/core/services/update_operations.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
 import 'package:app_faca_festa/core/platform/plataforma_app.dart';
@@ -16,13 +17,17 @@ class FirebasePushTokenRepository implements PushTokenRepository {
   }
 
   @override
-  Future<void> solicitarPermissao() async {
-    await _messaging.requestPermission();
+  Future<void> solicitarPermissao() {
+    return UpdateOperations.run(() async {
+      await _messaging.requestPermission();
+    });
   }
 
   @override
   Future<String?> obterTokenAtual() {
-    return _messaging.getToken();
+    return UpdateOperations.run(() async {
+      return _messaging.getToken();
+    });
   }
 
   @override

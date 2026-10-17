@@ -27,6 +27,7 @@ Widget buildAnimatedHeader(
   required EventoController eventoController,
   required EventThemeController theme,
   VoidCallback? onAbrirMenu,
+  Widget? contador,
 }) {
   final isCelular = MediaQuery.sizeOf(context).width < 650;
   final topInset = MediaQuery.paddingOf(context).top;
@@ -58,243 +59,259 @@ Widget buildAnimatedHeader(
           ),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(raioCapa),
-              boxShadow: [
-                BoxShadow(
-                  color: primary.withValues(alpha: 0.22),
-                  blurRadius: 16,
-                  offset: const Offset(0, 6),
-                ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(raioCapa),
-              child: SizedBox(
-                height: alturaCapa,
-                width: double.infinity,
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    Hero(
-                      tag: 'event_header',
-                      child: temCapa
-                          ? TemaCapaImagem(
-                              url: theme.capaUrl.value,
-                              fallback: Image.asset(
-                                'assets/images/event_generic_1.jpeg',
-                                fit: BoxFit.cover,
-                              ),
-                            )
-                          : Image.asset(
-                              'assets/images/event_generic_1.jpeg',
-                              fit: BoxFit.cover,
-                            ),
-                    ),
-                    if (temCapa)
-                      const DecoratedBox(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Color(0x33000000),
-                              Color(0x00000000),
-                              Color(0xB3000000),
-                            ],
-                            stops: [0, 0.42, 1],
-                          ),
-                        ),
-                      )
-                    else
-                      Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              gradient.colors.first.withValues(alpha: 0.02),
-                              gradient.colors.last.withValues(alpha: 0.03),
-                              Colors.black.withValues(alpha: 0.02),
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                        ),
-                      ),
-                    if (!temCapa)
-                      BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 2.5, sigmaY: 2.5),
-                        child: Container(
-                          color: Colors.black.withValues(alpha: 0.2),
-                        ),
-                      ),
-                    Positioned(
-                      top: 12,
-                      left: onAbrirMenu == null ? 14 : 52,
-                      right: 52,
-                      child: evento == null
-                          ? Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(theme.icon.value,
-                                    color: Colors.white, size: 16),
-                                const SizedBox(width: 6),
-                                Flexible(
-                                  child: Text(
-                                    rotuloTipo,
-                                    textAlign: TextAlign.center,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: GoogleFonts.poppins(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: isCelular ? 12 : 14,
-                                      shadows: _sombraCapa,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            )
-                          : Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                onTap: () => _abrirEditarRotuloBanner(
-                                  context: context,
-                                  tema: theme,
-                                  eventoController: eventoController,
-                                  evento: evento,
-                                  nomeTipo: tipoEvento?.nome,
-                                  temRotuloPersonalizado:
-                                      temRotuloPersonalizado,
-                                ),
-                                borderRadius: BorderRadius.circular(12),
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 4,
-                                    vertical: 2,
-                                  ),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(theme.icon.value,
-                                          color: Colors.white, size: 16),
-                                      const SizedBox(width: 6),
-                                      Flexible(
-                                        child: Text(
-                                          rotuloTipo,
-                                          textAlign: TextAlign.center,
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: GoogleFonts.poppins(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.w600,
-                                            fontSize: isCelular ? 12 : 14,
-                                            shadows: _sombraCapa,
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Icon(
-                                        Icons.edit_outlined,
-                                        color: Colors.white
-                                            .withValues(alpha: 0.85),
-                                        size: 14,
-                                        shadows: _sombraCapa,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                    ),
-                    if (onAbrirMenu != null)
-                      Positioned(
-                        top: 8,
-                        left: 8,
-                        child: Material(
-                          color: Colors.black.withValues(alpha: 0.38),
-                          shape: const CircleBorder(),
-                          clipBehavior: Clip.antiAlias,
-                          child: IconButton(
-                            tooltip: 'Mais opções',
-                            visualDensity: VisualDensity.compact,
-                            padding: const EdgeInsets.all(8),
-                            constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
-                            icon: const Icon(Icons.more_horiz_rounded,
-                                color: Colors.white, size: 18),
-                            onPressed: onAbrirMenu,
-                          ),
-                        ),
-                      ),
-                    if (evento != null)
-                      Positioned(
-                        top: 8,
-                        right: 8,
-                        child: _botaoTrocarCapa(
-                          context: context,
-                          tema: theme,
-                          eventoController: eventoController,
-                          temCapaEvento: temCapaEvento,
-                        ),
-                      ),
-                    if (!temCapa)
-                      Positioned(
-                        top: 56,
-                        left: 1,
-                        right: 1,
-                        child: SizedBox(
-                          height: 80,
-                          child: FraseAleatoriaWidget(
-                            tipoEvento: tipoEvento?.nome ?? 'Casamento',
-                            themeController: theme,
-                          ),
-                        ),
-                      ),
-                    Positioned(
-                      left: 12,
-                      right: 12,
-                      bottom: temCapa ? 14 : 10,
-                      child: temCapa
-                          ? Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  evento?.nomeEvento ?? 'Seu evento especial',
-                                  textAlign: TextAlign.center,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: GoogleFonts.poppins(
-                                    color: Colors.white,
-                                    fontSize: isCelular ? 18 : 22,
-                                    fontWeight: FontWeight.w700,
-                                    height: 1.15,
-                                    shadows: _sombraCapa,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                _metaEventoCapa(evento),
-                              ],
-                            )
-                          : Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 10,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.black.withValues(alpha: 0.3),
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                  color: Colors.white.withValues(alpha: 0.2),
-                                ),
-                              ),
-                              child: _metaEventoCapa(evento),
-                            ),
+          padding: EdgeInsets.fromLTRB(16, 10, 16, contador == null ? 0 : 78),
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(raioCapa),
+                  boxShadow: [
+                    BoxShadow(
+                      color: primary.withValues(alpha: 0.22),
+                      blurRadius: 16,
+                      offset: const Offset(0, 6),
                     ),
                   ],
                 ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(raioCapa),
+                  child: SizedBox(
+                    height: alturaCapa,
+                    width: double.infinity,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        Hero(
+                          tag: 'event_header',
+                          child: temCapa
+                              ? TemaCapaImagem(
+                                  url: theme.capaUrl.value,
+                                  fallback: Image.asset(
+                                    'assets/images/event_generic_1.jpeg',
+                                    fit: BoxFit.cover,
+                                  ),
+                                )
+                              : Image.asset(
+                                  'assets/images/event_generic_1.jpeg',
+                                  fit: BoxFit.cover,
+                                ),
+                        ),
+                        if (temCapa)
+                          const DecoratedBox(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  Color(0x33000000),
+                                  Color(0x00000000),
+                                  Color(0xB3000000),
+                                ],
+                                stops: [0, 0.42, 1],
+                              ),
+                            ),
+                          )
+                        else
+                          Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  gradient.colors.first.withValues(alpha: 0.02),
+                                  gradient.colors.last.withValues(alpha: 0.03),
+                                  Colors.black.withValues(alpha: 0.02),
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                            ),
+                          ),
+                        if (!temCapa)
+                          BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 2.5, sigmaY: 2.5),
+                            child: Container(
+                              color: Colors.black.withValues(alpha: 0.2),
+                            ),
+                          ),
+                        Positioned(
+                          top: 12,
+                          left: onAbrirMenu == null ? 14 : 52,
+                          right: 52,
+                          child: evento == null
+                              ? Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(theme.icon.value,
+                                        color: Colors.white, size: 16),
+                                    const SizedBox(width: 6),
+                                    Flexible(
+                                      child: Text(
+                                        rotuloTipo,
+                                        textAlign: TextAlign.center,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: GoogleFonts.poppins(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: isCelular ? 12 : 14,
+                                          shadows: _sombraCapa,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                )
+                              : Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    onTap: () => _abrirEditarRotuloBanner(
+                                      context: context,
+                                      tema: theme,
+                                      eventoController: eventoController,
+                                      evento: evento,
+                                      nomeTipo: tipoEvento?.nome,
+                                      temRotuloPersonalizado:
+                                          temRotuloPersonalizado,
+                                    ),
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 4,
+                                        vertical: 2,
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Icon(theme.icon.value,
+                                              color: Colors.white, size: 16),
+                                          const SizedBox(width: 6),
+                                          Flexible(
+                                            child: Text(
+                                              rotuloTipo,
+                                              textAlign: TextAlign.center,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: GoogleFonts.poppins(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.w600,
+                                                fontSize: isCelular ? 12 : 14,
+                                                shadows: _sombraCapa,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Icon(
+                                            Icons.edit_outlined,
+                                            color: Colors.white
+                                                .withValues(alpha: 0.85),
+                                            size: 14,
+                                            shadows: _sombraCapa,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                        ),
+                        if (onAbrirMenu != null)
+                          Positioned(
+                            top: 8,
+                            left: 8,
+                            child: Material(
+                              color: Colors.black.withValues(alpha: 0.38),
+                              shape: const CircleBorder(),
+                              clipBehavior: Clip.antiAlias,
+                              child: IconButton(
+                                tooltip: 'Mais opções',
+                                visualDensity: VisualDensity.compact,
+                                padding: const EdgeInsets.all(8),
+                                constraints: const BoxConstraints(
+                                    minWidth: 44, minHeight: 44),
+                                icon: const Icon(Icons.more_horiz_rounded,
+                                    color: Colors.white, size: 18),
+                                onPressed: onAbrirMenu,
+                              ),
+                            ),
+                          ),
+                        if (evento != null)
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: _botaoTrocarCapa(
+                              context: context,
+                              tema: theme,
+                              eventoController: eventoController,
+                              temCapaEvento: temCapaEvento,
+                            ),
+                          ),
+                        if (!temCapa)
+                          Positioned(
+                            top: 56,
+                            left: 1,
+                            right: 1,
+                            child: SizedBox(
+                              height: 80,
+                              child: FraseAleatoriaWidget(
+                                tipoEvento: tipoEvento?.nome ?? 'Casamento',
+                                themeController: theme,
+                              ),
+                            ),
+                          ),
+                        Positioned(
+                          left: 12,
+                          right: 12,
+                          bottom: temCapa ? 14 : 10,
+                          child: temCapa
+                              ? Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      evento?.nomeEvento ??
+                                          'Seu evento especial',
+                                      textAlign: TextAlign.center,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: GoogleFonts.poppins(
+                                        color: Colors.white,
+                                        fontSize: isCelular ? 18 : 22,
+                                        fontWeight: FontWeight.w700,
+                                        height: 1.15,
+                                        shadows: _sombraCapa,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    _metaEventoCapa(evento),
+                                  ],
+                                )
+                              : Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 10,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withValues(alpha: 0.3),
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(
+                                      color:
+                                          Colors.white.withValues(alpha: 0.2),
+                                    ),
+                                  ),
+                                  child: _metaEventoCapa(evento),
+                                ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
-            ),
+              if (contador != null)
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: -62,
+                  child: Center(child: contador),
+                ),
+            ],
           ),
         ),
       ],
@@ -680,7 +697,9 @@ Widget _metaEventoCapa(Evento? evento) {
         const SizedBox(width: 6),
         Text(
           evento?.data != null
-              ? DateFormat("d 'de' MMMM yyyy", 'pt_BR').format(evento!.data)
+              ? (evento!.duracaoDias > 1
+                  ? '${DateFormat('dd/MM/yyyy').format(evento.data)} a ${DateFormat('dd/MM/yyyy').format(evento.dataFim!)}'
+                  : DateFormat("d 'de' MMMM yyyy", 'pt_BR').format(evento.data))
               : 'Data a definir',
           style: GoogleFonts.poppins(
             color: Colors.white,

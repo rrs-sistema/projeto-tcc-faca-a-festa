@@ -100,6 +100,7 @@ extension _InspiracaoAdminFormMidia on _InspiracaoAdminFormPageState {
                       style: FilledButton.styleFrom(
                         backgroundColor: _primary,
                         foregroundColor: Colors.white,
+                        iconColor: Colors.white,
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14)),
                       ),
@@ -113,6 +114,7 @@ extension _InspiracaoAdminFormMidia on _InspiracaoAdminFormPageState {
                         onPressed: uploading ? null : _limparImagemPrincipal,
                         style: OutlinedButton.styleFrom(
                           foregroundColor: _danger,
+                          iconColor: _danger,
                           side: BorderSide(
                               color: _danger.withValues(alpha: 0.28)),
                           shape: RoundedRectangleBorder(
@@ -254,6 +256,7 @@ extension _InspiracaoAdminFormMidia on _InspiracaoAdminFormPageState {
                   style: FilledButton.styleFrom(
                     backgroundColor: _primary,
                     foregroundColor: Colors.white,
+                    iconColor: Colors.white,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14)),
                   ),

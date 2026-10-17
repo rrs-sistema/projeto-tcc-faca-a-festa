@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:app_faca_festa/domain/entities/resumo_reputacao_fornecedor.dart';
 
-
 class ResumoReputacaoFornecedorModel extends ResumoReputacaoFornecedor {
   const ResumoReputacaoFornecedorModel({
     required super.idResumo,
@@ -298,5 +297,4 @@ class ResumoReputacaoFornecedorModel extends ResumoReputacaoFornecedor {
 
     return null;
   }
-
 }

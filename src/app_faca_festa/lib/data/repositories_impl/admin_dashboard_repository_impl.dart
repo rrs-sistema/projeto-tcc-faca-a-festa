@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/core/services/update_operations.dart';
 import 'package:app_faca_festa/domain/entities/admin_dashboard_stats.dart';
 import 'package:app_faca_festa/domain/repositories/admin_dashboard_repository.dart';
 import '../datasources/remote/admin_dashboard_remote_datasource.dart';
@@ -9,6 +10,8 @@ class AdminDashboardRepositoryImpl implements AdminDashboardRepository {
 
   @override
   Future<AdminDashboardStats> carregarIndicadores() {
-    return remote.carregarIndicadores();
+    return UpdateOperations.run(() async {
+      return remote.carregarIndicadores();
+    });
   }
 }

@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/core/services/update_operations.dart';
 import 'package:app_faca_festa/domain/entities/avaliacao.dart';
 import 'package:app_faca_festa/domain/entities/avaliacao_servico.dart';
 import 'package:app_faca_festa/domain/repositories/avaliacao_servico_repository.dart';
@@ -24,10 +25,12 @@ class AvaliacaoServicoRepositoryImpl implements AvaliacaoServicoRepository {
     required String idFornecedor,
     required String idServico,
   }) {
-    return remote.getMediaServico(
-      idFornecedor: idFornecedor,
-      idServico: idServico,
-    );
+    return UpdateOperations.run(() async {
+      return remote.getMediaServico(
+        idFornecedor: idFornecedor,
+        idServico: idServico,
+      );
+    });
   }
 
   @override
@@ -41,16 +44,18 @@ class AvaliacaoServicoRepositoryImpl implements AvaliacaoServicoRepository {
     String? idEvento,
     String? nomeEvento,
   }) {
-    return remote.adicionarAvaliacaoServico(
-      idFornecedor: idFornecedor,
-      idServico: idServico,
-      idCliente: idCliente,
-      nomeCliente: nomeCliente,
-      nota: nota,
-      comentario: comentario,
-      idEvento: idEvento,
-      nomeEvento: nomeEvento,
-    );
+    return UpdateOperations.run(() async {
+      return remote.adicionarAvaliacaoServico(
+        idFornecedor: idFornecedor,
+        idServico: idServico,
+        idCliente: idCliente,
+        nomeCliente: nomeCliente,
+        nota: nota,
+        comentario: comentario,
+        idEvento: idEvento,
+        nomeEvento: nomeEvento,
+      );
+    });
   }
 
   @override
@@ -70,15 +75,17 @@ class AvaliacaoServicoRepositoryImpl implements AvaliacaoServicoRepository {
     String? idEvento,
     String? nomeEvento,
   }) {
-    return remote.adicionarAvaliacaoFornecedor(
-      idFornecedor: idFornecedor,
-      idCliente: idCliente,
-      nomeCliente: nomeCliente,
-      nota: nota,
-      comentario: comentario,
-      idEvento: idEvento,
-      nomeEvento: nomeEvento,
-    );
+    return UpdateOperations.run(() async {
+      return remote.adicionarAvaliacaoFornecedor(
+        idFornecedor: idFornecedor,
+        idCliente: idCliente,
+        nomeCliente: nomeCliente,
+        nota: nota,
+        comentario: comentario,
+        idEvento: idEvento,
+        nomeEvento: nomeEvento,
+      );
+    });
   }
 
   @override
@@ -87,11 +94,13 @@ class AvaliacaoServicoRepositoryImpl implements AvaliacaoServicoRepository {
     required String idEvento,
     required String idUsuario,
   }) {
-    return remote.podeAvaliarFornecedor(
-      idFornecedor: idFornecedor,
-      idEvento: idEvento,
-      idUsuario: idUsuario,
-    );
+    return UpdateOperations.run(() async {
+      return remote.podeAvaliarFornecedor(
+        idFornecedor: idFornecedor,
+        idEvento: idEvento,
+        idUsuario: idUsuario,
+      );
+    });
   }
 
   @override
@@ -100,10 +109,12 @@ class AvaliacaoServicoRepositoryImpl implements AvaliacaoServicoRepository {
     required String idEvento,
     required String idUsuario,
   }) {
-    return remote.podeAvaliarCotacao(
-      idFornecedor: idFornecedor,
-      idEvento: idEvento,
-      idUsuario: idUsuario,
-    );
+    return UpdateOperations.run(() async {
+      return remote.podeAvaliarCotacao(
+        idFornecedor: idFornecedor,
+        idEvento: idEvento,
+        idUsuario: idUsuario,
+      );
+    });
   }
 }

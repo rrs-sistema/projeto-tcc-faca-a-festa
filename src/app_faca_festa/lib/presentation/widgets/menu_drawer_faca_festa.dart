@@ -594,6 +594,7 @@ class MenuDrawerFacaFesta extends StatelessWidget {
           elevation: 0,
           backgroundColor: backgroundColor,
           foregroundColor: foregroundColor,
+          iconColor: foregroundColor,
           disabledBackgroundColor: backgroundColor,
           disabledForegroundColor: foregroundColor,
           padding: const EdgeInsets.symmetric(horizontal: 10),

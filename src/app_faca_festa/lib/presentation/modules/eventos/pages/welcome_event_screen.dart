@@ -81,8 +81,28 @@ class _WelcomeEventScreenState extends State<WelcomeEventScreen> {
     }
   }
 
+  /// Frase curta para o card explicar o tipo antes do clique.
+  String? _dicaTipo(String nome) {
+    final n = nome.toLowerCase();
+    if (n.contains('bebê') || n.contains('bebe')) return 'A chegada do bebê';
+    if (n.contains('casamento')) return 'O grande dia';
+    if (n.contains('anivers')) return 'Comemore mais um ano';
+    if (n.contains('formatura') ||
+        n.contains('colação') ||
+        n.contains('colacao')) {
+      return 'A conquista';
+    }
+    if (n.contains('infantil')) return 'Festa das crianças';
+    if (n.contains('corporativo') || n.contains('empresa')) {
+      return 'Empresa e equipes';
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final telaAmplia = MediaQuery.sizeOf(context).width >= 650;
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: FestaSystemUi.fundoClaro,
       child: Scaffold(
@@ -117,11 +137,11 @@ class _WelcomeEventScreenState extends State<WelcomeEventScreen> {
             SafeArea(
               child: Column(
                 children: [
-                  const SizedBox(height: 10),
+                  SizedBox(height: telaAmplia ? 48 : 10),
                   Text(
                     "🎊 Faça a Festa",
                     style: GoogleFonts.poppins(
-                      fontSize: 32,
+                      fontSize: telaAmplia ? 34 : 32,
                       fontWeight: FontWeight.w800,
                       color: Colors.pink.shade800,
                       letterSpacing: 1.2,
@@ -139,128 +159,179 @@ class _WelcomeEventScreenState extends State<WelcomeEventScreen> {
                     "Escolha o tipo de evento",
                     textAlign: TextAlign.center,
                     style: GoogleFonts.poppins(
-                      fontSize: 17,
+                      fontSize: telaAmplia ? 18 : 17,
                       color: Colors.pink.shade700,
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  if (telaAmplia) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      "Clique em um tipo para começar o planejamento",
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        color: Colors.black54,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                  SizedBox(height: telaAmplia ? 8 : 20),
 
                   // 🧩 Grid de Tipos de Evento (carregado do Firebase)
                   Expanded(
                     child: _loading
                         ? const Center(child: CircularProgressIndicator())
-                        : GridView.builder(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 34, vertical: 6),
-                            gridDelegate:
-                                const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              mainAxisSpacing: 16,
-                              crossAxisSpacing: 16,
-                              childAspectRatio: 1,
-                            ),
-                            itemCount: _tiposEvento.length,
-                            itemBuilder: (context, index) {
-                              final tipo = _tiposEvento[index];
-                              return _EventTypeCard(
-                                nome: tipo.nome,
-                                cor: _getColorFromName(tipo.nome),
-                                onTap: () async {
-                                  // 🔹 Aplica imediatamente o tema ao selecionar o tipo
-                                  EasyLoading.show(status: 'Processando...');
-                                  themeController.aplicarTemaPorNome(tipo.nome);
+                        : LayoutBuilder(
+                            builder: (context, constraints) {
+                              final medidas =
+                                  _GradeMedidas.de(constraints.maxWidth);
+                              final alturaGrade =
+                                  medidas.alturaConteudo(_tiposEvento.length);
+                              final cabeNaTela = medidas.ampla &&
+                                  alturaGrade <= constraints.maxHeight;
+                              final grade = GridView.builder(
+                                clipBehavior:
+                                    cabeNaTela ? Clip.none : Clip.hardEdge,
+                                physics: cabeNaTela
+                                    ? const NeverScrollableScrollPhysics()
+                                    : const ClampingScrollPhysics(),
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: medidas.paddingHorizontal,
+                                  vertical: 8,
+                                ),
+                                gridDelegate:
+                                    SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: medidas.colunas,
+                                  mainAxisSpacing: medidas.espacamento,
+                                  crossAxisSpacing: medidas.espacamento,
+                                  childAspectRatio: medidas.proporcao,
+                                ),
+                                itemCount: _tiposEvento.length,
+                                itemBuilder: (context, index) {
+                                  final tipo = _tiposEvento[index];
+                                  return _EventTypeCard(
+                                    nome: tipo.nome,
+                                    subtitulo: _dicaTipo(tipo.nome),
+                                    cor: _getColorFromName(tipo.nome),
+                                    ampla: medidas.ampla,
+                                    onTap: () async {
+                                      // 🔹 Aplica imediatamente o tema ao selecionar o tipo
+                                      EasyLoading.show(
+                                          status: 'Processando...');
+                                      themeController
+                                          .aplicarTemaPorNome(tipo.nome);
 
-                                  final usuario = await appController
-                                      .prepararUsuarioComEndereco();
+                                      final usuario = await appController
+                                          .prepararUsuarioComEndereco();
 
-                                  if (usuario == null) {
-                                    Get.snackbar(
-                                      'Sessão expirada',
-                                      'Por favor, faça login novamente.',
-                                      backgroundColor: Colors.redAccent,
-                                      colorText: Colors.white,
-                                    );
-                                    EasyLoading.dismiss();
-                                    Get.offAll(
-                                      () => RoleSelectorScreen(
-                                        eventoCadastroController:
-                                            eventoCadastroController,
-                                      ),
-                                    );
-                                    return;
-                                  }
+                                      if (usuario == null) {
+                                        Get.snackbar(
+                                          'Sessão expirada',
+                                          'Por favor, faça login novamente.',
+                                          backgroundColor: Colors.redAccent,
+                                          colorText: Colors.white,
+                                        );
+                                        EasyLoading.dismiss();
+                                        Get.offAll(
+                                          () => RoleSelectorScreen(
+                                            eventoCadastroController:
+                                                eventoCadastroController,
+                                          ),
+                                        );
+                                        return;
+                                      }
 
-                                  final enderecoUsuario =
-                                      appController.enderecoPrincipal.value;
-                                  final endCtrl = eventoCadastroController
-                                      .enderecoController.value;
+                                      final enderecoUsuario =
+                                          appController.enderecoPrincipal.value;
+                                      final endCtrl = eventoCadastroController
+                                          .enderecoController.value;
 
-                                  if (enderecoUsuario != null) {
-                                    endCtrl.logradouroController.text =
-                                        enderecoUsuario.logradouro;
-                                    endCtrl.numeroController.text =
-                                        enderecoUsuario.numero;
-                                    endCtrl.complementoController.text =
-                                        enderecoUsuario.complemento ?? '';
-                                    endCtrl.bairroController.text =
-                                        enderecoUsuario.bairro ?? '';
-                                    endCtrl.cepController.text =
-                                        enderecoUsuario.cep;
-                                    endCtrl.nomeCidadeController.text =
-                                        enderecoUsuario.nomeCidade ?? '';
-                                    endCtrl.ufController.text =
-                                        enderecoUsuario.uf ?? 'PR';
+                                      if (enderecoUsuario != null) {
+                                        endCtrl.logradouroController.text =
+                                            enderecoUsuario.logradouro;
+                                        endCtrl.numeroController.text =
+                                            enderecoUsuario.numero;
+                                        endCtrl.complementoController.text =
+                                            enderecoUsuario.complemento ?? '';
+                                        endCtrl.bairroController.text =
+                                            enderecoUsuario.bairro ?? '';
+                                        endCtrl.cepController.text =
+                                            enderecoUsuario.cep;
+                                        endCtrl.nomeCidadeController.text =
+                                            enderecoUsuario.nomeCidade ?? '';
+                                        endCtrl.ufController.text =
+                                            enderecoUsuario.uf ?? 'PR';
 
-                                    // ✅ Atualiza seleção reativa no UF/CidadeController
-                                    endCtrl.ufCidadeController.estadoSelecionado
-                                        .value = Estado(
-                                      id: '',
-                                      nome: enderecoUsuario.uf ?? 'Paraná',
-                                      uf: enderecoUsuario.uf ?? 'PR',
-                                    );
-                                    endCtrl.ufCidadeController.cidadeSelecionada
-                                        .value = Cidade(
-                                      id: '',
-                                      nome: enderecoUsuario.nomeCidade ?? '',
-                                      uf: enderecoUsuario.uf ?? 'PR',
-                                      idCidade: enderecoUsuario.idCidade,
-                                    );
-                                  }
-                                  eventoCadastroController.limpar(
-                                      manterEndereco: true);
-                                  eventoCadastroController
-                                      .tipoEventoSelecionado.value = tipo;
-                                  EasyLoading.dismiss();
+                                        // ✅ Atualiza seleção reativa no UF/CidadeController
+                                        endCtrl.ufCidadeController
+                                            .estadoSelecionado.value = Estado(
+                                          id: '',
+                                          nome: enderecoUsuario.uf ?? 'Paraná',
+                                          uf: enderecoUsuario.uf ?? 'PR',
+                                        );
+                                        endCtrl.ufCidadeController
+                                            .cidadeSelecionada.value = Cidade(
+                                          id: '',
+                                          nome:
+                                              enderecoUsuario.nomeCidade ?? '',
+                                          uf: enderecoUsuario.uf ?? 'PR',
+                                          idCidade: enderecoUsuario.idCidade,
+                                        );
+                                      }
+                                      eventoCadastroController.limpar(
+                                          manterEndereco: true);
+                                      eventoCadastroController
+                                          .tipoEventoSelecionado.value = tipo;
+                                      EasyLoading.dismiss();
 
-                                  await showCadastroEventoBottomSheet(
-                                    context,
-                                    controller: eventoCadastroController,
-                                    theme: themeController,
-                                    temasController: temaFestaController,
-                                    calculadoraController:
-                                        calculadoraController,
-                                    eventoController: eventoController,
-                                    cardapioController: cardapioController,
-                                    fornecedorMigracaoAdminController:
-                                        fornecedorMigracaoAdminController,
+                                      await showCadastroEventoBottomSheet(
+                                        context,
+                                        controller: eventoCadastroController,
+                                        theme: themeController,
+                                        temasController: temaFestaController,
+                                        calculadoraController:
+                                            calculadoraController,
+                                        eventoController: eventoController,
+                                        cardapioController: cardapioController,
+                                        fornecedorMigracaoAdminController:
+                                            fornecedorMigracaoAdminController,
+                                      );
+
+                                      final eventoAtual =
+                                          eventoController.eventoAtualEntidade;
+                                      if (eventoAtual != null &&
+                                          Get.currentRoute !=
+                                              '/HomeEventScreen') {
+                                        EasyLoading.dismiss();
+                                        appController.abrirHomeOrganizador();
+                                      }
+                                    },
                                   );
-
-                                  final eventoAtual =
-                                      eventoController.eventoAtualEntidade;
-                                  if (eventoAtual != null &&
-                                      Get.currentRoute != '/HomeEventScreen') {
-                                    EasyLoading.dismiss();
-                                    appController.abrirHomeOrganizador();
-                                  }
                                 },
+                              );
+
+                              if (!medidas.ampla) return grade;
+
+                              return Align(
+                                alignment: Alignment.center,
+                                child: SizedBox(
+                                  width: medidas.larguraGrade,
+                                  height: cabeNaTela
+                                      ? alturaGrade
+                                      : constraints.maxHeight,
+                                  child: grade,
+                                ),
                               );
                             },
                           ),
                   ),
 
                   Padding(
-                    padding: const EdgeInsets.only(top: 15, bottom: 10),
+                    padding: EdgeInsets.only(
+                      top: telaAmplia ? 8 : 15,
+                      bottom: 10,
+                    ),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -536,16 +607,85 @@ class _WelcomeEventScreenState extends State<WelcomeEventScreen> {
   }
 }
 
+/// Medidas da grade. No celular os cards preenchem a largura.
+/// Em telas maiores ficam num tamanho confortável, em 3 colunas, no centro.
+class _GradeMedidas {
+  const _GradeMedidas({
+    required this.colunas,
+    required this.larguraGrade,
+    required this.espacamento,
+    required this.proporcao,
+    required this.paddingHorizontal,
+    required this.ampla,
+    required this.alturaCard,
+  });
+
+  final int colunas;
+  final double larguraGrade;
+  final double espacamento;
+  final double proporcao;
+  final double paddingHorizontal;
+  final bool ampla;
+  final double alturaCard;
+
+  static const double _limiteCelular = 650;
+
+  int linhas(int itens) => itens == 0 ? 0 : (itens / colunas).ceil();
+
+  double alturaConteudo(int itens) {
+    final n = linhas(itens);
+    if (n == 0) return 0;
+    return n * alturaCard + (n - 1) * espacamento + 24;
+  }
+
+  static _GradeMedidas de(double largura) {
+    if (largura < _limiteCelular) {
+      return const _GradeMedidas(
+        colunas: 2,
+        larguraGrade: double.infinity,
+        espacamento: 16,
+        proporcao: 1,
+        paddingHorizontal: 34,
+        ampla: false,
+        alturaCard: 0,
+      );
+    }
+
+    const espaco = 20.0;
+    const cardMaxLargura = 248.0;
+    const cardAltura = 196.0;
+    final util = largura - 80;
+    const colunas = 3;
+    var cardLargura = (util - (colunas - 1) * espaco) / colunas;
+    if (cardLargura > cardMaxLargura) cardLargura = cardMaxLargura;
+
+    final larguraInterna = colunas * cardLargura + (colunas - 1) * espaco;
+    return _GradeMedidas(
+      colunas: colunas,
+      larguraGrade: larguraInterna + 16,
+      espacamento: espaco,
+      proporcao: cardLargura / cardAltura,
+      paddingHorizontal: 8,
+      ampla: true,
+      alturaCard: cardAltura,
+    );
+  }
+}
+
 /// 🎀 Card de evento (moderno e animado)
 class _EventTypeCard extends StatefulWidget {
   final String nome;
+  final String? subtitulo;
   final Color cor;
   final VoidCallback onTap;
+  final bool ampla;
 
   const _EventTypeCard({
     required this.nome,
     required this.cor,
     required this.onTap,
+    this.subtitulo,
+    this.ampla = false,
   });
 
   @override
@@ -553,7 +693,10 @@ class _EventTypeCard extends StatefulWidget {
 }
 
 class _EventTypeCardState extends State<_EventTypeCard> {
-  bool _hovered = false;
+  bool _ponteiro = false;
+  bool _pressionado = false;
+
+  bool get _ativo => _ponteiro || _pressionado;
 
   @override
   Widget build(BuildContext context) {
@@ -561,60 +704,127 @@ class _EventTypeCardState extends State<_EventTypeCard> {
     final emoji = nome.characters.first; // 💍 Casamento → 💍
     final texto =
         nome.replaceAll(RegExp(r'[^\w\sÀ-ú]'), '').trim(); // remove emoji
+    final ampla = widget.ampla;
+    final dica = widget.subtitulo;
 
-    return GestureDetector(
-      onTap: widget.onTap,
-      onTapDown: (_) => setState(() => _hovered = true),
-      onTapCancel: () => setState(() => _hovered = false),
-      onTapUp: (_) => setState(() => _hovered = false),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              widget.cor.withValues(alpha: 0.9),
-              widget.cor.withValues(alpha: 0.7),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: widget.cor.withValues(alpha: _hovered ? 0.5 : 0.3),
-              blurRadius: _hovered ? 16 : 10,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              AnimatedScale(
-                scale: _hovered ? 1.15 : 1.0,
-                duration: const Duration(milliseconds: 200),
-                child: Text(emoji, style: const TextStyle(fontSize: 56)),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                texto,
-                textAlign: TextAlign.center,
-                style: GoogleFonts.poppins(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 16,
-                  letterSpacing: 0.5,
-                  shadows: [
-                    Shadow(
-                      color: Colors.black.withValues(alpha: 0.3),
-                      offset: const Offset(1, 2),
-                      blurRadius: 3,
+    return Semantics(
+      button: true,
+      label: dica == null ? texto : '$texto. $dica',
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        onEnter: (_) => setState(() => _ponteiro = true),
+        onExit: (_) => setState(() => _ponteiro = false),
+        child: GestureDetector(
+          onTap: widget.onTap,
+          onTapDown: (_) => setState(() => _pressionado = true),
+          onTapCancel: () => setState(() => _pressionado = false),
+          onTapUp: (_) => setState(() => _pressionado = false),
+          child: AnimatedScale(
+            scale: _ativo && ampla ? 1.03 : 1,
+            duration: const Duration(milliseconds: 180),
+            curve: Curves.easeOut,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    widget.cor.withValues(alpha: ampla ? 0.95 : 0.9),
+                    widget.cor.withValues(alpha: ampla ? 0.72 : 0.7),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(ampla ? 22 : 24),
+                border: ampla
+                    ? Border.all(
+                        color:
+                            Colors.white.withValues(alpha: _ativo ? 0.9 : 0.45),
+                        width: _ativo ? 2 : 1.2,
+                      )
+                    : null,
+                boxShadow: [
+                  BoxShadow(
+                    color: widget.cor.withValues(
+                      alpha:
+                          _ativo ? (ampla ? 0.45 : 0.5) : (ampla ? 0.28 : 0.3),
                     ),
+                    blurRadius: _ativo ? (ampla ? 18 : 16) : 10,
+                    offset: Offset(0, _ativo && ampla ? 8 : 6),
+                  ),
+                ],
+              ),
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: ampla ? 14 : 0,
+                  vertical: ampla ? 12 : 0,
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    AnimatedScale(
+                      scale: _ativo ? 1.12 : 1.0,
+                      duration: const Duration(milliseconds: 200),
+                      child: ampla
+                          ? Container(
+                              width: 72,
+                              height: 72,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(
+                                  alpha: _ativo ? 0.32 : 0.2,
+                                ),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Text(
+                                emoji,
+                                style: const TextStyle(fontSize: 36),
+                              ),
+                            )
+                          : Text(
+                              emoji,
+                              style: const TextStyle(fontSize: 56),
+                            ),
+                    ),
+                    SizedBox(height: ampla ? 12 : 10),
+                    Text(
+                      texto,
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                        height: 1.15,
+                        letterSpacing: ampla ? 0.3 : 0.5,
+                        shadows: [
+                          Shadow(
+                            color: Colors.black.withValues(alpha: 0.3),
+                            offset: const Offset(1, 2),
+                            blurRadius: 3,
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (ampla && dica != null) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        dica,
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.poppins(
+                          color: Colors.white.withValues(alpha: 0.92),
+                          fontWeight: FontWeight.w500,
+                          fontSize: 12.5,
+                          height: 1.2,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
-            ],
+            ),
           ),
         ),
       ),

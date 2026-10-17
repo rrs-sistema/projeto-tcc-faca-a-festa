@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/core/utils/numeric_input.dart';
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:flutter_easyloading/flutter_easyloading.dart';
@@ -114,10 +115,12 @@ class _FornecedorServicoSheetState extends State<_FornecedorServicoSheet> {
 
     final vinculo = widget.vinculo;
     precoCtrl = TextEditingController(
-      text: vinculo?.preco.toStringAsFixed(2) ?? '',
+      text: vinculo == null ? '' : NumericInput.dinheiro(vinculo.preco),
     );
     promocaoCtrl = TextEditingController(
-      text: vinculo?.precoPromocao?.toStringAsFixed(2) ?? '',
+      text: vinculo?.precoPromocao == null
+          ? ''
+          : NumericInput.dinheiro(vinculo!.precoPromocao!),
     );
     urlController = TextEditingController();
     ativo = vinculo?.ativo ?? true;
@@ -213,6 +216,26 @@ class _FornecedorServicoSheetState extends State<_FornecedorServicoSheet> {
     setState(() => urlErro = null);
   }
 
+  List<T> _unicosPorId<T>(Iterable<T> fonte, String Function(T item) id) {
+    final vistos = <String>{};
+    final lista = <T>[];
+    for (final item in fonte) {
+      final chave = id(item);
+      if (chave.isEmpty || !vistos.add(chave)) continue;
+      lista.add(item);
+    }
+    return lista;
+  }
+
+  T? _naLista<T>(T? selecionado, List<T> lista, String Function(T item) id) {
+    if (selecionado == null) return null;
+    final chave = id(selecionado);
+    for (final item in lista) {
+      if (id(item) == chave) return item;
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     return DraggableScrollableSheet(
@@ -278,91 +301,126 @@ class _FornecedorServicoSheetState extends State<_FornecedorServicoSheet> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                DropdownButtonFormField<CategoriaServico>(
-                  value: categoriaSelecionada,
-                  decoration: _decor(
-                    'Categoria',
-                    Icons.category_outlined,
-                    obrigatorio: true,
-                  ),
-                  items: categoriaController.categorias
-                      .map((c) =>
-                          DropdownMenuItem(value: c, child: Text(c.nome)))
-                      .toList(),
-                  validator: (v) =>
-                      FormValidators.selecao(v, campo: 'a categoria'),
-                  onChanged: (val) async {
-                    setState(() {
-                      categoriaSelecionada = val;
-                      subcategoriaSelecionada = null;
-                      servicoSelecionado = null;
-                    });
-                    if (val != null) {
-                      await subcategoriaController
-                          .carregarSubcategorias(val.id);
-                      if (mounted) setState(() {});
-                    }
-                  },
-                ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<SubcategoriaServico>(
-                  value: subcategoriaSelecionada,
-                  decoration: _decor(
-                    'Subcategoria',
-                    Icons.list_alt_outlined,
-                    obrigatorio: true,
-                  ),
-                  isExpanded: true,
-                  items: categoriaSelecionada == null
-                      ? const []
-                      : subcategoriaController.subcategorias
-                          .where(
-                              (s) => s.idCategoria == categoriaSelecionada!.id)
-                          .map((s) =>
-                              DropdownMenuItem(value: s, child: Text(s.nome)))
-                          .toList(),
-                  validator: (v) {
-                    if (categoriaSelecionada == null) {
-                      return 'Selecione a categoria primeiro';
-                    }
-                    return FormValidators.selecao(v, campo: 'a subcategoria');
-                  },
-                  onChanged: categoriaSelecionada == null
-                      ? null
-                      : (val) {
+                Builder(builder: (context) {
+                  final categorias = _unicosPorId(
+                    categoriaController.categorias,
+                    (c) => c.id,
+                  );
+                  final categoriaValor = _naLista(
+                    categoriaSelecionada,
+                    categorias,
+                    (c) => c.id,
+                  );
+                  final subcategorias = categoriaValor == null
+                      ? <SubcategoriaServico>[]
+                      : _unicosPorId(
+                          subcategoriaController.subcategorias.where(
+                            (s) => s.idCategoria == categoriaValor.id,
+                          ),
+                          (s) => s.id,
+                        );
+                  final subcategoriaValor = _naLista(
+                    subcategoriaSelecionada,
+                    subcategorias,
+                    (s) => s.id,
+                  );
+                  final servicos = _unicosPorId(
+                    servicoController.servicos.where(
+                      (s) => s.idSubcategoria == subcategoriaValor?.id,
+                    ),
+                    (s) => s.id,
+                  );
+                  final servicoValor = _naLista(
+                    servicoSelecionado,
+                    servicos,
+                    (s) => s.id,
+                  );
+
+                  return Column(
+                    children: [
+                      DropdownButtonFormField<CategoriaServico>(
+                        value: categoriaValor,
+                        decoration: _decor(
+                          'Categoria',
+                          Icons.category_outlined,
+                          obrigatorio: true,
+                        ),
+                        items: categorias
+                            .map((c) =>
+                                DropdownMenuItem(value: c, child: Text(c.nome)))
+                            .toList(),
+                        validator: (v) =>
+                            FormValidators.selecao(v, campo: 'a categoria'),
+                        onChanged: (val) async {
                           setState(() {
-                            subcategoriaSelecionada = val;
+                            categoriaSelecionada = val;
+                            subcategoriaSelecionada = null;
                             servicoSelecionado = null;
                           });
+                          if (val != null) {
+                            await subcategoriaController
+                                .carregarSubcategorias(val.id);
+                            if (mounted) setState(() {});
+                          }
                         },
-                ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<ServicoProduto>(
-                  value: servicoSelecionado,
-                  decoration: _decor(
-                    'Serviço / Produto',
-                    Icons.work_outline_rounded,
-                    obrigatorio: true,
-                  ),
-                  items: servicoController.servicos
-                      .where((s) =>
-                          s.idSubcategoria == subcategoriaSelecionada?.id)
-                      .map((s) =>
-                          DropdownMenuItem(value: s, child: Text(s.nome)))
-                      .toList(),
-                  validator: (v) {
-                    if (subcategoriaSelecionada == null) {
-                      return 'Selecione a subcategoria primeiro';
-                    }
-                    return FormValidators.selecao(
-                      v,
-                      campo: 'o serviço / produto',
-                    );
-                  },
-                  onChanged: subcategoriaSelecionada == null
-                      ? null
-                      : (val) => setState(() => servicoSelecionado = val),
-                ),
+                      ),
+                      const SizedBox(height: 16),
+                      DropdownButtonFormField<SubcategoriaServico>(
+                        value: subcategoriaValor,
+                        decoration: _decor(
+                          'Subcategoria',
+                          Icons.list_alt_outlined,
+                          obrigatorio: true,
+                        ),
+                        isExpanded: true,
+                        items: subcategorias
+                            .map((s) =>
+                                DropdownMenuItem(value: s, child: Text(s.nome)))
+                            .toList(),
+                        validator: (v) {
+                          if (categoriaSelecionada == null) {
+                            return 'Selecione a categoria primeiro';
+                          }
+                          return FormValidators.selecao(v,
+                              campo: 'a subcategoria');
+                        },
+                        onChanged: categoriaValor == null
+                            ? null
+                            : (val) {
+                                setState(() {
+                                  subcategoriaSelecionada = val;
+                                  servicoSelecionado = null;
+                                });
+                              },
+                      ),
+                      const SizedBox(height: 16),
+                      DropdownButtonFormField<ServicoProduto>(
+                        value: servicoValor,
+                        decoration: _decor(
+                          'Serviço / Produto',
+                          Icons.work_outline_rounded,
+                          obrigatorio: true,
+                        ),
+                        items: servicos
+                            .map((s) =>
+                                DropdownMenuItem(value: s, child: Text(s.nome)))
+                            .toList(),
+                        validator: (v) {
+                          if (subcategoriaSelecionada == null) {
+                            return 'Selecione a subcategoria primeiro';
+                          }
+                          return FormValidators.selecao(
+                            v,
+                            campo: 'o serviço / produto',
+                          );
+                        },
+                        onChanged: subcategoriaValor == null
+                            ? null
+                            : (val) => setState(() => servicoSelecionado = val),
+                      ),
+                    ],
+                  );
+                }),
                 const SizedBox(height: 24),
                 Card(
                   elevation: 2,
@@ -596,6 +654,7 @@ class _FornecedorServicoSheetState extends State<_FornecedorServicoSheet> {
                     ),
                     style: TextButton.styleFrom(
                       foregroundColor: Colors.grey.shade400,
+                      iconColor: Colors.grey.shade400,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14)),

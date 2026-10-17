@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'package:app_faca_festa/core/legal/politica_privacidade.dart';
 import 'package:app_faca_festa/presentation/modules/legal/pages/central_privacidade_screen.dart';
@@ -79,6 +80,25 @@ class PrivacidadeScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
+            OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: primary,
+                iconColor: primary,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                side: BorderSide(color: primary.withValues(alpha: 0.45)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              ),
+              onPressed: () => launchUrl(
+                Uri.parse(PoliticaPrivacidade.urlPublica),
+                mode: LaunchMode.externalApplication,
+              ),
+              icon: const Icon(Icons.open_in_new_rounded),
+              label: Text(
+                'Abrir a política no site',
+                style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+              ),
+            ),
+            const SizedBox(height: 16),
             Text(
               PoliticaPrivacidade.introducao,
               style: GoogleFonts.poppins(
@@ -92,6 +112,7 @@ class PrivacidadeScreen extends StatelessWidget {
               style: FilledButton.styleFrom(
                 backgroundColor: primary,
                 foregroundColor: onPrimary,
+                iconColor: onPrimary,
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               ),

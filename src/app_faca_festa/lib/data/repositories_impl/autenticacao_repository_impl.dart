@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/core/services/update_operations.dart';
 import 'package:app_faca_festa/domain/entities/resultados_operacao.dart';
 import 'package:app_faca_festa/domain/repositories/autenticacao_repository.dart';
 import '../datasources/remote/autenticacao_remote_datasource.dart';
@@ -39,68 +40,80 @@ class AutenticacaoRepositoryImpl implements AutenticacaoRepository {
   bool get sessaoVisitanteConvite => remote.sessaoVisitanteConvite;
 
   @override
-  Future<void> entrarAnonimamente() async {
-    try {
-      await remote.entrarAnonimamente();
-    } on AutenticacaoRemoteException catch (erro) {
-      throw AutenticacaoException(erro.codigo, erro.mensagem);
-    }
+  Future<void> entrarAnonimamente() {
+    return UpdateOperations.run(() async {
+      try {
+        await remote.entrarAnonimamente();
+      } on AutenticacaoRemoteException catch (erro) {
+        throw AutenticacaoException(erro.codigo, erro.mensagem);
+      }
+    });
   }
 
   @override
-  Future<void> entrarComTokenCustomizado(String token) async {
-    try {
-      await remote.entrarComTokenCustomizado(token);
-    } on AutenticacaoRemoteException catch (erro) {
-      throw AutenticacaoException(erro.codigo, erro.mensagem);
-    }
+  Future<void> entrarComTokenCustomizado(String token) {
+    return UpdateOperations.run(() async {
+      try {
+        await remote.entrarComTokenCustomizado(token);
+      } on AutenticacaoRemoteException catch (erro) {
+        throw AutenticacaoException(erro.codigo, erro.mensagem);
+      }
+    });
   }
 
   @override
   Future<void> entrar({
     required String email,
     required String senha,
-  }) async {
-    try {
-      await remote.entrar(email: email, senha: senha);
-    } on AutenticacaoRemoteException catch (erro) {
-      throw AutenticacaoException(erro.codigo, erro.mensagem);
-    }
+  }) {
+    return UpdateOperations.run(() async {
+      try {
+        await remote.entrar(email: email, senha: senha);
+      } on AutenticacaoRemoteException catch (erro) {
+        throw AutenticacaoException(erro.codigo, erro.mensagem);
+      }
+    });
   }
 
   @override
-  Future<bool> entrarComGoogle() async {
-    try {
-      return await remote.entrarComGoogle();
-    } on AutenticacaoRemoteException catch (erro) {
-      if (autenticacaoFoiCancelada(erro.codigo)) {
-        return false;
+  Future<bool> entrarComGoogle() {
+    return UpdateOperations.run(() async {
+      try {
+        return await remote.entrarComGoogle();
+      } on AutenticacaoRemoteException catch (erro) {
+        if (autenticacaoFoiCancelada(erro.codigo)) {
+          return false;
+        }
+        throw AutenticacaoException(erro.codigo, erro.mensagem);
       }
-      throw AutenticacaoException(erro.codigo, erro.mensagem);
-    }
+    });
   }
 
   @override
   Future<String> criarUsuario({
     required String email,
     required String senha,
-  }) async {
-    try {
-      return await remote.criarUsuario(email: email, senha: senha);
-    } on AutenticacaoRemoteException catch (erro) {
-      throw AutenticacaoException(erro.codigo, erro.mensagem);
-    }
+  }) {
+    return UpdateOperations.run(() async {
+      try {
+        return await remote.criarUsuario(email: email, senha: senha);
+      } on AutenticacaoRemoteException catch (erro) {
+        throw AutenticacaoException(erro.codigo, erro.mensagem);
+      }
+    });
   }
 
   @override
   Future<void> solicitarCodigoRedefinicaoSenha({
     required String email,
-  }) async {
-    try {
-      await remote.solicitarCodigoRedefinicaoSenha(email: email);
-    } on AutenticacaoRemoteException catch (erro) {
-      throw AutenticacaoException(erro.codigo, erro.mensagem);
-    }
+  }) {
+    return UpdateOperations.run(() async {
+      try {
+        await remote.solicitarCodigoRedefinicaoSenha(email: email);
+      } on AutenticacaoRemoteException catch (erro) {
+        throw AutenticacaoException(erro.codigo, erro.mensagem);
+      }
+    });
   }
 
   @override
@@ -108,78 +121,94 @@ class AutenticacaoRepositoryImpl implements AutenticacaoRepository {
     required String email,
     required String codigo,
     required String novaSenha,
-  }) async {
-    try {
-      await remote.redefinirSenhaComCodigo(
-        email: email,
-        codigo: codigo,
-        novaSenha: novaSenha,
-      );
-    } on AutenticacaoRemoteException catch (erro) {
-      throw AutenticacaoException(erro.codigo, erro.mensagem);
-    }
+  }) {
+    return UpdateOperations.run(() async {
+      try {
+        await remote.redefinirSenhaComCodigo(
+          email: email,
+          codigo: codigo,
+          novaSenha: novaSenha,
+        );
+      } on AutenticacaoRemoteException catch (erro) {
+        throw AutenticacaoException(erro.codigo, erro.mensagem);
+      }
+    });
   }
 
   @override
-  Future<InicioTotpMfa> iniciarTotpMfa() async {
-    try {
-      return await remote.iniciarTotpMfa();
-    } on AutenticacaoRemoteException catch (erro) {
-      throw AutenticacaoException(erro.codigo, erro.mensagem);
-    }
+  Future<InicioTotpMfa> iniciarTotpMfa() {
+    return UpdateOperations.run(() async {
+      try {
+        return await remote.iniciarTotpMfa();
+      } on AutenticacaoRemoteException catch (erro) {
+        throw AutenticacaoException(erro.codigo, erro.mensagem);
+      }
+    });
   }
 
   @override
-  Future<CodigoEmailMfa> solicitarCodigoEmailMfa() async {
-    try {
-      return await remote.solicitarCodigoEmailMfa();
-    } on AutenticacaoRemoteException catch (erro) {
-      throw AutenticacaoException(erro.codigo, erro.mensagem);
-    }
+  Future<CodigoEmailMfa> solicitarCodigoEmailMfa() {
+    return UpdateOperations.run(() async {
+      try {
+        return await remote.solicitarCodigoEmailMfa();
+      } on AutenticacaoRemoteException catch (erro) {
+        throw AutenticacaoException(erro.codigo, erro.mensagem);
+      }
+    });
   }
 
   @override
-  Future<void> confirmarTotpMfa(String codigo) async {
-    try {
-      await remote.confirmarTotpMfa(codigo);
-    } on AutenticacaoRemoteException catch (erro) {
-      throw AutenticacaoException(erro.codigo, erro.mensagem);
-    }
+  Future<void> confirmarTotpMfa(String codigo) {
+    return UpdateOperations.run(() async {
+      try {
+        await remote.confirmarTotpMfa(codigo);
+      } on AutenticacaoRemoteException catch (erro) {
+        throw AutenticacaoException(erro.codigo, erro.mensagem);
+      }
+    });
   }
 
   @override
-  Future<void> confirmarEmailMfa(String codigo) async {
-    try {
-      await remote.confirmarEmailMfa(codigo);
-    } on AutenticacaoRemoteException catch (erro) {
-      throw AutenticacaoException(erro.codigo, erro.mensagem);
-    }
+  Future<void> confirmarEmailMfa(String codigo) {
+    return UpdateOperations.run(() async {
+      try {
+        await remote.confirmarEmailMfa(codigo);
+      } on AutenticacaoRemoteException catch (erro) {
+        throw AutenticacaoException(erro.codigo, erro.mensagem);
+      }
+    });
   }
 
   @override
-  Future<void> verificarTotpMfa(String codigo) async {
-    try {
-      await remote.verificarTotpMfa(codigo);
-    } on AutenticacaoRemoteException catch (erro) {
-      throw AutenticacaoException(erro.codigo, erro.mensagem);
-    }
+  Future<void> verificarTotpMfa(String codigo) {
+    return UpdateOperations.run(() async {
+      try {
+        await remote.verificarTotpMfa(codigo);
+      } on AutenticacaoRemoteException catch (erro) {
+        throw AutenticacaoException(erro.codigo, erro.mensagem);
+      }
+    });
   }
 
   @override
-  Future<void> verificarEmailMfa(String codigo) async {
-    try {
-      await remote.verificarEmailMfa(codigo);
-    } on AutenticacaoRemoteException catch (erro) {
-      throw AutenticacaoException(erro.codigo, erro.mensagem);
-    }
+  Future<void> verificarEmailMfa(String codigo) {
+    return UpdateOperations.run(() async {
+      try {
+        await remote.verificarEmailMfa(codigo);
+      } on AutenticacaoRemoteException catch (erro) {
+        throw AutenticacaoException(erro.codigo, erro.mensagem);
+      }
+    });
   }
 
   @override
-  Future<void> sair() async {
-    try {
-      await remote.sair();
-    } on AutenticacaoRemoteException catch (erro) {
-      throw AutenticacaoException(erro.codigo, erro.mensagem);
-    }
+  Future<void> sair() {
+    return UpdateOperations.run(() async {
+      try {
+        await remote.sair();
+      } on AutenticacaoRemoteException catch (erro) {
+        throw AutenticacaoException(erro.codigo, erro.mensagem);
+      }
+    });
   }
 }

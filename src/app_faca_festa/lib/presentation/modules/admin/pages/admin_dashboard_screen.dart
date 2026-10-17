@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'package:app_faca_festa/presentation/widgets/desktop_update_overlay.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -134,6 +135,7 @@ class AdminDashboardScreen extends StatelessWidget {
             ],
           ),
           actions: [
+            const DesktopUpdateMenuButton(color: Colors.white),
             IconButton(
               tooltip: 'Atualizar indicadores',
               icon: const Icon(Icons.refresh_rounded, color: Colors.white),

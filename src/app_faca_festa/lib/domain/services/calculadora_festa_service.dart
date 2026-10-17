@@ -6,94 +6,9 @@ import 'package:app_faca_festa/domain/entities/estimativa_financeira.dart';
 class CalculadoraFestaService {
   const CalculadoraFestaService();
 
-  static List<ItemEstimativaFinanceira> get itensPadraoEstimativa => const [
-        ItemEstimativaFinanceira(
-          id: 'salgadinhos',
-          categoria: 'Recepção',
-          nome: 'Salgadinhos',
-          tipoItem: 'comida',
-          publicoAlvo: 'todos',
-          unidade: UnidadeEstimativa.unidade,
-          quantidadePorConvidadoEquivalente: 12,
-          valorUnitarioMedio: 0.90,
-        ),
-        ItemEstimativaFinanceira(
-          id: 'docinhos',
-          categoria: 'Recepção',
-          nome: 'Docinhos',
-          tipoItem: 'sobremesa',
-          publicoAlvo: 'todos',
-          unidade: UnidadeEstimativa.unidade,
-          quantidadePorConvidadoEquivalente: 6,
-          valorUnitarioMedio: 1.20,
-        ),
-        ItemEstimativaFinanceira(
-          id: 'bolo',
-          categoria: 'Recepção',
-          nome: 'Bolo',
-          tipoItem: 'bolo',
-          publicoAlvo: 'todos',
-          unidade: UnidadeEstimativa.quilo,
-          quantidadePorConvidadoEquivalente: 0.10,
-          valorUnitarioMedio: 80.00,
-        ),
-        ItemEstimativaFinanceira(
-          id: 'refrigerante',
-          categoria: 'Bebidas',
-          nome: 'Refrigerante',
-          tipoItem: 'bebida',
-          publicoAlvo: 'todos',
-          unidade: UnidadeEstimativa.litro,
-          quantidadePorConvidadoEquivalente: 0.60,
-          valorUnitarioMedio: 8.00,
-        ),
-        ItemEstimativaFinanceira(
-          id: 'agua',
-          categoria: 'Bebidas',
-          nome: 'Água',
-          tipoItem: 'bebida',
-          publicoAlvo: 'todos',
-          unidade: UnidadeEstimativa.litro,
-          quantidadePorConvidadoEquivalente: 0.30,
-          valorUnitarioMedio: 3.00,
-        ),
-        ItemEstimativaFinanceira(
-          id: 'suco',
-          categoria: 'Bebidas',
-          nome: 'Suco',
-          tipoItem: 'bebida',
-          publicoAlvo: 'todos',
-          unidade: UnidadeEstimativa.litro,
-          quantidadePorConvidadoEquivalente: 0.25,
-          valorUnitarioMedio: 7.00,
-          selecionado: false,
-        ),
-        ItemEstimativaFinanceira(
-          id: 'descartaveis',
-          categoria: 'Estrutura',
-          nome: 'Descartáveis',
-          tipoItem: 'descartavel',
-          publicoAlvo: 'todos',
-          unidade: UnidadeEstimativa.pacote,
-          quantidadePorConvidadoEquivalente: 0.08,
-          valorUnitarioMedio: 12.00,
-        ),
-        ItemEstimativaFinanceira(
-          id: 'lembrancinhas',
-          categoria: 'Lembrancinhas',
-          nome: 'Lembrancinhas',
-          tipoItem: 'outros',
-          publicoAlvo: 'crianca',
-          unidade: UnidadeEstimativa.unidade,
-          quantidadePorConvidadoEquivalente: 0.60,
-          valorUnitarioMedio: 5.00,
-          selecionado: false,
-        ),
-      ];
-
   EstimativaFinanceira calcularEstimativa({
     required CalculadoraFesta calculo,
-    List<ItemEstimativaFinanceira>? itensBase,
+    required List<ItemEstimativaFinanceira> itensBase,
   }) {
     final convidados = ConvidadosEquivalentes(
       adultos: calculo.totalAdultos,
@@ -105,7 +20,7 @@ class CalculadoraFestaService {
       idEvento: calculo.idEvento,
       perfil: calculo.perfilFesta,
       convidados: convidados,
-      itens: itensBase ?? itensPadraoEstimativa,
+      itens: itensBase,
       dataSimulacao: calculo.dataAtualizacao,
       duracaoHoras: calculo.duracaoHoras,
       margemPersonalizada: calculo.margemPersonalizada,
@@ -114,7 +29,7 @@ class CalculadoraFestaService {
 
   List<CalculadoraFestaItem> calcularItens({
     required CalculadoraFesta calculo,
-    List<ItemEstimativaFinanceira>? itensBase,
+    required List<ItemEstimativaFinanceira> itensBase,
   }) {
     if (calculo.totalConvidados <= 0) return [];
 
@@ -125,8 +40,6 @@ class CalculadoraFestaService {
 
     if (!estimativa.podeCalcular) return [];
 
-    final convidadosEquivalentes =
-        estimativa.convidados.totalEquivalenteArredondado;
     final margem = estimativa.margemPersonalizada ??
         estimativa.perfil.margemSegurancaPadrao;
 
@@ -154,11 +67,38 @@ class CalculadoraFestaService {
         tipoItem: item.tipoItem,
         publicoAlvo: item.publicoAlvo,
         quantidade: quantidade.toDouble(),
+        quantidadeNecessaria: item.calcularQuantidadeComMargem(
+            convidados: estimativa.convidados,
+            perfil: estimativa.perfil,
+            duracaoHoras: estimativa.duracaoHoras,
+            margemPersonalizada: estimativa.margemPersonalizada),
+        idCardapio: item.premissas['id_cardapio']?.toString() ?? '',
+        idItemCardapio: item.premissas['id_item_cardapio']?.toString() ?? '',
         unidade: item.unidade.label,
         regraAplicada:
-            '${item.quantidadePorConvidadoEquivalente.g} ${item.unidade.label} por convidado equivalente '
-            'x $convidadosEquivalentes convidados equivalentes '
-            '+ ${(margem * 100).round()}% de margem. Perfil ${estimativa.perfil.nome}.',
+            '${item.porcaoReferenciaFormatada} por ${item.descartavel ? 'pessoa' : 'adulto equivalente'} por serviço.\n'
+            '${item.publicoEfetivo(estimativa.convidados).resumoInformado}. '
+            'Público ${item.publicoAlvo}: ${item.publicoEquivalente(estimativa.convidados).g} ${item.descartavel ? 'pessoas' : 'equivalentes'}. '
+            '${item.descartavel ? '' : 'Pesos: adulto 1; criança ${item.pesoCrianca.g}; bebê ${item.pesoBebe.g} (premissas de planejamento). '}\n'
+            'Conta: ${item.publicoEquivalente(estimativa.convidados).g} × '
+            '${item.quantidadePorConvidadoEquivalente.g} × '
+            '${item.numeroServicos.g} serviço(s) × '
+            '${item.fatorComposicao.g} participação × '
+            '${item.fatorPerfil(estimativa.perfil).g} perfil × '
+            '${item.fatorDuracaoAplicado(estimativa.duracaoHoras).g} duração ÷ '
+            '${item.rendimento.g} rendimento × ${(1 + margem).g} reserva '
+            '= ${quantidade.g} ${item.unidade.label} após arredondamento.\n'
+            '${item.ajustarPorDuracao && !item.descartavel ? 'Ajuste por duração ativado: ${estimativa.duracaoHoras}h; escala heurística do aplicativo.' : 'A duração da festa não multiplica esta porção; informe o número de serviços se houver repetição.'}\n'
+            'Perfil ${estimativa.perfil.nome}: ajuste de quantidade e ${(margem * 100).round()}% de reserva; não é medida de necessidade alimentar. '
+            'Estado: ${item.premissas['estado'] ?? 'informado pelo organizador'}. '
+            'Papel: ${item.premissas['papel_na_refeicao'] ?? 'a confirmar'}. '
+            '${item.premissas['origem'] == 'consumo_observado' ? 'Base retrospectiva: disponibilizado menos sobra não servida; o desperdício medido nos pratos foi preservado na porção de preparo. ' : ''}'
+            '${item.premissas['ajustar_por_perfil'] == false ? 'Esta referência não recebe multiplicador de quantidade do perfil; a reserva continua aplicada. ' : ''}'
+            '${item.premissas['unidade_original'] != null ? 'Unidade proposta ${item.unidade.label} para item inicialmente em ${item.premissas['unidade_original']}, ainda sem quantidade final. ' : ''}'
+            'Participação ${(item.fatorComposicao * 100).round()}%${item.dividirGrupo ? ' (divisão ativada)' : ' (sem divisão automática)'}; rendimento ${item.rendimento}; '
+            'embalagem ${item.tamanhoEmbalagem > 0 ? '${item.tamanhoEmbalagem} ${item.unidade.label}' : 'avulso'}. '
+            'Referência: ${item.premissas['fonte'] ?? 'regra informada pelo organizador'}${item.premissas['revisada_pelo_organizador'] == true ? ' (revisada pelo organizador)' : ''}. '
+            'Quantidade de compra arredondada conforme a unidade.',
         valorUnitarioMedio: item.valorUnitarioMedio,
         custoEstimado: custo,
         quantidadePorConvidadoEquivalente:
@@ -169,7 +109,7 @@ class CalculadoraFestaService {
 
   double calcularCustoTotal({
     required CalculadoraFesta calculo,
-    List<ItemEstimativaFinanceira>? itensBase,
+    required List<ItemEstimativaFinanceira> itensBase,
   }) {
     final estimativa = calcularEstimativa(
       calculo: calculo,
@@ -197,6 +137,8 @@ class CalculadoraFestaService {
 extension _DoubleRuleExtension on double {
   String get g {
     if (this == roundToDouble()) return toInt().toString();
-    return toStringAsFixed(2).replaceAll('.', ',');
+    return toStringAsFixed(4)
+        .replaceFirst(RegExp(r'0+$'), '')
+        .replaceAll('.', ',');
   }
 }

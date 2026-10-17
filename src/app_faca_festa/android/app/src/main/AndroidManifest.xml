@@ -47,7 +47,7 @@
     </queries>
 
     <application
-        android:label="Faça a Festa"
+        android:label="${appLabel}"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon"
         android:enableOnBackInvokedCallback="true">

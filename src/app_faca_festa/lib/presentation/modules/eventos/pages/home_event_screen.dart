@@ -36,6 +36,7 @@ import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/forne
 import 'package:app_faca_festa/presentation/modules/inspiracao/controllers/inspiracao_admin_controller.dart';
 import 'package:app_faca_festa/presentation/modules/inspiracao/controllers/inspiracao_controller.dart';
 import 'package:app_faca_festa/presentation/modules/usuario/controllers/usuario_controller.dart';
+import 'package:app_faca_festa/domain/entities/evento.dart';
 import 'package:app_faca_festa/domain/entities/tipo_evento.dart';
 import 'package:app_faca_festa/presentation/widgets/menu_drawer_faca_festa.dart';
 import 'package:app_faca_festa/presentation/widgets/festa_bottom_bar.dart';
@@ -53,6 +54,8 @@ import 'package:app_faca_festa/presentation/modules/convidado/pages/convidado_pa
 import 'contador_evento_screen.dart';
 import 'package:app_faca_festa/presentation/modules/checklist/pages/tarefas_screen.dart';
 import 'package:app_faca_festa/presentation/modules/calculadora/pages/calculadora_festa_screen.dart';
+
+const _larguraDesktop = 1360.0;
 
 class HomeEventScreen extends StatefulWidget {
   const HomeEventScreen({
@@ -122,26 +125,35 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
   OrcamentoController get orcamentoController => widget.orcamentoController;
   TarefaController get tarefaController => widget.tarefaController;
   EventoController get eventoController => widget.eventoController;
-  HomeEventNavController get homeEventNavController => widget.homeEventNavController;
-  FornecedorLocalizacaoController get fornecedorController => widget.fornecedorController;
-  FornecedorController get fornecedorCadastroController => widget.fornecedorCadastroController;
+  HomeEventNavController get homeEventNavController =>
+      widget.homeEventNavController;
+  FornecedorLocalizacaoController get fornecedorController =>
+      widget.fornecedorController;
+  FornecedorController get fornecedorCadastroController =>
+      widget.fornecedorCadastroController;
   FornecedorRecomendacaoController get fornecedorRecomendacaoController =>
       widget.fornecedorRecomendacaoController;
-  AvaliacaoServicoController get avaliacaoController => widget.avaliacaoController;
+  AvaliacaoServicoController get avaliacaoController =>
+      widget.avaliacaoController;
   EventThemeController get theme => widget.themeController;
   CotacaoController get cotacaoController => widget.cotacaoController;
-  SolicitacoesController get solicitacoesController => widget.solicitacoesController;
+  SolicitacoesController get solicitacoesController =>
+      widget.solicitacoesController;
   InspiracaoController get inspiracaoController => widget.inspiracaoController;
   UsuarioController get usuarioController => widget.usuarioController;
-  EventoCadastroController get eventoCadastroController => widget.eventoCadastroController;
-  GrupoConvidadoController get grupoConvidadoController => widget.grupoConvidadoController;
+  EventoCadastroController get eventoCadastroController =>
+      widget.eventoCadastroController;
+  GrupoConvidadoController get grupoConvidadoController =>
+      widget.grupoConvidadoController;
   CardapioController get cardapioController => widget.cardapioController;
-  CalculadoraFestaController get calculadoraController => widget.calculadoraController;
+  CalculadoraFestaController get calculadoraController =>
+      widget.calculadoraController;
   CalculadoraItensAdminController get calculadoraItensAdminController =>
       widget.calculadoraItensAdminController;
   FornecedorMigracaoAdminController get fornecedorMigracaoAdminController =>
       widget.fornecedorMigracaoAdminController;
-  InspiracaoAdminController get inspiracaoAdminController => widget.inspiracaoAdminController;
+  InspiracaoAdminController get inspiracaoAdminController =>
+      widget.inspiracaoAdminController;
   TemaFestaController get temaFestaController => widget.temaFestaController;
 
   @override
@@ -186,7 +198,9 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
   }
 
   Future<void> _abrirNovaTarefa(EventThemeController theme) async {
-    await tarefaController.carregarUsuarios();
+    await tarefaController.carregarUsuarios(
+      idEvento: eventoController.eventoAtualEntidade?.idEvento,
+    );
     if (!mounted) return;
     final eventoId = eventoController.eventoAtualEntidade?.idEvento ?? '';
     if (eventoId.isEmpty) return;
@@ -196,8 +210,8 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
       idUsuarioLogado: appController.usuarioLogado.value?.idUsuario,
       idEvento: eventoId,
       usuarios: [
-        ...convidadoController.convidados,
         ...tarefaController.usuarios,
+        ...convidadoController.convidados,
       ],
       onSave: (titulo, descricao, data, usuario) async {
         await tarefaController.adicionarTarefa(
@@ -214,7 +228,9 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
   }
 
   Future<void> _abrirTarefa(EventThemeController theme, Tarefa tarefa) async {
-    await tarefaController.carregarUsuarios();
+    await tarefaController.carregarUsuarios(
+      idEvento: eventoController.eventoAtualEntidade?.idEvento,
+    );
     if (!mounted) return;
     final responsavel = _responsavelDaTarefa(tarefa);
     await showTarefaDialog(
@@ -227,8 +243,8 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
       dataInicial: tarefa.dataPrevista,
       responsavelInicial: responsavel,
       usuarios: [
-        ...convidadoController.convidados,
         ...tarefaController.usuarios,
+        ...convidadoController.convidados,
       ],
       isEdit: true,
       onSave: (titulo, descricao, data, usuario) async {
@@ -307,41 +323,61 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
     return null;
   }
 
-  Widget _buildProximasTarefas(EventThemeController theme) {
-    return SliverToBoxAdapter(
-      child: Obx(() {
-        final agora = DateTime.now();
-        final pendentesLista = tarefaController.tarefasPendentesOrdenadas;
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(16, 18, 16, 0),
-          child: ProximasTarefasFaixa(
-            tarefas: pendentesLista.take(3).toList(),
-            total: tarefaController.total,
-            pendentes: tarefaController.pendentes,
-            atrasadas: HomeOrganizadorCopy.contarAtrasadas(
-              pendentesLista.map((tarefa) => tarefa.dataPrevista),
-              agora,
-            ),
-            primary: theme.primaryColor.value,
-            nomesResponsavel: _nomesResponsavel(),
-            onVerTodas: () => _abrirListaTarefas(theme),
-            onNova: () => _abrirNovaTarefa(theme),
-            onConcluir: _concluirTarefa,
-            onAbrir: (tarefa) => _abrirTarefa(theme, tarefa),
-            agora: agora,
+  Widget _buildProximasTarefas(
+    EventThemeController theme, {
+    bool comoSliver = true,
+    EdgeInsetsGeometry padding = const EdgeInsets.fromLTRB(16, 18, 16, 0),
+  }) {
+    final faixa = Obx(() {
+      final agora = DateTime.now();
+      final pendentesLista = tarefaController.tarefasPendentesOrdenadas;
+      return Padding(
+        padding: padding,
+        child: ProximasTarefasFaixa(
+          tarefas: pendentesLista.take(3).toList(),
+          total: tarefaController.total,
+          pendentes: tarefaController.pendentes,
+          atrasadas: HomeOrganizadorCopy.contarAtrasadas(
+            pendentesLista.map((tarefa) => tarefa.dataPrevista),
+            agora,
           ),
-        );
-      }),
-    );
+          primary: theme.primaryColor.value,
+          nomesResponsavel: _nomesResponsavel(),
+          onVerTodas: () => _abrirListaTarefas(theme),
+          onNova: () => _abrirNovaTarefa(theme),
+          onConcluir: _concluirTarefa,
+          onAbrir: (tarefa) => _abrirTarefa(theme, tarefa),
+          agora: agora,
+        ),
+      );
+    });
+    if (!comoSliver) return faixa;
+    return SliverToBoxAdapter(child: faixa);
   }
 
-  void _abrirInspiracao(EventThemeController theme) {
+  Future<void> _abrirInspiracao(EventThemeController theme) async {
     final evento = eventoController.eventoAtualEntidade;
-    final tipo = eventoController.tipoEventoAtualEntidade ??
-        const TipoEvento(idTipoEvento: '1', nome: 'Evento');
+    if (evento == null || evento.idTipoEvento.trim().isEmpty) {
+      Get.snackbar('Inspirações', 'Selecione um evento com tipo cadastrado.');
+      return;
+    }
+    if (eventoController.tipoEventoAtualEntidade?.idTipoEvento !=
+        evento.idTipoEvento) {
+      await eventoController.buscarTipoEvento(evento.idTipoEvento);
+    }
+    if (!mounted ||
+        eventoController.eventoAtualEntidade?.idEvento != evento.idEvento) {
+      return;
+    }
+    final tipo = eventoController.tipoEventoAtualEntidade;
+    if (tipo == null || tipo.idTipoEvento != evento.idTipoEvento) {
+      Get.snackbar('Inspirações',
+          'Não foi possível carregar o tipo deste evento. Tente novamente.');
+      return;
+    }
     Get.to(
       () => InspiracaoScreen(
-        key: ValueKey('inspiracao-${evento?.idEvento ?? 'sem-evento'}'),
+        key: ValueKey('inspiracao-${evento.idEvento}'),
         tipoEvento: tipo,
         controller: inspiracaoController,
         themeController: theme,
@@ -352,7 +388,7 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
         eventoController: eventoController,
         appController: appController,
         cotacoes: cotacaoController.gerenciarCotacoes,
-        eventoId: evento?.idEvento,
+        eventoId: evento.idEvento,
         userId: appController.usuarioLogado.value?.idUsuario,
       ),
     );
@@ -418,7 +454,8 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
             calculadoraController: calculadoraController,
             calculadoraItensAdminController: calculadoraItensAdminController,
             cardapioController: cardapioController,
-            fornecedorMigracaoAdminController: fornecedorMigracaoAdminController,
+            fornecedorMigracaoAdminController:
+                fornecedorMigracaoAdminController,
             inspiracaoAdminController: inspiracaoAdminController,
             temaFestaController: temaFestaController,
             onAbrirFornecedores: homeEventNavController.irParaFornecedores,
@@ -492,7 +529,21 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
     });
   }
 
+  Widget _faixa(Widget sliver, bool telaAmplia) {
+    if (!telaAmplia) return sliver;
+    final sobra = MediaQuery.sizeOf(context).width - _larguraDesktop;
+    if (sobra <= 0) return sliver;
+    return SliverPadding(
+      padding: EdgeInsets.symmetric(horizontal: sobra / 2),
+      sliver: sliver,
+    );
+  }
+
   Widget _buildHome(EventThemeController theme) {
+    final larguraJanela = MediaQuery.sizeOf(context).width;
+    final telaAmplia = larguraJanela >= 650;
+    final resumoLadoALado = larguraJanela >= 900;
+
     return Obx(() {
       theme.primaryColor.value;
       theme.secondaryColor.value;
@@ -515,67 +566,111 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
         value: overlay,
         child: Column(
           children: [
-            buildAnimatedHeader(
-              context,
-              eventoController: eventoController,
-              theme: theme,
-              onAbrirMenu: _abrirMenu,
-            ),
+            if (telaAmplia)
+              Align(
+                alignment: Alignment.topCenter,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: _larguraDesktop),
+                  child: buildAnimatedHeader(
+                    context,
+                    eventoController: eventoController,
+                    theme: theme,
+                    onAbrirMenu: _abrirMenu,
+                    contador: resumoLadoALado
+                        ? _contadorEvento(eventoModel, tipoEventoModel, theme)
+                        : null,
+                  ),
+                ),
+              )
+            else
+              buildAnimatedHeader(
+                context,
+                eventoController: eventoController,
+                theme: theme,
+                onAbrirMenu: _abrirMenu,
+              ),
             Expanded(
               child: CustomScrollView(
                 controller: _scrollControllerHome,
                 slivers: [
-                  SliverPersistentHeader(
-                    pinned: true,
-                    floating: false,
-                    delegate: ContadorEventoHeaderDelegate(
-                      scrollController: _scrollControllerHome,
-                      child: ContadorEventoScreen(
-                        key: ValueKey('contador-${eventoModel.idEvento}'),
-                        dataEvento: eventoModel.data,
-                        tipoEvento: tipoEventoModel?.nome ?? eventoModel.nomeEvento,
-                        themeController: theme,
-                        scrollController: _scrollControllerHome,
+                  if (!resumoLadoALado)
+                    _faixa(
+                      SliverPersistentHeader(
+                        pinned: true,
+                        floating: false,
+                        delegate: ContadorEventoHeaderDelegate(
+                          scrollController: _scrollControllerHome,
+                          child: _contadorEvento(
+                            eventoModel,
+                            tipoEventoModel,
+                            theme,
+                          ),
+                        ),
                       ),
+                      telaAmplia,
                     ),
-                  ),
-                  _buildDashboardOverview(theme),
-                  _buildBudgetChart(
-                    eventoController,
-                    orcamentoController.totalCustoEstimado,
-                    theme,
-                    onAbrir: homeEventNavController.irParaOrcamento,
-                  ),
-                  _buildQuickActions(
-                    theme: theme,
-                    convidadoController: convidadoController,
-                    orcamentoController: orcamentoController,
-                    cotacaoController: cotacaoController,
-                    tarefaController: tarefaController,
-                    eventoController: eventoController,
-                    homeEventNavController: homeEventNavController,
-                    appController: appController,
-                    fornecedorController: fornecedorController,
-                    fornecedorCadastroController: fornecedorCadastroController,
-                    fornecedorRecomendacaoController: fornecedorRecomendacaoController,
-                    avaliacaoController: avaliacaoController,
-                    solicitacoesController: solicitacoesController,
-                    grupoConvidadoController: grupoConvidadoController,
-                    cardapioController: cardapioController,
-                    calculadoraController: calculadoraController,
-                    fornecedorMigracaoAdminController: fornecedorMigracaoAdminController,
-                  ),
-                  _buildSuppliersCarousel(
-                    fornecedorController,
-                    theme,
-                    cotacaoController: cotacaoController,
-                    fornecedorCadastroController: fornecedorCadastroController,
-                    avaliacaoController: avaliacaoController,
-                    eventoController: eventoController,
-                    appController: appController,
-                    onVerTodos: homeEventNavController.irParaFornecedores,
-                  ),
-                  _buildProximasTarefas(theme),
+                  if (resumoLadoALado)
+                    _faixa(_buildPainelDesktop(theme), true)
+                  else ...[
+                    _faixa(
+                      _buildDashboardOverview(
+                        theme,
+                        agruparIndicadores: telaAmplia,
+                      ),
+                      telaAmplia,
+                    ),
+                    _faixa(
+                      _buildBudgetChart(
+                        eventoController,
+                        orcamentoController.totalCustoEstimado,
+                        theme,
+                        onAbrir: homeEventNavController.irParaOrcamento,
+                      ),
+                      telaAmplia,
+                    ),
+                    _faixa(
+                      _buildQuickActions(
+                        theme: theme,
+                        convidadoController: convidadoController,
+                        orcamentoController: orcamentoController,
+                        cotacaoController: cotacaoController,
+                        tarefaController: tarefaController,
+                        eventoController: eventoController,
+                        homeEventNavController: homeEventNavController,
+                        appController: appController,
+                        fornecedorController: fornecedorController,
+                        fornecedorCadastroController:
+                            fornecedorCadastroController,
+                        fornecedorRecomendacaoController:
+                            fornecedorRecomendacaoController,
+                        avaliacaoController: avaliacaoController,
+                        solicitacoesController: solicitacoesController,
+                        grupoConvidadoController: grupoConvidadoController,
+                        cardapioController: cardapioController,
+                        calculadoraController: calculadoraController,
+                        fornecedorMigracaoAdminController:
+                            fornecedorMigracaoAdminController,
+                      ),
+                      telaAmplia,
+                    ),
+                  ],
+                  if (!resumoLadoALado) ...[
+                    _faixa(
+                      _buildSuppliersCarousel(
+                        fornecedorController,
+                        theme,
+                        cotacaoController: cotacaoController,
+                        fornecedorCadastroController:
+                            fornecedorCadastroController,
+                        avaliacaoController: avaliacaoController,
+                        eventoController: eventoController,
+                        appController: appController,
+                        onVerTodos: homeEventNavController.irParaFornecedores,
+                      ),
+                      telaAmplia,
+                    ),
+                    _faixa(_buildProximasTarefas(theme), telaAmplia),
+                  ],
                   const SliverToBoxAdapter(child: SizedBox(height: 100)),
                 ],
               ),
@@ -586,65 +681,545 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
     });
   }
 
-  // 🔹 Dashboard Unificado e Compacto
-  Widget _buildDashboardOverview(EventThemeController theme) {
-    final cor = theme.primaryColor.value;
-    final eventoModel = eventoController.eventoAtualEntidade!;
+  Widget _contadorEvento(
+    Evento evento,
+    TipoEvento? tipo,
+    EventThemeController theme,
+  ) {
+    return ContadorEventoScreen(
+      key: ValueKey('contador-${evento.idEvento}'),
+      dataEvento: evento.data,
+      tipoEvento: tipo?.nome ?? evento.nomeEvento,
+      themeController: theme,
+      scrollController: _scrollControllerHome,
+    );
+  }
 
+  Widget _buildPainelDesktop(EventThemeController theme) {
     return SliverToBoxAdapter(
-      child: Container(
-        margin: const EdgeInsets.fromLTRB(16, 6, 16, 0),
-        padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            )
-          ],
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final trilho = (constraints.maxWidth * 0.32).clamp(320.0, 400.0);
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: _colunaPassos(theme)),
+                const SizedBox(width: 20),
+                SizedBox(width: trilho, child: _colunaAcompanhar(theme)),
+              ],
+            );
+          },
         ),
-        child: Obx(() {
-          final evento = eventoController.eventoAtual.value ?? eventoModel;
-          final totLista = convidadoController.totalConvidados;
-          final totConv = totLista > 0 ? totLista : evento.totalConvidadosCalculado;
-          final conf = totLista > 0 ? convidadoController.totalConfirmados : 0;
-          final progConv = totConv > 0 ? conf / totConv : 0.0;
+      ),
+    );
+  }
 
-          final totOrc = orcamentoController.totalCustoEstimado.value;
-          final limOrc = evento.custoEstimado ?? 0.0;
-          final progOrc = limOrc > 0 ? (totOrc / limOrc).clamp(0.0, 1.0) : 0.0;
+  Widget _colunaPassos(EventThemeController theme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          HomeOrganizadorCopy.seguirTitulo,
+          style: GoogleFonts.poppins(
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: const Color(0xFF1F2937),
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          HomeOrganizadorCopy.seguirTexto,
+          style: GoogleFonts.poppins(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: const Color(0xFF6B7280),
+          ),
+        ),
+        const SizedBox(height: 12),
+        _gradeAtalhosDesktop(theme),
+        const SizedBox(height: 22),
+        _buildSuppliersCarousel(
+          fornecedorController,
+          theme,
+          cotacaoController: cotacaoController,
+          fornecedorCadastroController: fornecedorCadastroController,
+          avaliacaoController: avaliacaoController,
+          eventoController: eventoController,
+          appController: appController,
+          onVerTodos: homeEventNavController.irParaFornecedores,
+          comoSliver: false,
+          encaixado: true,
+          emGrade: true,
+        ),
+      ],
+    );
+  }
 
-          final concl = tarefaController.concluidas;
-          final totTar = tarefaController.pendentes + tarefaController.concluidas;
-          final progTar = totTar > 0 ? concl / totTar : 0.0;
+  Widget _colunaAcompanhar(EventThemeController theme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _trilhoFesta(theme),
+        const SizedBox(height: 12),
+        _buildBudgetChart(
+          eventoController,
+          orcamentoController.totalCustoEstimado,
+          theme,
+          onAbrir: homeEventNavController.irParaOrcamento,
+          comoSliver: false,
+          padding: EdgeInsets.zero,
+        ),
+        _buildProximasTarefas(
+          theme,
+          comoSliver: false,
+          padding: const EdgeInsets.only(top: 12),
+        ),
+      ],
+    );
+  }
 
-          final secundaria = theme.secondaryColor.value;
-          final destaqueOrcamento =
-              secundaria.computeLuminance() < 0.18 ? Color.lerp(cor, secundaria, 0.4)! : secundaria;
+  Widget _gradeAtalhosDesktop(EventThemeController theme) {
+    return Obx(() {
+      final primaria = theme.primaryColor.value;
+      final secundaria = theme.secondaryColor.value;
+      final media = Color.lerp(primaria, secundaria, 0.4)!;
+      final destaque =
+          secundaria.computeLuminance() < 0.18 ? media : secundaria;
+      final itens = [
+        _AtalhoDesktop(
+          icone: Icons.request_quote_rounded,
+          titulo: HomeOrganizadorCopy.atalhoCotacoes,
+          dica: HomeOrganizadorCopy.atalhoCotacoesDica,
+          estado: HomeOrganizadorCopy.cotacoesValor(
+            cotacaoController.totalDoEvento(
+              eventoController.eventoAtualEntidade?.idEvento,
+            ),
+          ),
+          cor: media,
+        ),
+        _AtalhoDesktop(
+          icone: Icons.calculate_rounded,
+          titulo: HomeOrganizadorCopy.atalhoCalculadora,
+          dica: HomeOrganizadorCopy.atalhoCalculadoraDica,
+          estado: HomeOrganizadorCopy.calculadoraValor,
+          cor: destaque,
+        ),
+        _AtalhoDesktop(
+          icone: Icons.card_giftcard_rounded,
+          titulo: HomeOrganizadorCopy.atalhoPresentes,
+          dica: HomeOrganizadorCopy.atalhoPresentesDica,
+          estado: HomeOrganizadorCopy.presentesValor,
+          cor: primaria,
+        ),
+        _AtalhoDesktop(
+          icone: Icons.storefront_rounded,
+          titulo: HomeOrganizadorCopy.atalhoFornecedores,
+          dica: HomeOrganizadorCopy.atalhoFornecedoresDica,
+          estado: HomeOrganizadorCopy.fornecedoresValor,
+          cor: destaque,
+        ),
+      ];
 
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
+      return Column(
+        children: [
+          for (var linha = 0; linha < 2; linha++) ...[
+            if (linha > 0) const SizedBox(height: 12),
+            SizedBox(
+              height: 118,
+              child: Row(
+                children: [
+                  for (var coluna = 0; coluna < 2; coluna++) ...[
+                    if (coluna > 0) const SizedBox(width: 12),
+                    Expanded(
+                      child: _cartaoAtalho(
+                        itens[linha * 2 + coluna],
+                        () => _abrirAtalho(linha * 2 + coluna, theme),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ],
+      );
+    });
+  }
+
+  Widget _cartaoAtalho(_AtalhoDesktop item, VoidCallback aoTocar) {
+    return Semantics(
+      button: true,
+      label: '${item.titulo}. ${item.dica}. ${item.estado}',
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: Material(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          child: InkWell(
+            onTap: aoTocar,
+            borderRadius: BorderRadius.circular(18),
+            child: Ink(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: item.cor.withValues(alpha: 0.22)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: item.cor.withValues(alpha: 0.14),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(item.icone, color: item.cor, size: 22),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item.titulo,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.poppins(
+                              fontSize: 15,
+                              height: 1.15,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF1F2937),
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            item.dica,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.poppins(
+                              fontSize: 12.5,
+                              height: 1.25,
+                              fontWeight: FontWeight.w500,
+                              color: const Color(0xFF4B5563),
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            item.estado,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.poppins(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w600,
+                              color: item.cor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      color: item.cor.withValues(alpha: 0.8),
+                      size: 22,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _abrirAtalho(int indice, EventThemeController theme) {
+    if (indice == 0) {
+      Get.to(
+        () => PainelCotacaoPage(
+          theme: theme,
+          cotacaoCtrl: cotacaoController,
+          eventoCtrl: eventoController,
+          appController: appController,
+          fornecedorLocalizacaoCtrl: fornecedorController,
+          fornecedorCtrl: fornecedorCadastroController,
+          avaliacaoController: avaliacaoController,
+          solicitacoesCtrl: solicitacoesController,
+          recomendacaoController: fornecedorRecomendacaoController,
+        ),
+      );
+    } else if (indice == 1) {
+      Get.to(
+        () => CalculadoraFestaScreen(
+          calculadoraController: calculadoraController,
+          eventoController: eventoController,
+          themeController: theme,
+          cardapioController: cardapioController,
+          fornecedorMigracaoAdminController: fornecedorMigracaoAdminController,
+        ),
+      );
+    } else if (indice == 2) {
+      Get.toNamed(
+        '/gerenciarPresentes',
+        arguments: GerenciarPresentesArgs(
+          eventoId: eventoController.eventoAtualEntidade?.idEvento ?? '',
+        ),
+      );
+    } else if (indice == 3) {
+      homeEventNavController.irParaFornecedores();
+    }
+  }
+
+  Widget _trilhoFesta(EventThemeController theme) {
+    final cor = theme.primaryColor.value;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 14, 8, 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Obx(() {
+        final evento = eventoController.eventoAtual.value ??
+            eventoController.eventoAtualEntidade!;
+        final totLista = convidadoController.totalConvidados;
+        final totConv =
+            totLista > 0 ? totLista : evento.totalConvidadosCalculado;
+        final conf = totLista > 0 ? convidadoController.totalConfirmados : 0;
+        final progConv = totConv > 0 ? conf / totConv : 0.0;
+
+        final totOrc = orcamentoController.totalCustoEstimado.value;
+        final limOrc = evento.custoEstimado ?? 0.0;
+        final progOrc = limOrc > 0 ? totOrc / limOrc : 0.0;
+
+        final concl = tarefaController.concluidas;
+        final totTar = tarefaController.pendentes + tarefaController.concluidas;
+        final progTar = totTar > 0 ? concl / totTar : 0.0;
+
+        final secundaria = theme.secondaryColor.value;
+        final destaque = secundaria.computeLuminance() < 0.18
+            ? Color.lerp(cor, secundaria, 0.4)!
+            : secundaria;
+        final corTarefa = Color.lerp(cor, destaque, 0.45)!;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(left: 4, right: 8),
+              child: Text(
                 HomeOrganizadorCopy.resumoTitulo,
                 style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
                   color: const Color(0xFF1F2937),
                 ),
               ),
-              const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
+            ),
+            Padding(
+              padding: const EdgeInsets.only(left: 4, right: 8, top: 2),
+              child: Text(
+                HomeOrganizadorCopy.resumoTexto,
+                style: GoogleFonts.poppins(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w500,
+                  color: const Color(0xFF6B7280),
+                ),
+              ),
+            ),
+            const SizedBox(height: 6),
+            _linhaStatus(
+              titulo: HomeOrganizadorCopy.resumoConvidados,
+              detalhe: HomeOrganizadorCopy.convidadosDetalhe(conf, totConv),
+              valor: totConv <= 0 ? '0' : '$conf',
+              progresso: progConv,
+              cor: cor,
+              aoTocar: homeEventNavController.irParaConvidados,
+            ),
+            _linhaStatus(
+              titulo: HomeOrganizadorCopy.resumoOrcamento,
+              detalhe: HomeOrganizadorCopy.orcamentoDetalhe(progOrc),
+              valor: HomeOrganizadorCopy.orcamentoPercentual(progOrc),
+              progresso: progOrc,
+              cor: destaque,
+              aoTocar: homeEventNavController.irParaOrcamento,
+            ),
+            _linhaStatus(
+              titulo: HomeOrganizadorCopy.resumoTarefas,
+              detalhe: HomeOrganizadorCopy.tarefasDetalhe(concl, totTar),
+              valor: totTar == 0 ? '0' : '$concl',
+              progresso: progTar,
+              cor: corTarefa,
+              aoTocar: () => _abrirListaTarefas(theme),
+            ),
+          ],
+        );
+      }),
+    );
+  }
+
+  Widget _linhaStatus({
+    required String titulo,
+    required String detalhe,
+    required String valor,
+    required double progresso,
+    required Color cor,
+    required VoidCallback aoTocar,
+  }) {
+    return Semantics(
+      button: true,
+      label: '$titulo. $detalhe',
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: InkWell(
+          onTap: aoTocar,
+          borderRadius: BorderRadius.circular(14),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 46,
+                  height: 46,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      CircularProgressIndicator(
+                        value: progresso.clamp(0.0, 1.0).toDouble(),
+                        strokeWidth: 4.5,
+                        color: cor,
+                        backgroundColor: cor.withValues(alpha: 0.15),
+                      ),
+                      Center(
+                        child: Text(
+                          valor,
+                          style: GoogleFonts.poppins(
+                            fontSize: valor.length > 3 ? 10 : 12,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF1F2937),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        titulo,
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF1F2937),
+                        ),
+                      ),
+                      Text(
+                        detalhe,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: const Color(0xFF6B7280),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(Icons.chevron_right_rounded, color: cor, size: 22),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // 🔹 Dashboard Unificado e Compacto
+  Widget _buildDashboardOverview(
+    EventThemeController theme, {
+    bool comoSliver = true,
+    bool agruparIndicadores = false,
+    EdgeInsetsGeometry margin = const EdgeInsets.fromLTRB(16, 6, 16, 0),
+  }) {
+    final cor = theme.primaryColor.value;
+    final eventoModel = eventoController.eventoAtualEntidade!;
+
+    final card = Container(
+      margin: margin,
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          )
+        ],
+      ),
+      child: Obx(() {
+        final evento = eventoController.eventoAtual.value ?? eventoModel;
+        final totLista = convidadoController.totalConvidados;
+        final totConv =
+            totLista > 0 ? totLista : evento.totalConvidadosCalculado;
+        final conf = totLista > 0 ? convidadoController.totalConfirmados : 0;
+        final progConv = totConv > 0 ? conf / totConv : 0.0;
+
+        final totOrc = orcamentoController.totalCustoEstimado.value;
+        final limOrc = evento.custoEstimado ?? 0.0;
+        final progOrc = limOrc > 0 ? totOrc / limOrc : 0.0;
+
+        final concl = tarefaController.concluidas;
+        final totTar = tarefaController.pendentes + tarefaController.concluidas;
+        final progTar = totTar > 0 ? concl / totTar : 0.0;
+
+        final secundaria = theme.secondaryColor.value;
+        final destaqueOrcamento = secundaria.computeLuminance() < 0.18
+            ? Color.lerp(cor, secundaria, 0.4)!
+            : secundaria;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              HomeOrganizadorCopy.resumoTitulo,
+              style: GoogleFonts.poppins(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF1F2937),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: agruparIndicadores
+                  ? MainAxisAlignment.start
+                  : MainAxisAlignment.spaceAround,
+              children: [
+                for (final indicador in <Widget>[
                   _MiniCircularIndicator(
                     title: HomeOrganizadorCopy.resumoConvidados,
-                    value: totConv <= 0
-                        ? '0'
-                        : '$conf/$totConv',
+                    value: totConv <= 0 ? '0' : '$conf/$totConv',
                     progress: progConv,
                     color: cor,
                     onTap: homeEventNavController.irParaConvidados,
@@ -663,13 +1238,16 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
                     color: Color.lerp(cor, destaqueOrcamento, 0.45)!,
                     onTap: () => _abrirListaTarefas(theme),
                   ),
-                ],
-              ),
-            ],
-          );
-        }),
-      ),
+                ])
+                  agruparIndicadores ? Expanded(child: indicador) : indicador,
+              ],
+            ),
+          ],
+        );
+      }),
     );
+    if (!comoSliver) return card;
+    return SliverToBoxAdapter(child: card);
   }
 
   Widget _buildHomeSemEvento(EventThemeController theme) {
@@ -729,6 +1307,7 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: primary,
                   foregroundColor: Colors.white,
+                  iconColor: Colors.white,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
@@ -736,7 +1315,8 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
                 ),
                 child: Text(
                   HomeOrganizadorCopy.vazioCriar,
-                  style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 15.5),
+                  style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w700, fontSize: 15.5),
                 ),
               ),
             ),
@@ -788,13 +1368,17 @@ Widget _buildQuickActions({
         final primaria = theme.primaryColor.value;
         final secundaria = theme.secondaryColor.value;
         final media = Color.lerp(primaria, secundaria, 0.4)!;
-        final destaque = secundaria.computeLuminance() < 0.18 ? media : secundaria;
+        final destaque =
+            secundaria.computeLuminance() < 0.18 ? media : secundaria;
         final itens = [
           {
             'icon': Icons.request_quote_rounded,
             'label': HomeOrganizadorCopy.atalhoCotacoes,
             'color': media,
-            'val': HomeOrganizadorCopy.cotacoesValor(cotacaoController.totalCount.value),
+            'val': HomeOrganizadorCopy.cotacoesValor(
+                cotacaoController.totalDoEvento(
+              eventoController.eventoAtualEntidade?.idEvento,
+            )),
           },
           {
             'icon': Icons.calculate_rounded,
@@ -816,115 +1400,153 @@ Widget _buildQuickActions({
           },
         ];
 
-        return GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: itens.length,
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            crossAxisSpacing: 8,
-            mainAxisSpacing: 8,
-            childAspectRatio: 2.05,
-          ),
-          itemBuilder: (context, i) {
-            final item = itens[i];
-            final cor = item['color'] as Color;
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final larga = constraints.maxWidth >= 600;
+            final quatro = constraints.maxWidth >= 760;
+            return GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: itens.length,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: quatro ? 4 : 2,
+                crossAxisSpacing: larga ? 10 : 8,
+                mainAxisSpacing: larga ? 10 : 8,
+                mainAxisExtent: larga ? (quatro ? 108 : 96) : null,
+                childAspectRatio: 2.05,
+              ),
+              itemBuilder: (context, i) {
+                final item = itens[i];
+                final cor = item['color'] as Color;
 
-            return InkWell(
-              onTap: () {
-                if (i == 0) {
-                  Get.to(
-                    () => PainelCotacaoPage(
-                      theme: theme,
-                      cotacaoCtrl: cotacaoController,
-                      eventoCtrl: eventoController,
-                      appController: appController,
-                      fornecedorLocalizacaoCtrl: fornecedorController,
-                      fornecedorCtrl: fornecedorCadastroController,
-                      avaliacaoController: avaliacaoController,
-                      solicitacoesCtrl: solicitacoesController,
-                      recomendacaoController: fornecedorRecomendacaoController,
-                    ),
-                  );
-                }
-                if (i == 1) {
-                  Get.to(
-                    () => CalculadoraFestaScreen(
-                      calculadoraController: calculadoraController,
-                      eventoController: eventoController,
-                      themeController: theme,
-                      cardapioController: cardapioController,
-                      fornecedorMigracaoAdminController: fornecedorMigracaoAdminController,
-                    ),
-                  );
-                }
-                if (i == 2) {
-                  Get.toNamed(
-                    '/gerenciarPresentes',
-                    arguments: GerenciarPresentesArgs(
-                      eventoId: eventoController.eventoAtualEntidade?.idEvento ?? '',
-                    ),
-                  );
-                }
-                if (i == 3) {
-                  homeEventNavController.irParaFornecedores();
-                }
-              },
-              borderRadius: BorderRadius.circular(16),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: cor.withValues(alpha: 0.2)),
-                  boxShadow: [
-                    BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.02),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2))
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration:
-                          BoxDecoration(color: cor.withValues(alpha: 0.15), shape: BoxShape.circle),
-                      child: Icon(item['icon'] as IconData, size: 18, color: cor),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                return MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: InkWell(
+                    onTap: () {
+                      if (i == 0) {
+                        Get.to(
+                          () => PainelCotacaoPage(
+                            theme: theme,
+                            cotacaoCtrl: cotacaoController,
+                            eventoCtrl: eventoController,
+                            appController: appController,
+                            fornecedorLocalizacaoCtrl: fornecedorController,
+                            fornecedorCtrl: fornecedorCadastroController,
+                            avaliacaoController: avaliacaoController,
+                            solicitacoesCtrl: solicitacoesController,
+                            recomendacaoController:
+                                fornecedorRecomendacaoController,
+                          ),
+                        );
+                      }
+                      if (i == 1) {
+                        Get.to(
+                          () => CalculadoraFestaScreen(
+                            calculadoraController: calculadoraController,
+                            eventoController: eventoController,
+                            themeController: theme,
+                            cardapioController: cardapioController,
+                            fornecedorMigracaoAdminController:
+                                fornecedorMigracaoAdminController,
+                          ),
+                        );
+                      }
+                      if (i == 2) {
+                        Get.toNamed(
+                          '/gerenciarPresentes',
+                          arguments: GerenciarPresentesArgs(
+                            eventoId: eventoController
+                                    .eventoAtualEntidade?.idEvento ??
+                                '',
+                          ),
+                        );
+                      }
+                      if (i == 3) {
+                        homeEventNavController.irParaFornecedores();
+                      }
+                    },
+                    borderRadius: BorderRadius.circular(16),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: cor.withValues(alpha: 0.2)),
+                        boxShadow: [
+                          BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.02),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2))
+                        ],
+                      ),
+                      child: Row(
                         children: [
-                          Text(item['label'] as String,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.poppins(
-                                  fontSize: 12.5,
-                                  height: 1.15,
-                                  color: const Color(0xFF1F2937),
-                                  fontWeight: FontWeight.w700)),
-                          Text(item['val'] as String,
-                              style: GoogleFonts.poppins(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.grey.shade600),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis),
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                                color: cor.withValues(alpha: 0.15),
+                                shape: BoxShape.circle),
+                            child: Icon(item['icon'] as IconData,
+                                size: 18, color: cor),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(item['label'] as String,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: GoogleFonts.poppins(
+                                        fontSize: 12.5,
+                                        height: 1.15,
+                                        color: const Color(0xFF1F2937),
+                                        fontWeight: FontWeight.w700)),
+                                Text(item['val'] as String,
+                                    style: GoogleFonts.poppins(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w500,
+                                        color: Colors.grey.shade600),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis),
+                              ],
+                            ),
+                          ),
+                          if (larga)
+                            Icon(
+                              Icons.chevron_right_rounded,
+                              size: 22,
+                              color: cor.withValues(alpha: 0.75),
+                            ),
                         ],
                       ),
                     ),
-                  ],
-                ),
-              ),
+                  ),
+                );
+              },
             );
           },
         );
       }),
     ),
   );
+}
+
+class _AtalhoDesktop {
+  const _AtalhoDesktop({
+    required this.icone,
+    required this.titulo,
+    required this.dica,
+    required this.estado,
+    required this.cor,
+  });
+
+  final IconData icone;
+  final String titulo;
+  final String dica;
+  final String estado;
+  final Color cor;
 }
 
 class _MiniCircularIndicator extends StatelessWidget {
@@ -947,44 +1569,49 @@ class _MiniCircularIndicator extends StatelessWidget {
     return Semantics(
       button: onTap != null,
       label: '$title. $value',
-      child: InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(minWidth: 72, minHeight: 72),
-        child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-        child: Column(
-          children: [
-            SizedBox(
-              height: 52,
-              width: 52,
-              child: Stack(
-                fit: StackFit.expand,
+      child: MouseRegion(
+        cursor: onTap == null ? MouseCursor.defer : SystemMouseCursors.click,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minWidth: 72, minHeight: 72),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+              child: Column(
                 children: [
-                  CircularProgressIndicator(
-                      value: progress,
-                      strokeWidth: 5,
-                      color: color,
-                      backgroundColor: color.withValues(alpha: 0.15)),
-                  Center(
-                      child: Text(value,
-                          style: GoogleFonts.poppins(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w800,
-                              color: const Color(0xFF1F2937)))),
+                  SizedBox(
+                    height: 52,
+                    width: 52,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        CircularProgressIndicator(
+                            value: progress.clamp(0.0, 1.0).toDouble(),
+                            strokeWidth: 5,
+                            color: color,
+                            backgroundColor: color.withValues(alpha: 0.15)),
+                        Center(
+                            child: Text(value,
+                                style: GoogleFonts.poppins(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w800,
+                                    color: const Color(0xFF1F2937)))),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(title,
+                      style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF1F2937))),
                 ],
               ),
             ),
-            const SizedBox(height: 4),
-            Text(title,
-                style: GoogleFonts.poppins(
-                    fontSize: 12, fontWeight: FontWeight.w700, color: const Color(0xFF1F2937))),
-          ],
+          ),
         ),
       ),
-      ),
-    ),
     );
   }
 }
@@ -993,7 +1620,8 @@ class ContadorEventoHeaderDelegate extends SliverPersistentHeaderDelegate {
   final Widget child;
   final ScrollController scrollController;
 
-  ContadorEventoHeaderDelegate({required this.child, required this.scrollController});
+  ContadorEventoHeaderDelegate(
+      {required this.child, required this.scrollController});
 
   @override
   double get minExtent => 76;
@@ -1001,14 +1629,20 @@ class ContadorEventoHeaderDelegate extends SliverPersistentHeaderDelegate {
   double get maxExtent => 76;
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+  Widget build(
+      BuildContext context, double shrinkOffset, bool overlapsContent) {
     final bannerSumiu = shrinkOffset > 45;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       decoration: BoxDecoration(
-        color: bannerSumiu ? Colors.white.withValues(alpha: 0.95) : Colors.transparent,
+        color: bannerSumiu
+            ? Colors.white.withValues(alpha: 0.95)
+            : Colors.transparent,
         boxShadow: bannerSumiu
-            ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4)]
+            ? [
+                BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05), blurRadius: 4)
+              ]
             : [],
       ),
       child: Center(child: child),
@@ -1016,7 +1650,8 @@ class ContadorEventoHeaderDelegate extends SliverPersistentHeaderDelegate {
   }
 
   @override
-  bool shouldRebuild(covariant ContadorEventoHeaderDelegate oldDelegate) => true;
+  bool shouldRebuild(covariant ContadorEventoHeaderDelegate oldDelegate) =>
+      true;
 }
 
 Widget _buildBudgetChart(
@@ -1024,25 +1659,33 @@ Widget _buildBudgetChart(
   RxDouble totalCustoEstimado,
   EventThemeController theme, {
   VoidCallback? onAbrir,
+  bool comoSliver = true,
+  EdgeInsetsGeometry padding = const EdgeInsets.fromLTRB(16, 8, 16, 0),
+  bool preencherAltura = false,
 }) {
-  return SliverToBoxAdapter(
-    child: Obx(() {
-      final total = totalCustoEstimado.value;
-      final limite = eventoController.eventoAtual.value?.custoEstimado ?? 0.0;
-      final usado = limite > 0 ? (total / limite).clamp(0, 1) : 0.0;
-      final primary = theme.primaryColor.value;
+  final card = Obx(() {
+    final total = totalCustoEstimado.value;
+    final limite = eventoController.eventoAtual.value?.custoEstimado ?? 0.0;
+    final percentualUsado = limite > 0 ? total / limite : 0.0;
+    final usado = percentualUsado.clamp(0.0, 1.0);
+    final primary = theme.primaryColor.value;
 
-      return Padding(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-        child: Material(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          elevation: 0,
+    return Padding(
+      padding: padding,
+      child: Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        elevation: 0,
+        child: MouseRegion(
+          cursor:
+              onAbrir == null ? MouseCursor.defer : SystemMouseCursors.click,
           child: InkWell(
             onTap: onAbrir,
             borderRadius: BorderRadius.circular(20),
             child: Container(
-              padding: const EdgeInsets.only(left: 16, right: 16, top: 10, bottom: 10),
+              alignment: preencherAltura ? Alignment.centerLeft : null,
+              padding: const EdgeInsets.only(
+                  left: 16, right: 12, top: 10, bottom: 10),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
@@ -1067,7 +1710,10 @@ Widget _buildBudgetChart(
                           borderData: FlBorderData(show: false),
                           sections: [
                             PieChartSectionData(
-                                value: usado * 100, color: primary, radius: 8, showTitle: false),
+                                value: usado * 100,
+                                color: primary,
+                                radius: 8,
+                                showTitle: false),
                             PieChartSectionData(
                                 value: (1 - usado) * 100,
                                 color: Colors.grey.shade200,
@@ -1075,7 +1721,8 @@ Widget _buildBudgetChart(
                                 showTitle: false),
                           ],
                         )),
-                        Icon(Icons.attach_money_rounded, color: primary, size: 18),
+                        Icon(Icons.attach_money_rounded,
+                            color: primary, size: 18),
                       ],
                     ),
                   ),
@@ -1097,43 +1744,54 @@ Widget _buildBudgetChart(
                           children: [
                             Text(
                               '${HomeOrganizadorCopy.gastoUsado}: R\$ ${Biblioteca.formatarValorDecimal(total)}',
-                              style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade600),
+                              style: GoogleFonts.poppins(
+                                  fontSize: 11, color: Colors.grey.shade600),
                             ),
                             Text(
                               '${HomeOrganizadorCopy.gastoPlanejado}: R\$ ${Biblioteca.formatarValorDecimal(limite)}',
-                              style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade600),
+                              style: GoogleFonts.poppins(
+                                  fontSize: 11, color: Colors.grey.shade600),
                             ),
                           ],
                         ),
-                  const SizedBox(height: 2),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: Text(
-                      '${Biblioteca.formatarValorDecimal(usado * 100)}%',
-                      style: GoogleFonts.poppins(
-                          fontSize: 11, fontWeight: FontWeight.w800, color: primary),
+                        const SizedBox(height: 2),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: Text(
+                            '${Biblioteca.formatarValorDecimal(percentualUsado * 100)}%',
+                            style: GoogleFonts.poppins(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                                color: primary),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: LinearProgressIndicator(
+                              value: usado.toDouble(),
+                              minHeight: 6,
+                              backgroundColor: Colors.grey.shade200,
+                              valueColor: AlwaysStoppedAnimation(primary)),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 6),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: LinearProgressIndicator(
-                        value: usado.toDouble(),
-                        minHeight: 6,
-                        backgroundColor: Colors.grey.shade200,
-                        valueColor: AlwaysStoppedAnimation(primary)),
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    color: primary.withValues(alpha: 0.7),
+                    size: 22,
                   ),
                 ],
               ),
             ),
-          ],
-        ),
-            ),
           ),
         ),
-      );
-    }),
-  );
+      ),
+    );
+  });
+  if (!comoSliver) return card;
+  return SliverToBoxAdapter(child: card);
 }
 
 Widget _buildSuppliersCarousel(
@@ -1145,127 +1803,204 @@ Widget _buildSuppliersCarousel(
   required AppController appController,
   required CotacaoController cotacaoController,
   required VoidCallback onVerTodos,
+  bool comoSliver = true,
+  bool encaixado = false,
+  bool emGrade = false,
 }) {
   final cor = theme.primaryColor.value;
+  final margemTitulo =
+      encaixado ? EdgeInsets.zero : const EdgeInsets.fromLTRB(16, 8, 8, 0);
+  final margemLista = encaixado
+      ? const EdgeInsets.fromLTRB(0, 2, 0, 8)
+      : const EdgeInsets.fromLTRB(16, 2, 16, 8);
+  final margemVazio =
+      encaixado ? EdgeInsets.zero : const EdgeInsets.fromLTRB(16, 0, 16, 0);
 
-  return SliverToBoxAdapter(
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 8, 0),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  HomeOrganizadorCopy.fornecedoresRegiao,
-                  style: GoogleFonts.poppins(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF1F2937),
-                  ),
+  final corpo = Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Padding(
+        padding: margemTitulo,
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                HomeOrganizadorCopy.fornecedoresRegiao,
+                style: GoogleFonts.poppins(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: const Color(0xFF1F2937),
                 ),
               ),
-              TextButton(
-                onPressed: onVerTodos,
-                child: Text(
-                  HomeOrganizadorCopy.verFornecedores,
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 12,
-                    color: cor,
-                  ),
+            ),
+            TextButton(
+              onPressed: onVerTodos,
+              child: Text(
+                HomeOrganizadorCopy.verFornecedores,
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12,
+                  color: cor,
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
-        Obx(() {
-          final fornecedores = fornecedorController.fornecedoresFiltrados
-              .where((f) => f.fornecedor.ativo && f.fornecedor.aptoParaOperar != false)
-              .toList();
-          if (fornecedores.isEmpty && !fornecedorController.carregando.value) {
-            return Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-              child: Material(
-                color: Colors.white,
+      ),
+      Obx(() {
+        final fornecedores = fornecedorController.fornecedoresFiltrados
+            .where((f) =>
+                f.fornecedor.ativo && f.fornecedor.aptoParaOperar != false)
+            .toList();
+        if (fornecedores.isEmpty && !fornecedorController.carregando.value) {
+          return Padding(
+            padding: margemVazio,
+            child: Material(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              child: InkWell(
+                onTap: onVerTodos,
                 borderRadius: BorderRadius.circular(16),
-                child: InkWell(
-                  onTap: onVerTodos,
-                  borderRadius: BorderRadius.circular(16),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                      child: Row(
-                        children: [
-                          Icon(Icons.storefront_outlined, color: cor, size: 22),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  HomeOrganizadorCopy.nenhumFornecedorPerto,
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: const Color(0xFF1F2937),
-                                  ),
-                                ),
-                                Text(
-                                  HomeOrganizadorCopy.nenhumFornecedorAcao,
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w700,
-                                    color: cor,
-                                  ),
-                                ),
-                              ],
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  child: Row(
+                    children: [
+                      Icon(Icons.storefront_outlined, color: cor, size: 22),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              HomeOrganizadorCopy.nenhumFornecedorPerto,
+                              style: GoogleFonts.poppins(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF1F2937),
+                              ),
                             ),
-                          ),
-                          Icon(Icons.chevron_right_rounded, color: cor),
-                        ],
+                            Text(
+                              HomeOrganizadorCopy.nenhumFornecedorAcao,
+                              style: GoogleFonts.poppins(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: cor,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
+                      Icon(Icons.chevron_right_rounded, color: cor),
+                    ],
+                  ),
                 ),
               ),
-            );
-          }
-
-          return SizedBox(
-            height: 176,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.fromLTRB(16, 2, 16, 8),
-              itemCount: fornecedorController.carregando.value ? 3 : fornecedores.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 12),
-              itemBuilder: (_, index) {
-                if (fornecedorController.carregando.value) {
-                  return Shimmer.fromColors(
-                      baseColor: Colors.grey.shade300,
-                      highlightColor: Colors.grey.shade100,
-                      child: Container(
-                          width: 150,
-                          decoration: BoxDecoration(
-                              color: Colors.white, borderRadius: BorderRadius.circular(18))));
-                }
-                return _fornecedorCard(
-                  fornecedorDetalhe: fornecedores[index],
-                  cor: cor,
-                  themeController: theme,
-                  fornecedorController: fornecedorCadastroController,
-                  fornecedorLocalizacaoController: fornecedorController,
-                  avaliacaoController: avaliacaoController,
-                  eventoController: eventoController,
-                  appController: appController,
-                  cotacaoController: cotacaoController,
-                );
-              },
             ),
           );
-        }),
-      ],
-    ),
+        }
+
+        if (emGrade) {
+          final visiveis = fornecedores.take(8).toList();
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              const espaco = 12.0;
+              final colunas = constraints.maxWidth >= 760
+                  ? 4
+                  : constraints.maxWidth >= 520
+                      ? 3
+                      : 2;
+              final largura =
+                  ((constraints.maxWidth - espaco * (colunas - 1)) / colunas)
+                      .clamp(148.0, 230.0);
+              if (fornecedorController.carregando.value) {
+                return Padding(
+                  padding: margemLista,
+                  child: Wrap(
+                    spacing: espaco,
+                    runSpacing: espaco,
+                    children: List.generate(
+                      colunas,
+                      (_) => Shimmer.fromColors(
+                        baseColor: Colors.grey.shade300,
+                        highlightColor: Colors.grey.shade100,
+                        child: Container(
+                          width: largura,
+                          height: 168,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(18),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }
+              return Padding(
+                padding: margemLista,
+                child: Wrap(
+                  spacing: espaco,
+                  runSpacing: espaco,
+                  children: [
+                    for (final fornecedor in visiveis)
+                      _fornecedorCard(
+                        fornecedorDetalhe: fornecedor,
+                        cor: cor,
+                        themeController: theme,
+                        fornecedorController: fornecedorCadastroController,
+                        fornecedorLocalizacaoController: fornecedorController,
+                        avaliacaoController: avaliacaoController,
+                        eventoController: eventoController,
+                        appController: appController,
+                        cotacaoController: cotacaoController,
+                        largura: largura,
+                      ),
+                  ],
+                ),
+              );
+            },
+          );
+        }
+
+        return SizedBox(
+          height: 176,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: margemLista,
+            itemCount:
+                fornecedorController.carregando.value ? 3 : fornecedores.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            itemBuilder: (_, index) {
+              if (fornecedorController.carregando.value) {
+                return Shimmer.fromColors(
+                    baseColor: Colors.grey.shade300,
+                    highlightColor: Colors.grey.shade100,
+                    child: Container(
+                        width: 150,
+                        decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(18))));
+              }
+              return _fornecedorCard(
+                fornecedorDetalhe: fornecedores[index],
+                cor: cor,
+                themeController: theme,
+                fornecedorController: fornecedorCadastroController,
+                fornecedorLocalizacaoController: fornecedorController,
+                avaliacaoController: avaliacaoController,
+                eventoController: eventoController,
+                appController: appController,
+                cotacaoController: cotacaoController,
+              );
+            },
+          ),
+        );
+      }),
+    ],
   );
+  if (!comoSliver) return corpo;
+  return SliverToBoxAdapter(child: corpo);
 }
 
 Widget _fornecedorCard({
@@ -1278,6 +2013,7 @@ Widget _fornecedorCard({
   required EventoController eventoController,
   required AppController appController,
   required CotacaoController cotacaoController,
+  double largura = 150,
 }) {
   final fornecedor = fornecedorDetalhe.fornecedor;
   final contexto = _contextoFornecedor(fornecedorDetalhe);
@@ -1310,8 +2046,8 @@ Widget _fornecedorCard({
               cotacoes: cotacaoController.gerenciarCotacoes,
             )),
         child: Ink(
-          width: 150,
-          height: 164,
+          width: largura,
+          height: 168,
           color: Colors.white,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1327,7 +2063,8 @@ Widget _fornecedorCard({
                       fit: BoxFit.cover,
                       errorWidget: (_, __, ___) => ColoredBox(
                         color: cor.withValues(alpha: 0.08),
-                        child: Icon(Icons.storefront_outlined, color: cor, size: 28),
+                        child: Icon(Icons.storefront_outlined,
+                            color: cor, size: 28),
                       ),
                     ),
                     if (nota.isNotEmpty)
@@ -1335,7 +2072,8 @@ Widget _fornecedorCard({
                         top: 8,
                         right: 8,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 3),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(99),
@@ -1343,7 +2081,8 @@ Widget _fornecedorCard({
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.star_rounded, size: 13, color: Color(0xFFF59E0B)),
+                              const Icon(Icons.star_rounded,
+                                  size: 13, color: Color(0xFFF59E0B)),
                               const SizedBox(width: 2),
                               Text(
                                 nota,
@@ -1404,7 +2143,8 @@ Widget _fornecedorCard({
 
 String _contextoFornecedor(FornecedorDetalhado detalhe) {
   final categoria = _categoriaFornecedor(detalhe);
-  final distancia = HomeOrganizadorCopy.distanciaFornecedor(detalhe.distanciaKm);
+  final distancia =
+      HomeOrganizadorCopy.distanciaFornecedor(detalhe.distanciaKm);
   if (categoria.isNotEmpty && distancia.isNotEmpty) {
     return '$categoria · $distancia';
   }

@@ -384,6 +384,7 @@ class _EnviarAvaliacaoDialogState extends State<EnviarAvaliacaoDialog> {
                           ),
                           style: TextButton.styleFrom(
                             foregroundColor: textMuted,
+                            iconColor: textMuted,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(14),
                             ),

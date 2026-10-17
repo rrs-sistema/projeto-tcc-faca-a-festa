@@ -1,3 +1,5 @@
+import { limitarAnaliseCalculadora } from "../../services/calculadora/limiteAnaliseCalculadoraService";
+import { financeiroCalculadora } from "../../services/calculadora/financeiroCalculadoraService";
 import { defineSecret } from "firebase-functions/params";
 import * as logger from "firebase-functions/logger";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
@@ -39,15 +41,24 @@ export const analisarCalculadoraFestaIA = onCall(
 
     const rawData = asRecord(request.data);
     const payload = normalizarPayloadCalculadora(rawData);
-    if (!payload.id_usuario) {
-      payload.id_usuario = uid;
+    payload.id_usuario = uid;
+    payload.idUsuario = uid;
+    await validarAcessoCalculadora(payload, uid);
+    if (JSON.stringify(payload).length > 450000) throw new HttpsError("invalid-argument", "O planejamento excede o tamanho de análise permitido.");
+    await limitarAnaliseCalculadora(uid);
+    let sugestoesBase: Awaited<ReturnType<typeof buscarSugestoesBaseCalculadora>> = [];
+    try {
+      const perfil = asRecord(payload.perfil_festa ?? payload.perfilFesta);
+      sugestoesBase = await buscarSugestoesBaseCalculadora({
+        tipoEvento: asString(payload.tipo_evento ?? payload.tipoEvento),
+        perfilFesta: asString(payload.perfil_festa_tipo ?? perfil.tipo ?? perfil.nome ?? payload.perfil_festa),
+        limit: 12,
+      });
+    } catch (error) {
+      logger.warn("Base editorial indisponível; análise continua com os dados da simulação.", {
+        erro: error instanceof Error ? error.message : String(error),
+      });
     }
-
-    const sugestoesBase = await buscarSugestoesBaseCalculadora({
-      tipoEvento: asString(payload.tipo_evento ?? payload.tipoEvento),
-      perfilFesta: asString(payload.perfil_festa ?? payload.perfilFesta),
-      limit: 12,
-    });
 
     const modeloIAUtilizado = resolverModeloIA();
 
@@ -67,7 +78,6 @@ export const analisarCalculadoraFestaIA = onCall(
         },
       );
 
-      await salvarAnaliseNaSimulacao(payload, analise);
 
       return montarRespostaFunction(analise);
     } catch (error) {
@@ -77,7 +87,7 @@ export const analisarCalculadoraFestaIA = onCall(
       });
 
       const analiseFallback = aplicarRastreabilidadeAnalise(
-        buildFallbackLocal(payload),
+        completarAnaliseComDadosCalculadora(buildFallbackLocal(payload), payload),
         {
           sugestoesBase,
           modeloIAUtilizado: "fallback_local",
@@ -85,12 +95,38 @@ export const analisarCalculadoraFestaIA = onCall(
         },
       );
 
-      await salvarAnaliseNaSimulacao(payload, analiseFallback);
 
       return montarRespostaFunction(analiseFallback);
     }
   },
 );
+
+async function validarAcessoCalculadora(payload: CalculadoraIARequest, uid: string): Promise<void> {
+  const db = admin.firestore();
+  const eventoId = asString(payload.id_evento ?? payload.idEvento);
+  const calculoId = asString(payload.id_calculo ?? payload.idCalculo ?? payload.id);
+  const usuario = await db.collection("usuarios").doc(uid).get();
+  const isAdmin = usuario.data()?.tipo === "A" && usuario.data()?.ativo !== false;
+  if (eventoId && eventoId !== "estimativa_temporaria") {
+    const evento = await db.collection("evento").doc(eventoId).get();
+    if (!isAdmin && (!evento.exists || evento.data()?.id_usuario !== uid)) {
+      throw new HttpsError("permission-denied", "Esta festa não pertence ao usuário autenticado.");
+    }
+  }
+  if (calculoId) {
+    const calculo = await db.collection(COLLECTION_CALCULADORA_FESTA).doc(calculoId).get();
+    if (calculo.exists && !isAdmin) {
+      const dados = calculo.data() ?? {};
+      if (dados.id_usuario !== uid && dados.idUsuario !== uid &&
+          !(dados.id_evento === eventoId && eventoId && eventoId !== "estimativa_temporaria" && !dados.id_usuario && !dados.idUsuario)) {
+        throw new HttpsError("permission-denied", "Sem permissão para analisar esta simulação.");
+      }
+      if (dados.id_evento && dados.id_evento !== eventoId) {
+        throw new HttpsError("permission-denied", "A simulação pertence a outra festa.");
+      }
+    }
+  }
+}
 
 async function gerarAnaliseGenerativa(params: {
   payload: CalculadoraIARequest;
@@ -105,6 +141,7 @@ async function gerarAnaliseGenerativa(params: {
 
   const response = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
+    signal: AbortSignal.timeout(45000),
     headers: {
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
@@ -160,59 +197,58 @@ function completarAnaliseComDadosCalculadora(
   rawAnalise: Record<string, unknown>,
   payload: CalculadoraIARequest,
 ): Record<string, unknown> {
-  const custoTotalEstimado = asNumber(
-    rawAnalise.custo_total_estimado ??
-    payload.custo_total_estimado ??
-    payload.custoTotalEstimado ??
-    payload.custo_estimado ??
-    payload.custoEstimado,
-  );
-
-  const orcamentoDisponivel = nullableNumber(
-    rawAnalise.orcamento_disponivel ?? payload.orcamento_disponivel ?? payload.orcamentoDisponivel,
-  );
-
-  const diferencaOrcamento = asNumber(
-    rawAnalise.diferenca_orcamento,
-    orcamentoDisponivel === null ? 0 : custoTotalEstimado - orcamentoDisponivel,
-  );
+  const financeiro = financeiroCalculadora(payload);
+  const planejamento = asRecord(payload.planejamento);
+  const pendencias = [...new Set([
+    ...(Array.isArray(planejamento.pendencias_alimentares) ? planejamento.pendencias_alimentares : []),
+    ...(Array.isArray(planejamento.analise_refeicao) ? planejamento.analise_refeicao : []),
+  ].filter((p): p is string => typeof p === "string" && p.trim().length > 0)
+    .map(p => p.slice(0, 600)))].slice(0, 30);
+  const custoTotalEstimado = financeiro.custo;
+  const orcamentoDisponivel = financeiro.orcamento;
+  const diferencaOrcamento = financeiro.diferenca;
 
   return {
     ...rawAnalise,
     titulo: asString(rawAnalise.titulo, "Análise inteligente da festa"),
-    resumo: asString(rawAnalise.resumo, "Análise gerada com base na simulação da calculadora."),
-    indice_economia: asNumber(rawAnalise.indice_economia, 50),
-    indice_risco_faltar_itens: asNumber(rawAnalise.indice_risco_faltar_itens, 30),
-    indice_conforto: asNumber(rawAnalise.indice_conforto, 70),
+    resumo: pendencias.length > 0
+      ? "Há pendências na composição ou no atendimento dos grupos alimentares. Confira as porções e o preparo antes de considerar a refeição revisada."
+      : asString(rawAnalise.resumo, "Análise gerada com base na simulação da calculadora."),
+    indice_economia: 0,
+    indices_calibrados: false,
+    indice_risco_faltar_itens: 0,
+    indice_conforto: 0,
     custo_total_estimado: custoTotalEstimado,
     orcamento_disponivel: orcamentoDisponivel,
     diferenca_orcamento: diferencaOrcamento,
     data_analise: asString(rawAnalise.data_analise, new Date().toISOString()),
     sugestoes: Array.isArray(rawAnalise.sugestoes) ? rawAnalise.sugestoes : [],
-    diagnostico_financeiro: asString(rawAnalise.diagnostico_financeiro),
-    diagnostico_consumo: asString(rawAnalise.diagnostico_consumo),
-    recomendacao_final: asString(rawAnalise.recomendacao_final),
-    pontos_de_atencao: Array.isArray(rawAnalise.pontos_de_atencao) ? rawAnalise.pontos_de_atencao : [],
+    diagnostico_financeiro: financeiro.incompleto ? "Estimativa parcial: faltam regras, preços ou a consulta aos gastos existentes. Não é possível concluir se a festa cabe no limite." : asString(rawAnalise.diagnostico_financeiro),
+    diagnostico_consumo: pendencias.length > 0 ? pendencias.join(" ") : asString(rawAnalise.diagnostico_consumo),
+    recomendacao_final: pendencias.length > 0 ? "Revise as pendências de alimentação e confirme ingredientes e preparo com o responsável por servir." : asString(rawAnalise.recomendacao_final),
+    pontos_de_atencao: [...pendencias, ...(Array.isArray(rawAnalise.pontos_de_atencao) ? rawAnalise.pontos_de_atencao : [])],
     proximas_acoes: Array.isArray(rawAnalise.proximas_acoes) ? rawAnalise.proximas_acoes : [],
   };
 }
 
 function buildFallbackLocal(payload: CalculadoraIARequest): Record<string, unknown> {
-  const custoTotalEstimado = asNumber(
-    payload.custo_total_estimado ?? payload.custoTotalEstimado ?? payload.custo_estimado ?? payload.custoEstimado,
-  );
-  const orcamentoDisponivel = nullableNumber(payload.orcamento_disponivel ?? payload.orcamentoDisponivel);
-  const diferencaOrcamento = orcamentoDisponivel === null ? 0 : custoTotalEstimado - orcamentoDisponivel;
+  const financeiro = financeiroCalculadora(payload);
+  const custoTotalEstimado = financeiro.custo;
+  const orcamentoDisponivel = financeiro.orcamento;
+  const diferencaOrcamento = financeiro.diferenca;
   const acimaDoOrcamento = orcamentoDisponivel !== null && diferencaOrcamento > 0;
 
   return {
     titulo: "Análise inteligente da festa",
-    resumo: acimaDoOrcamento
+    resumo: financeiro.incompleto
+      ? "Estimativa parcial: configure os consumos e preços pendentes e confira os gastos existentes antes de avaliar o orçamento."
+      : acimaDoOrcamento
       ? "A estimativa ficou acima do orçamento informado. Vale revisar itens de maior custo e priorizar o essencial."
       : "A simulação está coerente para o planejamento inicial. Revise quantidades e fornecedores antes de fechar os gastos.",
-    indice_economia: acimaDoOrcamento ? 35 : 75,
-    indice_risco_faltar_itens: 30,
-    indice_conforto: acimaDoOrcamento ? 60 : 80,
+    indice_economia: 0,
+    indices_calibrados: false,
+    indice_risco_faltar_itens: 0,
+    indice_conforto: 0,
     custo_total_estimado: custoTotalEstimado,
     orcamento_disponivel: orcamentoDisponivel,
     diferenca_orcamento: diferencaOrcamento,
@@ -237,7 +273,11 @@ function buildFallbackLocal(payload: CalculadoraIARequest): Record<string, unkno
         impacto_estimado: 0,
       },
     ],
-    diagnostico_financeiro: acimaDoOrcamento
+    diagnostico_financeiro: financeiro.incompleto
+      ? "Não há dados completos para avaliar o limite total da festa."
+      : orcamentoDisponivel === null
+        ? "Informe o limite total da festa para avaliar a projeção financeira."
+        : acimaDoOrcamento
       ? "O custo estimado está acima do orçamento informado. Priorize cortes em itens opcionais ou negocie valores com fornecedores."
       : "O custo estimado está dentro de um cenário controlado para planejamento inicial.",
     diagnostico_consumo: "As quantidades calculadas devem ser revisadas considerando duração, perfil dos convidados e estilo da festa.",
@@ -253,35 +293,6 @@ function buildFallbackLocal(payload: CalculadoraIARequest): Record<string, unkno
       "Transformar itens aprovados em orçamento do evento.",
     ],
   };
-}
-
-async function salvarAnaliseNaSimulacao(
-  payload: CalculadoraIARequest,
-  analise: AnaliseCalculadoraIAResponse,
-): Promise<void> {
-  const idCalculo = asString(payload.id_calculo ?? payload.idCalculo ?? payload.id);
-  const idUsuario = asString(payload.id_usuario ?? payload.idUsuario);
-  const idEvento = asString(payload.id_evento ?? payload.idEvento);
-
-  if (!idCalculo) {
-    logger.info("Análise IA não persistida: id_calculo ausente no payload.");
-    return;
-  }
-
-  await admin
-    .firestore()
-    .collection(COLLECTION_CALCULADORA_FESTA)
-    .doc(idCalculo)
-    .set(
-      {
-        analise_ia: analise,
-        analise_ia_atualizada_em: admin.firestore.FieldValue.serverTimestamp(),
-        data_atualizacao: admin.firestore.FieldValue.serverTimestamp(),
-        ...(idUsuario ? { id_usuario: idUsuario } : {}),
-        ...(idEvento ? { id_evento: idEvento } : {}),
-      },
-      { merge: true },
-    );
 }
 
 function montarRespostaFunction(analise: AnaliseCalculadoraIAResponse): Record<string, unknown> {
@@ -320,18 +331,4 @@ function asString(value: unknown, fallback = ""): string {
   if (value === null || value === undefined) return fallback;
   const text = String(value).trim();
   return text.length > 0 && text !== "null" ? text : fallback;
-}
-
-function asNumber(value: unknown, fallback = 0): number {
-  if (typeof value === "number" && Number.isFinite(value)) return value;
-  if (typeof value === "string") {
-    const parsed = Number(value.replace(",", ".").replace(/[^0-9.-]/g, ""));
-    return Number.isFinite(parsed) ? parsed : fallback;
-  }
-  return fallback;
-}
-
-function nullableNumber(value: unknown): number | null {
-  if (value === null || value === undefined || value === "") return null;
-  return asNumber(value);
 }

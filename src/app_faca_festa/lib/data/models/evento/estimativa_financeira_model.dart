@@ -3,7 +3,6 @@ import 'perfil_festa_model.dart';
 
 import 'package:app_faca_festa/domain/entities/estimativa_financeira.dart';
 
-
 extension UnidadeEstimativaModelExtension on UnidadeEstimativa {
   static UnidadeEstimativa fromString(String? value) {
     final normalized = value?.trim().toLowerCase() ?? '';
@@ -28,6 +27,7 @@ class ItemEstimativaFinanceiraModel extends ItemEstimativaFinanceira {
     required super.quantidadePorConvidadoEquivalente,
     required super.valorUnitarioMedio,
     super.selecionado = true,
+    super.premissas = const {},
   });
 
   factory ItemEstimativaFinanceiraModel.fromEntity(
@@ -37,6 +37,7 @@ class ItemEstimativaFinanceiraModel extends ItemEstimativaFinanceira {
 
     return ItemEstimativaFinanceiraModel(
       id: entity.id,
+      premissas: entity.premissas,
       categoria: entity.categoria,
       nome: entity.nome,
       tipoItem: entity.tipoItem,
@@ -52,6 +53,7 @@ class ItemEstimativaFinanceiraModel extends ItemEstimativaFinanceira {
   @override
   ItemEstimativaFinanceiraModel copyWith({
     String? id,
+    Map<String, dynamic>? premissas,
     String? categoria,
     String? nome,
     String? tipoItem,
@@ -63,6 +65,7 @@ class ItemEstimativaFinanceiraModel extends ItemEstimativaFinanceira {
   }) {
     return ItemEstimativaFinanceiraModel(
       id: id ?? this.id,
+      premissas: premissas ?? this.premissas,
       categoria: categoria ?? this.categoria,
       nome: nome ?? this.nome,
       tipoItem: tipoItem ?? this.tipoItem,
@@ -78,6 +81,7 @@ class ItemEstimativaFinanceiraModel extends ItemEstimativaFinanceira {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
+      'premissas': premissas,
       'categoria': categoria,
       'nome': nome,
       'tipo_item': tipoItem,
@@ -93,6 +97,7 @@ class ItemEstimativaFinanceiraModel extends ItemEstimativaFinanceira {
   factory ItemEstimativaFinanceiraModel.fromMap(Map<String, dynamic> map) {
     return ItemEstimativaFinanceiraModel(
       id: map['id']?.toString() ?? '',
+      premissas: Map<String, dynamic>.from(map['premissas'] as Map? ?? {}),
       categoria: map['categoria']?.toString() ?? 'Recepção',
       nome: map['nome']?.toString() ?? '',
       tipoItem: map['tipo_item']?.toString() ??
@@ -205,7 +210,7 @@ class ResumoItemEstimativaModel {
   final String id;
   final String categoria;
   final String nome;
-  final int quantidade;
+  final double quantidade;
   final String unidade;
   final double valorUnitarioMedio;
   final double custoEstimado;

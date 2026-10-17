@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/core/services/update_operations.dart';
 import 'dart:convert';
 
 import 'package:firebase_auth/firebase_auth.dart';
@@ -38,97 +39,101 @@ class CallableHttpsClient {
     String nomeFunction, [
     Map<String, dynamic>? data,
     Duration? timeout,
-  ]) async {
-    final usuario = _auth.currentUser;
-    if (usuario == null) {
-      throw const CallableHttpsException(
-        'unauthenticated',
-        'Faça login para continuar.',
-      );
-    }
+  ]) {
+    return UpdateOperations.run(() async {
+      final usuario = _auth.currentUser;
+      if (usuario == null) {
+        throw const CallableHttpsException(
+          'unauthenticated',
+          'Faça login para continuar.',
+        );
+      }
 
-    final token = await usuario.getIdToken();
-    if (token == null || token.isEmpty) {
-      throw const CallableHttpsException(
-        'unauthenticated',
-        'Faça login para continuar.',
-      );
-    }
+      final token = await usuario.getIdToken();
+      if (token == null || token.isEmpty) {
+        throw const CallableHttpsException(
+          'unauthenticated',
+          'Faça login para continuar.',
+        );
+      }
 
-    final uri = _functionUri(nomeFunction);
+      final uri = _functionUri(nomeFunction);
 
-    final response = await _client
-        .post(
-          uri,
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer $token',
-          },
-          body: jsonEncode({'data': data ?? <String, dynamic>{}}),
-        )
-        .timeout(timeout ?? _timeout);
+      final response = await _client
+          .post(
+            uri,
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+            body: jsonEncode({'data': data ?? <String, dynamic>{}}),
+          )
+          .timeout(timeout ?? _timeout);
 
-    final body = _decodificar(response.body);
-    final error = body['error'];
-    if (error is Map) {
-      throw CallableHttpsException(
-        _codigoDeStatus(error['status']?.toString()),
-        error['message']?.toString(),
-      );
-    }
+      final body = _decodificar(response.body);
+      final error = body['error'];
+      if (error is Map) {
+        throw CallableHttpsException(
+          _codigoDeStatus(error['status']?.toString()),
+          error['message']?.toString(),
+        );
+      }
 
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw CallableHttpsException(
-        response.statusCode == 401 ? 'unauthenticated' : 'internal',
-        'Não foi possível concluir a verificação.',
-      );
-    }
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw CallableHttpsException(
+          response.statusCode == 401 ? 'unauthenticated' : 'internal',
+          'Não foi possível concluir a verificação.',
+        );
+      }
 
-    final result = body['result'];
-    if (result is Map<String, dynamic>) return result;
-    if (result is Map) {
-      return result.map((key, value) => MapEntry(key.toString(), value));
-    }
-    return const {};
+      final result = body['result'];
+      if (result is Map<String, dynamic>) return result;
+      if (result is Map) {
+        return result.map((key, value) => MapEntry(key.toString(), value));
+      }
+      return const {};
+    });
   }
 
   Future<Map<String, dynamic>> callPublic(
     String nomeFunction, [
     Map<String, dynamic>? data,
     Duration? timeout,
-  ]) async {
-    final uri = _functionUri(nomeFunction);
+  ]) {
+    return UpdateOperations.run(() async {
+      final uri = _functionUri(nomeFunction);
 
-    final response = await _client
-        .post(
-          uri,
-          headers: const {'Content-Type': 'application/json'},
-          body: jsonEncode({'data': data ?? <String, dynamic>{}}),
-        )
-        .timeout(timeout ?? _timeout);
+      final response = await _client
+          .post(
+            uri,
+            headers: const {'Content-Type': 'application/json'},
+            body: jsonEncode({'data': data ?? <String, dynamic>{}}),
+          )
+          .timeout(timeout ?? _timeout);
 
-    final body = _decodificar(response.body);
-    final error = body['error'];
-    if (error is Map) {
-      throw CallableHttpsException(
-        _codigoDeStatus(error['status']?.toString()),
-        error['message']?.toString(),
-      );
-    }
+      final body = _decodificar(response.body);
+      final error = body['error'];
+      if (error is Map) {
+        throw CallableHttpsException(
+          _codigoDeStatus(error['status']?.toString()),
+          error['message']?.toString(),
+        );
+      }
 
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw const CallableHttpsException(
-        'internal',
-        'Não foi possível concluir a verificação.',
-      );
-    }
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw const CallableHttpsException(
+          'internal',
+          'Não foi possível concluir a verificação.',
+        );
+      }
 
-    final result = body['result'];
-    if (result is Map<String, dynamic>) return result;
-    if (result is Map) {
-      return result.map((key, value) => MapEntry(key.toString(), value));
-    }
-    return const {};
+      final result = body['result'];
+      if (result is Map<String, dynamic>) return result;
+      if (result is Map) {
+        return result.map((key, value) => MapEntry(key.toString(), value));
+      }
+      return const {};
+    });
   }
 
   Uri _functionUri(String nomeFunction) {

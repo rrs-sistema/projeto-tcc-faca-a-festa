@@ -1,3 +1,4 @@
+import 'disponibilidade_cardapio_dialog.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -579,13 +580,50 @@ class _CardapioItemTile extends StatelessWidget {
                       color: item.confirmado
                           ? const Color(0xFF059669)
                           : const Color(0xFFF59E0B))
-                ])
+                ]),
+                if (item.disponibilidade != null)
+                  Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(
+                          item.disponibilidade!.nome != item.nome
+                              ? 'Confira a disponibilidade registrada'
+                              : 'Comprado: ${item.disponibilidade!.comprado.toStringAsFixed(2).replaceAll('.', ',')} ${item.disponibilidade!.unidade} · '
+                                  'estoque: ${item.disponibilidade!.estoque.toStringAsFixed(2).replaceAll('.', ',')} ${item.disponibilidade!.unidade}',
+                          style: const TextStyle(
+                              fontSize: 11, color: Color(0xFF475569)))),
               ])),
           PopupMenuButton<String>(
             color: Colors.white,
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
             onSelected: (v) {
+              if (v == 'disponibilidade') {
+                showDialog<void>(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (_) => Theme(
+                        data: Theme.of(context).copyWith(
+                            colorScheme: Theme.of(context)
+                                .colorScheme
+                                .copyWith(primary: primary)),
+                        child: DisponibilidadeCardapioDialog(
+                            item: item,
+                            onSalvar: (registro) async {
+                              final atuais = controller
+                                  .itensDoCardapio(idCardapio)
+                                  .where((i) => i.idItem == item.idItem);
+                              if (atuais.length != 1 ||
+                                  atuais.single.nome != item.nome ||
+                                  atuais.single.publicoAlvo !=
+                                      item.publicoAlvo) {
+                                throw StateError('O item mudou.');
+                              }
+                              await controller.atualizarItem(
+                                  idCardapio,
+                                  atuais.single
+                                      .copyWith(disponibilidade: registro));
+                            })));
+              }
               if (v == 'edit') {
                 abrirEditarItemCardapio(
                   context,
@@ -600,6 +638,10 @@ class _CardapioItemTile extends StatelessWidget {
               }
             },
             itemBuilder: (_) => [
+              const PopupMenuItem(
+                  value: 'disponibilidade',
+                  child:
+                      Text('O que já tenho', style: TextStyle(fontSize: 12))),
               const PopupMenuItem(
                   value: 'edit',
                   child: Text('Editar', style: TextStyle(fontSize: 12))),

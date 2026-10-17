@@ -1,6 +1,5 @@
 import 'package:app_faca_festa/domain/entities/cotacao_chat.dart';
 
-
 class CotacaoConversaModel extends CotacaoConversa {
   const CotacaoConversaModel({
     required super.idCotacao,

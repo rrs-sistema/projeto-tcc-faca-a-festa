@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/core/services/update_operations.dart';
 import 'package:app_faca_festa/domain/repositories/cotacao_repository.dart';
 import '../datasources/remote/cotacao_remote_datasource.dart';
 import '../models/cotacao/cotacao_chat_model.dart';
@@ -60,10 +61,12 @@ class CotacaoRepositoryImpl implements CotacaoRepository {
     required String idCotacao,
     required String idFornecedor,
   }) {
-    return remote.buscarConversaFornecedor(
-      idCotacao: idCotacao,
-      idFornecedor: idFornecedor,
-    );
+    return UpdateOperations.run(() async {
+      return remote.buscarConversaFornecedor(
+        idCotacao: idCotacao,
+        idFornecedor: idFornecedor,
+      );
+    });
   }
 
   @override
@@ -72,11 +75,13 @@ class CotacaoRepositoryImpl implements CotacaoRepository {
     required String idFornecedor,
     required String idUsuario,
   }) {
-    return remote.marcarMensagensComoLidas(
-      idCotacao: idCotacao,
-      idFornecedor: idFornecedor,
-      idUsuario: idUsuario,
-    );
+    return UpdateOperations.run(() async {
+      return remote.marcarMensagensComoLidas(
+        idCotacao: idCotacao,
+        idFornecedor: idFornecedor,
+        idUsuario: idUsuario,
+      );
+    });
   }
 
   @override
@@ -87,13 +92,15 @@ class CotacaoRepositoryImpl implements CotacaoRepository {
     required String nomeUsuario,
     required String mensagem,
   }) {
-    return remote.enviarMensagem(
-      idCotacao: idCotacao,
-      idFornecedor: idFornecedor,
-      idUsuario: idUsuario,
-      nomeUsuario: nomeUsuario,
-      mensagem: mensagem,
-    );
+    return UpdateOperations.run(() async {
+      return remote.enviarMensagem(
+        idCotacao: idCotacao,
+        idFornecedor: idFornecedor,
+        idUsuario: idUsuario,
+        nomeUsuario: nomeUsuario,
+        mensagem: mensagem,
+      );
+    });
   }
 
   @override
@@ -106,15 +113,17 @@ class CotacaoRepositoryImpl implements CotacaoRepository {
     required List<String> fornecedoresSelecionados,
     required List<ItemServicoCotacao> servicos,
   }) {
-    return remote.criarCotacao(
-      idEvento: idEvento,
-      categoriaNome: categoriaNome,
-      observacao: observacao,
-      valorEstimadoTotal: valorEstimadoTotal,
-      dataLimiteResposta: dataLimiteResposta,
-      fornecedoresSelecionados: fornecedoresSelecionados,
-      servicos: servicos,
-    );
+    return UpdateOperations.run(() async {
+      return remote.criarCotacao(
+        idEvento: idEvento,
+        categoriaNome: categoriaNome,
+        observacao: observacao,
+        valorEstimadoTotal: valorEstimadoTotal,
+        dataLimiteResposta: dataLimiteResposta,
+        fornecedoresSelecionados: fornecedoresSelecionados,
+        servicos: servicos,
+      );
+    });
   }
 
   @override
@@ -125,13 +134,15 @@ class CotacaoRepositoryImpl implements CotacaoRepository {
     String? condicaoPagamento,
     String? observacaoFornecedor,
   }) {
-    return remote.responderCotacao(
-      idCotacao: idCotacao,
-      aceitou: aceitou,
-      prazoEntrega: prazoEntrega,
-      condicaoPagamento: condicaoPagamento,
-      observacaoFornecedor: observacaoFornecedor,
-    );
+    return UpdateOperations.run(() async {
+      return remote.responderCotacao(
+        idCotacao: idCotacao,
+        aceitou: aceitou,
+        prazoEntrega: prazoEntrega,
+        condicaoPagamento: condicaoPagamento,
+        observacaoFornecedor: observacaoFornecedor,
+      );
+    });
   }
 
   @override
@@ -142,12 +153,14 @@ class CotacaoRepositoryImpl implements CotacaoRepository {
     required String idSolicitante,
     required String nomeSolicitante,
   }) {
-    return remote.confirmarFornecedorEscolhido(
-      idCotacao: idCotacao,
-      idFornecedor: idFornecedor,
-      nomeFornecedor: nomeFornecedor,
-      idSolicitante: idSolicitante,
-      nomeSolicitante: nomeSolicitante,
-    );
+    return UpdateOperations.run(() async {
+      return remote.confirmarFornecedorEscolhido(
+        idCotacao: idCotacao,
+        idFornecedor: idFornecedor,
+        nomeFornecedor: nomeFornecedor,
+        idSolicitante: idSolicitante,
+        nomeSolicitante: nomeSolicitante,
+      );
+    });
   }
 }

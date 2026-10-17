@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/core/services/update_operations.dart';
 import 'package:app_faca_festa/domain/entities/fornecedor_categoria.dart';
 import 'package:app_faca_festa/domain/entities/fornecedor_produto_servico.dart';
 import 'package:app_faca_festa/domain/repositories/fornecedor_repository.dart';
@@ -19,22 +20,30 @@ class FornecedorRepositoryImpl implements FornecedorRepository {
   Future<FornecedorAdminSnapshot> carregarSnapshotAdmin({
     required bool incluirEnderecos,
   }) {
-    return remote.carregarSnapshotAdmin(incluirEnderecos: incluirEnderecos);
+    return UpdateOperations.run(() async {
+      return remote.carregarSnapshotAdmin(incluirEnderecos: incluirEnderecos);
+    });
   }
 
   @override
   Future<FornecedorModel?> buscarPorUsuario(String idUsuario) {
-    return remote.buscarPorUsuario(idUsuario);
+    return UpdateOperations.run(() async {
+      return remote.buscarPorUsuario(idUsuario);
+    });
   }
 
   @override
   Future<FornecedorModel?> buscarPorIdUsuario(String idUsuario) {
-    return remote.buscarPorIdUsuario(idUsuario);
+    return UpdateOperations.run(() async {
+      return remote.buscarPorIdUsuario(idUsuario);
+    });
   }
 
   @override
   Future<EventoModel?> buscarEventoPorId(String idEvento) {
-    return remote.buscarEventoPorId(idEvento);
+    return UpdateOperations.run(() async {
+      return remote.buscarEventoPorId(idEvento);
+    });
   }
 
   @override
@@ -63,43 +72,57 @@ class FornecedorRepositoryImpl implements FornecedorRepository {
   Future<List<FornecedorProdutoServico>> listarServicosPorEvento(
     String idEvento,
   ) {
-    return remote.listarServicosPorEvento(idEvento);
+    return UpdateOperations.run(() async {
+      return remote.listarServicosPorEvento(idEvento);
+    });
   }
 
   @override
   Future<List<FornecedorModel>> listarFornecedoresDoEvento(String idEvento) {
-    return remote.listarFornecedoresDoEvento(idEvento);
+    return UpdateOperations.run(() async {
+      return remote.listarFornecedoresDoEvento(idEvento);
+    });
   }
 
   @override
   Future<List<CotacaoModel>> listarSolicitacoesPendentesDetalhadas(
     String idFornecedor,
   ) {
-    return remote.listarSolicitacoesPendentesDetalhadas(idFornecedor);
+    return UpdateOperations.run(() async {
+      return remote.listarSolicitacoesPendentesDetalhadas(idFornecedor);
+    });
   }
 
   @override
   Future<FornecedorEstatisticasModel> carregarEstatisticas(
     String idFornecedor,
   ) {
-    return remote.carregarEstatisticas(idFornecedor);
+    return UpdateOperations.run(() async {
+      return remote.carregarEstatisticas(idFornecedor);
+    });
   }
 
   @override
   Future<void> atualizarFornecedor(Fornecedor fornecedor) {
-    return remote.atualizarFornecedor(FornecedorModel.fromEntity(fornecedor));
+    return UpdateOperations.run(() async {
+      return remote.atualizarFornecedor(FornecedorModel.fromEntity(fornecedor));
+    });
   }
 
   @override
   Future<void> salvarFornecedor(Fornecedor fornecedor) {
-    return remote.salvarFornecedor(FornecedorModel.fromEntity(fornecedor));
+    return UpdateOperations.run(() async {
+      return remote.salvarFornecedor(FornecedorModel.fromEntity(fornecedor));
+    });
   }
 
   @override
   Future<void> salvarCategoriaFornecedor(FornecedorCategoria categoria) {
-    return remote.salvarCategoriaFornecedor(
-      FornecedorCategoriaModel.fromEntity(categoria),
-    );
+    return UpdateOperations.run(() async {
+      return remote.salvarCategoriaFornecedor(
+        FornecedorCategoriaModel.fromEntity(categoria),
+      );
+    });
   }
 
   @override
@@ -107,10 +130,12 @@ class FornecedorRepositoryImpl implements FornecedorRepository {
     required String idFornecedor,
     required bool ativo,
   }) {
-    return remote.atualizarStatusAtivo(
-      idFornecedor: idFornecedor,
-      ativo: ativo,
-    );
+    return UpdateOperations.run(() async {
+      return remote.atualizarStatusAtivo(
+        idFornecedor: idFornecedor,
+        ativo: ativo,
+      );
+    });
   }
 
   @override
@@ -118,10 +143,12 @@ class FornecedorRepositoryImpl implements FornecedorRepository {
     required String idFornecedor,
     required bool apto,
   }) {
-    return remote.atualizarAptoParaOperar(
-      idFornecedor: idFornecedor,
-      apto: apto,
-    );
+    return UpdateOperations.run(() async {
+      return remote.atualizarAptoParaOperar(
+        idFornecedor: idFornecedor,
+        apto: apto,
+      );
+    });
   }
 
   @override
@@ -129,10 +156,12 @@ class FornecedorRepositoryImpl implements FornecedorRepository {
     required String idFornecedor,
     required String token,
   }) {
-    return remote.atualizarFcmToken(
-      idFornecedor: idFornecedor,
-      token: token,
-    );
+    return UpdateOperations.run(() async {
+      return remote.atualizarFcmToken(
+        idFornecedor: idFornecedor,
+        token: token,
+      );
+    });
   }
 
   @override
@@ -141,15 +170,19 @@ class FornecedorRepositoryImpl implements FornecedorRepository {
     required String nomeArquivo,
     required String uid,
   }) {
-    return remote.uploadBanner(
-      bytes: bytes,
-      nomeArquivo: nomeArquivo,
-      uid: uid,
-    );
+    return UpdateOperations.run(() async {
+      return remote.uploadBanner(
+        bytes: bytes,
+        nomeArquivo: nomeArquivo,
+        uid: uid,
+      );
+    });
   }
 
   @override
   Future<int> limparDuplicatasFornecedorCategoria() {
-    return remote.limparDuplicatasFornecedorCategoria();
+    return UpdateOperations.run(() async {
+      return remote.limparDuplicatasFornecedorCategoria();
+    });
   }
 }

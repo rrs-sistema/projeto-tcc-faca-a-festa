@@ -3,7 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:app_faca_festa/domain/entities/fornecedor_categoria.dart';
 import 'package:app_faca_festa/domain/entities/fornecedor_categoria_resumo.dart';
 
-
 class FornecedorCategoriaModel extends FornecedorCategoria {
   FornecedorCategoriaModel({
     required super.idFornecedor,
@@ -75,11 +74,10 @@ class FornecedorCategoriaModel extends FornecedorCategoria {
         .map((item) {
           final map = Map<String, dynamic>.from(item);
           return FornecedorSubcategoriaResumo(
-            idSubcategoria: (map['idSubcategoria'] ??
-                    map['id_subcategoria'] ??
-                    '')
-                .toString()
-                .trim(),
+            idSubcategoria:
+                (map['idSubcategoria'] ?? map['id_subcategoria'] ?? '')
+                    .toString()
+                    .trim(),
             nomeSubcategoria: (map['nomeSubcategoria'] ??
                     map['nome_subcategoria'] ??
                     map['subcategoria'] ??

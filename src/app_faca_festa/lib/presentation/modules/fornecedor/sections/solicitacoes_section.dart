@@ -413,6 +413,7 @@ class _RespostaCotacaoAiBottomSheetState
                             ),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: const Color(0xFF4F46E5),
+                              iconColor: const Color(0xFF4F46E5),
                               side: const BorderSide(color: Color(0xFFC7D2FE)),
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(14)),
@@ -433,6 +434,7 @@ class _RespostaCotacaoAiBottomSheetState
                               elevation: 0,
                               backgroundColor: const Color(0xFF111827),
                               foregroundColor: Colors.white,
+                              iconColor: Colors.white,
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(14)),
                               padding: const EdgeInsets.symmetric(
@@ -797,6 +799,7 @@ class _CotacoesShell extends StatelessWidget {
                         ),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: const Color(0xFF4F46E5),
+                          iconColor: const Color(0xFF4F46E5),
                           side: const BorderSide(color: Color(0xFFC7D2FE)),
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(11)),
@@ -1061,6 +1064,7 @@ class _CompactActionButton extends StatelessWidget {
               onPressed: onTap,
               style: OutlinedButton.styleFrom(
                 foregroundColor: const Color(0xFF4F46E5),
+                iconColor: const Color(0xFF4F46E5),
                 side: const BorderSide(color: Color(0xFFC7D2FE)),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),
@@ -1074,6 +1078,7 @@ class _CompactActionButton extends StatelessWidget {
                 elevation: 0,
                 backgroundColor: const Color(0xFF111827),
                 foregroundColor: Colors.white,
+                iconColor: Colors.white,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),
                 padding: const EdgeInsets.symmetric(horizontal: 12),

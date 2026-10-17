@@ -3,6 +3,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:app_faca_festa/presentation/modules/eventos/home_organizador_copy.dart';
 
 void main() {
+  test('orçamento mostra o excedente sem limitar o texto a 100%', () {
+    expect(HomeOrganizadorCopy.orcamentoPercentual(1.2), '120%');
+    expect(HomeOrganizadorCopy.orcamentoPercentual(12.5), '1250%');
+    expect(HomeOrganizadorCopy.orcamentoPercentual(0), '0%');
+  });
   group('HomeOrganizadorCopy', () {
     test('resume convidados sem lista', () {
       expect(HomeOrganizadorCopy.convidadosValor(0, 0), '0 na lista');

@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/core/services/update_operations.dart';
 import 'package:app_faca_festa/domain/repositories/orcamento_repository.dart';
 import 'package:app_faca_festa/domain/entities/orcamento.dart';
 import '../datasources/remote/orcamento_remote_datasource.dart';
@@ -10,7 +11,9 @@ class OrcamentoRepositoryImpl implements OrcamentoRepository {
 
   @override
   Future<Orcamento?> buscarPorId(String idOrcamento) {
-    return remote.buscarPorId(idOrcamento);
+    return UpdateOperations.run(() async {
+      return remote.buscarPorId(idOrcamento);
+    });
   }
 
   @override
@@ -27,7 +30,9 @@ class OrcamentoRepositoryImpl implements OrcamentoRepository {
 
   @override
   Future<void> criarOrcamento(Orcamento orcamento) {
-    return remote.criarOrcamento(OrcamentoModel.fromEntity(orcamento));
+    return UpdateOperations.run(() async {
+      return remote.criarOrcamento(OrcamentoModel.fromEntity(orcamento));
+    });
   }
 
   @override
@@ -38,13 +43,15 @@ class OrcamentoRepositoryImpl implements OrcamentoRepository {
     required DateTime? dataReserva,
     required StatusOrcamento status,
   }) {
-    return remote.confirmarReserva(
-      idOrcamento: idOrcamento,
-      custoEstimado: custoEstimado,
-      anotacoes: anotacoes,
-      dataReserva: dataReserva,
-      status: status,
-    );
+    return UpdateOperations.run(() async {
+      return remote.confirmarReserva(
+        idOrcamento: idOrcamento,
+        custoEstimado: custoEstimado,
+        anotacoes: anotacoes,
+        dataReserva: dataReserva,
+        status: status,
+      );
+    });
   }
 
   @override
@@ -54,16 +61,20 @@ class OrcamentoRepositoryImpl implements OrcamentoRepository {
     String? anotacoes,
     required bool fechar,
   }) {
-    return remote.responderOrcamento(
-      idOrcamento: idOrcamento,
-      custoEstimado: custoEstimado,
-      anotacoes: anotacoes,
-      fechar: fechar,
-    );
+    return UpdateOperations.run(() async {
+      return remote.responderOrcamento(
+        idOrcamento: idOrcamento,
+        custoEstimado: custoEstimado,
+        anotacoes: anotacoes,
+        fechar: fechar,
+      );
+    });
   }
 
   @override
   Future<void> excluirOrcamento(String idOrcamento) {
-    return remote.excluirOrcamento(idOrcamento);
+    return UpdateOperations.run(() async {
+      return remote.excluirOrcamento(idOrcamento);
+    });
   }
 }

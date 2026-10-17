@@ -41,7 +41,7 @@ class TotpMfaController extends GetxController {
     final args = TotpMfaArgs.maybeOf(Get.arguments);
     if (args != null && args.ehEmail) {
       metodoLogin.value = etapaEmail;
-      solicitarCodigoEmail();
+      solicitarCodigoEmail(silencioso: true);
       return;
     }
     if (gerarQrNoInicio) {
@@ -104,23 +104,27 @@ class TotpMfaController extends GetxController {
     }
   }
 
-  Future<void> solicitarCodigoEmail() async {
+  Future<void> solicitarCodigoEmail({bool silencioso = false}) async {
     try {
       enviandoEmail.value = true;
-      EasyLoading.show(status: 'Enviando código...');
+      if (!silencioso) {
+        EasyLoading.show(status: 'Enviando código...');
+      }
       final data = await _autenticacaoRepository.solicitarCodigoEmailMfa();
       emailMascarado.value = data.emailMascarado;
-      EasyLoading.dismiss();
-      _mostrarSucesso(
-        data.mensagem.isEmpty
-            ? 'Enviamos um código para o seu e-mail.'
-            : data.mensagem,
-      );
+      if (!silencioso) {
+        EasyLoading.dismiss();
+        _mostrarSucesso(
+          data.mensagem.isEmpty
+              ? 'Enviamos um código para o seu e-mail.'
+              : data.mensagem,
+        );
+      }
     } on AutenticacaoException catch (e) {
-      EasyLoading.dismiss();
+      if (!silencioso) EasyLoading.dismiss();
       _mostrarErro(_traduzErro(e.codigo, e.mensagem));
     } catch (_) {
-      EasyLoading.dismiss();
+      if (!silencioso) EasyLoading.dismiss();
       _mostrarErro('Não foi possível enviar o código. Tente novamente.');
     } finally {
       enviandoEmail.value = false;

@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/core/utils/numeric_input.dart';
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:app_faca_festa/core/utils/biblioteca.dart';
@@ -475,6 +476,7 @@ class _CotacaoNovaBottomSheetState extends State<CotacaoNovaBottomSheet> {
               controller: controller,
               textAlign: TextAlign.center,
               keyboardType: TextInputType.number,
+              inputFormatters: NumericInput.inteiro,
               style: GoogleFonts.poppins(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,

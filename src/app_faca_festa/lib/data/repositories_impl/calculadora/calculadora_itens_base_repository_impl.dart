@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/core/services/update_operations.dart';
 import 'package:app_faca_festa/domain/entities/calculadora_evento_item.dart';
 import 'package:app_faca_festa/domain/entities/calculadora_item_base.dart';
 import 'package:app_faca_festa/domain/repositories/calculadora_itens_base_repository_contract.dart';
@@ -12,22 +13,30 @@ class CalculadoraItensBaseRepositoryImpl
 
   @override
   Future<List<CalculadoraItemBase>> listarItensBase() {
-    return remote.listarItensBase();
+    return UpdateOperations.run(() async {
+      return remote.listarItensBase();
+    });
   }
 
   @override
   Future<List<CalculadoraEventoItem>> listarItensEvento() {
-    return remote.listarItensEvento();
+    return UpdateOperations.run(() async {
+      return remote.listarItensEvento();
+    });
   }
 
   @override
   Future<List<CalculadoraItemBase>> listarItensBaseAtivos() {
-    return remote.listarItensBaseAtivos();
+    return UpdateOperations.run(() async {
+      return remote.listarItensBaseAtivos();
+    });
   }
 
   @override
   Future<List<CalculadoraEventoItem>> listarItensEventoAtivos() {
-    return remote.listarItensEventoAtivos();
+    return UpdateOperations.run(() async {
+      return remote.listarItensEventoAtivos();
+    });
   }
 
   @override
@@ -35,10 +44,12 @@ class CalculadoraItensBaseRepositoryImpl
     required String tipoEvento,
     String? perfilFesta,
   }) {
-    return remote.buscarItensPorTipoEvento(
-      tipoEvento: tipoEvento,
-      perfilFesta: perfilFesta,
-    );
+    return UpdateOperations.run(() async {
+      return remote.buscarItensPorTipoEvento(
+        tipoEvento: tipoEvento,
+        perfilFesta: perfilFesta,
+      );
+    });
   }
 
   @override
@@ -46,34 +57,46 @@ class CalculadoraItensBaseRepositoryImpl
     required String tipoEvento,
     String? perfilFesta,
   }) {
-    return remote.buscarItensPorTipoEventoComFallback(
-      tipoEvento: tipoEvento,
-      perfilFesta: perfilFesta,
-    );
+    return UpdateOperations.run(() async {
+      return remote.buscarItensPorTipoEventoComFallback(
+        tipoEvento: tipoEvento,
+        perfilFesta: perfilFesta,
+      );
+    });
   }
 
   @override
   Future<CalculadoraEventoItem?> buscarItemEventoPorId(String id) {
-    return remote.buscarItemEventoPorId(id);
+    return UpdateOperations.run(() async {
+      return remote.buscarItemEventoPorId(id);
+    });
   }
 
   @override
   Future<void> salvarItemBase(CalculadoraItemBase item) {
-    return remote.salvarItemBase(item);
+    return UpdateOperations.run(() async {
+      return remote.salvarItemBase(item);
+    });
   }
 
   @override
   Future<void> salvarItemEvento(CalculadoraEventoItem item) {
-    return remote.salvarItemEvento(item);
+    return UpdateOperations.run(() async {
+      return remote.salvarItemEvento(item);
+    });
   }
 
   @override
   Future<void> ativarDesativarItemBase(String id, bool ativo) {
-    return remote.ativarDesativarItemBase(id, ativo);
+    return UpdateOperations.run(() async {
+      return remote.ativarDesativarItemBase(id, ativo);
+    });
   }
 
   @override
   Future<void> ativarDesativarItemEvento(String id, bool ativo) {
-    return remote.ativarDesativarItemEvento(id, ativo);
+    return UpdateOperations.run(() async {
+      return remote.ativarDesativarItemEvento(id, ativo);
+    });
   }
 }

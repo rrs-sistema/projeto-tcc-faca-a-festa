@@ -101,7 +101,10 @@ class FornecedorCatalogo {
     });
   }
 
-  Future<void> listarComDetalhes(String idFornecedor) async {
+  Future<void> listarComDetalhes(
+    String idFornecedor, {
+    bool atualizarIa = true,
+  }) async {
     try {
       _carregando.value = true;
       _erro.value = '';
@@ -111,7 +114,7 @@ class FornecedorCatalogo {
         idFornecedor: idFornecedor,
       );
       servicosDetalhado.assignAll(lista);
-      await _recarregarAi();
+      if (atualizarIa) await _recarregarAi();
     } catch (e, s) {
       _erro.value = 'Erro ao carregar serviços: $e';
       debugPrint('❌ Erro ao listar serviços: $e\n$s');

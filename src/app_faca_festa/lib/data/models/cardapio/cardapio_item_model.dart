@@ -1,7 +1,7 @@
+import 'package:app_faca_festa/domain/entities/disponibilidade_cardapio.dart';
 import 'package:app_faca_festa/domain/entities/cardapio_item.dart';
 import 'cardapio_model.dart';
 import 'package:app_faca_festa/domain/entities/cardapio.dart';
-
 
 extension TipoItemCardapioPersistence on TipoItemCardapio {
   String get firestoreValue => name;
@@ -21,6 +21,7 @@ class CardapioItemModel extends CardapioItem {
     super.confirmado,
     super.geradoPelaCalculadora,
     super.observacao,
+    super.disponibilidade,
   });
 
   factory CardapioItemModel.fromEntity(CardapioItem item) => CardapioItemModel(
@@ -36,6 +37,7 @@ class CardapioItemModel extends CardapioItem {
         confirmado: item.confirmado,
         geradoPelaCalculadora: item.geradoPelaCalculadora,
         observacao: item.observacao,
+        disponibilidade: item.disponibilidade,
       );
 
   Map<String, dynamic> toMap() => {
@@ -51,6 +53,8 @@ class CardapioItemModel extends CardapioItem {
         'confirmado': confirmado,
         'gerado_pela_calculadora': geradoPelaCalculadora,
         'observacao': observacao,
+        if (disponibilidade != null)
+          'disponibilidade': disponibilidade!.toMap(),
       };
 
   factory CardapioItemModel.fromMap(Map<String, dynamic> map) =>
@@ -67,6 +71,8 @@ class CardapioItemModel extends CardapioItem {
         confirmado: map['confirmado'] ?? false,
         geradoPelaCalculadora: map['gerado_pela_calculadora'] ?? false,
         observacao: map['observacao']?.toString(),
+        disponibilidade:
+            DisponibilidadeCardapio.fromMap(map['disponibilidade']),
       );
 
   static double _doubleValue(dynamic value) =>
@@ -86,6 +92,7 @@ class CardapioItemModel extends CardapioItem {
     bool? confirmado,
     bool? geradoPelaCalculadora,
     String? observacao,
+    DisponibilidadeCardapio? disponibilidade,
   }) =>
       CardapioItemModel(
         idItem: idItem ?? this.idItem,
@@ -101,5 +108,6 @@ class CardapioItemModel extends CardapioItem {
         geradoPelaCalculadora:
             geradoPelaCalculadora ?? this.geradoPelaCalculadora,
         observacao: observacao ?? this.observacao,
+        disponibilidade: disponibilidade ?? this.disponibilidade,
       );
 }

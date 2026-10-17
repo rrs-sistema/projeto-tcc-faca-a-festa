@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/core/services/update_operations.dart';
 import 'dart:developer' as developer;
 
 import './../datasources/remote/gift_remote_datasource.dart';
@@ -35,56 +36,62 @@ class GiftRepositoryImpl implements GiftRepository {
   }
 
   @override
-  Future<void> createGift(String eventoId, Gift gift) async {
-    final model = GiftModel.fromEntity(gift);
+  Future<void> createGift(String eventoId, Gift gift) {
+    return UpdateOperations.run(() async {
+      final model = GiftModel.fromEntity(gift);
 
-    final companion = model.toCompanion(
-      eventoId: eventoId,
-      synced: false,
-      deleted: false,
-      updatedAtOverride: DateTime.now(),
-    );
+      final companion = model.toCompanion(
+        eventoId: eventoId,
+        synced: false,
+        deleted: false,
+        updatedAtOverride: DateTime.now(),
+      );
 
-    await local.saveGift(companion);
+      await local.saveGift(companion);
 
-    final saved = await local.getGift(model.id);
-    if (saved != null) {
-      await _trySyncRemote(saved);
-    }
+      final saved = await local.getGift(model.id);
+      if (saved != null) {
+        await _trySyncRemote(saved);
+      }
+    });
   }
 
   @override
-  Future<void> updateGift(String eventoId, Gift gift) async {
-    final model = GiftModel.fromEntity(gift);
+  Future<void> updateGift(String eventoId, Gift gift) {
+    return UpdateOperations.run(() async {
+      final model = GiftModel.fromEntity(gift);
 
-    final existing = await local.getGift(model.id);
+      final existing = await local.getGift(model.id);
 
-    final updated = model.toCompanion(
-      eventoId: eventoId,
-      synced: false,
-      deleted: existing?.deleted ?? false,
-      updatedAtOverride: DateTime.now(),
-    );
+      final updated = model.toCompanion(
+        eventoId: eventoId,
+        synced: false,
+        deleted: existing?.deleted ?? false,
+        updatedAtOverride: DateTime.now(),
+      );
 
-    await local.saveGift(updated);
+      await local.saveGift(updated);
 
-    final saved = await local.getGift(model.id);
-    if (saved != null) {
-      await _trySyncRemote(saved);
-    }
+      final saved = await local.getGift(model.id);
+      if (saved != null) {
+        await _trySyncRemote(saved);
+      }
+    });
   }
 
   @override
-  Future<void> deleteGift(String eventoId, String giftId) async {
-    final gift = await local.getGift(giftId);
-    if (gift == null) return;
+  Future<void> deleteGift(String eventoId, String giftId) {
+    return UpdateOperations.run(() async {
+      final gift = await local.getGift(giftId);
+      if (gift == null) return;
 
-    await local.markDeleted(giftId);
+      await local.markDeleted(giftId);
 
-    final updated = await local.getGift(giftId);
-    if (updated != null) {
-      await _trySyncRemote(updated);
-    }
+      final updated = await local.getGift(giftId);
+      if (updated != null) {
+        await _trySyncRemote(updated);
+      }
+    });
   }
 
   @override
@@ -93,25 +100,27 @@ class GiftRepositoryImpl implements GiftRepository {
     String giftId,
     String nome,
     String uid,
-  ) async {
-    final gift = await local.getGift(giftId);
-    if (gift == null || gift.status != 'disponivel') return false;
+  ) {
+    return UpdateOperations.run(() async {
+      final gift = await local.getGift(giftId);
+      if (gift == null || gift.status != 'disponivel') return false;
 
-    await local.updateReservation(
-      giftId: giftId,
-      status: 'reservado',
-      reservadoPor: nome,
-      reservadoUid: uid,
-      dataReserva: DateTime.now(),
-      synced: false,
-    );
+      await local.updateReservation(
+        giftId: giftId,
+        status: 'reservado',
+        reservadoPor: nome,
+        reservadoUid: uid,
+        dataReserva: DateTime.now(),
+        synced: false,
+      );
 
-    final updated = await local.getGift(giftId);
-    if (updated != null) {
-      await _trySyncRemote(updated);
-    }
+      final updated = await local.getGift(giftId);
+      if (updated != null) {
+        await _trySyncRemote(updated);
+      }
 
-    return true;
+      return true;
+    });
   }
 
   @override
@@ -119,52 +128,56 @@ class GiftRepositoryImpl implements GiftRepository {
     String eventoId,
     String giftId,
     GiftContribution contribution,
-  ) async {
-    final gift = await local.getGift(giftId);
-    if (gift == null) return;
+  ) {
+    return UpdateOperations.run(() async {
+      final gift = await local.getGift(giftId);
+      if (gift == null) return;
 
-    await local.updateValorArrecadado(
-      giftId: giftId,
-      valorArrecadado: gift.valorArrecadado + contribution.valor,
-      synced: false,
-    );
+      await local.updateValorArrecadado(
+        giftId: giftId,
+        valorArrecadado: gift.valorArrecadado + contribution.valor,
+        synced: false,
+      );
 
-    await local.saveContribution(
-      eventoId,
-      giftId,
-      contribution,
-    );
+      await local.saveContribution(
+        eventoId,
+        giftId,
+        contribution,
+      );
 
-    try {
-      await remote.saveContribution(eventoId, giftId, contribution);
+      try {
+        await remote.saveContribution(eventoId, giftId, contribution);
 
-      final updated = await local.getGift(giftId);
-      if (updated != null) {
-        await _trySyncRemote(updated);
-      }
-    } catch (_) {}
+        final updated = await local.getGift(giftId);
+        if (updated != null) {
+          await _trySyncRemote(updated);
+        }
+      } catch (_) {}
+    });
   }
 
-  Future<void> _trySyncRemote(GiftLocal localGift) async {
-    if (_syncing) return;
-    _syncing = true;
+  Future<void> _trySyncRemote(GiftLocal localGift) {
+    return UpdateOperations.run(() async {
+      if (_syncing) return;
+      _syncing = true;
 
-    try {
-      if (localGift.deleted) {
-        await remote.deleteGift(localGift.eventoId, localGift.giftId);
-      } else {
-        await remote.createGift(localGift.eventoId, localGift.toModel());
+      try {
+        if (localGift.deleted) {
+          await remote.deleteGift(localGift.eventoId, localGift.giftId);
+        } else {
+          await remote.createGift(localGift.eventoId, localGift.toModel());
+        }
+
+        await local.markSynced(localGift.giftId);
+      } catch (e) {
+        developer.log(
+          'Erro sync gift ${localGift.giftId}',
+          name: 'GiftRepositoryImpl',
+          error: e,
+        );
+      } finally {
+        _syncing = false;
       }
-
-      await local.markSynced(localGift.giftId);
-    } catch (e) {
-      developer.log(
-        'Erro sync gift ${localGift.giftId}',
-        name: 'GiftRepositoryImpl',
-        error: e,
-      );
-    } finally {
-      _syncing = false;
-    }
+    });
   }
 }

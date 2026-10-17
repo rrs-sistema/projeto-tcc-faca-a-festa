@@ -9,8 +9,10 @@ import 'package:app_faca_festa/domain/repositories/uf_cidade_repository.dart';
 import 'package:app_faca_festa/domain/services/buscar_cep_service.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_ufs_cidades.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 void main() {
+  setUpAll(() => initializeDateFormatting('pt_BR'));
   late _EventoRepositoryFake repository;
   late EventoCadastroController controller;
 
@@ -27,6 +29,76 @@ void main() {
 
   tearDown(() {
     controller.onClose();
+  });
+
+  group('planejamento com campos opcionais', () {
+    test('um dia é o padrão e não exige término, hora ou custo', () {
+      expect(controller.eventoVariosDias.value, isFalse);
+      expect(controller.validarTermino(''), isNull);
+      expect(controller.validarHora(''), isNull);
+      expect(controller.validarCusto(''), isNull);
+      expect(controller.custoEstimadoInformado, isNull);
+    });
+
+    test('vários dias exige término posterior ao início', () {
+      controller.dataFesta.text = '14/10/2026';
+      controller.definirEventoVariosDias(true);
+      expect(controller.validarTermino(''), isNotNull);
+      expect(controller.validarTermino('13/10/2026'), isNotNull);
+      expect(controller.validarTermino('14/10/2026'), isNotNull);
+      expect(controller.validarTermino('31/02/2026'), isNotNull);
+      expect(controller.validarTermino('19/10/2026'), isNull);
+    });
+
+    test('voltar para um dia limpa o término e remove a exigência', () {
+      controller.definirEventoVariosDias(true);
+      controller.dataFimFesta.text = '19/10/2026';
+      controller.definirEventoVariosDias(false);
+      expect(controller.dataFimFesta.text, isEmpty);
+      expect(controller.validarTermino(''), isNull);
+    });
+
+    test('campos opcionais preenchidos continuam sendo validados', () {
+      expect(controller.validarHora('25:80'), isNotNull);
+      expect(controller.validarHora('18:30'), isNull);
+      expect(controller.validarCusto('-10,00'), isNotNull);
+      controller.custoEstimado.text = 'R\$ 0,00';
+      expect(controller.validarCusto(controller.custoEstimado.text), isNull);
+      expect(controller.custoEstimadoInformado, isNull);
+      controller.custoEstimado.text = 'R\$ 0,50';
+      expect(controller.validarCusto(controller.custoEstimado.text), isNull);
+      expect(controller.custoEstimadoInformado, 0.5);
+    });
+
+    test(
+        'edição recupera vários dias e limpa o término ao carregar evento de um dia',
+        () {
+      Evento evento({DateTime? fim}) => Evento(
+            idEvento: 'evento',
+            idTipoEvento: 'retiro',
+            idUsuario: 'usuario',
+            nomeEvento: 'Retiro',
+            localEvento: 'Chácara',
+            data: DateTime(2026, 10, 14),
+            dataFim: fim,
+          );
+      controller.carregarEvento(evento(fim: DateTime(2026, 10, 19)));
+      expect(controller.eventoVariosDias.value, isTrue);
+      expect(controller.dataFimFesta.text, '19/10/2026');
+      controller.carregarEvento(evento());
+      expect(controller.eventoVariosDias.value, isFalse);
+      expect(controller.dataFimFesta.text, isEmpty);
+      expect(controller.horaFesta.text, isEmpty);
+      expect(controller.custoEstimadoInformado, isNull);
+    });
+
+    test('novo cadastro não herda período do evento anterior', () {
+      controller.definirEventoVariosDias(true);
+      controller.dataFimFesta.text = '19/10/2026';
+      controller.limpar(manterEndereco: true);
+      expect(controller.eventoVariosDias.value, isFalse);
+      expect(controller.dataFimFesta.text, isEmpty);
+    });
   });
 
   test('loads active event types from repository unchanged', () async {

@@ -7,6 +7,8 @@ class CalculadoraFestaItem {
   final String tipoItem;
   final String publicoAlvo;
   final double quantidade;
+  final double? quantidadeNecessaria;
+  final String idCardapio, idItemCardapio;
   final String unidade;
   final String regraAplicada;
   final bool adicionadoAoCardapio;
@@ -26,6 +28,9 @@ class CalculadoraFestaItem {
     required this.tipoItem,
     required this.publicoAlvo,
     required this.quantidade,
+    this.quantidadeNecessaria,
+    this.idCardapio = '',
+    this.idItemCardapio = '',
     required this.unidade,
     required this.regraAplicada,
     this.adicionadoAoCardapio = false,
@@ -40,7 +45,9 @@ class CalculadoraFestaItem {
   bool get podeAdicionarAoOrcamento => !adicionadoAoOrcamento;
 
   String get quantidadeFormatada {
-    final valor = quantidade.ceil();
+    final valor = quantidade == quantidade.roundToDouble()
+        ? quantidade.toInt().toString()
+        : quantidade.toStringAsFixed(2).replaceAll('.', ',');
     return '$valor $unidade';
   }
 
@@ -61,6 +68,9 @@ class CalculadoraFestaItem {
     String? tipoItem,
     String? publicoAlvo,
     double? quantidade,
+    double? quantidadeNecessaria,
+    String? idCardapio,
+    String? idItemCardapio,
     String? unidade,
     String? regraAplicada,
     bool? adicionadoAoCardapio,
@@ -82,6 +92,9 @@ class CalculadoraFestaItem {
       tipoItem: tipoItem ?? this.tipoItem,
       publicoAlvo: publicoAlvo ?? this.publicoAlvo,
       quantidade: quantidade ?? this.quantidade,
+      quantidadeNecessaria: quantidadeNecessaria ?? this.quantidadeNecessaria,
+      idCardapio: idCardapio ?? this.idCardapio,
+      idItemCardapio: idItemCardapio ?? this.idItemCardapio,
       unidade: unidade ?? this.unidade,
       regraAplicada: regraAplicada ?? this.regraAplicada,
       adicionadoAoCardapio: adicionadoAoCardapio ?? this.adicionadoAoCardapio,

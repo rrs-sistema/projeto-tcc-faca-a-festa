@@ -1,4 +1,4 @@
-import 'package:currency_text_input_formatter/currency_text_input_formatter.dart';
+import 'package:app_faca_festa/core/utils/numeric_input.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -225,14 +225,15 @@ class _CustomInputFieldState extends State<CustomInputField> {
               cursorColor: iconColor,
               inputFormatters: [
                 if (maskFormatter != null) maskFormatter!,
-                if (widget.type == InputType.money)
-                  CurrencyTextInputFormatter.currency(
-                    // Atualização sutil para a sintaxe mais recente do pacote, caso aplicável
-                    locale: 'pt_BR',
-                    symbol: 'R\$',
-                    decimalDigits: 2,
-                    enableNegative: false,
-                  ),
+                if (widget.autoFormat && widget.type == InputType.money)
+                  FormMasks.dinheiro(),
+                if (widget.autoFormat &&
+                    maskFormatter == null &&
+                    widget.type != InputType.money &&
+                    finalKeyboardType.index == TextInputType.number.index)
+                  ...(finalKeyboardType.decimal == true
+                      ? [NumericInput.decimal()]
+                      : NumericInput.inteiro),
               ],
               textAlign: widget.textAlign,
               style: GoogleFonts.poppins(
@@ -249,9 +250,8 @@ class _CustomInputFieldState extends State<CustomInputField> {
                       ),
                 suffixIcon: widget.type == InputType.password
                     ? IconButton(
-                        tooltip: showPassword
-                            ? 'Ocultar senha'
-                            : 'Mostrar senha',
+                        tooltip:
+                            showPassword ? 'Ocultar senha' : 'Mostrar senha',
                         icon: Icon(
                           showPassword
                               ? Icons.visibility

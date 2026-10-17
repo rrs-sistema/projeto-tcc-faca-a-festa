@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/core/utils/numeric_input.dart';
 import 'package:br_validators/br_validators.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:intl/intl.dart';
@@ -463,12 +464,7 @@ class FormValidators {
   }
 
   static double parseDinheiro(String? value) {
-    final texto = (value ?? '')
-        .replaceAll('R\$', '')
-        .replaceAll('.', '')
-        .replaceAll(',', '.')
-        .trim();
-    return double.tryParse(texto) ?? 0.0;
+    return NumericInput.parseMoeda(value) ?? 0.0;
   }
 
   static String? dinheiro(

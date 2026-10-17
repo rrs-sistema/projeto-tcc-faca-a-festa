@@ -634,6 +634,7 @@ Future<void> showResponderCotacaoBottomSheet({
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.green.shade600,
                                   foregroundColor: Colors.white,
+                                  iconColor: Colors.white,
                                   padding:
                                       const EdgeInsets.symmetric(vertical: 14),
                                   shape: RoundedRectangleBorder(
@@ -672,6 +673,7 @@ Future<void> showResponderCotacaoBottomSheet({
                                 ),
                                 style: OutlinedButton.styleFrom(
                                   foregroundColor: Colors.red.shade700,
+                                  iconColor: Colors.red.shade700,
                                   side: BorderSide(color: Colors.red.shade400),
                                   padding:
                                       const EdgeInsets.symmetric(vertical: 14),
@@ -698,6 +700,7 @@ Future<void> showResponderCotacaoBottomSheet({
                                 ),
                                 style: OutlinedButton.styleFrom(
                                   foregroundColor: Colors.grey.shade700,
+                                  iconColor: Colors.grey.shade700,
                                   side: BorderSide(color: Colors.grey.shade400),
                                   padding:
                                       const EdgeInsets.symmetric(vertical: 14),

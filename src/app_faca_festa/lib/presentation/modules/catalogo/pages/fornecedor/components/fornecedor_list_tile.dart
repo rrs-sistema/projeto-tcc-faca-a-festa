@@ -230,6 +230,7 @@ class FornecedorListTile extends StatelessWidget {
                   elevation: 0,
                   backgroundColor: Colors.green.shade700,
                   foregroundColor: Colors.white,
+                  iconColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 10),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12)),

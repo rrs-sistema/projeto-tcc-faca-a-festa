@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/domain/repositories/autenticacao_repository.dart';
 import 'dart:async';
 
 import 'package:app_faca_festa/presentation/modules/comunidade/controllers/comunidade_controller.dart';
@@ -8,12 +9,18 @@ import 'package:app_faca_festa/domain/entities/comunidade.dart';
 import 'package:app_faca_festa/domain/repositories/comunidade_repository.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_comunidade.dart';
 
+class _SessaoAutenticada extends Fake implements AutenticacaoRepository {
+  @override
+  String? get idUsuarioAtual => 'owner';
+}
+
 void main() {
   late _ComunidadeRepositoryFake repository;
   late ComunidadeController controller;
 
   setUp(() {
     Get.testMode = true;
+    Get.put<AutenticacaoRepository>(_SessaoAutenticada());
     repository = _ComunidadeRepositoryFake();
     controller = ComunidadeController(
       comunidade: GerenciarComunidade(repository),
@@ -28,6 +35,7 @@ void main() {
 
   test('observes posts through the use case', () async {
     controller.onInit();
+    controller.garantirEscuta();
 
     repository.emitir([
       _post(id: 'post-1', texto: 'Primeiro post'),

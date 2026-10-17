@@ -356,18 +356,9 @@ class _AnaliseIASimulacaoCompacta extends StatelessWidget {
             ),
             const SizedBox(width: 6),
             _ChipInfo(
-              icon: Icons.favorite_rounded,
-              label: '${analise.indiceConforto.clamp(0, 100).round()}%',
-              color: primary,
-            ),
-            const SizedBox(width: 6),
-            _ChipInfo(
-              icon: Icons.warning_amber_rounded,
-              label: '${analise.indiceRiscoFaltarItens.clamp(0, 100).round()}%',
-              color: analise.indiceRiscoFaltarItens >= 70
-                  ? Colors.redAccent
-                  : Colors.orange,
-            ),
+                icon: Icons.info_outline_rounded,
+                label: 'Porções a conferir',
+                color: primary),
           ],
         ),
         const SizedBox(height: 6),
@@ -490,6 +481,7 @@ class _AcoesSimulacao extends StatelessWidget {
                         ? primary
                         : Colors.blueGrey,
                 foregroundColor: Colors.white,
+                iconColor: Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10)),
@@ -531,6 +523,7 @@ class _AcoesSimulacao extends StatelessWidget {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: primary,
                       foregroundColor: Colors.white,
+                      iconColor: Colors.white,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10)),

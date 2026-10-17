@@ -3,6 +3,7 @@ part of 'calculadora_festa_controller.dart';
 extension CalculadoraFestaHistorico on CalculadoraFestaController {
   Future<void> salvarCalculo() async {
     final calculo = calculoAtual.value;
+    final versao = _versaoAnaliseIA.value;
 
     if (!possuiEventoVinculado) {
       Get.snackbar(
@@ -14,7 +15,7 @@ extension CalculadoraFestaHistorico on CalculadoraFestaController {
       return;
     }
 
-    if (calculo == null) {
+    if (calculo == null || !possuiResultado) {
       Get.snackbar(
         'Atenção',
         'Calcule as quantidades antes de salvar.',
@@ -28,6 +29,7 @@ extension CalculadoraFestaHistorico on CalculadoraFestaController {
       salvando.value = true;
 
       final calculoParaSalvar = calculo.copyWith(
+        contextoPlanejamento: snapshotPlanejamento,
         orcamentoDisponivel: orcamentoDisponivel.value,
         limparOrcamentoDisponivel: orcamentoDisponivel.value == null,
         analiseIA: analiseIA.value,
@@ -38,15 +40,18 @@ extension CalculadoraFestaHistorico on CalculadoraFestaController {
 
       await _repository.salvarSimulacao(
         calculo: calculoParaSalvar,
-        itens: itensCalculados,
+        itens: itensCalculados.toList(),
       );
 
-      calculoAtual.value = calculoParaSalvar;
+      if (versao == _versaoAnaliseIA.value &&
+          calculoAtual.value?.idCalculo == calculo.idCalculo) {
+        calculoAtual.value = calculoParaSalvar;
+      }
       await carregarSimulacoesSalvas();
 
       Get.snackbar(
         'Simulação salva',
-        'O cálculo e a análise inteligente foram salvos com sucesso.',
+        'A simulação foi salva com sucesso.',
         backgroundColor: Colors.teal,
         colorText: Colors.white,
       );
@@ -73,6 +78,7 @@ extension CalculadoraFestaHistorico on CalculadoraFestaController {
   }
 
   Future<void> carregarSimulacoesSalvas() async {
+    final evento = idEventoAtual.value;
     if (!possuiEventoVinculado) {
       simulacoesSalvas.clear();
       return;
@@ -80,8 +86,8 @@ extension CalculadoraFestaHistorico on CalculadoraFestaController {
 
     try {
       carregandoSimulacoes.value = true;
-      final simulacoes =
-          await _repository.listarSimulacoesPorEvento(idEventoAtual.value);
+      final simulacoes = await _repository.listarSimulacoesPorEvento(evento);
+      if (evento != idEventoAtual.value) return;
       simulacoesSalvas.assignAll(simulacoes);
     } catch (e) {
       Get.snackbar(
@@ -105,6 +111,10 @@ extension CalculadoraFestaHistorico on CalculadoraFestaController {
   /// Uso principal: BottomSheet "Minhas simulações". O usuário abre um cenário
   /// antigo, revisa os itens e pode continuar trabalhando sobre ele.
   Future<void> carregarSimulacaoNoEditor(CalculadoraFesta simulacao) async {
+    final preparacao = ++_versaoPreparacao;
+    _versaoCarregamentoItens++;
+    carregandoItensBase.value = false;
+    _agendarAnaliseIA();
     try {
       loading.value = true;
 
@@ -112,6 +122,8 @@ extension CalculadoraFestaHistorico on CalculadoraFestaController {
         simulacao.idCalculo,
       );
 
+      if (preparacao != _versaoPreparacao) return;
+      usandoContextoHistorico.value = true;
       idEventoAtual.value = simulacao.idEvento;
       tipoEventoAtual.value = simulacao.tipoEvento;
       estimativaSemEvento.value = false;
@@ -125,14 +137,120 @@ extension CalculadoraFestaHistorico on CalculadoraFestaController {
       duracaoHoras.value =
           simulacao.duracaoHoras <= 0 ? 4 : simulacao.duracaoHoras;
       calculoAtual.value = simulacao;
-      analiseIA.value = simulacao.analiseIA;
+      analiseIA.value = _historicoMotorAntigo ? null : simulacao.analiseIA;
+      revisarCardapio.value = false;
+      regrasManuais.clear();
+      itensEstimativa.assignAll(itens.map((item) => ItemEstimativaFinanceira(
+            id: item.idItemResultado.startsWith('${simulacao.idCalculo}_')
+                ? item.idItemResultado.substring(simulacao.idCalculo.length + 1)
+                : item.idItemResultado,
+            categoria: item.categoria,
+            nome: item.nome,
+            tipoItem: item.tipoItem,
+            publicoAlvo: item.publicoAlvo,
+            unidade: _unidadeEstimativaFromString(item.unidade),
+            quantidadePorConvidadoEquivalente:
+                item.quantidadePorConvidadoEquivalente,
+            valorUnitarioMedio: item.valorUnitarioMedio,
+          )));
+      _modoEscolhido = true;
+      final contexto = simulacao.contextoPlanejamento;
+      _versaoOperacao++;
+      await _operacaoSubscription?.cancel();
+      _operacaoSubscription = null;
+      operacaoEvento
+          .assignAll(OperacaoCalculadoraService.mapa(contexto['operacao']));
+      operacaoCarregada.value = contexto['operacao'] is Map;
+      erroOperacao.value = '';
+      final publicoSalvo =
+          OperacaoCalculadoraService.mapa(contexto['publico_evento']);
+      if (publicoSalvo.isNotEmpty) {
+        totalAdultos.value =
+            OperacaoCalculadoraService.inteiro(publicoSalvo['adultos']);
+        totalCriancas.value =
+            OperacaoCalculadoraService.inteiro(publicoSalvo['criancas']);
+        totalBebes.value =
+            OperacaoCalculadoraService.inteiro(publicoSalvo['bebes']);
+      }
+
+      if (contexto['regras'] is List) {
+        itensEstimativa.assignAll((contexto['regras'] as List).map((r) =>
+            ItemEstimativaFinanceira.fromPlanejamento(
+                Map<String, dynamic>.from(r as Map))));
+        if (contexto['regras_catalogo'] is List &&
+            contexto['regras_manuais'] is List) {
+          itensEstimativa.assignAll((contexto['regras_catalogo'] as List).map(
+              (r) => ItemEstimativaFinanceira.fromPlanejamento(
+                  Map<String, dynamic>.from(r as Map))));
+          regrasManuais.assignAll((contexto['regras_manuais'] as List).map(
+              (r) => ItemEstimativaFinanceira.fromPlanejamento(
+                  Map<String, dynamic>.from(r as Map))));
+        }
+        revisarCardapio.value = contexto['modo_revisao'] == true;
+        idCardapioAtual = contexto['id_cardapio']?.toString() ?? '';
+        tituloCardapio = contexto['titulo_cardapio']?.toString() ?? '';
+        cardapioDisponivel.value = contexto['cardapio_disponivel'] == true;
+        regrasRejeitadas.assignAll(
+            List<String>.from(contexto['regras_rejeitadas'] as List? ?? []));
+        itensCardapio
+            .assignAll((contexto['cardapio'] as List? ?? []).map((raw) {
+          final i = Map<String, dynamic>.from(raw as Map);
+          return CardapioItem(
+              idItem: i['id'] as String,
+              idEvento: i['evento'] as String,
+              idCardapio: i['cardapio'] as String,
+              nome: i['nome'] as String,
+              tipo: TipoItemCardapio.fromString(i['tipo'] as String),
+              publicoAlvo:
+                  PublicoAlvoCardapio.fromString(i['publico'] as String),
+              unidade: i['unidade'] as String,
+              quantidadeFinal: (i['final'] as num).toDouble(),
+              quantidadeSugerida: (i['sugerida'] as num).toDouble(),
+              confirmado: i['confirmado'] == true,
+              disponibilidade:
+                  DisponibilidadeCardapio.fromMap(i['disponibilidade']));
+        }));
+        await _orcamentoSubscription?.cancel();
+        _orcamentoSubscription = null;
+        _versaoOrcamento++;
+        compromissosOrcamento.assignAll(
+            (contexto['compromissos'] as List? ?? [])
+                .map((g) => Map<String, dynamic>.from(g as Map)));
+        carregandoOrcamento.value = false;
+        erroOrcamento.value = (contexto['financeiro']
+                    as Map?)?['orcamento_carregado'] ==
+                false
+            ? 'A consulta financeira estava incompleta nesta simulação. Atualize para consultar os dados atuais.'
+            : '';
+      }
+      cardapiosEvento.clear();
+      titulosCardapiosEvento.clear();
+      final todos = contexto['cardapios_evento'];
+      if (todos is Map) {
+        for (final e in todos.entries) {
+          cardapiosEvento[e.key.toString()] = (e.value as List)
+              .map((i) => restaurarItem(Map<String, dynamic>.from(i as Map)))
+              .toList();
+        }
+        titulosCardapiosEvento.assignAll(Map<String, String>.from(
+            contexto['titulos_cardapios_evento'] as Map? ?? {}));
+      }
+      consultaCardapiosCompleta.value =
+          todos is Map && contexto['consulta_cardapios_completa'] == true;
+      origemItensCalculadora.value = OrigemItensCalculadora.simulacao;
       itensCalculados.assignAll(itens);
 
       // Mantém a estimativa em memória coerente para novas análises de IA.
       estimativaAtual.value = _service.calcularEstimativa(
         calculo: simulacao,
-        itensBase: itensEstimativa,
+        itensBase: itensParaCalculo,
       );
+      if (analiseIA.value == null) {
+        _agendarAnaliseIA();
+      }
+      if (_historicoMotorAntigo) {
+        erroAnaliseIA.value = CalculadoraFestaAnaliseIa._avisoHistoricoAntigo;
+      }
     } catch (e) {
       Get.snackbar(
         'Erro',
@@ -172,6 +290,7 @@ extension CalculadoraFestaHistorico on CalculadoraFestaController {
         itensCalculados.clear();
         estimativaAtual.value = null;
         analiseIA.value = null;
+        _agendarAnaliseIA();
       }
 
       Get.snackbar(
@@ -286,10 +405,11 @@ extension CalculadoraFestaHistorico on CalculadoraFestaController {
       }
 
       await carregarSimulacoesSalvas();
+      await carregarContextoOrcamento();
 
       Get.snackbar(
-        'Orçamento criado',
-        '${itensPendentes.length} item(ns) foram adicionados ao orçamento do evento.',
+        'Orçamento atualizado',
+        '${itensPendentes.length} item(ns) foram vinculados ao orçamento. Gastos existentes foram preservados.',
         backgroundColor: Colors.teal,
         colorText: Colors.white,
       );
@@ -305,8 +425,12 @@ extension CalculadoraFestaHistorico on CalculadoraFestaController {
     }
   }
 
-  Future<void> enviarResultadoParaCardapio({required String idCardapio}) async {
+  Future<void> enviarResultadoParaCardapio(
+      {required String idCardapio,
+      List<CalculadoraFestaItem>? itensRevisados}) async {
     final calculo = calculoAtual.value;
+    final versao = _versaoAnaliseIA.value;
+    final historico = itensCalculados.toList();
 
     if (!possuiEventoVinculado) {
       Get.snackbar(
@@ -342,15 +466,23 @@ extension CalculadoraFestaHistorico on CalculadoraFestaController {
       enviandoParaCardapio.value = true;
       await _repository.enviarResultadoParaCardapio(
         calculo: calculo,
-        itens: itensCalculados.toList(),
+        itens: itensRevisados ?? itensCalculados.toList(),
         idCardapio: idCardapio,
+        itensSimulacao: historico,
       );
 
-      itensCalculados.assignAll(
-        itensCalculados
-            .map((i) => i.copyWith(adicionadoAoCardapio: true))
-            .toList(),
-      );
+      if (versao == _versaoAnaliseIA.value &&
+          calculoAtual.value?.idCalculo == calculo.idCalculo) {
+        itensCalculados.assignAll(
+          itensCalculados
+              .map((i) => (itensRevisados ?? itensCalculados).any(
+                      (enviado) => enviado.idItemResultado == i.idItemResultado)
+                  ? i.copyWith(adicionadoAoCardapio: true)
+                  : i)
+              .toList(),
+        );
+      }
+      await carregarSimulacoesSalvas();
 
       Get.snackbar(
         'Cardápio atualizado',

@@ -56,7 +56,6 @@ class _ServicoProdutoListScreenState extends State<ServicoProdutoListScreen> {
   final RxInt _sortColumnIndex = 0.obs;
   final RxBool _sortAscending = true.obs;
   final ScrollController _scrollVertical = ScrollController();
-  final ScrollController _scrollHeader = ScrollController();
   final ScrollController _scrollBody = ScrollController();
 
   final RxInt _currentPage = 1.obs;
@@ -79,25 +78,19 @@ class _ServicoProdutoListScreenState extends State<ServicoProdutoListScreen> {
   void initState() {
     super.initState();
 
-    // 🔹 Sincroniza cabeçalho e corpo
-    _scrollHeader.addListener(() {
-      if (_scrollBody.hasClients &&
-          _scrollBody.offset != _scrollHeader.offset) {
-        _scrollBody.jumpTo(_scrollHeader.offset);
-      }
-    });
-
-    _scrollBody.addListener(() {
-      if (_scrollHeader.hasClients &&
-          _scrollHeader.offset != _scrollBody.offset) {
-        _scrollHeader.jumpTo(_scrollBody.offset);
-      }
-    });
+    final fornecedorId = widget.fornecedorId;
+    if (fornecedorId != null && fornecedorId.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        controller.carregarServicosComDetalhesOtimizado(
+          idFornecedor: fornecedorId,
+        );
+      });
+    }
   }
 
   @override
   void dispose() {
-    _scrollHeader.dispose();
     _scrollBody.dispose();
     _scrollVertical.dispose();
     super.dispose();
@@ -219,37 +212,37 @@ class _ServicoProdutoListScreenState extends State<ServicoProdutoListScreen> {
         final width = MediaQuery.of(context).size.width;
 
         if (width >= 700) {
-          final width = MediaQuery.of(context).size.width;
-
-          return Scrollbar(
-            controller: _scrollBody,
-            thumbVisibility: true,
-            notificationPredicate: (notif) =>
-                notif.metrics.axis == Axis.horizontal,
-            child: SingleChildScrollView(
-              controller: _scrollBody,
-              scrollDirection: Axis.horizontal,
-              physics: const ClampingScrollPhysics(),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minWidth: 600, maxWidth: width),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildHeader(primary, _scrollHeader),
-                    SizedBox(
-                      height: MediaQuery.of(context).size.height - 220,
-                      child: Scrollbar(
-                        controller: _scrollVertical,
-                        thumbVisibility: true,
-                        notificationPredicate: (notif) =>
-                            notif.metrics.axis == Axis.vertical,
-                        child: SingleChildScrollView(
-                          controller: _scrollVertical,
-                          scrollDirection: Axis.vertical,
-                          physics: const BouncingScrollPhysics(),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 8),
-                            child: ServicoDataTable(
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              final colunas = ServicoGridColunas.para(constraints.maxWidth);
+              return Scrollbar(
+                controller: _scrollBody,
+                thumbVisibility: colunas.total > constraints.maxWidth + 1,
+                notificationPredicate: (notif) =>
+                    notif.metrics.axis == Axis.horizontal,
+                child: SingleChildScrollView(
+                  controller: _scrollBody,
+                  scrollDirection: Axis.horizontal,
+                  physics: const ClampingScrollPhysics(),
+                  child: SizedBox(
+                    width: colunas.total,
+                    height: constraints.maxHeight,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _buildHeader(primary, colunas),
+                        Expanded(
+                          child: Scrollbar(
+                            controller: _scrollVertical,
+                            thumbVisibility: true,
+                            notificationPredicate: (notif) =>
+                                notif.metrics.axis == Axis.vertical,
+                            child: SingleChildScrollView(
+                              controller: _scrollVertical,
+                              scrollDirection: Axis.vertical,
+                              physics: const BouncingScrollPhysics(),
+                              child: ServicoDataTable(
+                                colunas: colunas,
                               servicos: controller.servicosFornecedor,
                               medidas: medidas,
                               primary: primary,
@@ -319,12 +312,13 @@ class _ServicoProdutoListScreenState extends State<ServicoProdutoListScreen> {
                             ),
                           ),
                         ),
-                      ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
-            ),
+              );
+            },
           );
         }
 
@@ -343,18 +337,7 @@ class _ServicoProdutoListScreenState extends State<ServicoProdutoListScreen> {
     );
   }
 
-  Widget _buildHeader(Color primary, ScrollController controller) {
-    final totalWidth = MediaQuery.of(context).size.width;
-    final bool isSmall = totalWidth < 800;
-
-    const numWidth = 60.0;
-    final nomeServicoWidth = isSmall ? totalWidth * 0.48 : totalWidth * 0.588;
-    final nomeCategoriaWidth = isSmall ? 180.0 : 250.0;
-    final subCategoriaWidth = isSmall ? 180.0 : 250.0;
-    final medidaWidth = isSmall ? 100.0 : 130.0;
-    final precoWidth = isSmall ? 100.0 : 120.0;
-    final statusWidth = isSmall ? 90.0 : 100.0;
-
+  Widget _buildHeader(Color primary, ServicoGridColunas colunas) {
     return Container(
       height: 48,
       decoration: BoxDecoration(
@@ -374,36 +357,31 @@ class _ServicoProdutoListScreenState extends State<ServicoProdutoListScreen> {
           ),
         ],
       ),
-      child: SingleChildScrollView(
-        controller: controller, // ✅ Controlador próprio do cabeçalho
-        scrollDirection: Axis.horizontal,
-        physics: const ClampingScrollPhysics(),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _headerCell(Icons.format_list_numbered_rounded, '#', 0,
-                width: numWidth, iconColor: Colors.amberAccent),
-            _headerCell(Icons.handyman_rounded, 'Serviço / Produto', 1,
-                width: nomeServicoWidth,
-                iconColor: Colors.tealAccent,
-                onSort: (asc) => _sort((s) => s.nomeServico ?? '', 1, asc)),
-            _headerCell(Icons.category_outlined, 'Categoria', 2,
-                width: nomeCategoriaWidth,
-                iconColor: Colors.lightBlueAccent,
-                onSort: (asc) => _sort((s) => s.nomeCategoria ?? '', 2, asc)),
-            _headerCell(Icons.style_rounded, 'Subcategoria', 3,
-                width: subCategoriaWidth,
-                iconColor: Colors.purpleAccent,
-                onSort: (asc) =>
-                    _sort((s) => s.nomeSubcategoria ?? '', 3, asc)),
-            _headerCell(Icons.straighten_rounded, 'Medida', 4,
-                width: medidaWidth, iconColor: Colors.orangeAccent),
-            _headerCell(Icons.straighten_rounded, 'Preço', 4,
-                width: precoWidth, iconColor: Colors.orangeAccent),
-            _headerCell(Icons.manage_accounts_rounded, 'Ações', 5,
-                width: statusWidth, iconColor: Colors.redAccent),
-          ],
-        ),
+      child: Row(
+        children: [
+          _headerCell(Icons.format_list_numbered_rounded, '#', 0,
+              width: colunas.numero, iconColor: Colors.amberAccent),
+          _headerCell(Icons.handyman_rounded, 'Serviço / Produto', 1,
+              width: colunas.servico,
+              iconColor: Colors.tealAccent,
+              onSort: (asc) => _sort((s) => s.nomeServico ?? '', 1, asc)),
+          _headerCell(Icons.category_outlined, 'Categoria', 2,
+              width: colunas.categoria,
+              iconColor: Colors.lightBlueAccent,
+              onSort: (asc) => _sort((s) => s.nomeCategoria ?? '', 2, asc)),
+          _headerCell(Icons.style_rounded, 'Subcategoria', 3,
+              width: colunas.subcategoria,
+              iconColor: Colors.purpleAccent,
+              onSort: (asc) => _sort((s) => s.nomeSubcategoria ?? '', 3, asc)),
+          _headerCell(Icons.straighten_rounded, 'Medida', 4,
+              width: colunas.medida, iconColor: Colors.orangeAccent),
+          _headerCell(Icons.payments_outlined, 'Preço', 5,
+              width: colunas.preco,
+              iconColor: Colors.orangeAccent,
+              onSort: (asc) => _sort((s) => s.preco, 5, asc)),
+          _headerCell(Icons.manage_accounts_rounded, 'Ações', 6,
+              width: colunas.acoes, iconColor: Colors.redAccent),
+        ],
       ),
     );
   }
@@ -889,7 +867,61 @@ class _ServicoProdutoListScreenState extends State<ServicoProdutoListScreen> {
   }
 }
 
+class ServicoGridColunas {
+  const ServicoGridColunas({
+    required this.numero,
+    required this.servico,
+    required this.categoria,
+    required this.subcategoria,
+    required this.medida,
+    required this.preco,
+    required this.acoes,
+  });
+
+  final double numero;
+  final double servico;
+  final double categoria;
+  final double subcategoria;
+  final double medida;
+  final double preco;
+  final double acoes;
+
+  double get total =>
+      numero + servico + categoria + subcategoria + medida + preco + acoes;
+
+  static const minimoNumero = 56.0;
+  static const minimoServico = 220.0;
+  static const minimoCategoria = 180.0;
+  static const minimoSubcategoria = 200.0;
+  static const minimoMedida = 120.0;
+  static const minimoPreco = 130.0;
+  static const minimoAcoes = 120.0;
+
+  static double get minimo =>
+      minimoNumero +
+      minimoServico +
+      minimoCategoria +
+      minimoSubcategoria +
+      minimoMedida +
+      minimoPreco +
+      minimoAcoes;
+
+  factory ServicoGridColunas.para(double largura) {
+    final extra = (largura - minimo).clamp(0.0, double.infinity);
+    return ServicoGridColunas(
+      numero: minimoNumero,
+      servico: minimoServico + extra * 0.46,
+      categoria: minimoCategoria + extra * 0.27,
+      subcategoria: minimoSubcategoria + extra * 0.27,
+      medida: minimoMedida,
+      preco: minimoPreco,
+      acoes: minimoAcoes,
+    );
+  }
+}
+
 class ServicoDataTable extends StatelessWidget {
+  final ServicoGridColunas colunas;
   final List<FornecedorServicoDetalhado> servicos;
   final Map<String, String> medidas;
   final Color primary;
@@ -900,6 +932,7 @@ class ServicoDataTable extends StatelessWidget {
 
   const ServicoDataTable({
     super.key,
+    required this.colunas,
     required this.servicos,
     required this.medidas,
     required this.primary,
@@ -916,9 +949,6 @@ class ServicoDataTable extends StatelessWidget {
     final RxString filtroBusca = ''.obs;
 
     return Obx(() {
-      final width = MediaQuery.of(context).size.width;
-      final bool isSmall = width < 700;
-
       // 🔹 Filtro
       final termo = filtroBusca.value.toLowerCase().trim();
       final servicosFiltrados = termo.isEmpty
@@ -942,31 +972,17 @@ class ServicoDataTable extends StatelessWidget {
           (startIndex + rowsPerPage.value).clamp(0, servicosFiltrados.length);
       final visibleServicos = servicosFiltrados.sublist(startIndex, endIndex);
 
-      const numWidth = 60.0;
-
-      final nomeServicoWidth = isSmall ? width * 0.48 : width * 0.588;
-      final nomeCategoriaWidth = isSmall ? 180.0 : 250.0;
-      final subCategoriaWidth = isSmall ? 180.0 : 250.0;
-      final precoWidth = isSmall ? 100.0 : 120.0;
-      final medidaWidth = isSmall ? 100.0 : 130.0;
-      final statusWidth = 110.0;
-
       return Column(
         children: [
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(minWidth: 600),
-              child: Table(
+          Table(
                 columnWidths: {
-                  0: FixedColumnWidth(numWidth),
-                  1: FixedColumnWidth(nomeServicoWidth),
-                  2: FixedColumnWidth(nomeCategoriaWidth),
-                  3: FixedColumnWidth(subCategoriaWidth),
-                  4: FixedColumnWidth(medidaWidth),
-                  5: FixedColumnWidth(precoWidth),
-                  6: FixedColumnWidth(statusWidth),
+                  0: FixedColumnWidth(colunas.numero),
+                  1: FixedColumnWidth(colunas.servico),
+                  2: FixedColumnWidth(colunas.categoria),
+                  3: FixedColumnWidth(colunas.subcategoria),
+                  4: FixedColumnWidth(colunas.medida),
+                  5: FixedColumnWidth(colunas.preco),
+                  6: FixedColumnWidth(colunas.acoes),
                 },
                 border: TableBorder.symmetric(
                   inside: BorderSide(color: Colors.grey.withValues(alpha: 0.1)),
@@ -998,25 +1014,37 @@ class ServicoDataTable extends StatelessWidget {
                           s.nomeCategoria ?? '-', TextAlign.left),
                       _cell(index, hoveredIndex, selectedIndex,
                           s.nomeSubcategoria ?? '-', TextAlign.left),
+                      Center(child: _medidaBadge(tipo, primary)),
                       _cell(
                         index,
                         hoveredIndex,
                         selectedIndex,
                         Biblioteca.formatarPrecoGrid(s.preco, s.precoPromocao),
-                        TextAlign.center,
+                        TextAlign.right,
                       ),
-                      Center(child: _medidaBadge(tipo, primary)),
                       Center(
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             IconButton(
+                              visualDensity: VisualDensity.compact,
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(
+                                minWidth: 36,
+                                minHeight: 36,
+                              ),
                               icon: const Icon(Icons.edit_rounded,
                                   color: Colors.blueAccent),
                               onPressed: () => onEditar(s),
                             ),
                             IconButton(
+                              visualDensity: VisualDensity.compact,
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(
+                                minWidth: 36,
+                                minHeight: 36,
+                              ),
                               icon: const Icon(Icons.delete_outline_rounded,
                                   color: Colors.redAccent),
                               onPressed: () => onExcluir(s),
@@ -1027,8 +1055,6 @@ class ServicoDataTable extends StatelessWidget {
                     ],
                   );
                 }),
-              ),
-            ),
           ),
 
           // 🔹 Rodapé original (sem alterar nada)
@@ -1191,6 +1217,8 @@ class ServicoDataTable extends StatelessWidget {
         child: Text(
           text,
           textAlign: align,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
           style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade800),
         ),
       ),

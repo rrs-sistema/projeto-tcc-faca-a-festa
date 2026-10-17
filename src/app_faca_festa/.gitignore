@@ -94,3 +94,9 @@ Thumbs.db
 *.symbols
 
 .env*
+
+# Desktop publishing secrets must never be committed.
+*.key
+*.pfx
+/release/desktop-feed/
+/dist/

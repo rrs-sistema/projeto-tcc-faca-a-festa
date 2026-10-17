@@ -135,9 +135,7 @@ class CalculadoraItensBaseRemoteDatasource {
     final tipoEventoKey = _normalizarChave(tipoEvento);
     final perfilFestaKey = _normalizarChave(perfilFesta ?? '');
 
-    if (tipoEventoKey.isEmpty) {
-      return <CalculadoraEventoItemModel>[];
-    }
+    if (tipoEventoKey.isEmpty) return [];
 
     try {
       Query<Map<String, dynamic>> query = _eventoItensRef
@@ -168,7 +166,7 @@ class CalculadoraItensBaseRemoteDatasource {
         );
       }
 
-      return <CalculadoraEventoItemModel>[];
+      rethrow;
     } catch (error, stackTrace) {
       _logError(
         method: 'buscarItensPorTipoEvento',
@@ -176,7 +174,7 @@ class CalculadoraItensBaseRemoteDatasource {
         stackTrace: stackTrace,
       );
 
-      return <CalculadoraEventoItemModel>[];
+      rethrow;
     }
   }
 
@@ -205,6 +203,9 @@ class CalculadoraItensBaseRemoteDatasource {
       }
     }
 
+    if (_normalizarChave(tipoEvento) != 'todos') {
+      return buscarItensPorTipoEvento(tipoEvento: 'todos', perfilFesta: null);
+    }
     return <CalculadoraEventoItemModel>[];
   }
 
@@ -465,7 +466,7 @@ class CalculadoraItensBaseRemoteDatasource {
         stackTrace: stackTrace,
       );
 
-      return <CalculadoraEventoItemModel>[];
+      rethrow;
     }
   }
 

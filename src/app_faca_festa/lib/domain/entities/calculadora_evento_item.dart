@@ -17,6 +17,8 @@ class CalculadoraEventoItem {
   final DateTime createdAt;
   final DateTime updatedAt;
 
+  final Map<String, dynamic> premissas;
+
   const CalculadoraEventoItem({
     required this.id,
     required this.idItemBase,
@@ -35,10 +37,12 @@ class CalculadoraEventoItem {
     required this.observacao,
     required this.createdAt,
     required this.updatedAt,
+    this.premissas = const {},
   });
 
   CalculadoraEventoItem copyWith({
     String? id,
+    Map<String, dynamic>? premissas,
     String? idItemBase,
     String? tipoEvento,
     String? nome,
@@ -58,6 +62,7 @@ class CalculadoraEventoItem {
   }) {
     return CalculadoraEventoItem(
       id: id ?? this.id,
+      premissas: premissas ?? this.premissas,
       idItemBase: idItemBase ?? this.idItemBase,
       tipoEvento: tipoEvento ?? this.tipoEvento,
       nome: nome ?? this.nome,

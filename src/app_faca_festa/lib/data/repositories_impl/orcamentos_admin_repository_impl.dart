@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/core/services/update_operations.dart';
 import 'package:app_faca_festa/domain/entities/orcamento_admin.dart';
 import 'package:app_faca_festa/domain/repositories/orcamentos_admin_repository.dart';
 import '../datasources/remote/orcamentos_admin_remote_datasource.dart';
@@ -9,6 +10,8 @@ class OrcamentosAdminRepositoryImpl implements OrcamentosAdminRepository {
 
   @override
   Future<List<OrcamentoAdmin>> listarOrcamentosComEventoDetalhes() {
-    return remote.listarOrcamentosComEventoDetalhes();
+    return UpdateOperations.run(() async {
+      return remote.listarOrcamentosComEventoDetalhes();
+    });
   }
 }

@@ -225,6 +225,20 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    match /calculadora_operacao/{eventoId} {
+      allow read: if isAdmin() || eventoDono(eventoId);
+      allow create, update: if eventoDono(eventoId)
+        && request.resource.data.id_evento == eventoId
+        && request.resource.data.id_usuario == uid()
+        && request.resource.data.versao == 1
+        && request.resource.data.revisao is int
+        && request.resource.data.revisao > 0
+        && request.resource.data.keys().hasOnly([
+          'id_evento', 'id_usuario', 'versao', 'revisao', 'refeicoes', 'lotes'
+        ]);
+      allow delete: if isAdmin() || eventoDono(eventoId);
+    }
+
     match /evento/{eventoId} {
       allow read: if signedIn();
       allow create, update: if isAdmin()
@@ -296,14 +310,38 @@ service cloud.firestore {
       allow update, delete: if isAdmin() || eventoDono(resource.data.id_evento);
     }
 
+    function responsavelTarefaValido(data) {
+      let convidado = /databases/$(database)/documents/convidado/$(data.id_responsavel);
+      let evento = /databases/$(database)/documents/evento/$(data.id_evento);
+      return data.id_responsavel is string && data.id_responsavel.size() > 0
+        && exists(evento)
+        && (get(evento).data.id_usuario == data.id_responsavel
+          || (exists(convidado)
+            && get(convidado).data.id_evento == data.id_evento));
+    }
+
+    function leituraTarefaPorConvite(data) {
+      return signedIn()
+        && request.auth.token.papel == 'C'
+        && request.auth.token.idEvento == data.id_evento
+        && request.auth.token.idConvidado == data.id_responsavel
+        && exists(/databases/$(database)/documents/convidado/$(data.id_responsavel))
+        && conviteClaim(get(/databases/$(database)/documents/convidado/$(data.id_responsavel)).data);
+    }
+
     match /tarefa/{id} {
-      allow read: if signedIn();
-      allow create: if isAdmin() || eventoDono(request.resource.data.id_evento);
-      allow update: if isAdmin()
-        || eventoDono(resource.data.id_evento)
-        || (convidadoComContaReal(resource.data.id_responsavel)
-            && request.resource.data.id_responsavel == resource.data.id_responsavel
-            && request.resource.data.id_evento == resource.data.id_evento);
+      allow read: if isAdmin() || eventoDono(resource.data.id_evento)
+        || convidadoComContaReal(resource.data.id_responsavel)
+        || leituraTarefaPorConvite(resource.data);
+      allow create: if (isAdmin() || eventoDono(request.resource.data.id_evento))
+        && responsavelTarefaValido(request.resource.data)
+        && request.resource.data.status in ['a_fazer', 'em_andamento', 'concluida'];
+      allow update: if request.resource.data.id_evento == resource.data.id_evento
+        && request.resource.data.status in ['a_fazer', 'em_andamento', 'concluida']
+        && (((isAdmin() || eventoDono(resource.data.id_evento))
+              && responsavelTarefaValido(request.resource.data))
+          || (convidadoComContaReal(resource.data.id_responsavel)
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])));
       allow delete: if isAdmin() || eventoDono(resource.data.id_evento);
     }
 
@@ -487,10 +525,18 @@ service cloud.firestore {
         || eventoDono(request.resource.data.id_evento)
         || (isTipo('O') && orcamentoDoSolicitante(request.resource.data));
 
-      allow update: if isAdmin()
-        || eventoDono(resource.data.id_evento)
-        || orcamentoDoSolicitante(resource.data)
-        || (signedIn() && resource.data.id_fornecedor == uid());
+      allow update: if (
+          isAdmin()
+          || eventoDono(resource.data.id_evento)
+          || orcamentoDoSolicitante(resource.data)
+          || (signedIn() && resource.data.id_fornecedor == uid())
+        ) && (
+          !request.resource.data.diff(resource.data).affectedKeys()
+            .hasAny(['calculadora_conferencia_financeira', 'calculadora_cobre_itens', 'id_evento', 'id_solicitante'])
+          || isAdmin()
+          || eventoDono(resource.data.id_evento)
+          || orcamentoDoSolicitante(resource.data)
+        );
 
       allow delete: if isAdmin() || eventoDono(resource.data.id_evento);
 
@@ -513,35 +559,42 @@ service cloud.firestore {
       }
     }
 
+    function podeAcessarCalculadora(data) {
+      return isAdmin() || (signedIn() && (
+        ('id_usuario' in data && data.id_usuario == uid())
+        || ('idUsuario' in data && data.idUsuario == uid())
+        || ('id_evento' in data && eventoDono(data.id_evento))
+      ));
+    }
+
+    function podeLerItensCalculadora(id, subcolecao) {
+      let pai = /databases/$(database)/documents/calculadora_festa/$(id);
+      // O primeiro save consulta os itens antes de criar o pai. O ID gerado
+      // pelo app contém o evento; só seu dono pode consultar esse caminho.
+      return isAdmin() || (exists(pai)
+        ? podeAcessarCalculadora(get(pai).data)
+        : (subcolecao == 'itens' && signedIn() && id.matches('^calc_[^_]+_[0-9]+$')
+          && eventoDono(id.split('_')[1])));
+    }
+
     match /calculadora_festa/{id} {
-      allow read: if signedIn();
-
-      // create: `resource` não existe. Dono do evento cobre o caso de id_usuario
-      // ausente; o cliente ainda deve gravar o UID para histórico e updates.
-      allow create: if isAdmin()
-        || (signedIn() && campoIdUsuario(request.resource.data))
-        || eventoDono(request.resource.data.id_evento);
-
-      // update: documento existente. Permite reivindicar simulação sem dono
-      // (ex.: merge da IA que criou o doc antes do save do app).
-      allow update: if isAdmin()
-        || (signedIn() && campoIdUsuario(resource.data))
-        || eventoDono(resource.data.id_evento)
-        || (
-          signedIn()
-          && campoIdUsuario(request.resource.data)
-          && idUsuarioAusente(resource.data)
+      allow read, delete: if podeAcessarCalculadora(resource.data);
+      allow create: if isAdmin() || (
+        signedIn() && request.resource.data.id_usuario == uid()
+        && eventoDono(request.resource.data.id_evento)
+      );
+      allow update: if podeAcessarCalculadora(resource.data)
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['id_evento', 'idUsuario'])
+        && (
+          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['id_usuario'])
+          || (idUsuarioAusente(resource.data) && eventoDono(resource.data.id_evento)
+            && request.resource.data.id_usuario == uid())
         );
-
-      allow delete: if isAdmin()
-        || (signedIn() && campoIdUsuario(resource.data))
-        || eventoDono(resource.data.id_evento);
-
-      // Itens no mesmo batch do pai: get(parent) falha porque o pai ainda
-      // não está commitado. A regra do documento principal é o gate de dono.
       match /{subcolecao}/{docId} {
-        allow read: if signedIn();
-        allow write: if signedIn();
+        allow read: if podeLerItensCalculadora(id, subcolecao);
+        allow delete: if podeLerItensCalculadora(id, subcolecao);
+        allow create, update: if podeAcessarCalculadora(
+          getAfter(/databases/$(database)/documents/calculadora_festa/$(id)).data);
       }
     }
 

@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/core/services/update_operations.dart';
 import 'package:app_faca_festa/domain/entities/fornecedor_recomendacao.dart';
 import 'package:app_faca_festa/domain/repositories/fornecedor_recomendacao_repository.dart';
 import '../datasources/remote/fornecedor_recomendacao_remote_datasource.dart';
@@ -14,11 +15,13 @@ class FornecedorRecomendacaoRepositoryImpl
     required String idUsuario,
     required int limite,
   }) {
-    return remote.carregarRecomendacoesSalvas(
-      idEvento: idEvento,
-      idUsuario: idUsuario,
-      limite: limite,
-    );
+    return UpdateOperations.run(() async {
+      return remote.carregarRecomendacoesSalvas(
+        idEvento: idEvento,
+        idUsuario: idUsuario,
+        limite: limite,
+      );
+    });
   }
 
   @override
@@ -27,11 +30,13 @@ class FornecedorRecomendacaoRepositoryImpl
     required int limite,
     required bool modoDemo,
   }) {
-    return remote.gerarRecomendacoes(
-      idEvento: idEvento,
-      limite: limite,
-      modoDemo: modoDemo,
-    );
+    return UpdateOperations.run(() async {
+      return remote.gerarRecomendacoes(
+        idEvento: idEvento,
+        limite: limite,
+        modoDemo: modoDemo,
+      );
+    });
   }
 
   @override
@@ -43,13 +48,15 @@ class FornecedorRecomendacaoRepositoryImpl
     String? tipoEventoNome,
     String? cidade,
   }) {
-    return remote.registrarInteracao(
-      idEvento: idEvento,
-      idFornecedor: idFornecedor,
-      acao: acao,
-      tipoEventoId: tipoEventoId,
-      tipoEventoNome: tipoEventoNome,
-      cidade: cidade,
-    );
+    return UpdateOperations.run(() async {
+      return remote.registrarInteracao(
+        idEvento: idEvento,
+        idFornecedor: idFornecedor,
+        acao: acao,
+        tipoEventoId: tipoEventoId,
+        tipoEventoNome: tipoEventoNome,
+        cidade: cidade,
+      );
+    });
   }
 }

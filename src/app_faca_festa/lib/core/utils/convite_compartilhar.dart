@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/core/services/update_operations.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -7,15 +8,17 @@ enum ResultadoCompartilhamento { compartilhou, copiou }
 Future<ResultadoCompartilhamento> compartilharTextoConvite({
   required String texto,
   String? assunto,
-}) async {
-  try {
-    await Share.share(texto, subject: assunto);
-    return ResultadoCompartilhamento.compartilhou;
-  } on MissingPluginException {
-    await Clipboard.setData(ClipboardData(text: texto));
-    return ResultadoCompartilhamento.copiou;
-  } catch (_) {
-    await Clipboard.setData(ClipboardData(text: texto));
-    return ResultadoCompartilhamento.copiou;
-  }
+}) {
+  return UpdateOperations.run(() async {
+    try {
+      await Share.share(texto, subject: assunto);
+      return ResultadoCompartilhamento.compartilhou;
+    } on MissingPluginException {
+      await Clipboard.setData(ClipboardData(text: texto));
+      return ResultadoCompartilhamento.copiou;
+    } catch (_) {
+      await Clipboard.setData(ClipboardData(text: texto));
+      return ResultadoCompartilhamento.copiou;
+    }
+  });
 }

@@ -3,7 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:app_faca_festa/domain/entities/fornecedor.dart';
 import 'package:app_faca_festa/domain/entities/fornecedor_categoria_resumo.dart';
 
-
 class FornecedorModel extends Fornecedor {
   const FornecedorModel({
     required super.idFornecedor,

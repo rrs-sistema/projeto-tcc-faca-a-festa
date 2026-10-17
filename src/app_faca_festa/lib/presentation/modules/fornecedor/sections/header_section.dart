@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/presentation/widgets/desktop_update_overlay.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -32,8 +33,8 @@ class HeaderSection extends StatelessWidget {
           : 'Fornecedor Faça a Festa';
       final contato =
           _contatoPrincipal(fornecedor?.email, fornecedor?.telefone);
-      final categoria = _categoriaPrincipal(fornecedor) ??
-          'Categoria não informada';
+      final categoria =
+          _categoriaPrincipal(fornecedor) ?? 'Categoria não informada';
       final status = _statusText(ativo: ativo, apto: apto);
       final statusColor = _statusColor(ativo: ativo, apto: apto);
 
@@ -158,6 +159,7 @@ class HeaderSection extends StatelessWidget {
                       const SizedBox(width: 8),
                       auditoria,
                       const SizedBox(width: 8),
+                      const DesktopUpdateMenuButton(color: Colors.white),
                       logout,
                     ],
                   ),
@@ -182,6 +184,7 @@ class HeaderSection extends StatelessWidget {
                 const SizedBox(width: 8),
                 auditoria,
                 const SizedBox(width: 8),
+                const DesktopUpdateMenuButton(color: Colors.white),
                 logout,
               ],
             );

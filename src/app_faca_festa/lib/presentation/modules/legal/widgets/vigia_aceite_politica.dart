@@ -231,6 +231,7 @@ class _DialogoAceiteVigente extends StatelessWidget {
                       style: FilledButton.styleFrom(
                         backgroundColor: primary,
                         foregroundColor: onPrimary,
+                        iconColor: onPrimary,
                         minimumSize: const Size.fromHeight(52),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
@@ -246,6 +247,7 @@ class _DialogoAceiteVigente extends StatelessWidget {
                     OutlinedButton.icon(
                       style: OutlinedButton.styleFrom(
                         foregroundColor: primary,
+                        iconColor: primary,
                         minimumSize: const Size.fromHeight(48),
                         side: BorderSide(color: primary.withValues(alpha: 0.45)),
                         shape: RoundedRectangleBorder(
@@ -263,6 +265,7 @@ class _DialogoAceiteVigente extends StatelessWidget {
                     TextButton(
                       style: TextButton.styleFrom(
                         foregroundColor: const Color(0xFF64748B),
+                        iconColor: const Color(0xFF64748B),
                         minimumSize: const Size.fromHeight(44),
                       ),
                       onPressed: () => Get.back(result: false),

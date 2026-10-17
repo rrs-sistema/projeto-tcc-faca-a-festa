@@ -153,13 +153,9 @@ class Convidado {
     return normalizarEmail(email);
   }
 
-  /// Só conta real (e-mail/Google) pode ser responsável de tarefa.
-  /// Auth anônimo não grava `id_usuario` nem `email_usuario`.
-  bool get podeSerResponsavelTarefa {
-    if ((idUsuario?.trim() ?? '').isNotEmpty) return true;
-    if (_conviteVinculado) return true;
-    return _pareceEmail(emailUsuario) || _pareceEmail(emailNormalizado);
-  }
+  /// Convidados cadastrados podem receber tarefas mesmo sem conta vinculada.
+  bool get podeSerResponsavelTarefa =>
+      idConvidado.trim().isNotEmpty && idEvento.trim().isNotEmpty;
 
   bool mesmoIdentificador(Convidado outro) {
     if (idConvidado.trim().isNotEmpty &&

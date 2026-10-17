@@ -204,6 +204,7 @@ class _ConviteAcao extends StatelessWidget {
           minimumSize: const Size.fromHeight(48),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           foregroundColor: AuthFestaBrand.titulo,
+          iconColor: AuthFestaBrand.titulo,
         ),
         child: Text.rich(
           TextSpan(
@@ -247,6 +248,7 @@ class _EntrarContaButton extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           side: const BorderSide(color: Color(0xFFF0E6EC)),
           foregroundColor: AuthFestaBrand.rosa,
+          iconColor: AuthFestaBrand.rosa,
           backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),

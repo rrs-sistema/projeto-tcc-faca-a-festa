@@ -146,6 +146,7 @@ extension _FornecedorDetalheHero on FornecedorDetalheScreen {
                   ),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.amber.shade800,
+                    iconColor: Colors.amber.shade800,
                     side: BorderSide(
                         color: Colors.amber.shade700.withValues(alpha: 0.35)),
                     shape: RoundedRectangleBorder(
@@ -561,6 +562,7 @@ extension _FornecedorDetalheHero on FornecedorDetalheScreen {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: primary,
                     foregroundColor: Colors.white,
+                    iconColor: Colors.white,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),

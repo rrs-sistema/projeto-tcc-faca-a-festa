@@ -54,6 +54,7 @@ class FornecedorAguardandoAprovacaoScreen extends StatelessWidget {
                       ),
                       style: TextButton.styleFrom(
                         foregroundColor: FornecedorPremiumPalette.muted,
+                        iconColor: FornecedorPremiumPalette.muted,
                       ),
                     ),
                   ),
@@ -150,6 +151,7 @@ class FornecedorAguardandoAprovacaoScreen extends StatelessWidget {
                               elevation: 0,
                               backgroundColor: FornecedorPremiumPalette.dark,
                               foregroundColor: Colors.white,
+                              iconColor: Colors.white,
                               disabledBackgroundColor: FornecedorPremiumPalette
                                   .dark
                                   .withValues(alpha: 0.45),

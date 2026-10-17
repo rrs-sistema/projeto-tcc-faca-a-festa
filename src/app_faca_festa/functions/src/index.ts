@@ -1,4 +1,5 @@
 export { buscarCepGoogle } from "./address/buscarCepGoogle";
+export { obterEstatisticasPublicas } from "./functions/publico/obterEstatisticasPublicas";
 export { exportarDossieTitular } from "./functions/lgpd/exportarDossieTitular";
 export { atenderSolicitacaoLgpd } from "./functions/lgpd/atenderSolicitacaoLgpd";
 export { expurgarAuditoriaAntiga } from "./functions/lgpd/expurgarAuditoriaAntiga";

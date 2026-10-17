@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/core/services/update_operations.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 
 import 'package:app_faca_festa/domain/entities/resultados_operacao.dart';
@@ -15,18 +16,20 @@ class FornecedorMigracaoRepositoryImpl implements FornecedorMigracaoRepository {
     required bool aplicar,
     required bool sobrescrever,
     required int limite,
-  }) async {
-    try {
-      return await remote.migrarTiposEventoFornecedores(
-        dryRun: dryRun,
-        aplicar: aplicar,
-        sobrescrever: sobrescrever,
-        limite: limite,
-      );
-    } on FirebaseFunctionsException catch (e) {
-      throw FornecedorMigracaoException(
-        e.message ?? 'Erro ao executar migração.',
-      );
-    }
+  }) {
+    return UpdateOperations.run(() async {
+      try {
+        return await remote.migrarTiposEventoFornecedores(
+          dryRun: dryRun,
+          aplicar: aplicar,
+          sobrescrever: sobrescrever,
+          limite: limite,
+        );
+      } on FirebaseFunctionsException catch (e) {
+        throw FornecedorMigracaoException(
+          e.message ?? 'Erro ao executar migração.',
+        );
+      }
+    });
   }
 }

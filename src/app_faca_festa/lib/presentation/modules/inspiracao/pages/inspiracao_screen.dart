@@ -84,10 +84,26 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
     );
   }
 
+  static const _larguraDesktop = 1360.0;
+
+  Widget _faixa(Widget sliver, bool ampla) {
+    if (!ampla) return sliver;
+    final sobra = MediaQuery.sizeOf(context).width - _larguraDesktop;
+    if (sobra <= 0) return sliver;
+    return SliverPadding(
+      padding: EdgeInsets.symmetric(horizontal: sobra / 2),
+      sliver: sliver,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final gradient = themeController.gradient.value;
     final primary = themeController.primaryColor.value;
+    final largura = MediaQuery.sizeOf(context).width;
+    final ampla = largura >= 650;
+    final larga = largura >= 900;
+    final alturaCabecalho = larga ? 156.0 : 170.0;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC), // Fundo mais limpo
@@ -101,8 +117,7 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
           physics: const BouncingScrollPhysics(),
           slivers: [
             SliverAppBar(
-              expandedHeight:
-                  170, // 🔹 Altura reduzida e mais compacta[cite: 30]
+              expandedHeight: alturaCabecalho,
               floating: true,
               pinned: true,
               backgroundColor: themeController.primaryColor.value,
@@ -113,7 +128,7 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
               flexibleSpace: LayoutBuilder(
                 builder: (context, constraints) {
                   final percent = (constraints.maxHeight - kToolbarHeight) /
-                      (170 - kToolbarHeight);
+                      (alturaCabecalho - kToolbarHeight);
                   final progress = percent.clamp(0.0, 1.0);
 
                   return FlexibleSpaceBar(
@@ -164,7 +179,7 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
                               textAlign: TextAlign.center,
                               style: GoogleFonts.playfairDisplay(
                                 color: Colors.white,
-                                fontSize: 16,
+                                fontSize: larga ? 26 : 16,
                                 fontWeight: FontWeight.w700,
                                 height: 1.3,
                                 shadows: const [
@@ -186,41 +201,67 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
             ),
 
             // === Filtros Categoria ===
-            SliverToBoxAdapter(
-              child: _filtrosCategoria(primary),
+            _faixa(
+              SliverToBoxAdapter(
+                child: _filtrosCategoria(primary, larga: larga),
+              ),
+              ampla,
             ),
 
             // === Minhas Referências ===
-            SliverToBoxAdapter(
-              child: _atalhoMinhasReferencias(primary),
+            _faixa(
+              SliverToBoxAdapter(
+                child: _atalhoMinhasReferencias(primary, larga: larga),
+              ),
+              ampla,
             ),
 
             // === Carrossel de Destaques ===
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: _carrosselDestaque(inspiracoes),
+            _faixa(
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: _carrosselDestaque(inspiracoes, larga: larga),
+                ),
               ),
+              ampla,
             ),
 
             // === Grid de Inspirações ===
-            SliverToBoxAdapter(
-              child: _tituloSessao(
-                  'Ideias e Tendências', Icons.auto_awesome_rounded, primary),
+            _faixa(
+              SliverToBoxAdapter(
+                child: _tituloSessao(
+                  'Ideias e Tendências',
+                  Icons.auto_awesome_rounded,
+                  primary,
+                  subtitulo: larga
+                      ? 'Toque em uma foto para abrir a ideia e usar na festa.'
+                      : null,
+                ),
+              ),
+              ampla,
             ),
-            SliverToBoxAdapter(
-              child: _gridInspiracoes(inspiracoes, primary),
+            _faixa(
+              SliverToBoxAdapter(
+                child: _gridInspiracoes(inspiracoes, primary, larga: larga),
+              ),
+              ampla,
             ),
 
             // === Galeria e Fornecedores ===
-            SliverToBoxAdapter(
-              child: const SizedBox(height: 16),
+            _faixa(
+              const SliverToBoxAdapter(child: SizedBox(height: 16)),
+              ampla,
             ),
-            SliverToBoxAdapter(
-              child: _botaoGaleria(primary),
-            ),
-            SliverToBoxAdapter(
-              child: _fornecedoresSugeridos(primary),
+            if (!larga)
+              SliverToBoxAdapter(
+                child: _botaoGaleria(primary),
+              ),
+            _faixa(
+              SliverToBoxAdapter(
+                child: _fornecedoresSugeridos(primary),
+              ),
+              ampla,
             ),
 
             const SliverToBoxAdapter(child: SizedBox(height: 100)),
@@ -230,45 +271,51 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
     );
   }
 
-  Widget _filtrosCategoria(Color primary) {
+  Widget _filtrosCategoria(Color primary, {required bool larga}) {
     return Obx(() {
       final categorias = controller.categoriasDisponiveis();
 
       return SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        padding: EdgeInsets.symmetric(
+          horizontal: larga ? 20 : 14,
+          vertical: larga ? 14 : 10,
+        ),
         child: Row(
           children: categorias.map((c) {
             final selected = controller.categoriaSelecionada.value == c;
-            return GestureDetector(
-              onTap: () => controller.aplicarFiltro(c),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 250),
-                margin: const EdgeInsets.only(right: 8),
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 14, vertical: 6), // 🔹 Compacto[cite: 30]
-                decoration: BoxDecoration(
-                  color: selected ? primary : Colors.white,
-                  border: Border.all(
-                    color: selected ? primary : Colors.grey.shade300,
+            return MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: GestureDetector(
+                onTap: () => controller.aplicarFiltro(c),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 250),
+                  margin: const EdgeInsets.only(right: 8),
+                  padding: EdgeInsets.symmetric(
+                      horizontal: larga ? 16 : 14, vertical: larga ? 10 : 6),
+                  decoration: BoxDecoration(
+                    color: selected ? primary : Colors.white,
+                    border: Border.all(
+                      color: selected ? primary : Colors.grey.shade300,
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: selected
+                        ? [
+                            BoxShadow(
+                                color: primary.withValues(alpha: 0.25),
+                                blurRadius: 6,
+                                offset: const Offset(0, 3))
+                          ]
+                        : [],
                   ),
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: selected
-                      ? [
-                          BoxShadow(
-                              color: primary.withValues(alpha: 0.25),
-                              blurRadius: 6,
-                              offset: const Offset(0, 3))
-                        ]
-                      : [],
-                ),
-                child: Text(
-                  c,
-                  style: GoogleFonts.poppins(
-                    color: selected ? Colors.white : Colors.grey.shade700,
-                    fontSize: 12,
-                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                  child: Text(
+                    c,
+                    style: GoogleFonts.poppins(
+                      color: selected ? Colors.white : Colors.grey.shade700,
+                      fontSize: larga ? 13 : 12,
+                      fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                    ),
                   ),
                 ),
               ),
@@ -279,85 +326,104 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
     });
   }
 
-  Widget _atalhoMinhasReferencias(Color primary) {
+  Widget _atalhoMinhasReferencias(Color primary, {required bool larga}) {
     return Obx(() {
       final total = controller.referenciasEvento.length;
       if (!controller.possuiContextoEvento) return const SizedBox.shrink();
 
-      return Padding(
-        padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
-        child: InkWell(
-          onTap: () {
-            final eventoId = widget.eventoId ?? controller.eventoIdAtual;
-            final userId = widget.userId ?? controller.userIdAtual;
-            if (eventoId == null ||
-                eventoId.isEmpty ||
-                userId == null ||
-                userId.isEmpty) {
-              Get.snackbar('Evento não identificado', 'Abra um evento antes.',
-                  snackPosition: SnackPosition.BOTTOM);
-              return;
-            }
-            Get.to(
-              () => MinhasReferenciasEventoScreen(
-                eventoId: eventoId,
-                userId: userId,
-                controller: controller,
-                themeController: themeController,
+      final card = InkWell(
+        onTap: () {
+          final eventoId = widget.eventoId ?? controller.eventoIdAtual;
+          final userId = widget.userId ?? controller.userIdAtual;
+          if (eventoId == null ||
+              eventoId.isEmpty ||
+              userId == null ||
+              userId.isEmpty) {
+            Get.snackbar('Evento não identificado', 'Abra um evento antes.',
+                snackPosition: SnackPosition.BOTTOM);
+            return;
+          }
+          Get.to(
+            () => MinhasReferenciasEventoScreen(
+              eventoId: eventoId,
+              userId: userId,
+              controller: controller,
+              themeController: themeController,
+            ),
+          );
+        },
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: EdgeInsets.all(larga ? 16 : 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: primary.withValues(alpha: 0.15)),
+            boxShadow: [
+              BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4))
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: larga ? 44 : 38,
+                height: larga ? 44 : 38,
+                decoration: BoxDecoration(
+                    color: primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12)),
+                child: Icon(Icons.collections_bookmark_rounded,
+                    color: primary, size: larga ? 22 : 20),
               ),
-            );
-          },
-          borderRadius: BorderRadius.circular(16),
-          child: Container(
-            padding: const EdgeInsets.all(12), // 🔹 Mais fino[cite: 30]
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: primary.withValues(alpha: 0.15)),
-              boxShadow: [
-                BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.03),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4))
-              ],
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                      color: primary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12)),
-                  child: Icon(Icons.collections_bookmark_rounded,
-                      color: primary, size: 20),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Minhas Referências',
+                        style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w800,
+                            fontSize: larga ? 15 : 13,
+                            color: const Color(0xFF172033))),
+                    Text(
+                        total == 0
+                            ? 'Nenhuma salva. Toque para ver o que guardar.'
+                            : '$total salva(s)',
+                        style: GoogleFonts.poppins(
+                            fontSize: larga ? 12.5 : 11,
+                            color: Colors.grey.shade600)),
+                  ],
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Minhas Referências',
-                          style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.w800,
-                              fontSize: 13,
-                              color: const Color(0xFF172033))),
-                      Text(total == 0 ? 'Nenhuma salva' : '$total salva(s)',
-                          style: GoogleFonts.poppins(
-                              fontSize: 11, color: Colors.grey.shade600)),
-                    ],
-                  ),
-                ),
-                Icon(Icons.chevron_right_rounded, color: primary, size: 20),
-              ],
-            ),
+              ),
+              Icon(Icons.chevron_right_rounded, color: primary, size: 22),
+            ],
           ),
         ),
+      );
+
+      return Padding(
+        padding: EdgeInsets.fromLTRB(larga ? 20 : 14, 0, larga ? 20 : 14, 12),
+        child: larga
+            ? Row(
+                children: [
+                  Expanded(
+                    child: MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: card,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  _botaoGaleria(primary, expandir: false),
+                ],
+              )
+            : card,
       );
     });
   }
 
-  Widget _carrosselDestaque(List<Inspiracao> items) {
+  Widget _carrosselDestaque(List<Inspiracao> items, {required bool larga}) {
     final imagens = items.take(5).toList();
     if (imagens.isEmpty) return const SizedBox.shrink();
 
@@ -371,56 +437,62 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
             final item = imagens[index];
             final url = item.imagemUrl;
 
-            return Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () => _abrirDetalhe(item),
-                borderRadius: BorderRadius.circular(16),
-                child: ClipRRect(
+            return MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () => _abrirDetalhe(item),
                   borderRadius: BorderRadius.circular(16),
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      url.isEmpty
-                          ? Container(
-                              color: Colors.grey.shade200,
-                              child: const Icon(Icons.image_not_supported,
-                                  color: Colors.grey))
-                          : Image.network(url,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => Container(
-                                  color: Colors.grey.shade200,
-                                  child: const Icon(Icons.broken_image,
-                                      color: Colors.grey))),
-                      const DecoratedBox(
-                          decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                  colors: [Colors.transparent, Colors.black87],
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter))),
-                      Positioned(
-                        left: 12,
-                        bottom: 12,
-                        right: 12,
-                        child: Text(item.titulo,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.poppins(
-                                color: Colors.white,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700)),
-                      ),
-                    ],
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        url.isEmpty
+                            ? Container(
+                                color: Colors.grey.shade200,
+                                child: const Icon(Icons.image_not_supported,
+                                    color: Colors.grey))
+                            : Image.network(url,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => Container(
+                                    color: Colors.grey.shade200,
+                                    child: const Icon(Icons.broken_image,
+                                        color: Colors.grey))),
+                        const DecoratedBox(
+                            decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                    colors: [
+                              Colors.transparent,
+                              Colors.black87
+                            ],
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter))),
+                        Positioned(
+                          left: 14,
+                          bottom: 14,
+                          right: 14,
+                          child: Text(item.titulo,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.poppins(
+                                  color: Colors.white,
+                                  fontSize: larga ? 16 : 13,
+                                  fontWeight: FontWeight.w700)),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
             );
           },
           options: CarouselOptions(
-            height: 160,
+            height: larga ? 280 : 160,
             autoPlay: imagens.length > 1,
             enlargeCenterPage: true,
-            viewportFraction: 0.85,
+            viewportFraction: larga ? 0.48 : 0.85,
             pauseAutoPlayOnTouch: true,
             onPageChanged: (index, _) {
               setState(() => _destaqueIndex = index);
@@ -469,17 +541,35 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
     );
   }
 
-  Widget _tituloSessao(String titulo, IconData icon, Color primary) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: Row(
+  Widget _tituloSessao(String titulo, IconData icon, Color primary,
+          {String? subtitulo}) =>
+      Padding(
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, size: 18, color: primary),
-            const SizedBox(width: 8),
-            Text(titulo,
+            Row(
+              children: [
+                Icon(icon, size: 18, color: primary),
+                const SizedBox(width: 8),
+                Text(titulo,
+                    style: GoogleFonts.poppins(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF1F2937))),
+              ],
+            ),
+            if (subtitulo != null) ...[
+              const SizedBox(height: 2),
+              Text(
+                subtitulo,
                 style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF1F2937))),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: const Color(0xFF6B7280),
+                ),
+              ),
+            ],
           ],
         ),
       );
@@ -515,107 +605,133 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
     );
   }
 
-  Widget _gridInspiracoes(List<Inspiracao> list, Color primary) {
+  Widget _gridInspiracoes(List<Inspiracao> list, Color primary,
+      {required bool larga}) {
     if (list.isEmpty) return _emptyInspiracoes(primary);
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14),
-      child: MasonryGridView.count(
-        physics: const NeverScrollableScrollPhysics(),
-        shrinkWrap: true,
-        crossAxisCount: 2,
-        mainAxisSpacing: 10,
-        crossAxisSpacing: 10,
-        itemCount: list.length,
-        itemBuilder: (context, i) {
-          final insp = list[i];
-          final url = insp.imagemUrl;
-
-          return GestureDetector(
-            onTap: () => _abrirDetalhe(insp),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: Stack(
-                children: [
-                  url.isEmpty
-                      ? Container(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final colunas = !larga
+            ? 2
+            : constraints.maxWidth >= 1100
+                ? 4
+                : 3;
+        return Padding(
+          padding: EdgeInsets.symmetric(horizontal: larga ? 20 : 14),
+          child: MasonryGridView.count(
+            physics: const NeverScrollableScrollPhysics(),
+            shrinkWrap: true,
+            crossAxisCount: colunas,
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            itemCount: list.length,
+            itemBuilder: (context, i) {
+              final insp = list[i];
+              final url = insp.imagemUrl;
+              final foto = url.isEmpty
+                  ? Container(
+                      height: 160,
+                      color: Colors.grey.shade200,
+                      child: const Center(
+                          child: Icon(Icons.image, color: Colors.grey)))
+                  : Image.network(url,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
                           height: 160,
                           color: Colors.grey.shade200,
-                          child: const Center(
-                              child: Icon(Icons.image, color: Colors.grey)))
-                      : Image.network(url,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Container(
-                              height: 160,
-                              color: Colors.grey.shade200,
-                              child: const Center(
-                                  child: Icon(Icons.broken_image)))),
-                  Positioned.fill(
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                              colors: [
-                            Colors.transparent,
-                            Colors.black.withValues(alpha: 0.6)
-                          ],
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter)),
-                    ),
-                  ),
-                  Positioned(
-                    top: 6,
-                    right: 6,
-                    child: Tooltip(
-                      message: insp.favorito ? 'Favorita' : 'Marcar favorita',
-                      child: InkWell(
-                      onTap: () => controller.alternarFavorito(insp.id),
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(
-                            color: Colors.black45, shape: BoxShape.circle),
-                        child: Icon(
-                            insp.favorito
-                                ? Icons.star_rounded
-                                : Icons.star_border_rounded,
-                            color: insp.favorito ? Colors.amber : Colors.white,
-                            size: 20),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    left: 8,
-                    right: 8,
-                    bottom: 8,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
+                          child:
+                              const Center(child: Icon(Icons.broken_image))));
+
+              return MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  onTap: () => _abrirDetalhe(insp),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: Stack(
                       children: [
-                        _badgesPlanejamento(insp, primary),
-                        const SizedBox(height: 4),
-                        Text(
-                          insp.titulo,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            height: 1.2,
-                            shadows: const [
-                              Shadow(color: Colors.black54, blurRadius: 6),
+                        if (larga)
+                          SizedBox(
+                            height: 210,
+                            width: double.infinity,
+                            child: foto,
+                          )
+                        else
+                          foto,
+                        Positioned.fill(
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                    colors: [
+                                  Colors.transparent,
+                                  Colors.black.withValues(alpha: 0.6)
+                                ],
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter)),
+                          ),
+                        ),
+                        Positioned(
+                          top: 6,
+                          right: 6,
+                          child: Tooltip(
+                            message:
+                                insp.favorito ? 'Favorita' : 'Marcar favorita',
+                            child: InkWell(
+                              onTap: () => controller.alternarFavorito(insp.id),
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: const BoxDecoration(
+                                    color: Colors.black45,
+                                    shape: BoxShape.circle),
+                                child: Icon(
+                                    insp.favorito
+                                        ? Icons.star_rounded
+                                        : Icons.star_border_rounded,
+                                    color: insp.favorito
+                                        ? Colors.amber
+                                        : Colors.white,
+                                    size: 20),
+                              ),
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          left: 8,
+                          right: 8,
+                          bottom: 8,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              _badgesPlanejamento(insp, primary),
+                              const SizedBox(height: 4),
+                              Text(
+                                insp.titulo,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.poppins(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  height: 1.2,
+                                  shadows: const [
+                                    Shadow(
+                                        color: Colors.black54, blurRadius: 6),
+                                  ],
+                                ),
+                              ),
                             ],
                           ),
                         ),
                       ],
                     ),
                   ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
+                ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 
@@ -655,24 +771,28 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
     );
   }
 
-  Widget _botaoGaleria(Color primary) {
+  Widget _botaoGaleria(Color primary, {bool expandir = true}) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: ElevatedButton.icon(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.white,
-          foregroundColor: primary,
-          side: BorderSide(color: primary.withValues(alpha: 0.3)),
-          minimumSize: const Size(double.infinity, 44),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          elevation: 0,
+      padding: EdgeInsets.symmetric(horizontal: expandir ? 16 : 0),
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: ElevatedButton.icon(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.white,
+            foregroundColor: primary,
+            iconColor: primary,
+            side: BorderSide(color: primary.withValues(alpha: 0.3)),
+            minimumSize: Size(expandir ? double.infinity : 220, 52),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            elevation: 0,
+          ),
+          icon: const Icon(Icons.add_photo_alternate_rounded, size: 18),
+          label: Text("Adicionar minhas referências",
+              style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.w700, fontSize: 13)),
+          onPressed: () => controller.adicionarReferenciaPessoal(),
         ),
-        icon: const Icon(Icons.add_photo_alternate_rounded, size: 18),
-        label: Text("Adicionar minhas referências",
-            style:
-                GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 13)),
-        onPressed: () => controller.adicionarReferenciaPessoal(),
       ),
     );
   }

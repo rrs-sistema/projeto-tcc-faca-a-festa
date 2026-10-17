@@ -24,6 +24,36 @@ void main() {
     await repository.close();
   });
 
+  test(
+      'responsible selector includes guests without accounts from the selected event',
+      () async {
+    final guests = _ConvidadoRepositoryFake();
+    final now = DateTime(2026, 10, 14);
+    Convidado guest(String id, String event, String? uid) => Convidado(
+          idConvidado: id,
+          idEvento: event,
+          nome: id,
+          contato: '',
+          idUsuario: uid,
+          dataCadastro: now,
+          dataAtualizacao: now,
+        );
+    guests.lista = [
+      guest('linked', 'event-selected', 'uid-linked'),
+      guest('pending', 'event-selected', null),
+      guest('foreign', 'other-event', 'uid-foreign'),
+    ];
+    final selectedController = TarefaController(
+      repository: repository,
+      convidadoRepository: guests,
+    );
+    await selectedController.carregarUsuarios(idEvento: 'event-selected');
+    expect(guests.eventoObservado, 'event-selected');
+    expect(selectedController.usuarios.map((g) => g.idConvidado),
+        ['linked', 'pending']);
+    selectedController.onClose();
+  });
+
   test('guest listener keeps only tasks assigned to that guest', () async {
     await controller.listenTarefas(
       'evento-1',
@@ -188,9 +218,13 @@ class _TarefaRepositoryFake implements TarefaRepository {
 }
 
 class _ConvidadoRepositoryFake implements ConvidadoRepository {
+  List<Convidado> lista = [];
+  String? eventoObservado;
   @override
-  Stream<List<Convidado>> observarPorEvento(String idEvento) =>
-      Stream.value(const []);
+  Stream<List<Convidado>> observarPorEvento(String idEvento) {
+    eventoObservado = idEvento;
+    return Stream.value(lista);
+  }
 
   @override
   Future<Convidado?> buscarPorId(String idConvidado) async => null;

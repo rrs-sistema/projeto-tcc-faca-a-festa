@@ -321,6 +321,7 @@ class _ServicoProdutoSheetState extends State<_ServicoProdutoSheet> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.grey.shade800,
                       foregroundColor: Colors.black,
+                      iconColor: Colors.black,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14)),

@@ -65,6 +65,8 @@ class Orcamento {
     this.idCategoria,
     this.idTipoPagamento,
     this.custoEstimado,
+    this.custoSugeridoCalculadora,
+    this.quantidadeSugeridaCalculadora,
     this.orcamentoFechado = false,
     this.anotacoes,
     this.status = StatusOrcamento.pendente,
@@ -83,6 +85,8 @@ class Orcamento {
   final String? idCategoria;
   final String? idTipoPagamento;
   final double? custoEstimado;
+  final double? custoSugeridoCalculadora;
+  final double? quantidadeSugeridaCalculadora;
   final bool orcamentoFechado;
   final String? anotacoes;
   final StatusOrcamento status;
@@ -120,6 +124,8 @@ class Orcamento {
       idCategoria: idCategoria ?? this.idCategoria,
       idTipoPagamento: idTipoPagamento ?? this.idTipoPagamento,
       custoEstimado: custoEstimado ?? this.custoEstimado,
+      custoSugeridoCalculadora: custoSugeridoCalculadora,
+      quantidadeSugeridaCalculadora: quantidadeSugeridaCalculadora,
       orcamentoFechado: orcamentoFechado ?? this.orcamentoFechado,
       anotacoes: anotacoes ?? this.anotacoes,
       status: status ?? this.status,

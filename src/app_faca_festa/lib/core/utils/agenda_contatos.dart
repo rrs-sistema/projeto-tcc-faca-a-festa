@@ -23,7 +23,7 @@ bool agendaDoCelularDisponivel() {
       defaultTargetPlatform == TargetPlatform.iOS;
 }
 
-/// Agenda do aparelho (a mesma origem que o WhatsApp usa).
+/// Agenda do aparelho; não inclui contatos salvos apenas no WhatsApp.
 /// O WhatsApp não expõe a lista da conta para outros aplicativos.
 Future<List<ContatoAgenda>> carregarContatosDaAgenda() async {
   if (!agendaDoCelularDisponivel()) {

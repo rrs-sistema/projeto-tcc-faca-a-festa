@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:app_faca_festa/domain/entities/orcamento_gasto.dart';
 
-
 class OrcamentoGastoModel extends OrcamentoGasto {
   OrcamentoGastoModel({
     required super.idGasto,

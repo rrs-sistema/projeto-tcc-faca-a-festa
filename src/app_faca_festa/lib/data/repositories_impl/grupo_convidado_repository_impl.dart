@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/core/services/update_operations.dart';
 import 'package:app_faca_festa/domain/entities/convidado.dart';
 import 'package:app_faca_festa/domain/entities/grupo_convidado.dart';
 import 'package:app_faca_festa/domain/repositories/grupo_convidado_repository.dart';
@@ -19,21 +20,28 @@ class GrupoConvidadoRepositoryImpl implements GrupoConvidadoRepository {
       remote.observarConvidados(idEvento);
 
   @override
-  Future<void> salvarGrupo(GrupoConvidado grupo) => remote.salvarGrupo(
+  Future<void> salvarGrupo(GrupoConvidado grupo) {
+    return UpdateOperations.run(() async {
+      return remote.salvarGrupo(
         grupo is GrupoConvidadoModel
             ? grupo
             : GrupoConvidadoModel.fromEntity(grupo),
       );
+    });
+  }
 
   @override
   Future<void> excluirGrupo(
     String idGrupo, {
     bool desvincularConvidados = true,
-  }) =>
-      remote.excluirGrupo(
+  }) {
+    return UpdateOperations.run(() async {
+      return remote.excluirGrupo(
         idGrupo,
         desvincularConvidados: desvincularConvidados,
       );
+    });
+  }
 
   ConvidadoModel _convidadoModel(Convidado convidado) =>
       convidado is ConvidadoModel
@@ -49,33 +57,48 @@ class GrupoConvidadoRepositoryImpl implements GrupoConvidadoRepository {
   Future<void> vincularConvidadoAoGrupo(
     Convidado convidado,
     GrupoConvidado grupo,
-  ) =>
-      remote.vincularConvidadoAoGrupo(
+  ) {
+    return UpdateOperations.run(() async {
+      return remote.vincularConvidadoAoGrupo(
         _convidadoModel(convidado),
         _grupoModel(grupo),
       );
+    });
+  }
 
   @override
-  Future<void> removerConvidadoDoGrupo(Convidado convidado) =>
-      remote.removerConvidadoDoGrupo(_convidadoModel(convidado));
+  Future<void> removerConvidadoDoGrupo(Convidado convidado) {
+    return UpdateOperations.run(() async {
+      return remote.removerConvidadoDoGrupo(_convidadoModel(convidado));
+    });
+  }
 
   @override
   Future<void> vincularConvidadoNaMesa(
     Convidado convidado,
     String idMesa,
     int numeroMesa,
-  ) =>
-      remote.vincularConvidadoNaMesa(
+  ) {
+    return UpdateOperations.run(() async {
+      return remote.vincularConvidadoNaMesa(
         _convidadoModel(convidado),
         idMesa,
         numeroMesa,
       );
+    });
+  }
 
   @override
-  Future<void> removerConvidadoDaMesa(Convidado convidado) =>
-      remote.removerConvidadoDaMesa(_convidadoModel(convidado));
+  Future<void> removerConvidadoDaMesa(Convidado convidado) {
+    return UpdateOperations.run(() async {
+      return remote.removerConvidadoDaMesa(_convidadoModel(convidado));
+    });
+  }
 
   @override
-  Future<void> atualizarResumos(List<ResumoGrupoConvidado> resumos) =>
-      remote.atualizarResumos(resumos);
+  Future<void> atualizarResumos(List<ResumoGrupoConvidado> resumos) {
+    return UpdateOperations.run(() async {
+      return remote.atualizarResumos(resumos);
+    });
+  }
 }

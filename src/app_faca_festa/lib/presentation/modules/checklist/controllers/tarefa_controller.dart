@@ -99,10 +99,10 @@ class TarefaController extends GetxController {
     await _tarefasSubscription?.cancel();
     _tarefasSubscription = _repository
         .observarPorEvento(
-          idEvento,
-          ordenarPorData: ordenarPorData,
-          idResponsavel: responsavel.isEmpty ? null : responsavel,
-        )
+      idEvento,
+      ordenarPorData: ordenarPorData,
+      idResponsavel: responsavel.isEmpty ? null : responsavel,
+    )
         .listen(
       (lista) {
         tarefas.assignAll(_filtrarPorResponsavel(lista));
@@ -123,11 +123,11 @@ class TarefaController extends GetxController {
     return lista.where((tarefa) => tarefa.ehDoConvidado(responsavel)).toList();
   }
 
-  Future<void> carregarUsuarios() async {
+  Future<void> carregarUsuarios({String? idEvento}) async {
     try {
       erro.value = '';
-      final idEvento = _idEventoAtual();
-      if (idEvento.isEmpty) {
+      final eventoId = idEvento ?? _idEventoAtual();
+      if (eventoId.isEmpty) {
         usuarios.clear();
         _idEventoUsuarios = '';
         await _convidadosSubscription?.cancel();
@@ -135,24 +135,24 @@ class TarefaController extends GetxController {
         return;
       }
 
-      if (_idEventoUsuarios == idEvento && _convidadosSubscription != null) {
+      if (_idEventoUsuarios == eventoId && _convidadosSubscription != null) {
         usuarios.assignAll(
           _montarElegiveis(
-            [...usuarios, ..._convidadosDoEvento(idEvento)],
-            idEvento: idEvento,
+            [...usuarios, ..._convidadosDoEvento(eventoId)],
+            idEvento: eventoId,
           ),
         );
         return;
       }
 
       await _convidadosSubscription?.cancel();
-      _idEventoUsuarios = idEvento;
+      _idEventoUsuarios = eventoId;
 
       final primeiro = Completer<void>();
       _convidadosSubscription =
-          _convidadoRepository.observarPorEvento(idEvento).listen(
+          _convidadoRepository.observarPorEvento(eventoId).listen(
         (lista) {
-          usuarios.assignAll(_montarElegiveis(lista, idEvento: idEvento));
+          usuarios.assignAll(_montarElegiveis(lista, idEvento: eventoId));
           if (!primeiro.isCompleted) primeiro.complete();
         },
         onError: (Object error, StackTrace stackTrace) {
@@ -164,7 +164,7 @@ class TarefaController extends GetxController {
       await primeiro.future;
       if (usuarios.isEmpty) {
         usuarios.assignAll(
-          _montarElegiveis(_convidadosDoEvento(idEvento), idEvento: idEvento),
+          _montarElegiveis(_convidadosDoEvento(eventoId), idEvento: eventoId),
         );
       }
     } catch (e) {
@@ -282,7 +282,9 @@ class TarefaController extends GetxController {
     List<Convidado> convidados, {
     String? idEvento,
   }) {
-    final lista = [...convidados, ..._convidadosDoEvento(idEvento ?? '')];
+    final lista = [...convidados, ..._convidadosDoEvento(idEvento ?? '')]
+        .where((item) => item.idEvento == idEvento)
+        .toList();
     _incluirOrganizador(lista, idEvento ?? '');
 
     final vistos = <String>{};
@@ -301,6 +303,12 @@ class TarefaController extends GetxController {
   void _incluirOrganizador(List<Convidado> convidados, String idEvento) {
     final user = _appAtualController?.usuarioLogado.value;
     if (user == null || user.idUsuario.trim().isEmpty) return;
+    final evento = _eventoAtualController?.eventoAtualEntidade;
+    if (evento == null ||
+        evento.idEvento != idEvento ||
+        evento.idUsuario != user.idUsuario) {
+      return;
+    }
     if (_jaRepresentaUsuario(convidados, user)) return;
 
     final agora = DateTime.now();
@@ -326,13 +334,13 @@ class TarefaController extends GetxController {
 
   bool _jaRepresentaUsuario(List<Convidado> convidados, Usuario user) {
     final uid = user.idUsuario.trim();
-    final email = Convidado.normalizarEmail(user.email);
     return convidados.any((item) {
       if (uid.isNotEmpty &&
+          (item.idUsuario?.trim() ?? '').isNotEmpty &&
           (item.idConvidado.trim() == uid || item.idUsuario?.trim() == uid)) {
         return true;
       }
-      return email.isNotEmpty && item.emailDaConta == email;
+      return false;
     });
   }
 

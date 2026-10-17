@@ -332,6 +332,7 @@ class SolicitacaoFornecedorCard extends StatelessWidget {
                             ),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: const Color(0xFF4F46E5),
+                              iconColor: const Color(0xFF4F46E5),
                               side: const BorderSide(color: Color(0xFFC7D2FE)),
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12)),

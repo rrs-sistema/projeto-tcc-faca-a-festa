@@ -59,7 +59,6 @@ class SugestaoBaseFestaController extends GetxController {
     );
   }
 
-
   @override
   void onClose() {
     buscaController.dispose();
@@ -321,4 +320,3 @@ class SugestaoBaseFestaOptions {
     'critica',
   ];
 }
-

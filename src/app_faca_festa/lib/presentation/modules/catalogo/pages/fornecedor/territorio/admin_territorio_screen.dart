@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/core/utils/numeric_input.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -370,8 +371,8 @@ class AdminTerritorioScreen extends StatelessWidget {
                             value: t.idFornecedor.trim().isNotEmpty
                                 ? t.idFornecedor.trim()
                                 : null,
-                            items: _itensDropdownFornecedor(
-                                t.idFornecedor.trim()),
+                            items:
+                                _itensDropdownFornecedor(t.idFornecedor.trim()),
                             decoration: InputDecoration(
                               filled: true,
                               fillColor: Colors.grey.shade100,
@@ -441,8 +442,13 @@ class AdminTerritorioScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 6),
                             TextFormField(
-                              initialValue: t.raioKm?.toString() ?? '',
-                              keyboardType: TextInputType.number,
+                              initialValue: t.raioKm == null
+                                  ? ''
+                                  : NumericInput.quantidade(t.raioKm!),
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                      decimal: true),
+                              inputFormatters: [NumericInput.decimal()],
                               decoration: InputDecoration(
                                 filled: true,
                                 fillColor: Colors.grey.shade100,
@@ -523,6 +529,7 @@ class AdminTerritorioScreen extends StatelessWidget {
                                 label: const Text('Cancelar'),
                                 style: TextButton.styleFrom(
                                   foregroundColor: Colors.grey.shade700,
+                                  iconColor: Colors.grey.shade700,
                                 ),
                               ),
                               ElevatedButton.icon(

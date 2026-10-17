@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/core/services/update_operations.dart';
 import 'dart:developer' as developer;
 
 import 'package:app_faca_festa/core/database/app_database.dart';
@@ -16,52 +17,56 @@ class GiftSyncService {
     required this.remote,
   });
 
-  Future<void> syncPendentes() async {
-    final pendentes = await local.getUnsynced();
+  Future<void> syncPendentes() {
+    return UpdateOperations.run(() async {
+      final pendentes = await local.getUnsynced();
 
-    for (final gift in pendentes) {
-      try {
-        if (gift.deleted) {
-          await remote.deleteGift(gift.eventoId, gift.giftId);
-        } else {
-          await remote.createGift(gift.eventoId, gift.toModel());
+      for (final gift in pendentes) {
+        try {
+          if (gift.deleted) {
+            await remote.deleteGift(gift.eventoId, gift.giftId);
+          } else {
+            await remote.createGift(gift.eventoId, gift.toModel());
+          }
+
+          await local.markSynced(gift.giftId);
+        } catch (e) {
+          developer.log(
+            'Erro ao sincronizar gift ${gift.giftId}',
+            name: 'GiftSyncService',
+            error: e,
+          );
+          continue;
         }
-
-        await local.markSynced(gift.giftId);
-      } catch (e) {
-        developer.log(
-          'Erro ao sincronizar gift ${gift.giftId}',
-          name: 'GiftSyncService',
-          error: e,
-        );
-        continue;
       }
-    }
 
-    await _syncContributionsPendentes();
+      await _syncContributionsPendentes();
+    });
   }
 
-  Future<void> _syncContributionsPendentes() async {
-    final pendentes = await local.getUnsyncedContributions();
+  Future<void> _syncContributionsPendentes() {
+    return UpdateOperations.run(() async {
+      final pendentes = await local.getUnsyncedContributions();
 
-    for (final contribution in pendentes) {
-      try {
-        await remote.saveContribution(
-          contribution.eventoId,
-          contribution.giftId,
-          contribution.toEntity(),
-        );
+      for (final contribution in pendentes) {
+        try {
+          await remote.saveContribution(
+            contribution.eventoId,
+            contribution.giftId,
+            contribution.toEntity(),
+          );
 
-        await local.markContributionSynced(contribution.contributionId);
-      } catch (e) {
-        developer.log(
-          'Erro ao sincronizar contribution ${contribution.contributionId}',
-          name: 'GiftSyncService',
-          error: e,
-        );
-        continue;
+          await local.markContributionSynced(contribution.contributionId);
+        } catch (e) {
+          developer.log(
+            'Erro ao sincronizar contribution ${contribution.contributionId}',
+            name: 'GiftSyncService',
+            error: e,
+          );
+          continue;
+        }
       }
-    }
+    });
   }
 }
 

@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 
 import 'package:app_faca_festa/app/routes/app_route_args.dart';
 import 'package:app_faca_festa/core/utils/biblioteca.dart';
+import 'package:app_faca_festa/core/utils/form_validators.dart';
 import 'package:app_faca_festa/domain/entities/endereco_usuario.dart';
 import 'package:app_faca_festa/domain/entities/evento.dart';
 import 'package:app_faca_festa/domain/entities/tipo_evento.dart';
@@ -96,6 +97,46 @@ class EventoCadastroController extends GetxController {
   String? _rotuloBanner;
 
   final dataFesta = TextEditingController();
+  final dataFimFesta = TextEditingController();
+  final eventoVariosDias = false.obs;
+
+  void definirEventoVariosDias(bool variosDias) {
+    eventoVariosDias.value = variosDias;
+    if (!variosDias) dataFimFesta.clear();
+  }
+
+  String? validarTermino(String? value) {
+    if (!eventoVariosDias.value) return null;
+    final texto = value?.trim() ?? '';
+    if (texto.isEmpty) return 'Informe o término do evento de vários dias.';
+    final formato = DateFormat('dd/MM/yyyy', 'pt_BR');
+    final fim = formato.tryParseStrict(texto);
+    if (fim == null) return 'Informe uma data de término válida.';
+    final inicio = formato.tryParseStrict(dataFesta.text.trim());
+    if (inicio != null && !fim.isAfter(inicio)) {
+      return 'Para vários dias, o término deve ser depois do início.';
+    }
+    return null;
+  }
+
+  String? validarHora(String? value) => FormValidators.hora(
+        value,
+        campo: 'a hora do evento',
+        obrigatorio: false,
+      );
+
+  String? validarCusto(String? value) => FormValidators.dinheiro(
+        value,
+        campo: 'o custo estimado',
+        obrigatorio: false,
+      );
+
+  double? get custoEstimadoInformado {
+    if (custoEstimado.text.trim().isEmpty) return null;
+    final valor = Biblioteca.toDouble(custoEstimado.text);
+    return valor > 0 ? valor : null;
+  }
+
   final horaFesta = TextEditingController();
   final cidade = TextEditingController();
   final uf = TextEditingController(text: 'PR');

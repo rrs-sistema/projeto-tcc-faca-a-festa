@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/core/services/update_operations.dart';
 import 'dart:convert';
 
 import 'package:google_fonts/google_fonts.dart';
@@ -72,24 +73,26 @@ class _ListaConvidadosScreenState extends State<ListaConvidadosScreen> {
     super.dispose();
   }
 
-  Future<void> _exportarCsv() async {
-    final lista = convidadoController.convidados.toList();
-    if (lista.isEmpty) {
-      EasyLoading.showInfo('Não há convidados para exportar.');
-      return;
-    }
-    final csv = exportarConvidadosCsv(lista);
-    await Share.shareXFiles(
-      [
-        XFile.fromData(
-          Uint8List.fromList(utf8.encode(csv)),
-          mimeType: 'text/csv',
-          name: 'convidados-faca-festa.csv',
-        ),
-      ],
-      subject: 'Lista de convidados',
-      fileNameOverrides: const ['convidados-faca-festa.csv'],
-    );
+  Future<void> _exportarCsv() {
+    return UpdateOperations.run(() async {
+      final lista = convidadoController.convidados.toList();
+      if (lista.isEmpty) {
+        EasyLoading.showInfo('Não há convidados para exportar.');
+        return;
+      }
+      final csv = exportarConvidadosCsv(lista);
+      await Share.shareXFiles(
+        [
+          XFile.fromData(
+            Uint8List.fromList(utf8.encode(csv)),
+            mimeType: 'text/csv',
+            name: 'convidados-faca-festa.csv',
+          ),
+        ],
+        subject: 'Lista de convidados',
+        fileNameOverrides: const ['convidados-faca-festa.csv'],
+      );
+    });
   }
 
   void _definirModoSelecao(bool ativo) {
@@ -320,15 +323,17 @@ class _ListaConvidadosScreenState extends State<ListaConvidadosScreen> {
     Color primary, {
     Convidado? convidado,
   }) {
-    return abrirDialogAdicionarConvidado(
-      context,
-      primary,
-      themeController: themeController,
-      eventoController: eventoController,
-      convidadoController: convidadoController,
-      grupoController: grupoController,
-      convidado: convidado,
-    );
+    return UpdateOperations.run(() async {
+      return abrirDialogAdicionarConvidado(
+        context,
+        primary,
+        themeController: themeController,
+        eventoController: eventoController,
+        convidadoController: convidadoController,
+        grupoController: grupoController,
+        convidado: convidado,
+      );
+    });
   }
 
   List<Convidado> _filtrarLista(List<Convidado> listaBase) {
@@ -369,10 +374,7 @@ class _ListaConvidadosScreenState extends State<ListaConvidadosScreen> {
           'Nenhum pendente',
           'Não há convidados aguardando resposta neste filtro.'
         ),
-      'recusados' => (
-          'Nenhuma recusa',
-          'Ninguém recusou o convite ainda.'
-        ),
+      'recusados' => ('Nenhuma recusa', 'Ninguém recusou o convite ainda.'),
       _ => (
           'Nenhum resultado',
           'Nenhum convidado combina com o que você buscou.'
@@ -590,54 +592,60 @@ class _ListaConvidadosScreenState extends State<ListaConvidadosScreen> {
     });
   }
 
-  Future<void> _atualizarStatus(
-      Convidado convidado, StatusConvidado status) async {
-    await convidadoController.atualizarStatus(convidado.idConvidado, status);
-    final titulo = switch (status) {
-      StatusConvidado.confirmado => 'Presença confirmada',
-      StatusConvidado.pendente => 'Convidado pendente',
-      StatusConvidado.recusado => 'Convite recusado',
-    };
-    final cor = switch (status) {
-      StatusConvidado.confirmado => Colors.green.shade700,
-      StatusConvidado.pendente => Colors.orange.shade700,
-      StatusConvidado.recusado => Colors.red.shade600,
-    };
-    _mostrarSnack(titulo, convidado.nome, cor);
+  Future<void> _atualizarStatus(Convidado convidado, StatusConvidado status) {
+    return UpdateOperations.run(() async {
+      await convidadoController.atualizarStatus(convidado.idConvidado, status);
+      final titulo = switch (status) {
+        StatusConvidado.confirmado => 'Presença confirmada',
+        StatusConvidado.pendente => 'Convidado pendente',
+        StatusConvidado.recusado => 'Convite recusado',
+      };
+      final cor = switch (status) {
+        StatusConvidado.confirmado => Colors.green.shade700,
+        StatusConvidado.pendente => Colors.orange.shade700,
+        StatusConvidado.recusado => Colors.red.shade600,
+      };
+      _mostrarSnack(titulo, convidado.nome, cor);
+    });
   }
 
-  Future<void> _confirmarExclusao(Convidado convidado) async {
-    final confirmar = await Get.dialog<bool>(
-      AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('Excluir convidado?',
-            style:
-                GoogleFonts.poppins(fontWeight: FontWeight.w800, fontSize: 15)),
-        content: Text('Deseja remover ${convidado.nome} da lista?',
-            style: GoogleFonts.poppins(fontSize: 12)),
-        actions: [
-          TextButton(
-              onPressed: () => Get.back(result: false),
-              child: const Text('Cancelar')),
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red.shade600,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
+  Future<void> _confirmarExclusao(Convidado convidado) {
+    return UpdateOperations.run(() async {
+      final confirmar = await Get.dialog<bool>(
+        AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text('Excluir convidado?',
+              style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.w800, fontSize: 15)),
+          content: Text('Deseja remover ${convidado.nome} da lista?',
+              style: GoogleFonts.poppins(fontSize: 12)),
+          actions: [
+            TextButton(
+                onPressed: () => Get.back(result: false),
+                child: const Text('Cancelar')),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red.shade600,
+                foregroundColor: Colors.white,
+                iconColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
+              ),
+              onPressed: () => Get.back(result: true),
+              icon: const Icon(Icons.delete_outline_rounded, size: 14),
+              label: const Text('Excluir', style: TextStyle(fontSize: 12)),
             ),
-            onPressed: () => Get.back(result: true),
-            icon: const Icon(Icons.delete_outline_rounded, size: 14),
-            label: const Text('Excluir', style: TextStyle(fontSize: 12)),
-          ),
-        ],
-      ),
-    );
+          ],
+        ),
+      );
 
-    if (confirmar == true) {
-      await convidadoController.excluirConvidado(convidado.idConvidado);
-      _mostrarSnack('Convidado excluído', convidado.nome, Colors.red.shade600);
-    }
+      if (confirmar == true) {
+        await convidadoController.excluirConvidado(convidado.idConvidado);
+        _mostrarSnack(
+            'Convidado excluído', convidado.nome, Colors.red.shade600);
+      }
+    });
   }
 
   void _carregarConvidadosDoEventoAtual({bool mostrarSnack = false}) {
@@ -762,6 +770,7 @@ class _ListaConvidadosScreenState extends State<ListaConvidadosScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
                     foregroundColor: primary,
+                    iconColor: primary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -784,100 +793,107 @@ class _ListaConvidadosScreenState extends State<ListaConvidadosScreen> {
     });
   }
 
-  Future<void> _confirmarEnvioEmail() async {
-    final selecionados = _selecionados.values.toList(growable: false);
-    final comEmail = selecionados.where((item) => item.temEmail).length;
-    final semEmail = selecionados.length - comEmail;
-    if (comEmail == 0) {
-      _mostrarSnack(
-        'Sem e-mail',
-        'Cadastre o e-mail dos convidados para enviar o convite.',
-        Colors.orange.shade700,
-      );
-      return;
-    }
-
-    final confirmar = await Get.dialog<bool>(
-      AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(
-          'Enviar convites?',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w800, fontSize: 15),
-        ),
-        content: Text(
-          semEmail == 0
-              ? 'Vamos enviar o link do convite para $comEmail convidado(s) por e-mail.'
-              : 'Vamos enviar para $comEmail convidado(s). $semEmail sem e-mail serão ignorados.',
-          style: GoogleFonts.poppins(fontSize: 12, height: 1.4),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(result: false),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: themeController.primaryColor.value,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-            onPressed: () => Get.back(result: true),
-            icon: const Icon(Icons.email_outlined, size: 16),
-            label: const Text('Enviar', style: TextStyle(fontSize: 12)),
-          ),
-        ],
-      ),
-    );
-    if (confirmar != true) return;
-    await _enviarConvitesPorEmail(selecionados);
-  }
-
-  Future<void> _enviarConvitesPorEmail(List<Convidado> selecionados) async {
-    try {
-      EasyLoading.show(status: 'Enviando convites...');
-      final resultado =
-          await convidadoController.enviarConvitesPorEmail(selecionados);
-      EasyLoading.dismiss();
-
-      if (resultado.enviados == 0) {
+  Future<void> _confirmarEnvioEmail() {
+    return UpdateOperations.run(() async {
+      final selecionados = _selecionados.values.toList(growable: false);
+      final comEmail = selecionados.where((item) => item.temEmail).length;
+      final semEmail = selecionados.length - comEmail;
+      if (comEmail == 0) {
         _mostrarSnack(
-          'Nenhum e-mail enviado',
-          resultado.semEmail.isNotEmpty
-              ? 'Os selecionados estão sem e-mail válido.'
-              : 'Não foi possível enviar agora.',
+          'Sem e-mail',
+          'Cadastre o e-mail dos convidados para enviar o convite.',
           Colors.orange.shade700,
         );
         return;
       }
 
-      final extra = <String>[];
-      if (resultado.semEmail.isNotEmpty) {
-        extra.add('${resultado.semEmail.length} sem e-mail');
-      }
-      if (resultado.falhas.isNotEmpty) {
-        extra.add('${resultado.falhas.length} falharam');
-      }
-      _mostrarSnack(
-        resultado.enviados == 1
-            ? 'Convite enviado'
-            : '${resultado.enviados} convites enviados',
-        extra.isEmpty ? 'O link foi enviado por e-mail.' : extra.join(' · '),
-        themeController.primaryColor.value,
+      final confirmar = await Get.dialog<bool>(
+        AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text(
+            'Enviar convites?',
+            style:
+                GoogleFonts.poppins(fontWeight: FontWeight.w800, fontSize: 15),
+          ),
+          content: Text(
+            semEmail == 0
+                ? 'Vamos enviar o link do convite para $comEmail convidado(s) por e-mail.'
+                : 'Vamos enviar para $comEmail convidado(s). $semEmail sem e-mail serão ignorados.',
+            style: GoogleFonts.poppins(fontSize: 12, height: 1.4),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Get.back(result: false),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: themeController.primaryColor.value,
+                foregroundColor: Colors.white,
+                iconColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              onPressed: () => Get.back(result: true),
+              icon: const Icon(Icons.email_outlined, size: 16),
+              label: const Text('Enviar', style: TextStyle(fontSize: 12)),
+            ),
+          ],
+        ),
       );
-      _sairSelecao();
-    } on EnviarConvitesPorEmailException catch (erro) {
-      EasyLoading.dismiss();
-      _mostrarSnack('Não enviou', erro.toString(), Colors.red.shade600);
-    } catch (_) {
-      EasyLoading.dismiss();
-      _mostrarSnack(
-        'Erro',
-        'Não foi possível enviar os convites.',
-        Colors.red.shade600,
-      );
-    }
+      if (confirmar != true) return;
+      await _enviarConvitesPorEmail(selecionados);
+    });
+  }
+
+  Future<void> _enviarConvitesPorEmail(List<Convidado> selecionados) {
+    return UpdateOperations.run(() async {
+      try {
+        EasyLoading.show(status: 'Enviando convites...');
+        final resultado =
+            await convidadoController.enviarConvitesPorEmail(selecionados);
+        EasyLoading.dismiss();
+
+        if (resultado.enviados == 0) {
+          _mostrarSnack(
+            'Nenhum e-mail enviado',
+            resultado.semEmail.isNotEmpty
+                ? 'Os selecionados estão sem e-mail válido.'
+                : 'Não foi possível enviar agora.',
+            Colors.orange.shade700,
+          );
+          return;
+        }
+
+        final extra = <String>[];
+        if (resultado.semEmail.isNotEmpty) {
+          extra.add('${resultado.semEmail.length} sem e-mail');
+        }
+        if (resultado.falhas.isNotEmpty) {
+          extra.add('${resultado.falhas.length} falharam');
+        }
+        _mostrarSnack(
+          resultado.enviados == 1
+              ? 'Convite enviado'
+              : '${resultado.enviados} convites enviados',
+          extra.isEmpty ? 'O link foi enviado por e-mail.' : extra.join(' · '),
+          themeController.primaryColor.value,
+        );
+        _sairSelecao();
+      } on EnviarConvitesPorEmailException catch (erro) {
+        EasyLoading.dismiss();
+        _mostrarSnack('Não enviou', erro.toString(), Colors.red.shade600);
+      } catch (_) {
+        EasyLoading.dismiss();
+        _mostrarSnack(
+          'Erro',
+          'Não foi possível enviar os convites.',
+          Colors.red.shade600,
+        );
+      }
+    });
   }
 }
 
@@ -911,12 +927,8 @@ class _GuestCard extends StatelessWidget {
     final initial = convidado.nome.trim().isEmpty
         ? '?'
         : convidado.nome.trim()[0].toUpperCase();
-    final email = convidado.email?.trim().isNotEmpty == true
-        ? convidado.email!.trim()
-        : 'Sem e-mail';
-    final contato = _asText(convidado.contato).trim().isNotEmpty
-        ? _asText(convidado.contato).trim()
-        : 'Sem contato';
+    final email = convidado.email?.trim() ?? '';
+    final contato = _asText(convidado.contato).trim();
     final grupo = convidado.nomeGrupo?.trim().isNotEmpty == true
         ? convidado.nomeGrupo!.trim()
         : 'Sem grupo';
@@ -986,8 +998,10 @@ class _GuestCard extends StatelessWidget {
                               icon: _getStatusIcon(convidado.status)),
                         ],
                       ),
-                      const SizedBox(height: 4),
-                      _InfoLine(icon: Icons.email_outlined, text: email),
+                      if (email.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        _InfoLine(icon: Icons.email_outlined, text: email),
+                      ],
                       if (modoSelecao && !convidado.temEmail) ...[
                         const SizedBox(height: 2),
                         Text(
@@ -999,8 +1013,10 @@ class _GuestCard extends StatelessWidget {
                           ),
                         ),
                       ],
-                      const SizedBox(height: 2),
-                      _InfoLine(icon: Icons.phone_rounded, text: contato),
+                      if (contato.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        _InfoLine(icon: Icons.phone_rounded, text: contato),
+                      ],
                       const SizedBox(height: 6),
                       Wrap(
                         spacing: 4,

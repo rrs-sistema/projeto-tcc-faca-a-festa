@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/core/services/update_operations.dart';
 import 'dart:convert';
 
 import 'package:google_fonts/google_fonts.dart';
@@ -89,24 +90,26 @@ class _ConvidadosPageState extends State<ConvidadosPage>
     });
   }
 
-  Future<void> _exportarCsv() async {
-    final lista = convidadoController.convidados.toList();
-    if (lista.isEmpty) {
-      EasyLoading.showInfo('Não há convidados para exportar.');
-      return;
-    }
-    final csv = exportarConvidadosCsv(lista);
-    await Share.shareXFiles(
-      [
-        XFile.fromData(
-          Uint8List.fromList(utf8.encode(csv)),
-          mimeType: 'text/csv',
-          name: 'convidados-faca-festa.csv',
-        ),
-      ],
-      subject: 'Lista de convidados',
-      fileNameOverrides: const ['convidados-faca-festa.csv'],
-    );
+  Future<void> _exportarCsv() {
+    return UpdateOperations.run(() async {
+      final lista = convidadoController.convidados.toList();
+      if (lista.isEmpty) {
+        EasyLoading.showInfo('Não há convidados para exportar.');
+        return;
+      }
+      final csv = exportarConvidadosCsv(lista);
+      await Share.shareXFiles(
+        [
+          XFile.fromData(
+            Uint8List.fromList(utf8.encode(csv)),
+            mimeType: 'text/csv',
+            name: 'convidados-faca-festa.csv',
+          ),
+        ],
+        subject: 'Lista de convidados',
+        fileNameOverrides: const ['convidados-faca-festa.csv'],
+      );
+    });
   }
 
   void _iniciarEscutaDoEventoAtual() {

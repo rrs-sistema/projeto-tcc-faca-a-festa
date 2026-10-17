@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/core/services/update_operations.dart';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -84,54 +85,58 @@ class AuditoriaAdminScreen extends StatelessWidget {
     );
   }
 
-  Future<void> _exportarCsv(AuditoriaController controller) async {
-    if (controller.visiveis.isEmpty) {
-      Get.snackbar(
-        'Auditoria',
-        'Não há registros visíveis para exportar.',
-        snackPosition: SnackPosition.BOTTOM,
-      );
-      return;
-    }
+  Future<void> _exportarCsv(AuditoriaController controller) {
+    return UpdateOperations.run(() async {
+      if (controller.visiveis.isEmpty) {
+        Get.snackbar(
+          'Auditoria',
+          'Não há registros visíveis para exportar.',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+        return;
+      }
 
-    final csv = controller.exportarCsvVisivel();
-    await Share.shareXFiles(
-      [
-        XFile.fromData(
-          Uint8List.fromList(utf8.encode(csv)),
-          mimeType: 'text/csv',
-        ),
-      ],
-      subject: 'auditoria-faca-festa.csv',
-      text: 'Exportação da auditoria da plataforma Faça a Festa.',
-      fileNameOverrides: ['auditoria-faca-festa.csv'],
-    );
+      final csv = controller.exportarCsvVisivel();
+      await Share.shareXFiles(
+        [
+          XFile.fromData(
+            Uint8List.fromList(utf8.encode(csv)),
+            mimeType: 'text/csv',
+          ),
+        ],
+        subject: 'auditoria-faca-festa.csv',
+        text: 'Exportação da auditoria da plataforma Faça a Festa.',
+        fileNameOverrides: ['auditoria-faca-festa.csv'],
+      );
+    });
   }
 
-  Future<void> _exportarPdf(AuditoriaController controller) async {
-    if (controller.visiveis.isEmpty) {
-      Get.snackbar(
-        'Auditoria',
-        'Não há registros visíveis para exportar.',
-        snackPosition: SnackPosition.BOTTOM,
-      );
-      return;
-    }
+  Future<void> _exportarPdf(AuditoriaController controller) {
+    return UpdateOperations.run(() async {
+      if (controller.visiveis.isEmpty) {
+        Get.snackbar(
+          'Auditoria',
+          'Não há registros visíveis para exportar.',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+        return;
+      }
 
-    final pdf = await controller.exportarPdfVisivel(
-      titulo: 'Auditoria da plataforma Faça a Festa',
-    );
-    await Share.shareXFiles(
-      [
-        XFile.fromData(
-          pdf,
-          mimeType: 'application/pdf',
-        ),
-      ],
-      subject: 'auditoria-faca-festa.pdf',
-      text: 'Relatório de auditoria da plataforma Faça a Festa.',
-      fileNameOverrides: ['auditoria-faca-festa.pdf'],
-    );
+      final pdf = await controller.exportarPdfVisivel(
+        titulo: 'Auditoria da plataforma Faça a Festa',
+      );
+      await Share.shareXFiles(
+        [
+          XFile.fromData(
+            pdf,
+            mimeType: 'application/pdf',
+          ),
+        ],
+        subject: 'auditoria-faca-festa.pdf',
+        text: 'Relatório de auditoria da plataforma Faça a Festa.',
+        fileNameOverrides: ['auditoria-faca-festa.pdf'],
+      );
+    });
   }
 }
 

@@ -28,7 +28,7 @@ extension _CalculadoraFestaTotais on _CalculadoraFestaScreenState {
                 fontSize: 11.5,
                 color: selected ? primary : Colors.grey.shade700,
               ),
-            onSelected: (_) {
+              onSelected: (_) {
                 calculadoraController.alterarBaseCalculo(base);
                 _sincronizarCamposManuais();
               },
@@ -66,21 +66,42 @@ extension _CalculadoraFestaTotais on _CalculadoraFestaScreenState {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: TipoPerfilFesta.values.map((tipo) {
-                final perfilTipo = PerfilFesta.fromTipo(tipo);
-                final selected = _normalizarTexto(perfilAtual.nome) ==
-                    _normalizarTexto(perfilTipo.nome);
-
-                return _buildPerfilFestaChip(
-                  primary: primary,
-                  tipo: tipo,
-                  selected: selected,
-                );
-              }).toList(),
-            ),
+            LayoutBuilder(builder: (context, constraints) {
+              final style = GoogleFonts.poppins(
+                  fontSize: 11.5, fontWeight: FontWeight.w700);
+              var larguraMinima = 0.0;
+              for (final tipo in TipoPerfilFesta.values) {
+                final painter = TextPainter(
+                    text: TextSpan(text: _labelPerfilFesta(tipo), style: style),
+                    textDirection: Directionality.of(context),
+                    textScaler: MediaQuery.textScalerOf(context))
+                  ..layout();
+                if (painter.width + 24 > larguraMinima) {
+                  larguraMinima = painter.width + 24;
+                }
+                painter.dispose();
+              }
+              final disponivel =
+                  (constraints.maxWidth - 12) / TipoPerfilFesta.values.length;
+              final largura =
+                  disponivel < larguraMinima ? larguraMinima : disponivel;
+              return SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(children: [
+                    for (final tipo in TipoPerfilFesta.values) ...[
+                      if (tipo != TipoPerfilFesta.values.first)
+                        const SizedBox(width: 6),
+                      SizedBox(
+                          width: largura,
+                          child: _buildPerfilFestaChip(
+                              primary: primary,
+                              tipo: tipo,
+                              selected: _normalizarTexto(perfilAtual.nome) ==
+                                  _normalizarTexto(
+                                      PerfilFesta.fromTipo(tipo).nome))),
+                    ],
+                  ]));
+            }),
             const SizedBox(height: 6),
             Row(
               children: [
@@ -92,9 +113,8 @@ extension _CalculadoraFestaTotais on _CalculadoraFestaScreenState {
                 const SizedBox(width: 4),
                 Expanded(
                   child: Text(
-                    'Ajusta as regras dos itens e a margem da estimativa.',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                    'Porção × ${perfilAtual.multiplicadorQuantidade.toStringAsFixed(2)} '
+                    'e $margemPercentual% de reserva. Esses ajustes não medem a necessidade alimentar.',
                     style: GoogleFonts.poppins(
                       color: Colors.grey.shade600,
                       fontSize: 10.2,
@@ -115,68 +135,34 @@ extension _CalculadoraFestaTotais on _CalculadoraFestaScreenState {
     required TipoPerfilFesta tipo,
     required bool selected,
   }) {
-    final borderRadius = BorderRadius.circular(12);
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: borderRadius,
-        onTap: () => calculadoraController.selecionarPerfil(tipo),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          curve: Curves.easeOut,
-          height: 34,
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          decoration: BoxDecoration(
-            color: selected ? primary.withValues(alpha: 0.12) : Colors.white,
-            borderRadius: borderRadius,
-            border: Border.all(
-              color: selected
-                  ? primary.withValues(alpha: 0.45)
-                  : Colors.black.withValues(alpha: 0.12),
-              width: selected ? 1.2 : 1,
-            ),
-            boxShadow: selected
-                ? [
-                    BoxShadow(
-                      color: primary.withValues(alpha: 0.08),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
-                    ),
-                  ]
-                : const [],
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                width: 20,
-                height: 20,
-                decoration: BoxDecoration(
-                  color: selected
-                      ? primary.withValues(alpha: 0.14)
-                      : Colors.grey.shade100,
-                  shape: BoxShape.circle,
-                ),
-                alignment: Alignment.center,
-                child: Icon(
-                  selected ? Icons.check_rounded : _iconePerfilFesta(tipo),
-                  size: selected ? 14 : 13,
-                  color: selected ? primary : Colors.grey.shade600,
-                ),
-              ),
-              const SizedBox(width: 7),
-              Text(
-                _labelPerfilFesta(tipo),
-                style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 11,
-                  color: selected ? primary : Colors.grey.shade700,
-                ),
-              ),
-            ],
-          ),
+    final radius = BorderRadius.circular(12);
+    return Semantics(
+      button: true,
+      selected: selected,
+      child: Material(
+        color:
+            selected ? primary.withValues(alpha: .12) : const Color(0xFFF8FAFC),
+        shape: RoundedRectangleBorder(
+            borderRadius: radius,
+            side: BorderSide(
+                color: selected ? primary : const Color(0xFFCBD5E1),
+                width: selected ? 1.5 : 1)),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: () => calculadoraController.selecionarPerfil(tipo),
+          child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 48),
+              child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                  child: Text(_labelPerfilFesta(tipo),
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      style: GoogleFonts.poppins(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
+                          color:
+                              selected ? primary : const Color(0xFF475569))))),
         ),
       ),
     );
@@ -194,20 +180,6 @@ extension _CalculadoraFestaTotais on _CalculadoraFestaScreenState {
     if (key.contains('econom')) return 'Econômico';
     if (key.contains('premium')) return 'Premium';
     return 'Padrão';
-  }
-
-  IconData _iconePerfilFesta(TipoPerfilFesta tipo) {
-    final key = _enumKey(tipo);
-
-    if (key.contains('econom')) {
-      return Icons.savings_rounded;
-    }
-
-    if (key.contains('premium')) {
-      return Icons.workspace_premium_rounded;
-    }
-
-    return Icons.verified_rounded;
   }
 
   String _enumKey(Object value) {

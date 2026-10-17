@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/core/utils/numeric_input.dart';
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:flutter/material.dart';
@@ -722,6 +723,9 @@ class _PremiumTextField extends StatelessWidget {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
+      inputFormatters: keyboardType?.index == TextInputType.number.index
+          ? [NumericInput.moeda()]
+          : null,
       maxLines: maxLines,
       validator: validator,
       onChanged: onChanged,
@@ -1001,19 +1005,11 @@ class _GlowCircle extends StatelessWidget {
 
 String _valueToField(double? value) {
   if (value == null || value == 0) return '';
-  return value.toStringAsFixed(2).replaceAll('.', ',');
+  return NumericInput.dinheiro(value);
 }
 
 double _parseMoney(String value) {
-  var normalized = value.trim().replaceAll('R\$', '').replaceAll(' ', '');
-
-  if (normalized.contains(',') && normalized.contains('.')) {
-    normalized = normalized.replaceAll('.', '').replaceAll(',', '.');
-  } else if (normalized.contains(',')) {
-    normalized = normalized.replaceAll(',', '.');
-  }
-
-  return double.tryParse(normalized) ?? 0.0;
+  return NumericInput.parse(value) ?? 0.0;
 }
 
 IconData _tipoIcon(GiftType tipo) {

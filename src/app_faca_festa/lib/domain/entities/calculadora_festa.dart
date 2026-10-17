@@ -78,6 +78,8 @@ class CalculadoraFesta {
   final DateTime? dataConversaoOrcamento;
   final AnaliseCalculadoraIA? analiseIA;
 
+  final Map<String, dynamic> contextoPlanejamento;
+
   const CalculadoraFesta({
     required this.idCalculo,
     required this.idEvento,
@@ -99,6 +101,7 @@ class CalculadoraFesta {
     this.convertidoEmOrcamento = false,
     this.dataConversaoOrcamento,
     this.analiseIA,
+    this.contextoPlanejamento = const {},
   });
 
   int get totalConvidados => totalAdultos + totalCriancas + totalBebes;
@@ -124,6 +127,7 @@ class CalculadoraFesta {
 
   CalculadoraFesta copyWith({
     String? idCalculo,
+    Map<String, dynamic>? contextoPlanejamento,
     String? idEvento,
     String? tipoEvento,
     BaseCalculoFesta? baseCalculo,
@@ -152,6 +156,7 @@ class CalculadoraFesta {
   }) {
     return CalculadoraFesta(
       idCalculo: idCalculo ?? this.idCalculo,
+      contextoPlanejamento: contextoPlanejamento ?? this.contextoPlanejamento,
       idEvento: idEvento ?? this.idEvento,
       tipoEvento: tipoEvento ?? this.tipoEvento,
       baseCalculo: baseCalculo ?? this.baseCalculo,

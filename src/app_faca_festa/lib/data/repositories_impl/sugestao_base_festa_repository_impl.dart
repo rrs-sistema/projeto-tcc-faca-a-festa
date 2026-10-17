@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/core/services/update_operations.dart';
 import 'package:app_faca_festa/domain/entities/sugestao_base_festa.dart';
 import 'package:app_faca_festa/domain/repositories/sugestao_base_festa_repository_contract.dart';
 
@@ -11,17 +12,23 @@ class SugestaoBaseFestaRepositoryImpl
 
   @override
   Future<List<SugestaoBaseFesta>> listarSugestoes() {
-    return remote.listarSugestoes();
+    return UpdateOperations.run(() async {
+      return remote.listarSugestoes();
+    });
   }
 
   @override
   Future<void> salvarSugestao(SugestaoBaseFesta sugestao) {
-    return remote.salvarSugestao(sugestao);
+    return UpdateOperations.run(() async {
+      return remote.salvarSugestao(sugestao);
+    });
   }
 
   @override
   Future<void> atualizarSugestao(SugestaoBaseFesta sugestao) {
-    return remote.atualizarSugestao(sugestao);
+    return UpdateOperations.run(() async {
+      return remote.atualizarSugestao(sugestao);
+    });
   }
 
   @override
@@ -29,20 +36,26 @@ class SugestaoBaseFestaRepositoryImpl
     required String id,
     required bool ativo,
   }) {
-    return remote.ativarDesativarSugestao(id: id, ativo: ativo);
+    return UpdateOperations.run(() async {
+      return remote.ativarDesativarSugestao(id: id, ativo: ativo);
+    });
   }
 
   @override
   Future<void> excluirLogicamente(String id) {
-    return remote.excluirLogicamente(id);
+    return UpdateOperations.run(() async {
+      return remote.excluirLogicamente(id);
+    });
   }
 
   @override
   Future<int> importarSugestoesTeste({
     bool sobrescrever = true,
   }) {
-    return remote.importarSugestoesTeste(
-      sobrescrever: sobrescrever,
-    );
+    return UpdateOperations.run(() async {
+      return remote.importarSugestoesTeste(
+        sobrescrever: sobrescrever,
+      );
+    });
   }
 }

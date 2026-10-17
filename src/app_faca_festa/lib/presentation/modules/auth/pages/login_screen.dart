@@ -214,6 +214,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         style: OutlinedButton.styleFrom(
                           backgroundColor: Colors.white,
                           foregroundColor: Colors.grey.shade800,
+                          iconColor: Colors.grey.shade800,
                           side: BorderSide(color: Colors.grey.shade200),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
@@ -263,6 +264,7 @@ class _CadastroContaButton extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           side: const BorderSide(color: Color(0xFFF0E6EC)),
           foregroundColor: AuthFestaBrand.rosa,
+          iconColor: AuthFestaBrand.rosa,
           backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),

@@ -20,9 +20,9 @@
 ; ======================================================================
 
 #define MyAppName "Faça a Festa"
-; Alinhado ao pubspec.yaml: version: 1.0.3+5
-#define MyAppVersion "1.0.3"
-#define MyAppFileVersion "1.0.3.5"
+; Alinhado ao pubspec.yaml: version: 1.0.13+15
+#define MyAppVersion "1.0.13"
+#define MyAppFileVersion "1.0.13.15"
 #define MyAppPublisher "RRS System Technology"
 #define MyAppURL "https://faca-a-festa.web.app/"
 #define MyAppExeName "app_faca_festa.exe"
@@ -71,7 +71,7 @@ DisableWelcomePage=no
 AllowNoIcons=yes
 
 OutputDir={#ProjectDir}\release\windows-installer\{#BuildDate}
-OutputBaseFilename=FacaFesta_Setup_v{#MyAppVersion}
+OutputBaseFilename=FacaFesta_Setup_v{#MyAppFileVersion}
 
 Compression=lzma2/ultra64
 SolidCompression=yes
@@ -85,7 +85,7 @@ PrivilegesRequired=admin
 PrivilegesRequiredOverridesAllowed=dialog
 
 SetupLogging=yes
-CloseApplications=yes
+CloseApplications=no
 RestartApplications=no
 UsePreviousAppDir=yes
 UsePreviousGroup=yes
@@ -168,6 +168,7 @@ function IsVCRedistInstalled(): Boolean;
 var
   Installed: Cardinal;
   Major: Cardinal;
+  Minor: Cardinal;
   Key: String;
 begin
   Key := 'SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64';
@@ -176,10 +177,14 @@ begin
   begin
     if Installed = 1 then
     begin
+      Result := False;
       if RegQueryDWordValue(HKLM, Key, 'Major', Major) then
-        Result := (Major >= 14)
-      else
-        Result := True;
+      begin
+        if Major > 14 then
+          Result := True
+        else if (Major = 14) and RegQueryDWordValue(HKLM, Key, 'Minor', Minor) then
+          Result := (Minor >= 44);
+      end;
       Exit;
     end;
   end;

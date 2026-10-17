@@ -450,6 +450,7 @@ class _TemaFestaFormSheetState extends State<TemaFestaFormSheet> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: _dark,
                             foregroundColor: Colors.white,
+                            iconColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(14),
@@ -863,6 +864,7 @@ Future<Color?> _escolherCor(BuildContext context, Color inicial) {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF1F2937),
                   foregroundColor: Colors.white,
+                  iconColor: Colors.white,
                 ),
                 onPressed: () => Navigator.pop(ctx, atual.toColor()),
                 child: const Text('Usar cor'),

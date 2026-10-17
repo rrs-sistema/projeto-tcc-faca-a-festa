@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:app_faca_festa/domain/entities/evento_admin.dart';
 
-
 class EventoComTipoModel extends EventoAdmin {
   EventoComTipoModel({
     required super.id,

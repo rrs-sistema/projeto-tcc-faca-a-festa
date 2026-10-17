@@ -396,15 +396,29 @@ class EventThemeController extends GetxController {
         style: ElevatedButton.styleFrom(
           backgroundColor: primary,
           foregroundColor: onPrimary,
+          iconColor: onPrimary,
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           backgroundColor: primary,
           foregroundColor: onPrimary,
+          iconColor: onPrimary,
         ),
       ),
       progressIndicatorTheme: ProgressIndicatorThemeData(color: primary),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: primary,
+          iconColor: primary,
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: primary,
+          iconColor: primary,
+        ),
+      ),
       chipTheme: ChipThemeData(
         selectedColor: primary,
         checkmarkColor: onPrimary,

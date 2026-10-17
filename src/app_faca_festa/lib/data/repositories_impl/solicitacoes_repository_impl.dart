@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/core/services/update_operations.dart';
 import 'package:app_faca_festa/domain/repositories/solicitacoes_repository.dart';
 import '../datasources/remote/solicitacoes_remote_datasource.dart';
 import '../models/cotacao/cotacao_model.dart';
@@ -19,9 +20,11 @@ class SolicitacoesRepositoryImpl implements SolicitacoesRepository {
     required String idCotacao,
     required String canceladoPor,
   }) {
-    return remote.cancelarCotacao(
-      idCotacao: idCotacao,
-      canceladoPor: canceladoPor,
-    );
+    return UpdateOperations.run(() async {
+      return remote.cancelarCotacao(
+        idCotacao: idCotacao,
+        canceladoPor: canceladoPor,
+      );
+    });
   }
 }

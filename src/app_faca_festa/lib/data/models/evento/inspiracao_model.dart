@@ -4,7 +4,6 @@ import 'package:app_faca_festa/domain/entities/inspiracao.dart';
 import 'package:app_faca_festa/domain/entities/inspiracao_sugestao.dart';
 import 'package:app_faca_festa/domain/entities/referencia_evento.dart';
 
-
 class InspiracaoModel extends Inspiracao {
   InspiracaoModel({
     required super.id,

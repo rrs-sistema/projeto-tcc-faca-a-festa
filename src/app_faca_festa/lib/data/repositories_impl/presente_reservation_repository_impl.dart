@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/core/services/update_operations.dart';
 import 'package:app_faca_festa/data/datasources/remote/presente_reservation_remote_datasource.dart';
 import 'package:app_faca_festa/domain/repositories/presente_reservation_repository.dart';
 
@@ -15,12 +16,14 @@ class PresenteReservationRepositoryImpl
     required String nomeConvidado,
     required DateTime dataReserva,
   }) {
-    return _remote.reservar(
-      idEvento: idEvento,
-      idPresente: idPresente,
-      idConvidado: idConvidado,
-      nomeConvidado: nomeConvidado,
-      dataReserva: dataReserva,
-    );
+    return UpdateOperations.run(() async {
+      return _remote.reservar(
+        idEvento: idEvento,
+        idPresente: idPresente,
+        idConvidado: idConvidado,
+        nomeConvidado: nomeConvidado,
+        dataReserva: dataReserva,
+      );
+    });
   }
 }

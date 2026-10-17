@@ -156,6 +156,7 @@ Future<void> _confirmarExcluirGrupo({
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.red.shade600,
             foregroundColor: Colors.white,
+            iconColor: Colors.white,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10),
             ),
@@ -831,19 +832,21 @@ class _ConvidadoItem extends StatelessWidget {
                     color: const Color(0xFF111827),
                   ),
                 ),
-                Text(
-                  convidado.email?.trim().isNotEmpty == true
-                      ? convidado.email!.trim()
-                      : (convidado.contato.trim().isNotEmpty
-                          ? convidado.contato.trim()
-                          : 'Sem contato'),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.poppins(
-                    fontSize: 10,
-                    color: const Color(0xFF6B7280),
+                if (convidado.email?.trim().isNotEmpty == true ||
+                    convidado.contato.trim().isNotEmpty)
+                  Text(
+                    convidado.email?.trim().isNotEmpty == true
+                        ? convidado.email!.trim()
+                        : (convidado.contato.trim().isNotEmpty
+                            ? convidado.contato.trim()
+                            : ''),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.poppins(
+                      fontSize: 10,
+                      color: const Color(0xFF6B7280),
+                    ),
                   ),
-                ),
               ],
             ),
           ),

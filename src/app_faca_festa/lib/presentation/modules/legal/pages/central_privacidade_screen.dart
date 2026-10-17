@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/core/services/update_operations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter/services.dart';
@@ -33,7 +34,8 @@ class CentralPrivacidadeScreen extends StatefulWidget {
   }
 
   @override
-  State<CentralPrivacidadeScreen> createState() => _CentralPrivacidadeScreenState();
+  State<CentralPrivacidadeScreen> createState() =>
+      _CentralPrivacidadeScreenState();
 }
 
 class _CentralPrivacidadeScreenState extends State<CentralPrivacidadeScreen> {
@@ -113,14 +115,16 @@ class _CentralPrivacidadeScreenState extends State<CentralPrivacidadeScreen> {
                       secondary: secondary,
                       aoExportar: () => _exportarDossie(context),
                       aoCorrigir: () => _abrirPerfil(context),
-                      aoRevogar: () => _revogarAvisos(context, usuario?.idUsuario ?? ''),
+                      aoRevogar: () =>
+                          _revogarAvisos(context, usuario?.idUsuario ?? ''),
                       aoAnonimizar: () => _pedirRegistro(
                         context,
                         tipo: 'anonimizacao',
                         titulo: 'Anonimizar ou bloquear',
                         texto:
                             'O pedido pede para anonimizar ou bloquear dados da conta enquanto a exclusão não ocorre. A conta continua ativa até a execução. Você recebe um protocolo.',
-                        resumo: 'Solicitação de anonimização ou bloqueio dos dados da conta.',
+                        resumo:
+                            'Solicitação de anonimização ou bloqueio dos dados da conta.',
                       ),
                       aoOpor: () => _pedirRegistro(
                         context,
@@ -128,7 +132,8 @@ class _CentralPrivacidadeScreenState extends State<CentralPrivacidadeScreen> {
                         titulo: 'Registrar oposição',
                         texto:
                             'A oposição vale para tratamento baseado em legítimo interesse, como auditoria e reputação. O pedido fica registrado para análise e não apaga a conta na hora.',
-                        resumo: 'Oposição a tratamento baseado em legítimo interesse.',
+                        resumo:
+                            'Oposição a tratamento baseado em legítimo interesse.',
                       ),
                       aoExcluir: () => _pedirRegistro(
                         context,
@@ -136,9 +141,11 @@ class _CentralPrivacidadeScreenState extends State<CentralPrivacidadeScreen> {
                         titulo: 'Solicitar exclusão',
                         texto:
                             'O pedido elimina a conta, o perfil, os eventos em que você é o organizador, convidados desses eventos, cotações, mensagens, fotos enviadas e o token de aviso. Cópias de segurança e logs de auditoria podem levar um prazo adicional. A conta não é apagada neste instante: o pedido fica registrado para execução.',
-                        resumo: 'Solicitação de eliminação da conta e dos dados associados.',
+                        resumo:
+                            'Solicitação de eliminação da conta e dos dados associados.',
                       ),
-                      aoLerPolitica: () => Navigator.of(context).push(PrivacidadeScreen.rota()),
+                      aoLerPolitica: () =>
+                          Navigator.of(context).push(PrivacidadeScreen.rota()),
                     )
                   : IndiceTratamentos(
                       primary: primary,
@@ -152,85 +159,93 @@ class _CentralPrivacidadeScreenState extends State<CentralPrivacidadeScreen> {
     );
   }
 
-  Future<void> _exportarDossie(BuildContext context) async {
-    if (_ocupado) return;
-    final usuario = Get.isRegistered<AppController>()
-        ? Get.find<AppController>().usuarioLogado.value
-        : null;
-    if (usuario == null) {
-      _aviso(context, 'Entre na sua conta para exportar o dossiê do titular.');
-      return;
-    }
-    final preferencias = PreferenciasNotificacaoStore().ler(usuario.idUsuario);
-    _ocupado = true;
-    EasyLoading.show(status: 'Preparando seu dossiê...');
-    try {
-      String texto;
-      try {
-        texto = await LgpdFunctionsClient().exportarDossie();
-      } on LgpdFunctionsException {
-        texto = montarDossieTitular(
-          usuario: usuario,
-          preferencias: preferencias,
-        );
+  Future<void> _exportarDossie(BuildContext context) {
+    return UpdateOperations.run(() async {
+      if (_ocupado) return;
+      final usuario = Get.isRegistered<AppController>()
+          ? Get.find<AppController>().usuarioLogado.value
+          : null;
+      if (usuario == null) {
+        _aviso(
+            context, 'Entre na sua conta para exportar o dossiê do titular.');
+        return;
       }
-      await _registrar(
-        idUsuario: usuario.idUsuario,
-        tipo: 'acesso',
-        resumo: 'Exportação do dossiê do titular.',
-        nome: usuario.nome,
-        email: usuario.email,
-      );
-      final pdf = await gerarPdfDossieTitular(texto);
-      await EasyLoading.dismiss();
-      await Share.shareXFiles(
-        [
-          XFile.fromData(
-            pdf,
-            mimeType: 'application/pdf',
-            name: 'dossie-lgpd-faca-festa.pdf',
-          ),
-        ],
-        subject: 'Dossiê LGPD — Faça a Festa',
-        fileNameOverrides: const ['dossie-lgpd-faca-festa.pdf'],
-      );
-    } finally {
-      if (EasyLoading.isShow) await EasyLoading.dismiss();
-      _ocupado = false;
-    }
+      final preferencias =
+          PreferenciasNotificacaoStore().ler(usuario.idUsuario);
+      _ocupado = true;
+      EasyLoading.show(status: 'Preparando seu dossiê...');
+      try {
+        String texto;
+        try {
+          texto = await LgpdFunctionsClient().exportarDossie();
+        } on LgpdFunctionsException {
+          texto = montarDossieTitular(
+            usuario: usuario,
+            preferencias: preferencias,
+          );
+        }
+        await _registrar(
+          idUsuario: usuario.idUsuario,
+          tipo: 'acesso',
+          resumo: 'Exportação do dossiê do titular.',
+          nome: usuario.nome,
+          email: usuario.email,
+        );
+        final pdf = await gerarPdfDossieTitular(texto);
+        await EasyLoading.dismiss();
+        await Share.shareXFiles(
+          [
+            XFile.fromData(
+              pdf,
+              mimeType: 'application/pdf',
+              name: 'dossie-lgpd-faca-festa.pdf',
+            ),
+          ],
+          subject: 'Dossiê LGPD — Faça a Festa',
+          fileNameOverrides: const ['dossie-lgpd-faca-festa.pdf'],
+        );
+      } finally {
+        if (EasyLoading.isShow) await EasyLoading.dismiss();
+        _ocupado = false;
+      }
+    });
   }
 
-  Future<void> _revogarAvisos(BuildContext context, String idUsuario) async {
-    if (_ocupado) return;
-    if (idUsuario.isEmpty) {
-      _aviso(context, 'Entre na sua conta para alterar os avisos.');
-      return;
-    }
-    final usuario = Get.isRegistered<AppController>()
-        ? Get.find<AppController>().usuarioLogado.value
-        : null;
-    _ocupado = true;
-    EasyLoading.show(status: 'Abrindo avisos...');
-    try {
-      await _registrar(
-        idUsuario: idUsuario,
-        tipo: 'revogacao',
-        resumo: 'Abertura das preferências para revogar avisos neste aparelho.',
-        nome: usuario?.nome ?? '',
-        email: usuario?.email ?? '',
-      );
-    } finally {
-      await EasyLoading.dismiss();
-      _ocupado = false;
-    }
-    if (!context.mounted) return;
-    Get.to(() => PreferenciasNotificacaoScreen(idUsuario: idUsuario));
+  Future<void> _revogarAvisos(BuildContext context, String idUsuario) {
+    return UpdateOperations.run(() async {
+      if (_ocupado) return;
+      if (idUsuario.isEmpty) {
+        _aviso(context, 'Entre na sua conta para alterar os avisos.');
+        return;
+      }
+      final usuario = Get.isRegistered<AppController>()
+          ? Get.find<AppController>().usuarioLogado.value
+          : null;
+      _ocupado = true;
+      EasyLoading.show(status: 'Abrindo avisos...');
+      try {
+        await _registrar(
+          idUsuario: idUsuario,
+          tipo: 'revogacao',
+          resumo:
+              'Abertura das preferências para revogar avisos neste aparelho.',
+          nome: usuario?.nome ?? '',
+          email: usuario?.email ?? '',
+        );
+      } finally {
+        await EasyLoading.dismiss();
+        _ocupado = false;
+      }
+      if (!context.mounted) return;
+      Get.to(() => PreferenciasNotificacaoScreen(idUsuario: idUsuario));
+    });
   }
 
   void _abrirPerfil(BuildContext context) {
     if (!Get.isRegistered<AppController>() ||
         Get.find<AppController>().usuarioLogado.value == null) {
-      _aviso(context, 'Entre na sua conta e abra Meu perfil para corrigir os dados.');
+      _aviso(context,
+          'Entre na sua conta e abra Meu perfil para corrigir os dados.');
       return;
     }
     if (!Get.isRegistered<UsuarioController>() ||
@@ -257,79 +272,83 @@ class _CentralPrivacidadeScreenState extends State<CentralPrivacidadeScreen> {
     required String titulo,
     required String texto,
     required String resumo,
-  }) async {
-    if (_ocupado) return;
-    final usuario = Get.isRegistered<AppController>()
-        ? Get.find<AppController>().usuarioLogado.value
-        : null;
-    if (usuario == null) {
-      _aviso(context, 'Entre na sua conta para registrar o pedido.');
-      return;
-    }
-    var confirmando = false;
-    final confirmar = await showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (context, setLocal) => AlertDialog(
-          title: Text(
-            titulo,
-            style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
-          ),
-          content: Text(
-            texto,
-            style: GoogleFonts.poppins(fontSize: 14, height: 1.4),
-          ),
-          actions: [
-            TextButton(
-              onPressed: confirmando ? null : () => Navigator.of(dialogContext).pop(false),
-              child: const Text('Cancelar'),
+  }) {
+    return UpdateOperations.run(() async {
+      if (_ocupado) return;
+      final usuario = Get.isRegistered<AppController>()
+          ? Get.find<AppController>().usuarioLogado.value
+          : null;
+      if (usuario == null) {
+        _aviso(context, 'Entre na sua conta para registrar o pedido.');
+        return;
+      }
+      var confirmando = false;
+      final confirmar = await showDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) => StatefulBuilder(
+          builder: (context, setLocal) => AlertDialog(
+            title: Text(
+              titulo,
+              style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
             ),
-            FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor: Theme.of(dialogContext).colorScheme.primary,
+            content: Text(
+              texto,
+              style: GoogleFonts.poppins(fontSize: 14, height: 1.4),
+            ),
+            actions: [
+              TextButton(
+                onPressed: confirmando
+                    ? null
+                    : () => Navigator.of(dialogContext).pop(false),
+                child: const Text('Cancelar'),
               ),
-              onPressed: confirmando
-                  ? null
-                  : () {
-                      setLocal(() => confirmando = true);
-                      Navigator.of(dialogContext).pop(true);
-                    },
-              child: confirmando
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('Registrar pedido'),
-            ),
-          ],
+              FilledButton(
+                style: FilledButton.styleFrom(
+                  backgroundColor: Theme.of(dialogContext).colorScheme.primary,
+                ),
+                onPressed: confirmando
+                    ? null
+                    : () {
+                        setLocal(() => confirmando = true);
+                        Navigator.of(dialogContext).pop(true);
+                      },
+                child: confirmando
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('Registrar pedido'),
+              ),
+            ],
+          ),
         ),
-      ),
-    );
-    if (confirmar != true || !context.mounted) return;
-    _ocupado = true;
-    EasyLoading.show(status: 'Registrando pedido...');
-    String? protocolo;
-    try {
-      protocolo = await _registrar(
-        idUsuario: usuario.idUsuario,
-        tipo: tipo,
-        resumo: resumo,
-        nome: usuario.nome,
-        email: usuario.email,
       );
-    } finally {
-      await EasyLoading.dismiss();
-      _ocupado = false;
-    }
-    if (!context.mounted) return;
-    _aviso(
-      context,
-      protocolo == null
-          ? 'Não foi possível registrar o pedido agora. Tente de novo em instantes.'
-          : 'Pedido registrado. Protocolo $protocolo.',
-    );
+      if (confirmar != true || !context.mounted) return;
+      _ocupado = true;
+      EasyLoading.show(status: 'Registrando pedido...');
+      String? protocolo;
+      try {
+        protocolo = await _registrar(
+          idUsuario: usuario.idUsuario,
+          tipo: tipo,
+          resumo: resumo,
+          nome: usuario.nome,
+          email: usuario.email,
+        );
+      } finally {
+        await EasyLoading.dismiss();
+        _ocupado = false;
+      }
+      if (!context.mounted) return;
+      _aviso(
+        context,
+        protocolo == null
+            ? 'Não foi possível registrar o pedido agora. Tente de novo em instantes.'
+            : 'Pedido registrado. Protocolo $protocolo.',
+      );
+    });
   }
 
   Future<String?> _registrar({
@@ -338,19 +357,22 @@ class _CentralPrivacidadeScreenState extends State<CentralPrivacidadeScreen> {
     required String resumo,
     String nome = '',
     String email = '',
-  }) async {
-    if (!Get.isRegistered<PerfilUsuarioRepository>()) return null;
-    try {
-      return await Get.find<PerfilUsuarioRepository>().registrarSolicitacaoTitular(
-        idUsuario: idUsuario,
-        tipo: tipo,
-        resumo: resumo,
-        nome: nome,
-        email: email,
-      );
-    } catch (_) {
-      return null;
-    }
+  }) {
+    return UpdateOperations.run(() async {
+      if (!Get.isRegistered<PerfilUsuarioRepository>()) return null;
+      try {
+        return await Get.find<PerfilUsuarioRepository>()
+            .registrarSolicitacaoTitular(
+          idUsuario: idUsuario,
+          tipo: tipo,
+          resumo: resumo,
+          nome: nome,
+          email: email,
+        );
+      } catch (_) {
+        return null;
+      }
+    });
   }
 
   void _aviso(BuildContext context, String texto) {
@@ -467,7 +489,8 @@ class _Direitos extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           'Política ${PoliticaPrivacidade.versao}. Toque na ação. O restante fica com a equipe.',
-          style: GoogleFonts.poppins(fontSize: 13, height: 1.4, color: const Color(0xFF64748B)),
+          style: GoogleFonts.poppins(
+              fontSize: 13, height: 1.4, color: const Color(0xFF64748B)),
         ),
         const SizedBox(height: 14),
         _Acao(
@@ -505,7 +528,8 @@ class _Direitos extends StatelessWidget {
         const SizedBox(height: 8),
         Text(
           'Pedidos analisados pela equipe',
-          style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700, color: primary),
+          style: GoogleFonts.poppins(
+              fontSize: 13, fontWeight: FontWeight.w700, color: primary),
         ),
         const SizedBox(height: 8),
         _Acao(
@@ -621,7 +645,8 @@ class _Acao extends StatelessWidget {
                       ],
                     ),
                   ),
-                  Icon(Icons.chevron_right_rounded, color: primary.withValues(alpha: 0.7)),
+                  Icon(Icons.chevron_right_rounded,
+                      color: primary.withValues(alpha: 0.7)),
                 ],
               ),
             ),
@@ -658,16 +683,19 @@ class _Limites extends StatelessWidget {
           collapsedIconColor: primary,
           title: Text(
             'Prazos e limites',
-            style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 14),
+            style:
+                GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 14),
           ),
           subtitle: Text(
             'O que a equipe ainda declara nesta versão.',
-            style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF64748B)),
+            style: GoogleFonts.poppins(
+                fontSize: 12, color: const Color(0xFF64748B)),
           ),
           children: [
             Text(
               'Criança e bebê entram só com o primeiro nome, sem documento, informados pelo responsável. Exclusão, anonimização e oposição geram protocolo e a conta só é apagada na execução. Logs de auditoria saem depois de 365 dias. A cópia local em SQLite ainda não é criptografada. Convite por e-mail e avaliação por push seguem a preferência da conta. A petição à ANPD continua disponível.',
-              style: GoogleFonts.poppins(fontSize: 13, height: 1.45, color: const Color(0xFF334155)),
+              style: GoogleFonts.poppins(
+                  fontSize: 13, height: 1.45, color: const Color(0xFF334155)),
             ),
           ],
         ),

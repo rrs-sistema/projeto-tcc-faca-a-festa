@@ -1,3 +1,4 @@
+import 'dart:convert';
 import '../../models/evento/analise_calculadora_ia_model.dart';
 import '../../models/evento/calculadora_festa_item_model.dart';
 import '../../models/evento/estimativa_financeira_model.dart';
@@ -23,7 +24,10 @@ typedef CalculadoraFestaAIRemoteExecutor = Future<Map<String, dynamic>>
 class CalculadoraFestaRemoteAIService implements ICalculadoraFestaAIService {
   final CalculadoraFestaAIRemoteExecutor executor;
 
-  const CalculadoraFestaRemoteAIService({
+  final _cache = <String, (DateTime, AnaliseCalculadoraIAModel)>{};
+  final _pendentes = <String, Future<AnaliseCalculadoraIAModel>>{};
+
+  CalculadoraFestaRemoteAIService({
     required this.executor,
   });
 
@@ -36,6 +40,7 @@ class CalculadoraFestaRemoteAIService implements ICalculadoraFestaAIService {
     String? idCalculo,
     String? idEvento,
     String? idUsuario,
+    Map<String, dynamic>? contextoPlanejamento,
   }) async {
     final payload = _montarPayload(
       estimativa: estimativa,
@@ -45,12 +50,39 @@ class CalculadoraFestaRemoteAIService implements ICalculadoraFestaAIService {
       idCalculo: idCalculo,
       idEvento: idEvento,
       idUsuario: idUsuario,
+      contextoPlanejamento: contextoPlanejamento,
     );
 
-    final response = await executor(payload);
-    final normalized = _normalizarResposta(response);
+    final chave = jsonEncode(_ordenar(payload));
+    final agora = DateTime.now();
+    _cache.removeWhere(
+        (_, e) => agora.difference(e.$1) > const Duration(minutes: 5));
+    final salvo = _cache[chave];
+    if (salvo != null) return salvo.$2;
+    if (_pendentes.containsKey(chave)) return _pendentes[chave]!;
+    final futuro = Future<AnaliseCalculadoraIAModel>.sync(() async {
+      final response = await executor(payload);
+      final result =
+          AnaliseCalculadoraIAModel.fromMap(_normalizarResposta(response));
+      if (_cache.length >= 8) _cache.remove(_cache.keys.first);
+      _cache[chave] = (DateTime.now(), result);
+      return result;
+    });
+    _pendentes[chave] = futuro;
+    try {
+      return await futuro;
+    } finally {
+      _pendentes.remove(chave);
+    }
+  }
 
-    return AnaliseCalculadoraIAModel.fromMap(normalized);
+  Object? _ordenar(Object? value) {
+    if (value is Map) {
+      final keys = value.keys.map((k) => k.toString()).toList()..sort();
+      return {for (final k in keys) k: _ordenar(value[k])};
+    }
+    if (value is List) return value.map(_ordenar).toList();
+    return value;
   }
 
   Map<String, dynamic> _montarPayload({
@@ -61,6 +93,7 @@ class CalculadoraFestaRemoteAIService implements ICalculadoraFestaAIService {
     String? idCalculo,
     String? idEvento,
     String? idUsuario,
+    Map<String, dynamic>? contextoPlanejamento,
   }) {
     final estimativaModel = EstimativaFinanceiraModel.fromEntity(estimativa);
     final itensCalculadosModel =
@@ -83,6 +116,7 @@ class CalculadoraFestaRemoteAIService implements ICalculadoraFestaAIService {
       if (idUsuario != null && idUsuario.trim().isNotEmpty)
         'id_usuario': idUsuario.trim(),
       'tipo_evento': tipoEvento,
+      'planejamento': contextoPlanejamento ?? {},
 
       // Mantém compatibilidade com validadores que aceitam perfil como objeto.
       'perfil_festa':

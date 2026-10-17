@@ -5,7 +5,6 @@ import 'package:app_faca_festa/domain/entities/calculadora_festa.dart';
 import 'package:app_faca_festa/domain/entities/analise_calculadora_ia.dart';
 import 'package:app_faca_festa/domain/entities/perfil_festa.dart';
 
-
 extension BaseCalculoFestaModelExtension on BaseCalculoFesta {
   static BaseCalculoFesta fromString(String? value) {
     final normalized = value?.trim().toLowerCase() ?? '';
@@ -66,6 +65,7 @@ class CalculadoraFestaModel extends CalculadoraFesta {
     super.convertidoEmOrcamento = false,
     super.dataConversaoOrcamento,
     super.analiseIA,
+    super.contextoPlanejamento = const {},
   });
 
   factory CalculadoraFestaModel.fromEntity(CalculadoraFesta entity) {
@@ -73,6 +73,7 @@ class CalculadoraFestaModel extends CalculadoraFesta {
 
     return CalculadoraFestaModel(
       idCalculo: entity.idCalculo,
+      contextoPlanejamento: entity.contextoPlanejamento,
       idEvento: entity.idEvento,
       tipoEvento: entity.tipoEvento,
       baseCalculo: entity.baseCalculo,
@@ -100,6 +101,7 @@ class CalculadoraFestaModel extends CalculadoraFesta {
   @override
   CalculadoraFestaModel copyWith({
     String? idCalculo,
+    Map<String, dynamic>? contextoPlanejamento,
     String? idEvento,
     String? tipoEvento,
     BaseCalculoFesta? baseCalculo,
@@ -128,6 +130,7 @@ class CalculadoraFestaModel extends CalculadoraFesta {
   }) {
     return CalculadoraFestaModel(
       idCalculo: idCalculo ?? this.idCalculo,
+      contextoPlanejamento: contextoPlanejamento ?? this.contextoPlanejamento,
       idEvento: idEvento ?? this.idEvento,
       tipoEvento: tipoEvento ?? this.tipoEvento,
       baseCalculo: baseCalculo ?? this.baseCalculo,
@@ -176,6 +179,7 @@ class CalculadoraFestaModel extends CalculadoraFesta {
 
     return {
       'id_calculo': idCalculo,
+      'contexto_planejamento': contextoPlanejamento,
       'id_evento': idEvento,
       'tipo_evento': tipoEvento,
       'base_calculo': baseCalculo.name,
@@ -201,10 +205,14 @@ class CalculadoraFestaModel extends CalculadoraFesta {
       'data_conversao_orcamento': dataConversaoOrcamento?.toIso8601String(),
       'data_calculo': dataCalculo.toIso8601String(),
       'data_atualizacao': dataAtualizacao.toIso8601String(),
-      if (analiseIAModel != null) 'analise_ia': analiseIAModel.toMap(),
-      if (analiseIAModel != null) 'fonte_analise_ia': analiseIAModel.fonte,
-      if (analiseIAModel != null)
-        'data_analise_ia': analiseIAModel.dataAnalise.toIso8601String(),
+      'analise_ia': analiseIAModel?.toMap(),
+      'fonte_analise_ia': analiseIAModel?.fonte,
+      'data_analise_ia': analiseIAModel?.dataAnalise.toIso8601String(),
+      if (analiseIAModel == null) ...{
+        'analise_ia_generativa': null,
+        'analiseIA': null,
+        'analysis': null,
+      },
     };
   }
 
@@ -237,6 +245,9 @@ class CalculadoraFestaModel extends CalculadoraFesta {
         status == StatusSimulacaoCalculadora.convertidaOrcamento;
 
     return CalculadoraFestaModel(
+      contextoPlanejamento: map['contexto_planejamento'] is Map
+          ? Map<String, dynamic>.from(map['contexto_planejamento'] as Map)
+          : const {},
       idCalculo: map['id_calculo']?.toString() ?? map['id']?.toString() ?? '',
       idEvento: map['id_evento']?.toString() ?? '',
       tipoEvento: map['tipo_evento']?.toString() ?? 'Evento',

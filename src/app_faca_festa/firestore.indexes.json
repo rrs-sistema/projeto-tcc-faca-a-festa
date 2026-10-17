@@ -4,90 +4,190 @@
       "collectionGroup": "tarefa",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "id_evento", "order": "ASCENDING" },
-        { "fieldPath": "id_responsavel", "order": "ASCENDING" }
+        {
+          "fieldPath": "id_evento",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "id_responsavel",
+          "order": "ASCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "fornecedores",
       "queryScope": "COLLECTION_GROUP",
       "fields": [
-        { "fieldPath": "id_fornecedor", "order": "ASCENDING" },
-        { "fieldPath": "status", "order": "ASCENDING" }
+        {
+          "fieldPath": "id_fornecedor",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "fornecedor_servico",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "id_fornecedor", "order": "ASCENDING" },
-        { "fieldPath": "id_produto_servico", "order": "ASCENDING" }
+        {
+          "fieldPath": "id_fornecedor",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "id_produto_servico",
+          "order": "ASCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "orcamento",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "id_evento", "order": "ASCENDING" },
-        { "fieldPath": "id_fornecedor", "order": "ASCENDING" }
+        {
+          "fieldPath": "id_evento",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "id_fornecedor",
+          "order": "ASCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "avaliacao_fornecedor",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "id_evento", "order": "ASCENDING" },
-        { "fieldPath": "id_fornecedor", "order": "ASCENDING" },
-        { "fieldPath": "id_usuario", "order": "ASCENDING" }
+        {
+          "fieldPath": "id_evento",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "id_fornecedor",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "id_usuario",
+          "order": "ASCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "auditoria_eventos",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "id_fornecedor", "order": "ASCENDING" },
-        { "fieldPath": "visivel_fornecedor", "order": "ASCENDING" },
-        { "fieldPath": "criado_em", "order": "DESCENDING" }
+        {
+          "fieldPath": "id_fornecedor",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "visivel_fornecedor",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "criado_em",
+          "order": "DESCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "auditoria_eventos",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "area", "order": "ASCENDING" },
-        { "fieldPath": "criado_em", "order": "DESCENDING" }
+        {
+          "fieldPath": "area",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "criado_em",
+          "order": "DESCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "auditoria_eventos",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "acao", "order": "ASCENDING" },
-        { "fieldPath": "criado_em", "order": "DESCENDING" }
+        {
+          "fieldPath": "acao",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "criado_em",
+          "order": "DESCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "auditoria_eventos",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "nivel", "order": "ASCENDING" },
-        { "fieldPath": "criado_em", "order": "DESCENDING" }
+        {
+          "fieldPath": "nivel",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "criado_em",
+          "order": "DESCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "auditoria_eventos",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "origem", "order": "ASCENDING" },
-        { "fieldPath": "criado_em", "order": "DESCENDING" }
+        {
+          "fieldPath": "origem",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "criado_em",
+          "order": "DESCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "auditoria_eventos",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "ator_uid", "order": "ASCENDING" },
-        { "fieldPath": "criado_em", "order": "DESCENDING" }
+        {
+          "fieldPath": "ator_uid",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "criado_em",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "calculadora_festa",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "id_usuario",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "consumo_registrado_em",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "calculadora_festa",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "id_usuario",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "data_atualizacao",
+          "order": "DESCENDING"
+        }
       ]
     }
   ],

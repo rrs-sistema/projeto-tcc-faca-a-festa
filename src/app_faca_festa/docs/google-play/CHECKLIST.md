@@ -1,7 +1,7 @@
 # Google Play — Faça a Festa
 
 Pacote Android: `com.rrs.system.technology.facafesta`  
-Versão atual: `1.0.0` (versionCode `2`)
+Versão atual: `1.0.4` (versionCode `6`)
 
 ## Antes de enviar o AAB
 
@@ -21,9 +21,9 @@ Digitais da **chave de upload** (cadastrar no Firebase Console → app Android):
 
 - SHA-1: `C5:58:11:F8:15:23:D4:A9:0D:B7:CC:5F:AA:F1:30:DD:4B:95:9A:2E`
 - SHA-256: `D8:49:5B:13:2A:F5:3E:CD:22:CB:F6:8C:37:BB:DD:8C:64:3D:CE:72:D1:F5:3F:41:0B:12:B2:F4:61:A7:B7:95`
-2. Publique a política pública (obrigatória na ficha):
-   - `firebase deploy --only hosting` depois do `flutter build web`
-   - URL: https://faca-a-festa.web.app/privacidade.html
+2. Política pública (obrigatória na ficha), no site da RRS:
+   - URL: https://rrs-sistema.github.io/site-rrs-system-tecnology/politica-faca-a-festa.html
+   - O texto fica em `D:\repository\site\site-rrs-system-tecnology`. Publique esse site para a URL acima refletir a alteração.
 3. No Firebase Console → Projeto **faca-a-festa** → App Android → adicionar as digitais SHA-1 e SHA-256 da **chave de upload** (impressas após o build) e, depois do primeiro envio, também as da **chave de assinatura da Play**.
 4. Sem essas digitais, o botão **Entrar com Google** falha na versão da loja.
 
@@ -48,8 +48,23 @@ Faça a Festa reúne o planejamento do evento em um único lugar: organizadores 
 O aplicativo pede localização só em primeiro plano (fornecedores próximos) e acesso aos contatos apenas se você quiser importar convidados. Não usamos anúncios nem rastreamos localização em segundo plano.
 
 **Categoria sugerida:** Eventos / Estilo de vida  
-**E-mail de contato:** o mesmo da conta de desenvolvedor da Play  
-**Política de privacidade:** https://faca-a-festa.web.app/privacidade.html
+**E-mail de contato:** rrs.sistema@gmail.com  
+**Política de privacidade:** https://rrs-sistema.github.io/site-rrs-system-tecnology/politica-faca-a-festa.html  
+**URL de exclusão da conta:** https://rrs-sistema.github.io/site-rrs-system-tecnology/exclusao-de-dados.html#faca-a-festa
+
+## Declarações que ainda estão abertas no Play Console
+
+A política de privacidade já está concluída. Nas demais, use estas respostas:
+
+1. **Detalhes do login.** O app exige conta. Cadastro de organizador é imediato, sem aprovação. Instruções: na tela inicial, Cadastre-se → Organizador → nome, e-mail, senha e aceite da política. Com essa conta dá para criar evento, convidados, orçamento e cotação. Fornecedor é um segundo cadastro, com categorias de serviço. Crie uma conta de avaliador e cole usuário e senha no formulário.
+2. **Anúncios.** O app não contém anúncios.
+3. **Classificação de conteúdo.** Sem violência, sexo, linguagem imprópria ou compras digitais. Há menção a bebidas alcoólicas no planejamento (cardápio e calculadora), sem ser o foco. Usuários trocam informações (convite, cotação e chat). A localização do aparelho não é compartilhada ao vivo com outras pessoas.
+4. **Público-alvo.** Somente 18 anos ou mais. O app não é dirigido a crianças. Nome de criança ou bebê na lista de convidados é informado pelo adulto responsável.
+5. **Segurança dos dados.** Coleta nome, e-mail, fotos enviadas, endereço, dados do evento, token de notificação, localização em primeiro plano e contatos (opcional). Finalidade: conta e funcionamento. Compartilha com Firebase/Google e com outros usuários só no fluxo do evento. Não vende dados e não usa para publicidade. Criptografado em trânsito. Exclusão: URL acima. Conta pode ser excluída.
+6. **Apps governamentais.** Não.
+7. **Recursos financeiros.** Não. O orçamento da festa é anotação do usuário; o app não processa pagamento, crédito, cripto nem conta bancária.
+8. **Saúde.** Não.
+9. **Categoria e contato.** Eventos ou Estilo de vida. E-mail: rrs.sistema@gmail.com.
 
 ## Segurança de dados (Play Console)
 

@@ -223,8 +223,7 @@ class _EditarItemCardapioBottomSheetState
     setState(() => _salvando = true);
 
     try {
-      final atualizado = CardapioItem(
-        idItem: widget.item.idItem,
+      final atualizado = widget.item.copyWith(
         nome: _nomeCtrl.text.trim(),
         tipo: _tipo,
         confirmado: _confirmado,

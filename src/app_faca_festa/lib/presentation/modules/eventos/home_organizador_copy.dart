@@ -27,10 +27,18 @@ abstract final class HomeOrganizadorCopy {
   static const gastoUsado = 'Gasto';
   static const gastoPlanejado = 'Planejado';
 
-  static const atalhoCotacoes = 'Pedidos de preço';
+  static const atalhoCotacoes = 'Cotações';
   static const atalhoCalculadora = 'Calculadora';
   static const atalhoPresentes = 'Presentes';
   static const atalhoFornecedores = 'Fornecedores';
+
+  static const seguirTitulo = 'Por onde seguir';
+  static const seguirTexto = 'Escolha o próximo passo da festa.';
+  static const atalhoCotacoesDica = 'Peça orçamento aos fornecedores';
+  static const atalhoCalculadoraDica = 'Estime quantidades e custos';
+  static const atalhoPresentesDica = 'Monte a lista da festa';
+  static const atalhoFornecedoresDica = 'Veja quem atende perto';
+  static const resumoTexto = 'Abra convidados, orçamento ou tarefas.';
 
   static const proximasTarefas = 'Próximas tarefas';
   static const verTodasTarefas = 'Ver todas';
@@ -49,7 +57,8 @@ abstract final class HomeOrganizadorCopy {
   static const nenhumFornecedorAcao = 'Buscar fornecedores';
   static const fornecedorAbrir = 'Ver detalhes';
 
-  static String tarefasFaixaTitulo({required int total, required int pendentes}) {
+  static String tarefasFaixaTitulo(
+      {required int total, required int pendentes}) {
     if (total <= 0) return nenhumaTarefa;
     if (pendentes <= 0) return tarefasEmDia;
     return proximasTarefas;
@@ -62,7 +71,8 @@ abstract final class HomeOrganizadorCopy {
 
   static PrazoTarefaHome prazoTarefa(DateTime? data, DateTime agora) {
     if (data == null) {
-      return const PrazoTarefaHome(rotulo: semPrazo, atrasada: false, hoje: false);
+      return const PrazoTarefaHome(
+          rotulo: semPrazo, atrasada: false, hoje: false);
     }
     final diferenca = _soDia(data).difference(_soDia(agora)).inDays;
     if (diferenca < 0) {
@@ -76,7 +86,8 @@ abstract final class HomeOrganizadorCopy {
       return const PrazoTarefaHome(rotulo: 'Hoje', atrasada: false, hoje: true);
     }
     if (diferenca == 1) {
-      return const PrazoTarefaHome(rotulo: 'Amanhã', atrasada: false, hoje: false);
+      return const PrazoTarefaHome(
+          rotulo: 'Amanhã', atrasada: false, hoje: false);
     }
     if (diferenca <= 7) {
       return PrazoTarefaHome(
@@ -133,7 +144,8 @@ abstract final class HomeOrganizadorCopy {
     return '${km.round()} km';
   }
 
-  static DateTime _soDia(DateTime data) => DateTime(data.year, data.month, data.day);
+  static DateTime _soDia(DateTime data) =>
+      DateTime(data.year, data.month, data.day);
 
   static String _ddMm(DateTime data) {
     final dia = data.day.toString().padLeft(2, '0');
@@ -154,8 +166,25 @@ abstract final class HomeOrganizadorCopy {
     return '$confirmados de $total';
   }
 
+  static String convidadosDetalhe(int confirmados, int total) {
+    if (total <= 0) return 'Ninguém na lista ainda';
+    if (confirmados <= 0) return 'Nenhum dos $total confirmou';
+    return '$confirmados de $total confirmaram';
+  }
+
+  static String orcamentoDetalhe(double progresso) {
+    return '${orcamentoPercentual(progresso)} do planejado';
+  }
+
+  static String tarefasDetalhe(int feitas, int total) {
+    if (total <= 0) return 'Nada anotado ainda';
+    if (feitas <= 0) return total == 1 ? '1 para fazer' : '$total para fazer';
+    return '$feitas de $total feitas';
+  }
+
   static String orcamentoPercentual(double progresso) {
-    final pct = (progresso * 100).clamp(0, 999);
+    final pct =
+        progresso.isFinite ? (progresso * 100).clamp(0, double.infinity) : 0;
     return '${pct.toStringAsFixed(0)}%';
   }
 

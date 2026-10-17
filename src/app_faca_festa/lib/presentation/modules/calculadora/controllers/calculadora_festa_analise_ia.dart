@@ -1,14 +1,39 @@
 part of 'calculadora_festa_controller.dart';
 
 extension CalculadoraFestaAnaliseIa on CalculadoraFestaController {
+  bool get _historicoMotorAntigo =>
+      usandoContextoHistorico.value &&
+      ((calculoAtual.value?.contextoPlanejamento['versao_motor'] as num?)
+                  ?.toInt() ??
+              0) <
+          6;
+
+  static const _avisoHistoricoAntigo =
+      'Esta simulação usa uma versão anterior do cálculo. Atualize com os dados atuais do evento antes de solicitar a análise.';
+
   void _agendarAnaliseIA() {
     _versaoAnaliseIA.value++;
+    analiseIA.value = null;
+    erroAnaliseIA.value = '';
+    analisandoIA.value = false;
   }
 
-  Future<void> _executarAnaliseIA({bool force = false}) async {
+  Future<void> tentarAnaliseIA() async => _executarAnaliseIA();
+
+  Future<void> _executarAnaliseIA() async {
+    if (_historicoMotorAntigo) {
+      analiseIA.value = null;
+      erroAnaliseIA.value = _avisoHistoricoAntigo;
+      return;
+    }
+    if (loading.value ||
+        (usandoContextoHistorico.value && analiseIA.value != null)) {
+      return;
+    }
     final estimativa = estimativaAtual.value;
     final calculoReferencia = calculoAtual.value;
     final versaoSolicitada = _versaoAnaliseIA.value;
+    final requisicao = ++_ultimaRequisicaoIA;
 
     if (estimativa == null ||
         calculoReferencia == null ||
@@ -19,8 +44,11 @@ extension CalculadoraFestaAnaliseIa on CalculadoraFestaController {
 
     try {
       analisandoIA.value = true;
+      erroAnaliseIA.value = '';
+      analiseIA.value = null;
 
       final analise = await _aiService.analisarEstimativa(
+        contextoPlanejamento: contextoPlanejamento,
         estimativa: estimativa,
         itensCalculados: itensCalculados.toList(),
         tipoEvento: tipoEventoAtual.value,
@@ -30,7 +58,8 @@ extension CalculadoraFestaAnaliseIa on CalculadoraFestaController {
         idUsuario: calculoReferencia.idUsuario ?? _uidAtual,
       );
 
-      if (!force && versaoSolicitada != _versaoAnaliseIA.value) {
+      if (versaoSolicitada != _versaoAnaliseIA.value ||
+          requisicao != _ultimaRequisicaoIA) {
         return;
       }
 
@@ -50,9 +79,17 @@ extension CalculadoraFestaAnaliseIa on CalculadoraFestaController {
         dataAtualizacao: DateTime.now(),
       );
     } catch (e) {
+      if (versaoSolicitada == _versaoAnaliseIA.value &&
+          requisicao == _ultimaRequisicaoIA) {
+        erroAnaliseIA.value =
+            'A análise está indisponível. As quantidades calculadas continuam disponíveis.';
+      }
       debugPrint('Erro ao executar análise inteligente da calculadora: $e');
     } finally {
-      analisandoIA.value = false;
+      if (versaoSolicitada == _versaoAnaliseIA.value &&
+          requisicao == _ultimaRequisicaoIA) {
+        analisandoIA.value = false;
+      }
     }
   }
 }

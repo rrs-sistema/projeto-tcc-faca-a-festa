@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/core/services/update_operations.dart';
 import 'package:app_faca_festa/domain/entities/categoria_servico.dart';
 import 'package:app_faca_festa/domain/entities/fornecedor_categoria.dart';
 import 'package:app_faca_festa/domain/entities/territorio.dart';
@@ -53,18 +54,24 @@ class FornecedorLocalizacaoRepositoryImpl
   Future<List<FornecedorServicoDetalhadoDto>> listarTodosServicosDoFornecedor(
     String idFornecedor,
   ) {
-    return remote.listarTodosServicosDoFornecedor(idFornecedor);
+    return UpdateOperations.run(() async {
+      return remote.listarTodosServicosDoFornecedor(idFornecedor);
+    });
   }
 
   @override
   Future<List<FornecedorServicoDetalhadoDto>> listarServicosPorCategoria(
     String idCategoria,
   ) {
-    return remote.listarServicosPorCategoria(idCategoria);
+    return UpdateOperations.run(() async {
+      return remote.listarServicosPorCategoria(idCategoria);
+    });
   }
 
   @override
   Future<List<FornecedorServicoDetalhadoDto>> listarFornecedoresSemCategoria() {
-    return remote.listarFornecedoresSemCategoria();
+    return UpdateOperations.run(() async {
+      return remote.listarFornecedoresSemCategoria();
+    });
   }
 }

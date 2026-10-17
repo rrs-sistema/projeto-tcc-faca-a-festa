@@ -1,5 +1,4 @@
 import 'package:get/get.dart';
-import 'package:flutter_easyloading/flutter_easyloading.dart';
 
 import 'package:app_faca_festa/app/routes/app_route_args.dart';
 import 'package:app_faca_festa/core/utils/form_validators.dart';
@@ -9,6 +8,7 @@ import 'package:app_faca_festa/domain/repositories/autenticacao_repository.dart'
 import 'package:app_faca_festa/domain/repositories/perfil_usuario_repository.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_auditoria.dart';
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
+import 'package:app_faca_festa/presentation/modules/auth/widgets/auth_erro_login_sheet.dart';
 
 class LoginController extends GetxController {
   LoginController({
@@ -48,12 +48,12 @@ class LoginController extends GetxController {
   Future<void> login() async {
     final erroEmail = FormValidators.email(email.value);
     if (erroEmail != null) {
-      EasyLoading.showError(erroEmail);
+      _mostrarErro(mensagem: erroEmail, titulo: 'Confira o e-mail');
       return;
     }
     final erroSenha = FormValidators.senhaLogin(senha.value);
     if (erroSenha != null) {
-      EasyLoading.showError(erroSenha);
+      _mostrarErro(mensagem: erroSenha, titulo: 'Confira a senha');
       return;
     }
 
@@ -77,7 +77,7 @@ class LoginController extends GetxController {
       Get.offAllNamed('/splash');
     } on AutenticacaoException catch (e) {
       await _registrarFalhaLogin(codigo: e.codigo, metodo: 'senha');
-      EasyLoading.showError(_traduzErro(e.codigo));
+      _mostrarErro(codigo: e.codigo);
     } finally {
       carregando.value = false;
     }
@@ -106,7 +106,7 @@ class LoginController extends GetxController {
         return;
       }
       await _registrarFalhaLogin(codigo: e.codigo, metodo: 'google');
-      EasyLoading.showError(_traduzErro(e.codigo));
+      _mostrarErro(codigo: e.codigo);
     } finally {
       carregando.value = false;
     }
@@ -222,32 +222,11 @@ class LoginController extends GetxController {
     return _gerenciarAuditoria ?? _gerenciarAuditoriaResolver?.call();
   }
 
-  String _traduzErro(String code) {
-    switch (code) {
-      case 'user-not-found':
-        return 'Usuário não encontrado';
-      case 'wrong-password':
-        return 'Senha incorreta';
-      case 'invalid-email':
-        return 'Email inválido';
-      case 'account-exists-with-different-credential':
-        return 'Este e-mail já está cadastrado com outro método de login';
-      case 'canceled':
-      case 'web-context-canceled':
-      case 'ERROR_WEB_CONTEXT_CANCELED':
-      case 'popup-closed-by-user':
-        return 'Login com Google cancelado';
-      case 'interrupted':
-        return 'O Google interrompeu o login. Tente novamente.';
-      case 'clientConfigurationError':
-      case 'providerConfigurationError':
-        return 'Google não configurado corretamente no Firebase';
-      case 'google-token-not-found':
-      case 'google-sign-in-unsupported':
-      case 'google-unexpected-error':
-        return 'Login com Google indisponível neste dispositivo';
-      default:
-        return 'Erro ao fazer login. Tente novamente.';
-    }
+  void _mostrarErro({String? codigo, String? titulo, String? mensagem}) {
+    mostrarErroLoginSheet(
+      codigo: codigo,
+      titulo: titulo,
+      mensagem: mensagem,
+    );
   }
 }

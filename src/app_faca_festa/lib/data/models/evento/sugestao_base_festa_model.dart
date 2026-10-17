@@ -3,7 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:app_faca_festa/domain/entities/gatilhos_sugestao_base_festa.dart';
 import 'package:app_faca_festa/domain/entities/sugestao_base_festa.dart';
 
-
 enum ModuloSugestaoIA {
   calculadora('calculadora'),
   orcamento('orcamento'),
@@ -507,17 +506,22 @@ class SugestaoBaseFestaModel extends SugestaoBaseFesta {
       riscoMinimo: _asNullableInt(map['risco_minimo']),
       criancasMinimo: _asNullableInt(map['criancas_minimo']),
       adultosMinimo: _asNullableInt(map['adultos_minimo']),
-      quantidadeMinimaConvidados: _asNullableInt(map['quantidade_minima_convidados']),
-      percentualCriancasMinimo: _asNullableInt(map['percentual_criancas_minimo']),
-      diferencaOrcamentoMaxima: _asNullableInt(map['diferenca_orcamento_maxima']),
-      fornecedoresPendentesMinimo: _asNullableInt(map['fornecedores_pendentes_minimo']),
+      quantidadeMinimaConvidados:
+          _asNullableInt(map['quantidade_minima_convidados']),
+      percentualCriancasMinimo:
+          _asNullableInt(map['percentual_criancas_minimo']),
+      diferencaOrcamentoMaxima:
+          _asNullableInt(map['diferenca_orcamento_maxima']),
+      fornecedoresPendentesMinimo:
+          _asNullableInt(map['fornecedores_pendentes_minimo']),
       tarefasPendentesMinimo: _asNullableInt(map['tarefas_pendentes_minimo']),
       convidadosEquivalentesMinimo:
           _asNullableInt(map['convidados_equivalentes_minimo']),
     );
   }
 
-  static Map<String, dynamic> _gatilhosToMap(GatilhosSugestaoBaseFesta gatilhos) {
+  static Map<String, dynamic> _gatilhosToMap(
+      GatilhosSugestaoBaseFesta gatilhos) {
     return <String, dynamic>{
       if (gatilhos.diasAntesEvento != null)
         'dias_antes_evento': gatilhos.diasAntesEvento,

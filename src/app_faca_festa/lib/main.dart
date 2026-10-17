@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 
 import 'app/faca_festa_app.dart';
+import 'app/bootstrap/desktop_update_bootstrap.dart';
 import 'app/bootstrap/app_bootstrap.dart';
 import 'app/bootstrap/app_check_bootstrap.dart';
 import 'app/bootstrap/firebase_services_bootstrap.dart';
@@ -44,8 +45,7 @@ Future<void> main() async {
   }
 
   try {
-    await GiftOfflineBootstrap.initialize()
-        .timeout(const Duration(seconds: 5));
+    await GiftOfflineBootstrap.initialize().timeout(const Duration(seconds: 5));
   } catch (e) {
     debugPrint('⚠️ Falha ao iniciar banco local: $e');
   }
@@ -64,4 +64,5 @@ Future<void> main() async {
   AppBootstrap.registerControllers();
 
   runApp(const FacaFestaApp());
+  DesktopUpdateBootstrap.initialize();
 }

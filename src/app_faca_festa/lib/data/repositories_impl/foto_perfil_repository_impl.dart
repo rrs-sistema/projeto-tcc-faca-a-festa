@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/core/services/update_operations.dart';
 import 'package:app_faca_festa/domain/repositories/foto_perfil_repository.dart';
 import '../datasources/remote/foto_perfil_remote_datasource.dart';
 
@@ -11,10 +12,13 @@ class FotoPerfilRepositoryImpl implements FotoPerfilRepository {
     required String idUsuario,
     required String caminhoArquivo,
     required String nomeArquivo,
-  }) =>
-      remote.enviar(
+  }) {
+    return UpdateOperations.run(() async {
+      return remote.enviar(
         idUsuario: idUsuario,
         caminhoArquivo: caminhoArquivo,
         nomeArquivo: nomeArquivo,
       );
+    });
+  }
 }

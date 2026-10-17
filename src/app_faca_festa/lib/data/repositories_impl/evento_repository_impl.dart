@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/core/services/update_operations.dart';
 import 'package:app_faca_festa/domain/repositories/evento_repository.dart';
 import 'package:app_faca_festa/domain/entities/evento.dart';
 import 'package:app_faca_festa/domain/entities/tipo_evento.dart';
@@ -11,12 +12,16 @@ class EventoRepositoryImpl implements EventoRepository {
 
   @override
   Future<Evento?> buscarPorId(String idEvento) {
-    return remote.buscarPorId(idEvento);
+    return UpdateOperations.run(() async {
+      return remote.buscarPorId(idEvento);
+    });
   }
 
   @override
   Future<Evento?> buscarUltimoPorUsuario(String idUsuario) {
-    return remote.buscarUltimoPorUsuario(idUsuario);
+    return UpdateOperations.run(() async {
+      return remote.buscarUltimoPorUsuario(idUsuario);
+    });
   }
 
   @override
@@ -31,19 +36,25 @@ class EventoRepositoryImpl implements EventoRepository {
 
   @override
   Future<TipoEvento?> buscarTipoPorId(String idTipoEvento) {
-    return remote.buscarTipoPorId(idTipoEvento);
+    return UpdateOperations.run(() async {
+      return remote.buscarTipoPorId(idTipoEvento);
+    });
   }
 
   @override
   Future<List<TipoEvento>> listarTiposAtivos() {
-    return remote.listarTiposAtivos();
+    return UpdateOperations.run(() async {
+      return remote.listarTiposAtivos();
+    });
   }
 
   @override
   Future<void> salvar(Evento evento) {
-    final model =
-        evento is EventoModel ? evento : EventoModel.fromEntity(evento);
-    return remote.salvar(model);
+    return UpdateOperations.run(() async {
+      final model =
+          evento is EventoModel ? evento : EventoModel.fromEntity(evento);
+      return remote.salvar(model);
+    });
   }
 
   @override
@@ -51,12 +62,16 @@ class EventoRepositoryImpl implements EventoRepository {
     required String idEvento,
     required List<int> bytes,
   }) {
-    return remote.enviarCapa(idEvento: idEvento, bytes: bytes);
+    return UpdateOperations.run(() async {
+      return remote.enviarCapa(idEvento: idEvento, bytes: bytes);
+    });
   }
 
   @override
   Future<void> removerArquivoCapa(String idEvento) {
-    return remote.removerArquivoCapa(idEvento);
+    return UpdateOperations.run(() async {
+      return remote.removerArquivoCapa(idEvento);
+    });
   }
 
   @override
@@ -64,10 +79,12 @@ class EventoRepositoryImpl implements EventoRepository {
     required String idEvento,
     String? imagemCapaUrl,
   }) {
-    return remote.atualizarImagemCapa(
-      idEvento: idEvento,
-      imagemCapaUrl: imagemCapaUrl,
-    );
+    return UpdateOperations.run(() async {
+      return remote.atualizarImagemCapa(
+        idEvento: idEvento,
+        imagemCapaUrl: imagemCapaUrl,
+      );
+    });
   }
 
   @override
@@ -75,15 +92,19 @@ class EventoRepositoryImpl implements EventoRepository {
     required String idEvento,
     String? rotuloBanner,
   }) {
-    return remote.atualizarRotuloBanner(
-      idEvento: idEvento,
-      rotuloBanner: rotuloBanner,
-    );
+    return UpdateOperations.run(() async {
+      return remote.atualizarRotuloBanner(
+        idEvento: idEvento,
+        rotuloBanner: rotuloBanner,
+      );
+    });
   }
 
   @override
   Future<void> excluir(String idEvento) {
-    return remote.excluir(idEvento);
+    return UpdateOperations.run(() async {
+      return remote.excluir(idEvento);
+    });
   }
 
   @override

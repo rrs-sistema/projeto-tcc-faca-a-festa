@@ -14,7 +14,7 @@ Future<void> _showAddGastoDialog(
   final dinheiroPago = FormMasks.dinheiro();
   final nomeCtrl = TextEditingController();
   final custoCtrl = TextEditingController(
-    text: custoEstimado > 0 ? dinheiroCusto.formatDouble(custoEstimado) : '',
+    text: custoEstimado > 0 ? NumericInput.dinheiro(custoEstimado) : '',
   );
   final pagoCtrl = TextEditingController();
   final formKey = GlobalKey<FormState>();
@@ -442,6 +442,7 @@ Future<void> _showAddGastoDialog(
                               ),
                               style: TextButton.styleFrom(
                                 foregroundColor: textMuted,
+                                iconColor: textMuted,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(14),
                                 ),

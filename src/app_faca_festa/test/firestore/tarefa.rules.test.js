@@ -68,6 +68,7 @@ async function seed(env) {
       id_evento: "evento-org-1",
       id_usuario: "guest-1",
       nome: "Silvio",
+      convite_token: "cf89bbba-55fc-4db8",
     });
     await setDoc(doc(db, "convidado/convidado-outro"), {
       id_convidado: "convidado-outro",
@@ -200,6 +201,58 @@ async function run() {
       }),
     );
     await assertSucceeds(getDoc(doc(adminDb, "tarefa/tarefa-org")));
+
+    // Assignment must target the owner or a registered guest of this event.
+    await env.withSecurityRulesDisabled(async (context) => {
+      const db = context.firestore();
+      await setDoc(doc(db, "convidado/unlinked"), {
+        id_evento: "evento-org-1", email_normalizado: "pending@faca.test",
+        convite_status: "vinculado",
+      });
+      await setDoc(doc(db, "convidado/foreign"), {
+        id_evento: "another-event", id_usuario: "guest-2",
+      });
+    });
+    for (const responsible of ["missing", "foreign", "", null]) {
+      await assertFails(setDoc(doc(organizerDb, "tarefa/invalid"), {
+        id_evento: "evento-org-1", id_responsavel: responsible,
+        titulo: "Invalid assignment", status: "a_fazer",
+      }));
+      await assertFails(updateDoc(doc(organizerDb, "tarefa/tarefa-org"), {
+        id_responsavel: responsible,
+      }));
+    }
+    await assertSucceeds(setDoc(doc(organizerDb, "tarefa/no-account"), {
+      id_evento: "evento-org-1", id_responsavel: "unlinked",
+      titulo: "Guest without account", status: "a_fazer",
+    }));
+    await assertSucceeds(updateDoc(doc(organizerDb, "tarefa/no-account"), {
+      status: "em_andamento",
+    }));
+    await assertFails(updateDoc(doc(visitorDb, "tarefa/no-account"), {
+      status: "concluida",
+    }));
+    await assertSucceeds(setDoc(doc(organizerDb, "tarefa/owner"), {
+      id_evento: "evento-org-1", id_responsavel: "org-1",
+      titulo: "Owner task", status: "a_fazer",
+    }));
+    await assertSucceeds(updateDoc(doc(organizerDb, "tarefa/tarefa-org"), {
+      id_responsavel: "convidado-outro",
+    }));
+    await assertFails(updateDoc(doc(guestDb, "tarefa/tarefa-silvio"), {
+      id_responsavel: "convidado-outro",
+    }));
+    await assertFails(updateDoc(doc(guestDb, "tarefa/tarefa-silvio"), {
+      status: "invalid",
+    }));
+    await assertFails(updateDoc(doc(organizerDb, "tarefa/tarefa-org"), {
+      id_evento: "another-event",
+    }));
+    await assertFails(getDoc(doc(authedDb(env, "unrelated"), "tarefa/tarefa-silvio")));
+    await assertFails(getDoc(doc(authedDb(env, "forged", {
+      papel: "C", idEvento: "evento-org-1", idConvidado: "convidado-silvio",
+      conviteToken: "wrong-token-at-least-16",
+    }), "tarefa/tarefa-silvio")));
 
     console.log("Tarefa Firestore rules: OK");
   } finally {

@@ -44,6 +44,16 @@ class CotacaoController extends GetxController {
 
   GerenciarCotacoes get gerenciarCotacoes => _gerenciarCotacoes;
 
+  /// A consulta da conta inclui vários eventos; telas de uma festa devem
+  /// usar esta seleção para a lista e para todos os seus indicadores.
+  List<Cotacao> cotacoesDoEvento(String? idEvento) {
+    final id = idEvento?.trim() ?? '';
+    if (id.isEmpty) return const [];
+    return cotacoes.where((cotacao) => cotacao.idEvento == id).toList();
+  }
+
+  int totalDoEvento(String? idEvento) => cotacoesDoEvento(idEvento).length;
+
   void _atualizarContagens() {
     contratadosCount.value =
         cotacoes.where((o) => o.status == StatusCotacao.concluida).length;
@@ -200,6 +210,7 @@ class CotacaoController extends GetxController {
     _cotacaoStream = null;
     _cancelarSubStreams();
     cotacoes.clear();
+    _atualizarContagens();
     carregando.value = false;
   }
 

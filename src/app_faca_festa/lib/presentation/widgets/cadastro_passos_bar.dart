@@ -89,6 +89,7 @@ class CadastroPassosAcoes extends StatelessWidget {
               onPressed: carregando ? null : onVoltar,
               style: OutlinedButton.styleFrom(
                 foregroundColor: cor,
+                iconColor: cor,
                 side: BorderSide(color: cor.withValues(alpha: 0.45)),
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 shape: RoundedRectangleBorder(
@@ -112,6 +113,7 @@ class CadastroPassosAcoes extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: cor,
                 foregroundColor: Colors.white,
+                iconColor: Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),

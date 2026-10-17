@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/core/services/update_operations.dart';
 import 'package:app_faca_festa/domain/repositories/orcamento_gasto_repository.dart';
 import 'package:app_faca_festa/domain/entities/orcamento_gasto.dart';
 import 'package:app_faca_festa/domain/entities/orcamento_validacao_resultado.dart';
@@ -20,12 +21,14 @@ class OrcamentoGastoRepositoryImpl implements OrcamentoGastoRepository {
     required double custo,
     required double pago,
   }) {
-    return remote.adicionarGasto(
-      idOrcamento: idOrcamento,
-      nome: nome,
-      custo: custo,
-      pago: pago,
-    );
+    return UpdateOperations.run(() async {
+      return remote.adicionarGasto(
+        idOrcamento: idOrcamento,
+        nome: nome,
+        custo: custo,
+        pago: pago,
+      );
+    });
   }
 
   @override
@@ -34,11 +37,13 @@ class OrcamentoGastoRepositoryImpl implements OrcamentoGastoRepository {
     required String idGasto,
     required double valorTotal,
   }) {
-    return remote.marcarComoPago(
-      idOrcamento: idOrcamento,
-      idGasto: idGasto,
-      valorTotal: valorTotal,
-    );
+    return UpdateOperations.run(() async {
+      return remote.marcarComoPago(
+        idOrcamento: idOrcamento,
+        idGasto: idGasto,
+        valorTotal: valorTotal,
+      );
+    });
   }
 
   @override
@@ -46,9 +51,11 @@ class OrcamentoGastoRepositoryImpl implements OrcamentoGastoRepository {
     required String idOrcamento,
     required String idGasto,
   }) {
-    return remote.removerGasto(
-      idOrcamento: idOrcamento,
-      idGasto: idGasto,
-    );
+    return UpdateOperations.run(() async {
+      return remote.removerGasto(
+        idOrcamento: idOrcamento,
+        idGasto: idGasto,
+      );
+    });
   }
 }

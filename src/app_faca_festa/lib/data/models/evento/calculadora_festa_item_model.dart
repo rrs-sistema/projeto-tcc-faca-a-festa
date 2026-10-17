@@ -1,6 +1,5 @@
 import 'package:app_faca_festa/domain/entities/calculadora_festa_item.dart';
 
-
 class CalculadoraFestaItemModel extends CalculadoraFestaItem {
   const CalculadoraFestaItemModel({
     required super.idItemResultado,
@@ -11,6 +10,9 @@ class CalculadoraFestaItemModel extends CalculadoraFestaItem {
     required super.tipoItem,
     required super.publicoAlvo,
     required super.quantidade,
+    super.quantidadeNecessaria,
+    super.idCardapio = '',
+    super.idItemCardapio = '',
     required super.unidade,
     required super.regraAplicada,
     super.adicionadoAoCardapio = false,
@@ -34,6 +36,9 @@ class CalculadoraFestaItemModel extends CalculadoraFestaItem {
       tipoItem: entity.tipoItem,
       publicoAlvo: entity.publicoAlvo,
       quantidade: entity.quantidade,
+      quantidadeNecessaria: entity.quantidadeNecessaria,
+      idCardapio: entity.idCardapio,
+      idItemCardapio: entity.idItemCardapio,
       unidade: entity.unidade,
       regraAplicada: entity.regraAplicada,
       adicionadoAoCardapio: entity.adicionadoAoCardapio,
@@ -49,7 +54,9 @@ class CalculadoraFestaItemModel extends CalculadoraFestaItem {
 
   @override
   String get quantidadeFormatada {
-    final valor = quantidade.ceil();
+    final valor = quantidade == quantidade.roundToDouble()
+        ? quantidade.toInt().toString()
+        : quantidade.toStringAsFixed(2).replaceAll('.', ',');
     return '$valor $unidade';
   }
 
@@ -73,6 +80,9 @@ class CalculadoraFestaItemModel extends CalculadoraFestaItem {
     String? tipoItem,
     String? publicoAlvo,
     double? quantidade,
+    double? quantidadeNecessaria,
+    String? idCardapio,
+    String? idItemCardapio,
     String? unidade,
     String? regraAplicada,
     bool? adicionadoAoCardapio,
@@ -94,6 +104,9 @@ class CalculadoraFestaItemModel extends CalculadoraFestaItem {
       tipoItem: tipoItem ?? this.tipoItem,
       publicoAlvo: publicoAlvo ?? this.publicoAlvo,
       quantidade: quantidade ?? this.quantidade,
+      quantidadeNecessaria: quantidadeNecessaria ?? this.quantidadeNecessaria,
+      idCardapio: idCardapio ?? this.idCardapio,
+      idItemCardapio: idItemCardapio ?? this.idItemCardapio,
       unidade: unidade ?? this.unidade,
       regraAplicada: regraAplicada ?? this.regraAplicada,
       adicionadoAoCardapio: adicionadoAoCardapio ?? this.adicionadoAoCardapio,
@@ -122,6 +135,10 @@ class CalculadoraFestaItemModel extends CalculadoraFestaItem {
       'tipo_item': tipoItem,
       'publico_alvo': publicoAlvo,
       'quantidade': quantidade,
+      if (quantidadeNecessaria != null)
+        'quantidade_necessaria': quantidadeNecessaria,
+      'id_cardapio': idCardapio,
+      'id_item_cardapio': idItemCardapio,
       'unidade': unidade,
       'regra_aplicada': regraAplicada,
       'adicionado_ao_cardapio': adicionadoAoCardapio,
@@ -145,6 +162,11 @@ class CalculadoraFestaItemModel extends CalculadoraFestaItem {
       tipoItem: map['tipo_item']?.toString() ?? 'comida',
       publicoAlvo: map['publico_alvo']?.toString() ?? 'todos',
       quantidade: _asDouble(map['quantidade']),
+      quantidadeNecessaria: map['quantidade_necessaria'] is num
+          ? (map['quantidade_necessaria'] as num).toDouble()
+          : null,
+      idCardapio: map['id_cardapio']?.toString() ?? '',
+      idItemCardapio: map['id_item_cardapio']?.toString() ?? '',
       unidade: map['unidade']?.toString() ?? 'un',
       regraAplicada: map['regra_aplicada']?.toString() ?? '',
       adicionadoAoCardapio: _asBool(map['adicionado_ao_cardapio']),

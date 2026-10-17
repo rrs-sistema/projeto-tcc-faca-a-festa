@@ -676,6 +676,7 @@ class _GiftActionButton extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor: background,
           foregroundColor: foreground,
+          iconColor: foreground,
           disabledBackgroundColor: Colors.grey.shade200,
           disabledForegroundColor: Colors.grey.shade500,
           elevation: disabled ? 0 : 2,

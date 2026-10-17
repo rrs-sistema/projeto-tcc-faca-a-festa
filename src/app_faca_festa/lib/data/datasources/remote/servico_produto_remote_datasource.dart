@@ -147,114 +147,135 @@ class ServicoProdutoRemoteDatasource {
   Future<List<FornecedorServicoDetalhadoDto>> _listarServicosFornecedor(
     String idFornecedor,
   ) async {
-    final categoriaSnap = await _db
-        .collection('fornecedor_categoria')
-        .where('id_fornecedor', isEqualTo: idFornecedor)
-        .get();
+    final vinculosSnap = await _lerAtual(
+      _db
+          .collection('fornecedor_servico')
+          .where('id_fornecedor', isEqualTo: idFornecedor),
+    );
 
-    if (categoriaSnap.docs.isEmpty) {
+    if (vinculosSnap.docs.isEmpty) {
       return <FornecedorServicoDetalhadoDto>[];
     }
 
-    final mapaCategorias = <String, String>{};
-    final mapaSubcategorias = <String, String>{};
-    final mapaSubParaCat = <String, String>{};
-    final subIds = <String>{};
+    final vinculos = <Map<String, dynamic>>[];
+    final idsServico = <String>{};
+    for (final doc in vinculosSnap.docs) {
+      final data = doc.data();
+      final idServico = (data['id_produto_servico'] ?? '').toString().trim();
+      if (idServico.isEmpty || !idsServico.add(idServico)) continue;
+      vinculos.add(data);
+    }
+    if (vinculos.isEmpty) return <FornecedorServicoDetalhadoDto>[];
 
-    for (final catDoc in categoriaSnap.docs) {
-      final data = catDoc.data();
-      final idCat = data['id_categoria'] ?? '';
-      mapaCategorias[idCat] = data['nome_categoria'] ?? 'Sem nome';
-
-      final subs = (data['subcategorias'] as List?) ?? [];
-      for (final sub in subs) {
-        final idSub = sub['idSubcategoria'] ?? '';
-        final nomeSub = sub['nomeSubcategoria'] ?? '';
-
-        if (idSub.isNotEmpty) {
-          mapaSubcategorias[idSub] = nomeSub;
-          mapaSubParaCat[idSub] = idCat;
-          subIds.add(idSub);
-        }
+    final servicos = <String, Map<String, dynamic>>{};
+    for (final chunk in _dividirChunks(idsServico.toList(), 30)) {
+      final snap = await _db
+          .collection('servico_produto')
+          .where(FieldPath.documentId, whereIn: chunk)
+          .get();
+      for (final doc in snap.docs) {
+        servicos[doc.id] = doc.data();
       }
     }
 
-    if (subIds.isEmpty) {
-      return <FornecedorServicoDetalhadoDto>[];
+    final idsSub = <String>{};
+    for (final data in servicos.values) {
+      final idSub = (data['id_subcategoria'] ?? '').toString().trim();
+      if (idSub.isNotEmpty) idsSub.add(idSub);
+    }
+    for (final vinculo in vinculos) {
+      final idSub = (vinculo['id_subcategoria'] ?? '').toString().trim();
+      if (idSub.isNotEmpty) idsSub.add(idSub);
     }
 
-    final subIdsList = subIds.toList();
-    final chunks = _dividirChunks(subIdsList, 30);
+    final mapaSub = <String, Map<String, dynamic>>{};
+    for (final chunk in _dividirChunks(idsSub.toList(), 30)) {
+      final snap = await _db
+          .collection('subcategoria_servico')
+          .where(FieldPath.documentId, whereIn: chunk)
+          .get();
+      for (final doc in snap.docs) {
+        mapaSub[doc.id] = doc.data();
+      }
+    }
 
-    final vinculosSnap = await _db
-        .collection('fornecedor_servico')
-        .where('id_fornecedor', isEqualTo: idFornecedor)
-        .get();
-
-    final vinculosMap = {
-      for (final doc in vinculosSnap.docs)
-        doc.data()['id_produto_servico']: doc.data(),
-    };
+    final idsCat = <String>{
+      for (final data in mapaSub.values)
+        (data['id_categoria'] ?? data['idCategoria'] ?? '').toString().trim(),
+    }..remove('');
+    final mapaCat = <String, String>{};
+    for (final chunk in _dividirChunks(idsCat.toList(), 30)) {
+      final snap = await _db
+          .collection('categoria_servico')
+          .where(FieldPath.documentId, whereIn: chunk)
+          .get();
+      for (final doc in snap.docs) {
+        mapaCat[doc.id] = (doc.data()['nome'] ?? 'Sem nome').toString();
+      }
+    }
 
     final fotosSnap = await _db
         .collection('servico_foto')
         .where('id_fornecedor', isEqualTo: idFornecedor)
         .get();
-
-    final fotosMap = {
-      for (final doc in fotosSnap.docs)
-        doc.data()['id_produto_servico']: doc.data()['url'],
-    };
-
-    final todosServicosDocs = <QueryDocumentSnapshot<Map<String, dynamic>>>[];
-
-    for (final chunk in chunks) {
-      final snap = await _db
-          .collection('servico_produto')
-          .where('id_subcategoria', whereIn: chunk)
-          .where('ativo', isEqualTo: true)
-          .get();
-
-      todosServicosDocs.addAll(snap.docs);
+    final fotosMap = <String, String>{};
+    for (final doc in fotosSnap.docs) {
+      final idServico =
+          (doc.data()['id_produto_servico'] ?? '').toString().trim();
+      final url = doc.data()['url']?.toString();
+      if (idServico.isNotEmpty && url != null && url.isNotEmpty) {
+        fotosMap[idServico] = url;
+      }
     }
 
-    final lista = <FornecedorServicoDetalhadoDto>[];
-
-    for (final servDoc in todosServicosDocs) {
-      final data = servDoc.data();
-      final idServico = servDoc.id;
-      final idSub = (data['id_subcategoria'] ?? '').toString();
-
-      final vinculo = vinculosMap[idServico];
-      if (vinculo == null) continue;
-
-      final preco = (vinculo['preco'] ?? 0).toDouble();
-      final precoPromocao = vinculo['preco_promocao'] != null
-          ? (vinculo['preco_promocao'] as num).toDouble()
-          : null;
-
-      lista.add(
-        FornecedorServicoDetalhadoDto(
-          id: idServico,
+    return [
+      for (final vinculo in vinculos)
+        _detalheDoVinculo(
           idFornecedor: idFornecedor,
-          idProdutoServico: idServico,
-          idSubcategoria: idSub,
-          nomeServico: data['nome'] ?? 'Serviço sem nome',
-          descricaoServico: data['descricao'] ?? '',
-          tipoMedida: data['tipo_medida'] ?? 'U',
-          preco: preco,
-          precoPromocao: precoPromocao,
-          nomeSubcategoria: mapaSubcategorias[idSub] ?? 'Sem subcategoria',
-          nomeCategoria:
-              mapaCategorias[mapaSubParaCat[idSub]] ?? 'Sem categoria',
-          imagemUrl: fotosMap[idServico],
-          ativo: vinculo['ativo'] ?? true,
-          quantidade: 1,
+          vinculo: vinculo,
+          servicos: servicos,
+          mapaSub: mapaSub,
+          mapaCat: mapaCat,
+          fotosMap: fotosMap,
         ),
-      );
-    }
+    ];
+  }
 
-    return lista;
+  FornecedorServicoDetalhadoDto _detalheDoVinculo({
+    required String idFornecedor,
+    required Map<String, dynamic> vinculo,
+    required Map<String, Map<String, dynamic>> servicos,
+    required Map<String, Map<String, dynamic>> mapaSub,
+    required Map<String, String> mapaCat,
+    required Map<String, String> fotosMap,
+  }) {
+    final idServico = (vinculo['id_produto_servico'] ?? '').toString().trim();
+    final servico = servicos[idServico];
+    final idSub =
+        (servico?['id_subcategoria'] ?? vinculo['id_subcategoria'] ?? '')
+            .toString()
+            .trim();
+    final sub = mapaSub[idSub];
+    final idCat =
+        (sub?['id_categoria'] ?? sub?['idCategoria'] ?? '').toString().trim();
+    final promo = vinculo['preco_promocao'];
+
+    return FornecedorServicoDetalhadoDto(
+      id: idServico,
+      idFornecedor: idFornecedor,
+      idProdutoServico: idServico,
+      idSubcategoria: idSub,
+      nomeServico: (servico?['nome'] ?? 'Serviço sem nome').toString(),
+      descricaoServico: (servico?['descricao'] ?? '').toString(),
+      tipoMedida: (servico?['tipo_medida'] ?? 'U').toString(),
+      preco: (vinculo['preco'] as num?)?.toDouble() ?? 0,
+      precoPromocao: promo is num ? promo.toDouble() : null,
+      nomeSubcategoria: (sub?['nome'] ?? 'Sem subcategoria').toString(),
+      nomeCategoria: mapaCat[idCat] ?? 'Sem categoria',
+      imagemUrl: fotosMap[idServico],
+      ativo: vinculo['ativo'] ?? true,
+      quantidade: 1,
+    );
   }
 
   Future<void> excluirServico(String id) {
@@ -373,6 +394,17 @@ class ServicoProdutoRemoteDatasource {
 
   Future<void> excluirVinculo(String id) {
     return _db.collection('fornecedor_servico').doc(id).delete();
+  }
+
+  /// A primeira leitura do painel não pode ficar no cache vazio.
+  Future<QuerySnapshot<Map<String, dynamic>>> _lerAtual(
+    Query<Map<String, dynamic>> consulta,
+  ) async {
+    try {
+      return await consulta.get(const GetOptions(source: Source.server));
+    } catch (_) {
+      return consulta.get();
+    }
   }
 
   List<List<String>> _dividirChunks(List<String> lista, int tamanho) {

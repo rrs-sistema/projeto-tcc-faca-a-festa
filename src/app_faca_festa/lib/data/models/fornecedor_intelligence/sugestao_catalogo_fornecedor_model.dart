@@ -3,7 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:app_faca_festa/domain/entities/servico_catalogo_alerta.dart';
 import 'package:app_faca_festa/domain/entities/sugestao_catalogo_fornecedor.dart';
 
-
 class SugestaoCatalogoFornecedorModel extends SugestaoCatalogoFornecedor {
   const SugestaoCatalogoFornecedorModel({
     required super.idSugestao,
@@ -122,8 +121,7 @@ class SugestaoCatalogoFornecedorModel extends SugestaoCatalogoFornecedor {
       'pendencias': pendencias,
       'melhorias_prioritarias': melhoriasPrioritarias,
       'campos_ausentes': camposAusentes,
-      'servicos_com_alerta':
-          servicosComAlerta.map(_alertaToMap).toList(),
+      'servicos_com_alerta': servicosComAlerta.map(_alertaToMap).toList(),
       'categorias_sem_servico': categoriasSemServico,
       'total_servicos_ativos': totalServicosAtivos,
       'total_servicos_sem_imagem': totalServicosSemImagem,

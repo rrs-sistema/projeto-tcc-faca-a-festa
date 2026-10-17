@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/core/services/update_operations.dart';
 import 'package:app_faca_festa/domain/entities/tema_festa.dart';
 import 'package:app_faca_festa/domain/exceptions/tema_festa_exception.dart';
 import 'package:app_faca_festa/domain/repositories/tema_festa_repository.dart';
@@ -13,22 +14,30 @@ class TemaFestaRepositoryImpl implements TemaFestaRepository {
 
   @override
   Future<List<TemaFesta>> carregar() {
-    return remote.carregar();
+    return UpdateOperations.run(() async {
+      return remote.carregar();
+    });
   }
 
   @override
   Future<TemaFesta?> buscarPorId(String idTema) {
-    return remote.buscarPorId(idTema);
+    return UpdateOperations.run(() async {
+      return remote.buscarPorId(idTema);
+    });
   }
 
   @override
   Future<void> salvar(TemaFesta tema) {
-    return remote.salvar(TemaFestaModel.fromEntity(tema));
+    return UpdateOperations.run(() async {
+      return remote.salvar(TemaFestaModel.fromEntity(tema));
+    });
   }
 
   @override
   Future<void> excluir(String idTema) {
-    return remote.excluir(idTema);
+    return UpdateOperations.run(() async {
+      return remote.excluir(idTema);
+    });
   }
 
   @override
@@ -36,16 +45,20 @@ class TemaFestaRepositoryImpl implements TemaFestaRepository {
     required String idTema,
     required List<int> bytes,
   }) {
-    return _traduzirErroCallable(
-      () => remote.enviarCapa(idTema: idTema, bytes: bytes),
-    );
+    return UpdateOperations.run(() async {
+      return _traduzirErroCallable(
+        () => remote.enviarCapa(idTema: idTema, bytes: bytes),
+      );
+    });
   }
 
   @override
   Future<void> removerCapaStorage({required String idTema}) {
-    return _traduzirErroCallable(
-      () => remote.removerCapaStorage(idTema: idTema),
-    );
+    return UpdateOperations.run(() async {
+      return _traduzirErroCallable(
+        () => remote.removerCapaStorage(idTema: idTema),
+      );
+    });
   }
 
   @override
@@ -58,16 +71,21 @@ class TemaFestaRepositoryImpl implements TemaFestaRepository {
   Future<void> popularTemasIniciais({
     required List<TemaFesta> temasExistentes,
   }) {
-    return remote.popularTemasIniciais(
-      temasExistentes: temasExistentes.map(TemaFestaModel.fromEntity).toList(),
-    );
+    return UpdateOperations.run(() async {
+      return remote.popularTemasIniciais(
+        temasExistentes:
+            temasExistentes.map(TemaFestaModel.fromEntity).toList(),
+      );
+    });
   }
 
-  Future<T> _traduzirErroCallable<T>(Future<T> Function() action) async {
-    try {
-      return await action();
-    } on CallableHttpsException catch (e) {
-      throw TemaFestaException(e.code, e.message);
-    }
+  Future<T> _traduzirErroCallable<T>(Future<T> Function() action) {
+    return UpdateOperations.run(() async {
+      try {
+        return await action();
+      } on CallableHttpsException catch (e) {
+        throw TemaFestaException(e.code, e.message);
+      }
+    });
   }
 }

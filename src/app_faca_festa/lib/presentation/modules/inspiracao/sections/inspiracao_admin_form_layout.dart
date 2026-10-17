@@ -90,6 +90,7 @@ extension _InspiracaoAdminFormLayout on _InspiracaoAdminFormPageState {
             onPressed: salvando ? null : () => Get.back(result: false),
             style: OutlinedButton.styleFrom(
               foregroundColor: _dark,
+              iconColor: _dark,
               side: BorderSide(color: _dark.withValues(alpha: 0.16)),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16)),
@@ -104,6 +105,7 @@ extension _InspiracaoAdminFormLayout on _InspiracaoAdminFormPageState {
             style: FilledButton.styleFrom(
               backgroundColor: _primary,
               foregroundColor: Colors.white,
+              iconColor: Colors.white,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16)),
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),

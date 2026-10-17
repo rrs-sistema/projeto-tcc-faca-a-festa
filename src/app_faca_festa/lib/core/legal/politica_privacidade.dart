@@ -1,27 +1,37 @@
 /// Texto da política de privacidade exibido no app e alinhado à página pública.
 abstract final class PoliticaPrivacidade {
   static const String urlPublica =
-      'https://faca-a-festa.web.app/privacidade.html';
+      'https://rrs-sistema.github.io/site-rrs-system-tecnology/politica-faca-a-festa.html';
 
-  static const String versao = '2026-10-06';
+  static const String urlExclusaoConta =
+      'https://rrs-sistema.github.io/site-rrs-system-tecnology/exclusao-de-dados.html#faca-a-festa';
 
-  static const String atualizacao = '6 de outubro de 2026';
+  static const String emailSuporte = 'rrs.sistema@gmail.com';
+
+  static const String emailEmpresa = 'rrs.system.technology@gmail.com';
+
+  static const String versao = '2026-10-07';
+
+  static const String atualizacao = '7 de outubro de 2026';
 
   static const String introducao =
-      'O Faça a Festa (“nós”, “aplicativo”) é um serviço de planejamento de '
-      'eventos que conecta organizadores, convidados e fornecedores. Esta '
-      'política descreve quais dados pessoais tratamos, para que finalidade e '
-      'com quem são compartilhados, em conformidade com a Lei Geral de '
-      'Proteção de Dados (Lei nº 13.709/2018 — LGPD).';
+      'A RIVALDO ROBERTO DA SILVA LTDA, que atua como RRS System Technology, '
+      'desenvolve o Faça a Festa. O texto completo e vigente desta política '
+      'está em $urlPublica. Esta tela resume o mesmo documento, em '
+      'conformidade com a Lei Geral de Proteção de Dados '
+      '(Lei nº 13.709/2018 — LGPD).';
 
   static const List<PoliticaSecao> secoes = [
     PoliticaSecao(
       titulo: '1. Quem é o controlador',
       corpo:
-          'O controlador dos dados é o responsável pelo aplicativo Faça a Festa. '
-          'Pedidos de acesso, correção ou exclusão podem ser feitos pelo e-mail '
-          'de suporte informado na ficha do aplicativo na Google Play Store ou '
-          'pelo próprio aplicativo, na área da conta.',
+          'Nos dados da conta, a desenvolvedora trata o cadastro para prestar o '
+          'serviço. Nos dados do evento, o organizador decide o que é inserido '
+          'e, em muitos casos, atua como controlador; a RRS atua como operadora. '
+          'Pedidos de acesso, correção ou exclusão podem ser feitos por '
+          '$emailSuporte, $emailEmpresa, pelo formulário Fale Conosco do site '
+          'ou em Dados protegidos, no aplicativo. A exclusão sem abrir o '
+          'aplicativo está em $urlExclusaoConta.',
     ),
     PoliticaSecao(
       titulo: '2. Dados que coletamos',
@@ -77,8 +87,8 @@ abstract final class PoliticaPrivacidade {
           'organizadores vêem dados do fornecedor publicados no catálogo; '
           'fornecedores vêem solicitações e dados de contato ligados à cotação; '
           'convidados vêem informações do evento para o qual foram convidados.\n\n'
-          'Não vendemos dados pessoais e não usamos identificador de '
-          'publicidade para anúncios.',
+          'Não vendemos dados pessoais, não usamos identificador de publicidade '
+          'e o aplicativo não contém anúncios.',
     ),
     PoliticaSecao(
       titulo: '5. Permissões do Android',
@@ -95,11 +105,16 @@ abstract final class PoliticaPrivacidade {
       titulo: '6. Retenção e exclusão',
       corpo:
           'Mantemos os dados enquanto a conta estiver ativa e pelo prazo '
-          'necessário às obrigações legais e à segurança (por exemplo, '
-          'registros de auditoria). Em Dados protegidos você solicita a exclusão, '
-          'a anonimização, o bloqueio ou a oposição. O pedido gera um protocolo. '
-          'A exclusão da conta é executada pelo administrador na fila de '
-          'protocolos. Logs de auditoria são mantidos por 365 dias.',
+          'necessário às obrigações legais e à segurança. Em Dados protegidos, '
+          'no aplicativo, você solicita a exclusão, a anonimização, o bloqueio '
+          'ou a oposição. O pedido gera um protocolo e a exclusão é executada '
+          'pela equipe. Sem o aplicativo, envie um e-mail para $emailSuporte ou '
+          '$emailEmpresa com o assunto "Solicitação de exclusão de dados — '
+          'Faça a Festa" e o e-mail da conta. O passo a passo está em '
+          '$urlExclusaoConta. A exclusão remove a conta, '
+          'o perfil, os eventos em que você é o organizador, os convidados '
+          'desses eventos, cotações, mensagens, fotos enviadas e o token de '
+          'aviso. Logs de auditoria são mantidos por 365 dias.',
     ),
     PoliticaSecao(
       titulo: '7. Seus direitos (LGPD)',

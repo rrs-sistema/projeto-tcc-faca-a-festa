@@ -9,9 +9,7 @@ extension _PresentesPixDialog on _PresentesSectionState {
   }) {
     final valorSugerido = _moneyValue(valorInicial);
     final valorController = TextEditingController(
-      text: valorSugerido > 0
-          ? valorSugerido.toStringAsFixed(2).replaceAll('.', ',')
-          : '',
+      text: valorSugerido > 0 ? NumericInput.dinheiro(valorSugerido) : '',
     );
     final hasPix = chavePix.trim().isNotEmpty;
 
@@ -183,6 +181,7 @@ extension _PresentesPixDialog on _PresentesSectionState {
                           backgroundColor: primary,
                           disabledBackgroundColor: Colors.grey.shade300,
                           foregroundColor: Colors.white,
+                          iconColor: Colors.white,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16)),
@@ -246,7 +245,7 @@ class _GiftValueField extends StatelessWidget {
               keyboardType:
                   const TextInputType.numberWithOptions(decimal: true),
               inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'[0-9,.]')),
+                NumericInput.moeda(),
               ],
               style: GoogleFonts.poppins(
                 fontSize: 21,
@@ -274,13 +273,5 @@ double _moneyValue(dynamic value, {double fallback = 0.0}) {
   if (value == null) return fallback;
   if (value is num) return value.toDouble();
 
-  var raw = value.toString().replaceAll('R\$', '').replaceAll(' ', '').trim();
-
-  if (raw.contains(',')) {
-    raw = raw.replaceAll('.', '').replaceAll(',', '.');
-  } else {
-    raw = raw.replaceAll(RegExp(r'[^0-9.-]'), '');
-  }
-
-  return double.tryParse(raw) ?? fallback;
+  return NumericInput.parse(value.toString()) ?? fallback;
 }
