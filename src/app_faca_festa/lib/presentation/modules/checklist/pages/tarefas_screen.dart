@@ -73,7 +73,7 @@ class TarefasScreen extends StatelessWidget {
         bottomNavigationBar: SafeArea(
           top: false,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 10, 20, 12),
+            padding: const EdgeInsets.fromLTRB(20, FestaPageInsets.belowAppBar, 20, 12),
             child: SizedBox(
                 height: 52,
                 child: FilledButton.icon(

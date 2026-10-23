@@ -10,6 +10,10 @@ import 'package:app_faca_festa/domain/entities/cotacao.dart';
 import 'package:app_faca_festa/domain/entities/categoria_servico.dart';
 import 'package:app_faca_festa/domain/entities/endereco_usuario.dart';
 import 'package:app_faca_festa/domain/entities/fornecedor.dart';
+import 'package:app_faca_festa/domain/entities/fornecedor_dados_cadastrais.dart';
+import 'package:app_faca_festa/domain/entities/fornecedor_cadastro_edicao.dart';
+import 'package:app_faca_festa/domain/entities/fornecedor_categoria_resumo.dart';
+import 'package:app_faca_festa/core/utils/form_validators.dart';
 import 'package:app_faca_festa/domain/entities/fornecedor_categoria.dart';
 import 'package:app_faca_festa/domain/entities/fornecedor_produto_servico.dart';
 import 'package:app_faca_festa/domain/entities/fornecedor_servico_detalhado.dart';
@@ -236,6 +240,180 @@ class FornecedorController extends GetxController {
       );
     } catch (e) {
       throw Exception("Erro ao atualizar fornecedor: $e");
+    }
+  }
+
+  bool get podeEditarDadosFornecedor {
+    final usuario = _resolverAppController()?.usuarioLogado.value;
+    return usuario?.tipo == 'A' && usuario?.ativo == true;
+  }
+
+  final _edicoesCadastrais = <String>{};
+
+  Future<FornecedorCadastroEdicao> carregarCadastroFornecedorAdmin(
+      String id) async {
+    if (!podeEditarDadosFornecedor) {
+      throw StateError('Acesso permitido somente a administradores ativos.');
+    }
+    final admin = _resolverAppController()?.usuarioLogado.value?.idUsuario;
+    final cadastro = await _fornecedores.carregarCadastroEdicao(id);
+    if (!podeEditarDadosFornecedor ||
+        _resolverAppController()?.usuarioLogado.value?.idUsuario != admin) {
+      throw StateError('A sessão mudou. Entre novamente na gestão.');
+    }
+    return cadastro;
+  }
+
+  Future<void> salvarCadastroFornecedorAdmin(
+      FornecedorCadastroAlteracao alteracao) async {
+    if (!podeEditarDadosFornecedor) {
+      throw StateError('Acesso permitido somente a administradores ativos.');
+    }
+    final dados = alteracao.dados;
+    final endereco = alteracao.endereco;
+    final erros = [
+      FormValidators.nomeCompleto(alteracao.nomeResponsavel),
+      FormValidators.razaoSocial(dados.razaoSocial),
+      FormValidators.email(dados.email),
+      FormValidators.telefone(dados.telefone),
+      FormValidators.cnpj(dados.cnpj),
+      FormValidators.descricaoServicos(dados.descricao),
+      FormValidators.cep(endereco.cep),
+      FormValidators.logradouro(endereco.logradouro),
+      FormValidators.numeroEndereco(endereco.numero),
+      FormValidators.bairro(endereco.bairro),
+      FormValidators.cidade(endereco.nomeCidade),
+      FormValidators.uf(endereco.uf),
+      FormValidators.selecao(alteracao.categorias, campo: 'uma categoria'),
+      FormValidators.selecao(alteracao.servicos, campo: 'um serviço'),
+      FormValidators.selecao(alteracao.tipoEventoIds,
+          campo: 'um tipo de evento')
+    ];
+    final erro = erros.whereType<String>().firstOrNull;
+    if (erro != null) throw StateError(erro);
+    final id = alteracao.origem.fornecedor.idFornecedor;
+    if (!_edicoesCadastrais.add(id)) {
+      throw StateError('Já existe um salvamento em andamento.');
+    }
+    final admin = _resolverAppController()?.usuarioLogado.value?.idUsuario;
+    try {
+      await _fornecedores.salvarCadastroEdicao(alteracao);
+      if (!podeEditarDadosFornecedor ||
+          _resolverAppController()?.usuarioLogado.value?.idUsuario != admin) {
+        return;
+      }
+      Fornecedor aplicar(Fornecedor atual) => dados.aplicarEm(atual).copyWith(
+          tipoEventoIds: alteracao.tipoEventoIds,
+          tipoEventoSlugs: alteracao.tipoEventoSlugs,
+          tipoEventoNomes: alteracao.tipoEventoNomes,
+          bannerUrl: alteracao.novoBannerUrl ?? atual.bannerUrl,
+          categorias: alteracao.categorias
+              .map((cat) => FornecedorCategoriaResumo(
+                  idCategoria: cat.idCategoria,
+                  nomeCategoria: cat.nomeCategoria ?? '',
+                  subcategorias: cat.subcategorias))
+              .toList());
+      final index = fornecedores.indexWhere((f) => f.idFornecedor == id);
+      if (index >= 0) {
+        fornecedores[index] = aplicar(fornecedores[index]);
+        listaAdmin.ordenar();
+      }
+      if (fornecedor.value?.idFornecedor == id) {
+        fornecedor.value = aplicar(fornecedor.value!);
+      }
+      enderecos.removeWhere(
+          (e) => e.idUsuario == endereco.idUsuario && e.id == endereco.id);
+      enderecos.add(endereco);
+      categoriasFornecedor.removeWhere((c) => c.idFornecedor == id);
+      categoriasFornecedor.addAll(
+          alteracao.categorias.map((c) => c.copyWith(idFornecedor: id)));
+      final selecionados = alteracao.servicos.map((s) => s.id).toSet();
+      for (var i = 0; i < allServicosFornecedor.length; i++) {
+        final v = allServicosFornecedor[i];
+        if (v.idFornecedor == id) {
+          allServicosFornecedor[i] =
+              v.copyWith(ativo: selecionados.contains(v.idProdutoServico));
+        }
+      }
+      for (final servico in alteracao.servicos) {
+        if (allServicosFornecedor.any(
+            (s) => s.idFornecedor == id && s.idProdutoServico == servico.id)) {
+          continue;
+        }
+        allServicosFornecedor.add(FornecedorProdutoServico(
+            id: '${id}_${servico.id}',
+            idFornecedor: id,
+            idProdutoServico: servico.id,
+            preco: 0,
+            idSubcategoria: servico.idSubcategoria));
+      }
+      _registradorAuditoria.registrar(
+          acao: 'FORNECEDOR_EDITADO',
+          resumo: 'Cadastro do fornecedor atualizado pelo fluxo de criação.',
+          entidadeTipo: 'fornecedor',
+          entidadeId: id,
+          entidadeNome: dados.razaoSocial,
+          idFornecedor: id);
+    } finally {
+      _edicoesCadastrais.remove(id);
+    }
+  }
+
+  Future<void> editarDadosFornecedorAdmin({
+    required String idFornecedor,
+    required FornecedorDadosCadastrais dados,
+  }) async {
+    if (!podeEditarDadosFornecedor) {
+      throw StateError(
+          'Somente administradores ativos podem editar estes dados.');
+    }
+    if (idFornecedor.trim().isEmpty) {
+      throw ArgumentError('Fornecedor não identificado.');
+    }
+    final validacoes = [
+      FormValidators.razaoSocial(dados.razaoSocial),
+      FormValidators.email(dados.email, obrigatorio: false),
+      FormValidators.telefone(dados.telefone,
+          obrigatorio: dados.telefone.isNotEmpty),
+      FormValidators.cnpj(dados.cnpj, obrigatorio: dados.cnpj.isNotEmpty),
+      FormValidators.descricao(dados.descricao, minimo: 0, maximo: 2000),
+    ];
+    final invalido = validacoes.whereType<String>().firstOrNull;
+    if (invalido != null) throw ArgumentError(invalido);
+    if (!_edicoesCadastrais.add(idFornecedor)) {
+      throw StateError(
+          'Já existe um salvamento em andamento para este fornecedor.');
+    }
+    final idAdmin = _resolverAppController()?.usuarioLogado.value?.idUsuario;
+    try {
+      await _fornecedores.atualizarDadosCadastrais(
+          idFornecedor: idFornecedor, dados: dados);
+      // Não injeta dados de uma sessão anterior após sair ou trocar de conta.
+      if (!podeEditarDadosFornecedor ||
+          _resolverAppController()?.usuarioLogado.value?.idUsuario != idAdmin) {
+        return;
+      }
+      final index =
+          fornecedores.indexWhere((f) => f.idFornecedor == idFornecedor);
+      if (index >= 0) {
+        fornecedores[index] = dados.aplicarEm(fornecedores[index]);
+        listaAdmin.ordenar();
+      }
+      final atual = fornecedor.value;
+      if (atual?.idFornecedor == idFornecedor) {
+        fornecedor.value = dados.aplicarEm(atual!);
+      }
+      _registradorAuditoria.registrar(
+        acao: 'FORNECEDOR_EDITADO',
+        resumo:
+            'Dados cadastrais do fornecedor atualizados pelo administrador.',
+        entidadeTipo: 'fornecedor',
+        entidadeId: idFornecedor,
+        entidadeNome: dados.razaoSocial,
+        idFornecedor: idFornecedor,
+      );
+    } finally {
+      _edicoesCadastrais.remove(idFornecedor);
     }
   }
 

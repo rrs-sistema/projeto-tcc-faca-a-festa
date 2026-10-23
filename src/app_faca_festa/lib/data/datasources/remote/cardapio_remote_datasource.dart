@@ -3,6 +3,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../models/cardapio/cardapio_item_model.dart';
 import '../../models/cardapio/cardapio_model.dart';
 import 'package:app_faca_festa/domain/repositories/cardapio_repository.dart';
+import '../../../domain/services/criacao_cardapio_inicial_service.dart';
+import '../../models/evento/calculadora_festa_model.dart';
+import '../../models/evento/calculadora_festa_item_model.dart';
 
 class CardapioRemoteDatasource {
   CardapioRemoteDatasource(this.firestore);
@@ -11,6 +14,82 @@ class CardapioRemoteDatasource {
 
   CollectionReference<Map<String, dynamic>> get _cardapios =>
       firestore.collection('cardapios');
+
+  Future<bool> criarCardapioInicial(CriacaoCardapioInicial proposta) async {
+    final menu = proposta.cardapio;
+    if (menu.idCardapio !=
+            CriacaoCardapioInicialService.identidade(menu.idEvento) ||
+        proposta.calculo.idCalculo != menu.idCardapio ||
+        proposta.calculo.idEvento != menu.idEvento ||
+        proposta.itens.isEmpty ||
+        proposta.itens.length > 40 ||
+        proposta.calculo.idUsuario == null ||
+        proposta.calculo.idUsuario!.isEmpty ||
+        proposta.resultados.length != proposta.itens.length ||
+        proposta.resultados.any((r) =>
+            r.idEvento != menu.idEvento ||
+            r.idCardapio != menu.idCardapio ||
+            r.idCalculo != proposta.calculo.idCalculo ||
+            !r.adicionadoAoCardapio ||
+            r.adicionadoAoOrcamento) ||
+        proposta.itens.any((i) =>
+            i.idEvento != menu.idEvento ||
+            i.idCardapio != menu.idCardapio ||
+            i.quantidadeFinal != 0 ||
+            i.confirmado ||
+            i.disponibilidade != null)) {
+      throw StateError('A criação inicial contém dados incompatíveis.');
+    }
+    final parent = _cardapios.doc(menu.idCardapio);
+    final simulacao = firestore
+        .collection('calculadora_festa')
+        .doc(proposta.calculo.idCalculo);
+    return firestore.runTransaction<bool>((tx) async {
+      final evento =
+          await tx.get(firestore.collection('evento').doc(menu.idEvento));
+      final anterior = await tx.get(parent);
+      final historico = await tx.get(simulacao);
+      if (!evento.exists) throw StateError('O evento não existe mais.');
+      if (anterior.exists) {
+        final dados = anterior.data()!;
+        if (dados['id_evento'] != menu.idEvento ||
+            dados['origem_plano_inicial'] != 1 ||
+            !historico.exists ||
+            historico.data()?['id_evento'] != menu.idEvento ||
+            historico.data()?['id_usuario'] != proposta.calculo.idUsuario) {
+          throw StateError(
+              'Já existem dados nesse destino. Nenhum registro foi substituído.');
+        }
+        return false;
+      }
+      if (historico.exists) {
+        throw StateError(
+            'Há uma simulação anterior sem cardápio. Confira o histórico antes de criar novamente.');
+      }
+      for (final item in proposta.itens) {
+        if ((await tx.get(parent.collection('itens').doc(item.idItem)))
+            .exists) {
+          throw StateError(
+              'Há itens anteriores sem cardápio. Confira os dados antes de criar.');
+        }
+      }
+      tx.set(parent, {
+        ...CardapioModel.fromEntity(menu).toMap(),
+        'origem_plano_inicial': 1
+      });
+      for (final item in proposta.itens) {
+        tx.set(parent.collection('itens').doc(item.idItem),
+            CardapioItemModel.fromEntity(item).toMap());
+      }
+      tx.set(simulacao,
+          CalculadoraFestaModel.fromEntity(proposta.calculo).toMap());
+      for (final resultado in proposta.resultados) {
+        tx.set(simulacao.collection('itens').doc(resultado.idItemResultado),
+            CalculadoraFestaItemModel.fromEntity(resultado).toMap());
+      }
+      return true;
+    });
+  }
 
   Stream<List<CardapioModel>> observarCardapios(String idEvento) {
     return _cardapios

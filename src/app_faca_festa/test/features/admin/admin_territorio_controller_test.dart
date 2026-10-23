@@ -40,6 +40,37 @@ void main() {
 
     expect(repository.territoriosSalvos, [territorio]);
     expect(controller.territorios.map((t) => t.idTerritorio), ['territorio-1']);
+    expect(controller.idTerritorioSelecionado.value, 'territorio-1');
+  });
+
+  test('selects territory and clears with verTodos', () {
+    final territorio = _territorio(id: 'territorio-1', descricao: 'Zona Sul');
+    controller.territorios.assignAll([territorio]);
+
+    controller.selecionarTerritorio(territorio);
+    expect(controller.idTerritorioSelecionado.value, 'territorio-1');
+
+    controller.verTodos();
+    expect(controller.idTerritorioSelecionado.value, isNull);
+  });
+
+  test('filters by status and search text', () {
+    controller.territorios.assignAll([
+      _territorio(id: 'a', descricao: 'Curitiba', ativo: true),
+      _territorio(id: 'b', descricao: 'Maringá', ativo: false),
+    ]);
+
+    controller.definirFiltroStatus(FiltroStatusTerritorio.ativos);
+    expect(controller.territoriosFiltrados.map((t) => t.idTerritorio), ['a']);
+
+    controller.definirFiltroStatus(FiltroStatusTerritorio.todos);
+    controller.atualizarBusca('maring');
+    expect(
+      controller
+          .filtrarComNomes((_) => 'Fornecedor X')
+          .map((t) => t.idTerritorio),
+      ['b'],
+    );
   });
 
   test('toggles active state and reloads territories', () async {

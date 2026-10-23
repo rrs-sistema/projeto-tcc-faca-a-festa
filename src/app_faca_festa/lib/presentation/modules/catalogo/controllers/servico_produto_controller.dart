@@ -19,6 +19,12 @@ class ServicoProdutoController extends GetxController {
         _auditoriaResolver = auditoriaResolver;
 
   final GerenciarServicosProduto _servicos;
+  Future<void> carregarParaFormulario() async {
+    servicos.assignAll(await _servicos.listarServicos());
+  }
+
+  ServicoProdutoController novaSessao() =>
+      ServicoProdutoController(servicos: _servicos);
   final AuditoriaRegistrar? _auditoria;
   final AuditoriaRegistrar? Function()? _auditoriaResolver;
   AuditoriaRegistrar get _registradorAuditoria =>

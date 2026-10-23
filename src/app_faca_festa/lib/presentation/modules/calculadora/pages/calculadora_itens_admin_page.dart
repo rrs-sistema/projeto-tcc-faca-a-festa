@@ -7,6 +7,7 @@ import 'package:app_faca_festa/domain/entities/calculadora_item_base.dart';
 import 'package:app_faca_festa/presentation/modules/calculadora/controllers/calculadora_itens_admin_controller.dart';
 import 'calculadora_evento_item_form_dialog.dart';
 import 'calculadora_item_base_form_dialog.dart';
+import 'catalogo_contextual_admin_page.dart';
 
 class CalculadoraItensAdminPage extends StatelessWidget {
   const CalculadoraItensAdminPage({
@@ -31,6 +32,13 @@ class CalculadoraItensAdminPage extends StatelessWidget {
           ),
           centerTitle: false,
           actions: [
+            IconButton(
+                tooltip: 'Referências e modelos versionados',
+                icon: const Icon(Icons.library_books_outlined),
+                onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                        builder: (_) => CatalogoContextualAdminPage(
+                            controller: controller)))),
             IconButton(
               tooltip: 'Atualizar',
               onPressed: controller.carregarTudo,

@@ -32,11 +32,11 @@ enum StatusCotacao {
       case StatusCotacao.pendente:
         return 'O fornecedor ainda está preparando o preço.';
       case StatusCotacao.respondida:
-        return 'Compare o valor e contrate se gostar.';
+        return 'Preço chegou. Você (organizador) fecha o negócio em Ver detalhes → Contratar este.';
       case StatusCotacao.parcial:
-        return 'Alguns já responderam. Você pode comparar ou esperar o restante.';
+        return 'Já há preço. Abra Ver detalhes para comparar e contratar, ou aguarde mais respostas.';
       case StatusCotacao.concluida:
-        return 'Serviço contratado. Depois da festa, avalie.';
+        return 'Contrato criado. Toque em Declarar pagamento / acompanhar.';
       case StatusCotacao.cancelada:
         return 'Este pedido foi cancelado.';
       case StatusCotacao.perdeuCotacao:
@@ -44,6 +44,10 @@ enum StatusCotacao {
         return 'Este fornecedor não ficou com o serviço.';
     }
   }
+
+  /// Organizador já pode abrir e contratar (há ao menos um preço).
+  bool get prontoParaContratar =>
+      this == StatusCotacao.respondida || this == StatusCotacao.parcial;
 
   String get firestoreValue {
     switch (this) {
@@ -69,16 +73,22 @@ enum StatusCotacao {
 
     switch (value.toLowerCase()) {
       case 'respondida':
+      case 'respondido':
         return StatusCotacao.respondida;
       case 'parcial':
         return StatusCotacao.parcial;
       case 'concluida':
+      case 'concluido':
+      case 'fechado':
+      case 'fechada':
         return StatusCotacao.concluida;
       case 'cancelada':
+      case 'cancelado':
         return StatusCotacao.cancelada;
       case 'perdeucotacao':
         return StatusCotacao.perdeuCotacao;
       case 'recusado':
+      case 'recusada':
         return StatusCotacao.recusado;
       default:
         return StatusCotacao.pendente;

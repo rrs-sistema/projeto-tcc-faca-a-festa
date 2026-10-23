@@ -157,6 +157,8 @@ extension _CalculadoraFestaDecisoes on _CalculadoraFestaScreenState {
     final assinatura = jsonEncode(c.snapshotPlanejamento);
     final atual = c.resumoCompras;
     var reserva = c.margemEmUso > .05 ? .05 : c.margemEmUso;
+    var salvando = false;
+    String? erro;
     final adotar = await showDialog<bool>(
         context: context,
         builder: (ctx) => StatefulBuilder(builder: (ctx, atualizar) {
@@ -176,11 +178,42 @@ extension _CalculadoraFestaDecisoes on _CalculadoraFestaScreenState {
                       primary: themeController.primaryColor.value,
                       confirmLabel: 'Usar esta reserva',
                       cancelLabel: 'Manter atual',
-                      onCancel: () => Navigator.pop(ctx),
-                      onConfirm: () => Navigator.pop(ctx, true),
+                      onCancel: () {
+                        if (!salvando) Navigator.pop(ctx);
+                      },
+                      onConfirm: () async {
+                        if (salvando) return;
+                        atualizar(() {
+                          salvando = true;
+                          erro = null;
+                        });
+                        try {
+                          if (assinatura !=
+                              jsonEncode(c.snapshotPlanejamento)) {
+                            throw StateError(
+                                'O planejamento mudou. Revise o cenário.');
+                          }
+                          await c.confirmarConfiguracao(c
+                              .prepararConfirmacaoConfiguracao(
+                                  {'margem': reserva}));
+                          if (ctx.mounted) Navigator.pop(ctx, true);
+                        } catch (e) {
+                          if (ctx.mounted) {
+                            atualizar(() => erro = e is StateError
+                                ? e.message.toString()
+                                : 'Não foi possível guardar a reserva. Seus valores foram mantidos.');
+                          }
+                        } finally {
+                          if (ctx.mounted) atualizar(() => salvando = false);
+                        }
+                      },
                       child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
+                            if (erro != null)
+                              Text(erro!,
+                                  style: const TextStyle(color: Colors.red)),
+                            if (salvando) const Text('Guardando reserva…'),
                             Text(
                                 'Limite: ${_money(c.orcamentoDisponivel.value!)}',
                                 style: const TextStyle(
@@ -210,7 +243,9 @@ extension _CalculadoraFestaDecisoes on _CalculadoraFestaScreenState {
                                 max: .3,
                                 divisions: 30,
                                 label: '${(reserva * 100).round()}%',
-                                onChanged: (v) => atualizar(() => reserva = v)),
+                                onChanged: salvando
+                                    ? null
+                                    : (v) => atualizar(() => reserva = v)),
                             const Text(
                                 'Este cenário preserva a porção base e muda somente a reserva. Diminuir a reserva aumenta o risco de falta; não garante comida suficiente.',
                                 style: TextStyle(fontSize: 12)),
@@ -222,12 +257,6 @@ extension _CalculadoraFestaDecisoes on _CalculadoraFestaScreenState {
                           ])));
             }));
     if (adotar == true && mounted) {
-      if (assinatura != jsonEncode(c.snapshotPlanejamento) ||
-          !_podeAlterarPlanejamento()) {
-        Get.snackbar('Planejamento alterado', 'Revise o cenário novamente.');
-        return;
-      }
-      c.atualizarMargemPersonalizada(reserva);
       c.medicaoUso.ajustes++;
     }
   }
@@ -268,22 +297,25 @@ extension _CalculadoraFestaDecisoes on _CalculadoraFestaScreenState {
         builder: (_) => Theme(
             data: themeController.materialTheme,
             child: CalculadoraRegraManualDialog(
+                catalogo: c.catalogoContextual.value,
+                contextoReferencia: c.contextoReferenciaPara(c.idCardapioAtual),
                 inicial: original.copyWith(
                     nome: '',
                     selecionado: true,
                     quantidadePorConvidadoEquivalente: 0,
                     valorUnitarioMedio: 0,
                     premissas: {
-                  'papel_na_refeicao': original.premissas['papel_na_refeicao'],
-                  'estado': 'não informado',
-                  'grupo': original.premissas['grupo'] ?? '',
-                  'dividir_grupo': original.dividirGrupo,
-                  'participacao': original.premissas['participacao'] ?? 1,
-                  'numero_servicos': original.numeroServicos,
-                  'ajustar_por_perfil': false,
-                  'fonte': 'Alternativa informada pelo organizador',
-                  'origem': 'alternativa_organizador'
-                }))));
+                      'papel_na_refeicao':
+                          original.premissas['papel_na_refeicao'],
+                      'estado': 'não informado',
+                      'grupo': original.premissas['grupo'] ?? '',
+                      'dividir_grupo': original.dividirGrupo,
+                      'participacao': original.premissas['participacao'] ?? 1,
+                      'numero_servicos': original.numeroServicos,
+                      'ajustar_por_perfil': false,
+                      'fonte': 'Alternativa informada pelo organizador',
+                      'origem': 'alternativa_organizador'
+                    }))));
     if (alternativa == null || !mounted || c.calculoAtual.value == null) return;
     try {
       final cenario = const CenarioAlternativaService().simular(
@@ -460,69 +492,25 @@ extension _CalculadoraFestaDecisoes on _CalculadoraFestaScreenState {
           'Vincule um evento', 'Salve o evento antes de registrar a revisão.');
       return;
     }
-    final assinaturaRevisao = jsonEncode(c.snapshotPlanejamento);
-    try {
-      final registros = await c.consultarConsumos();
-      if (!mounted || assinaturaRevisao != jsonEncode(c.snapshotPlanejamento)) {
-        return;
-      }
-      final daFesta =
-          registros.where((r) => r.idEvento == c.idEventoAtual.value).toList();
-      final escolher = await showDialog<CalculadoraFestaItem>(
-          context: context,
-          builder: (ctx) => Theme(
-              data: themeController.materialTheme,
-              child: _PlanejamentoDialog(
-                  title: 'Depois da festa',
-                  icon: Icons.fact_check_outlined,
-                  primary: themeController.primaryColor.value,
-                  confirmLabel: 'Concluir revisão',
-                  cancelLabel: 'Voltar',
-                  onConfirm: () => Navigator.pop(ctx),
-                  onCancel: () => Navigator.pop(ctx),
-                  child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const Text(
-                            'Registre as quantidades reais, não as sugeridas. Os registros alimentam comparações futuras quando os contextos forem compatíveis.',
-                            style: TextStyle(fontSize: 12)),
-                        for (final item in c.itensCalculados)
-                          Builder(builder: (_) {
-                            final regra = c.regraDoResultado(item);
-                            final medidos = daFesta
-                                .where((r) =>
-                                    r.regra.id == regra?.id &&
-                                    r.contexto ==
-                                        (regra == null
-                                            ? ''
-                                            : c.contextoConsumo(regra,
-                                                duracaoObservada:
-                                                    r.duracaoHoras)))
-                                .toList()
-                              ..sort((a, b) =>
-                                  b.dataRegistro.compareTo(a.dataRegistro));
-                            final ultimo =
-                                medidos.isEmpty ? null : medidos.first;
-                            return ListTile(
-                                contentPadding: EdgeInsets.zero,
-                                title: Text(item.nome),
-                                subtitle: Text(ultimo == null
-                                    ? 'Nenhum registro encontrado neste contexto'
-                                    : 'Sobra pronta: ${ultimo.sobra.toStringAsFixed(2).replaceAll('.', ',')} ${ultimo.regra.premissas['unidade_consumo'] ?? ultimo.regra.unidade.label}; desperdício: ${ultimo.desperdicio.toStringAsFixed(2).replaceAll('.', ',')} ${ultimo.regra.premissas['unidade_consumo'] ?? ultimo.regra.unidade.label}. ${ultimo.faltou ? 'Houve falta.' : 'Sem falta informada.'}'),
-                                trailing: Icon(ultimo == null
-                                    ? Icons.add_circle_outline
-                                    : Icons.edit_outlined),
-                                onTap: () => Navigator.pop(ctx, item));
-                          }),
-                      ]))));
-      if (escolher != null && mounted) {
-        final regra = c.regraDoResultado(escolher);
-        if (regra != null) await _registrarConsumo(regra);
-      }
-    } catch (_) {
-      Get.snackbar('Revisão indisponível',
-          'Não foi possível consultar os registros. Tente novamente.');
+    if (!_eventoEncerrado) {
+      Get.snackbar('Depois da festa',
+          'A revisão fica disponível após a realização do evento.');
+      return;
     }
+    await showDialog<void>(
+        context: context,
+        builder: (_) => Theme(
+            data: themeController.materialTheme,
+            child: CalculadoraRevisaoPosEventoDialog(
+                controller: c,
+                onMedir: (id) async {
+                  final item =
+                      c.itensCardapio.firstWhereOrNull((i) => i.idItem == id);
+                  if (item == null || !mounted) return;
+                  final regra = const RevisaoCardapioService()
+                      .regraPara(item, c.regrasDisponiveis);
+                  if (regra != null) await _registrarConsumo(regra);
+                })));
   }
 
   Future<void> _avaliarExperiencia() async {

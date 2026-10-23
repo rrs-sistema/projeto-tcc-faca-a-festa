@@ -103,7 +103,10 @@ class EventoRemoteDatasource {
   }
 
   Future<void> salvar(EventoModel evento) {
-    return _eventos.doc(evento.idEvento).set(evento.toMap());
+    final data = evento.toMap();
+    // Merge preserva metadados fora do formulário; a remoção do término é explícita.
+    if (evento.dataFim == null) data['data_fim'] = FieldValue.delete();
+    return _eventos.doc(evento.idEvento).set(data, SetOptions(merge: true));
   }
 
   Future<String> enviarCapa({

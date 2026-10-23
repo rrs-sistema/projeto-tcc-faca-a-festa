@@ -86,12 +86,20 @@ class PainelCotacaoPage extends StatelessWidget {
                   child: CircularProgressIndicator(),
                 ),
               )
+            else if (cotacaoCtrl.erroEscuta.value.isNotEmpty)
+              _buildMensagemVazia(
+                primary,
+                cotacaoCtrl.erroEscuta.value,
+                icone: Icons.cloud_off_rounded,
+              )
             else if (cotacoes.isNotEmpty)
               _buildMinhasCotacoes(cotacoes, primary)
             else
               _buildMensagemVazia(
                 primary,
-                "Você ainda não pediu preço a nenhum fornecedor.",
+                cotacaoCtrl.cotacoes.isEmpty
+                    ? 'Você ainda não pediu preço a nenhum fornecedor neste evento. Use Orçamento ou as recomendações acima para solicitar.'
+                    : 'Há pedidos em outras festas da sua conta, mas nenhum neste evento ainda.',
               ),
             const SizedBox(height: 20),
           ],
@@ -302,13 +310,19 @@ class PainelCotacaoPage extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 6),
-        Text(
-          'Peça preço, acompanhe as respostas e contrate quem combinou com a festa.',
-          style: GoogleFonts.poppins(
-            fontSize: 12, // 🔹 Fonte menor
-            color: Colors.grey.shade700,
-            height: 1.35,
+        const SizedBox(height: 12),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: Text(
+            'Solicite orçamentos e acompanhe as propostas para sua festa.',
+            textAlign: TextAlign.start,
+            softWrap: true,
+            style: GoogleFonts.poppins(
+              fontSize: 13,
+              fontWeight: FontWeight.w400,
+              color: const Color(0xFF64748B),
+              height: 1.6,
+            ),
           ),
         ),
       ],
@@ -390,6 +404,8 @@ class PainelCotacaoPage extends StatelessWidget {
               data: Theme.of(Get.context!)
                   .copyWith(dividerColor: Colors.transparent),
               child: ExpansionTile(
+                initiallyExpanded: cotacao.status.prontoParaContratar ||
+                    cotacao.status == StatusCotacao.concluida,
                 tilePadding: const EdgeInsets.symmetric(
                     horizontal: 12, vertical: 2), // 🔹 Compacto
                 leading: Container(
@@ -455,19 +471,120 @@ class PainelCotacaoPage extends StatelessWidget {
                 ),
                 childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
                 children: [
-                  _buildAcaoCotacao(
-                      primary, "Ver detalhes", Icons.visibility_rounded, () {
-                    mostrarDetalhesCotacao(
-                      cotacao,
-                      fornecedorController: fornecedorCtrl,
-                      cotacaoController: cotacaoCtrl,
-                      cotacoes: cotacaoCtrl.gerenciarCotacoes,
-                      theme: theme,
-                      avaliacaoController: avaliacaoController,
-                      appController: appController,
-                      eventoController: eventoCtrl,
-                    );
-                  }),
+                  if (cotacao.status.prontoParaContratar) ...[
+                    Container(
+                      width: double.infinity,
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.green.shade50,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.green.shade200),
+                      ),
+                      child: Text(
+                        'Quem fecha o negócio: você (organizador). '
+                        'Abra os detalhes e toque em Contratar este.',
+                        style: GoogleFonts.poppins(
+                          fontSize: 11.5,
+                          height: 1.35,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.green.shade800,
+                        ),
+                      ),
+                    ),
+                    _buildAcaoCotacao(
+                      Colors.green.shade700,
+                      'Ver preço e contratar',
+                      Icons.check_circle_outline_rounded,
+                      () {
+                        mostrarDetalhesCotacao(
+                          cotacao,
+                          fornecedorController: fornecedorCtrl,
+                          cotacaoController: cotacaoCtrl,
+                          cotacoes: cotacaoCtrl.gerenciarCotacoes,
+                          theme: theme,
+                          avaliacaoController: avaliacaoController,
+                          appController: appController,
+                          eventoController: eventoCtrl,
+                        );
+                      },
+                    ),
+                  ] else if (cotacao.status == StatusCotacao.concluida) ...[
+                    Container(
+                      width: double.infinity,
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.shade50,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.blue.shade200),
+                      ),
+                      child: Text(
+                        'Contrato fechado. Declare o pagamento à plataforma '
+                        'e acompanhe a execução.',
+                        style: GoogleFonts.poppins(
+                          fontSize: 11.5,
+                          height: 1.35,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.blue.shade900,
+                        ),
+                      ),
+                    ),
+                    _buildAcaoCotacao(
+                      Colors.blue.shade700,
+                      'Declarar pagamento / acompanhar',
+                      Icons.account_balance_wallet_outlined,
+                      () {
+                        final idEvento = cotacao.idEvento.trim().isNotEmpty
+                            ? cotacao.idEvento.trim()
+                            : (eventoCtrl.eventoAtualEntidade?.idEvento ?? '')
+                                .trim();
+                        if (idEvento.isEmpty) {
+                          Get.snackbar(
+                            'Pagamento',
+                            'Não foi possível identificar o evento.',
+                            backgroundColor: Colors.redAccent,
+                            colorText: Colors.white,
+                          );
+                          return;
+                        }
+                        Get.toNamed(
+                          '/acompanhamento-organizador',
+                          arguments: {
+                            'idEvento': idEvento,
+                            'nomeEvento':
+                                eventoCtrl.eventoAtualEntidade?.nomeEvento,
+                          },
+                        );
+                      },
+                    ),
+                    _buildAcaoCotacao(
+                        primary, "Ver detalhes", Icons.visibility_rounded, () {
+                      mostrarDetalhesCotacao(
+                        cotacao,
+                        fornecedorController: fornecedorCtrl,
+                        cotacaoController: cotacaoCtrl,
+                        cotacoes: cotacaoCtrl.gerenciarCotacoes,
+                        theme: theme,
+                        avaliacaoController: avaliacaoController,
+                        appController: appController,
+                        eventoController: eventoCtrl,
+                      );
+                    }),
+                  ] else
+                    _buildAcaoCotacao(
+                        primary, "Ver detalhes", Icons.visibility_rounded, () {
+                      mostrarDetalhesCotacao(
+                        cotacao,
+                        fornecedorController: fornecedorCtrl,
+                        cotacaoController: cotacaoCtrl,
+                        cotacoes: cotacaoCtrl.gerenciarCotacoes,
+                        theme: theme,
+                        avaliacaoController: avaliacaoController,
+                        appController: appController,
+                        eventoController: eventoCtrl,
+                      );
+                    }),
                   if (cotacao.status == StatusCotacao.pendente ||
                       cotacao.status == StatusCotacao.parcial)
                     _buildAcaoCotacao(Colors.redAccent, "Cancelar pedido",

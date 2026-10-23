@@ -197,8 +197,18 @@ class AvaliacaoServicoRemoteDatasource {
           .where('id_usuario', isEqualTo: idUsuario)
           .limit(1)
           .get();
+      if (jaAvaliou.docs.isNotEmpty) return false;
 
-      return jaAvaliou.docs.isEmpty;
+      // Só após contratação efetiva (orçamento fechado com o fornecedor).
+      final contratado = await _db
+          .collection('orcamento')
+          .where('id_evento', isEqualTo: idEvento)
+          .where('id_fornecedor', isEqualTo: idFornecedor)
+          .where('orcamento_fechado', isEqualTo: true)
+          .limit(1)
+          .get();
+
+      return contratado.docs.isNotEmpty;
     } catch (e, s) {
       developer.log(
         'Erro ao verificar se pode avaliar cotação',

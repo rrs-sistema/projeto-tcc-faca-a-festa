@@ -62,9 +62,10 @@ abstract interface class CotacaoRemoteDatasource {
     DateTime? prazoEntrega,
     String? condicaoPagamento,
     String? observacaoFornecedor,
+    double? valorProposto,
   });
 
-  Future<String> confirmarFornecedorEscolhido({
+  Future<Map<String, dynamic>> confirmarFornecedorEscolhido({
     required String idCotacao,
     required String idFornecedor,
     required String nomeFornecedor,
@@ -87,10 +88,11 @@ class FirebaseCotacaoRemoteDatasource implements CotacaoRemoteDatasource {
 
   @override
   Stream<List<CotacaoModel>> observarMinhasCotacoes(String idUsuario) {
+    // Sem orderBy no servidor: evita índice composto obrigatório
+    // (id_usuario_solicitante + data_envio). Ordenação fica no cliente.
     return _db
         .collection('cotacao')
         .where('id_usuario_solicitante', isEqualTo: idUsuario)
-        .orderBy('data_envio', descending: true)
         .snapshots()
         .asyncMap((snapshot) async {
       final lista = <CotacaoModel>[];
@@ -98,20 +100,24 @@ class FirebaseCotacaoRemoteDatasource implements CotacaoRemoteDatasource {
       for (final doc in snapshot.docs) {
         final data = doc.data();
         final totalEstimado = await _calcularTotalEstimado(doc.reference);
+        final statusPai = StatusCotacao.fromString(data['status']?.toString());
+        final status = await _statusEfetivoDaCotacao(doc.reference, statusPai);
 
         lista.add(
           CotacaoModel(
             id: doc.id,
-            idEvento: data['id_evento'],
-            idUsuarioSolicitante: data['id_usuario_solicitante'],
-            nomeUsuarioSolicitante: data['nome_usuario_solicitante'],
-            categoriaNome: data['categoria_nome'] ?? '',
-            descricao: data['observacao'] ?? data['descricao'],
+            idEvento: (data['id_evento'] ?? '').toString(),
+            idUsuarioSolicitante:
+                (data['id_usuario_solicitante'] ?? idUsuario).toString(),
+            nomeUsuarioSolicitante:
+                (data['nome_usuario_solicitante'] ?? '').toString(),
+            categoriaNome: (data['categoria_nome'] ?? '').toString(),
+            descricao: (data['observacao'] ?? data['descricao'])?.toString(),
             dataLimiteResposta:
                 (data['data_limite_resposta'] as Timestamp?)?.toDate(),
             dataCadastro:
                 (data['data_envio'] as Timestamp?)?.toDate() ?? DateTime.now(),
-            status: StatusCotacao.fromString(data['status']),
+            status: status,
             valorEstimadoTotal: totalEstimado,
             fornecedores: const [],
             servicos: const [],
@@ -119,8 +125,46 @@ class FirebaseCotacaoRemoteDatasource implements CotacaoRemoteDatasource {
         );
       }
 
+      lista.sort((a, b) => b.dataCadastro.compareTo(a.dataCadastro));
       return lista;
     });
+  }
+
+  /// Se o pai ficou preso em `pendente` mas já há resposta nos fornecedores,
+  /// deriva o status efetivo para a UI do organizador.
+  Future<StatusCotacao> _statusEfetivoDaCotacao(
+    DocumentReference<Map<String, dynamic>> cotacaoRef,
+    StatusCotacao statusPai,
+  ) async {
+    if (statusPai == StatusCotacao.concluida ||
+        statusPai == StatusCotacao.cancelada ||
+        statusPai == StatusCotacao.respondida ||
+        statusPai == StatusCotacao.parcial) {
+      return statusPai;
+    }
+
+    final snap = await cotacaoRef.collection('fornecedores').get();
+    if (snap.docs.isEmpty) return statusPai;
+
+    final statuses = snap.docs
+        .map((d) => (d.data()['status'] ?? '').toString().toLowerCase())
+        .toList();
+    final finalizados = statuses.every(
+      (s) =>
+          s == 'respondido' ||
+          s == 'respondida' ||
+          s == 'recusado' ||
+          s == 'cancelada' ||
+          s == 'fechado' ||
+          s == 'perdeucotacao',
+    );
+    final algumPreco = statuses.any((s) => s == 'respondido' || s == 'respondida');
+    final soRecusas = statuses.every((s) => s == 'recusado' || s == 'cancelada');
+
+    if (soRecusas) return StatusCotacao.cancelada;
+    if (finalizados && algumPreco) return StatusCotacao.respondida;
+    if (algumPreco) return StatusCotacao.parcial;
+    return statusPai;
   }
 
   Future<double> _calcularTotalEstimado(
@@ -325,6 +369,7 @@ class FirebaseCotacaoRemoteDatasource implements CotacaoRemoteDatasource {
     DateTime? prazoEntrega,
     String? condicaoPagamento,
     String? observacaoFornecedor,
+    double? valorProposto,
   }) {
     return _callable.responderCotacao(
       idCotacao: idCotacao,
@@ -332,11 +377,12 @@ class FirebaseCotacaoRemoteDatasource implements CotacaoRemoteDatasource {
       prazoEntrega: prazoEntrega,
       condicaoPagamento: condicaoPagamento ?? '',
       observacaoFornecedor: observacaoFornecedor ?? '',
+      valorProposto: valorProposto,
     );
   }
 
   @override
-  Future<String> confirmarFornecedorEscolhido({
+  Future<Map<String, dynamic>> confirmarFornecedorEscolhido({
     required String idCotacao,
     required String idFornecedor,
     required String nomeFornecedor,
@@ -391,8 +437,15 @@ class FirebaseCotacaoRemoteDatasource implements CotacaoRemoteDatasource {
 
     final ultima =
         mensagens.docs.isNotEmpty ? mensagens.docs.first.data() : null;
-    final naoLidas =
-        mensagens.docs.where((m) => (m.data()['lido'] ?? false) != true).length;
+    // Badge: mensagens de terceiros (não próprias, não sistema) ainda não lidas.
+    final naoLidas = mensagens.docs.where((m) {
+      final data = m.data();
+      final autor = (data['id_usuario'] ?? '').toString();
+      if (autor.isEmpty || autor == 'sistema' || autor == idFornecedor) {
+        return false;
+      }
+      return data['lido'] != true;
+    }).length;
 
     return CotacaoConversaModel(
       idCotacao: cotacaoRef.id,
@@ -406,7 +459,7 @@ class FirebaseCotacaoRemoteDatasource implements CotacaoRemoteDatasource {
       nomeSolicitante:
           (cotacaoData['nome_usuario_solicitante'] ?? 'Organizador').toString(),
       dataSolicitacao: _toDateTime(cotacaoData['data_envio']) ?? DateTime.now(),
-      ultimaMensagem: (ultima?['mensagem'] ?? 'Conversa iniciada').toString(),
+      ultimaMensagem: (ultima?['mensagem'] ?? 'Nenhuma mensagem ainda').toString(),
       ultimaMensagemEm: _toDateTime(ultima?['enviado_em']),
       naoLidas: naoLidas,
     );
@@ -425,6 +478,7 @@ class FirebaseCotacaoRemoteDatasource implements CotacaoRemoteDatasource {
       observacaoFornecedor: (data['observacao_fornecedor'] ?? '').toString(),
       prazoEntrega: _toDateTime(data['prazo_entrega']),
       condicaoPagamento: data['condicao_pagamento']?.toString(),
+      valorCotado: (data['valor_cotado'] as num?)?.toDouble(),
       servicos: servicosSnap.docs
           .map((servico) => _servicoResumoFromMap(servico.data()))
           .toList(),
@@ -432,12 +486,14 @@ class FirebaseCotacaoRemoteDatasource implements CotacaoRemoteDatasource {
   }
 
   CotacaoMensagemModel _mensagemFromMap(Map<String, dynamic> data) {
+    final idUsuario = (data['id_usuario'] ?? '').toString();
     return CotacaoMensagemModel(
-      idUsuario: (data['id_usuario'] ?? '').toString(),
+      idUsuario: idUsuario,
       nomeUsuario: (data['nome_usuario'] ?? '').toString(),
       mensagem: (data['mensagem'] ?? '').toString(),
       enviadoEm: _toDateTime(data['enviado_em']) ?? DateTime.now(),
       lido: data['lido'] == true,
+      sistema: data['sistema'] == true || idUsuario == 'sistema',
     );
   }
 

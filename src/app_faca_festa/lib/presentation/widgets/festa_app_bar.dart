@@ -47,13 +47,17 @@ abstract final class FestaSystemUi {
   }
 }
 
-/// ===============================================================
-/// 🎀 APP BAR TEMATIZADA - "FAÇA A FESTA"
-/// ---------------------------------------------------------------
-/// - Integra com o tema atual (gradiente, cores, ícone)
-/// - Suporte a blur de fundo e título com fonte Poppins estilizada
-/// - Reutilizável em qualquer tela
-/// ===============================================================
+/// Espaço padrão entre a [FestaAppBar] (com curva) e o título/conteúdo da página.
+abstract final class FestaPageInsets {
+  static const double belowAppBar = 24;
+}
+
+/// App bar tematizada com toolbar própria (Row), sem [AppBar].
+/// O Material [NavigationToolbar] no trailing recebia constraints ≈ 1×1 quando
+/// a altura preferida do Scaffold era consumida pelo padding da status bar.
+///
+/// O Scaffold reserva `preferredSize + statusBar`. Este widget precisa consumir
+/// o inset superior; senão o título fica colado nos ícones da status bar.
 class FestaAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String titulo;
   final bool automaticamenteImplyLeading;
@@ -69,7 +73,7 @@ class FestaAppBar extends StatelessWidget implements PreferredSizeWidget {
     required this.titulo,
     this.automaticamenteImplyLeading = true,
     this.acoes,
-    this.altura = 65,
+    this.altura = 56,
     this.tituloExtra,
     this.bottom,
     this.themeController,
@@ -77,7 +81,10 @@ class FestaAppBar extends StatelessWidget implements PreferredSizeWidget {
   });
 
   @override
-  Size get preferredSize => Size.fromHeight(altura);
+  Size get preferredSize {
+    final bottomH = bottom?.preferredSize.height ?? 0;
+    return Size.fromHeight(altura + bottomH);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -99,102 +106,120 @@ class FestaAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 
   Widget _buildBar(BuildContext context, Gradient gradiente) {
+    final acoesList = acoes ?? const <Widget>[];
+    final topInset = MediaQuery.paddingOf(context).top;
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: FestaSystemUi.fundoEscuro,
-      child: ClipRRect(
-        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(20)),
-        child: Stack(
-          children: [
-            // 🔹 Fundo com gradiente e blur sutil
-            Container(
-              decoration: BoxDecoration(
-                gradient: gradiente,
-              ),
-            ),
-            BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
-              child: Container(color: Colors.white.withValues(alpha: 0.05)),
-            ),
-
-            // 🔹 AppBar principal
-            AppBar(
-              automaticallyImplyLeading: false,
-              elevation: 0,
-              backgroundColor: Colors.transparent,
-              systemOverlayStyle: FestaSystemUi.fundoEscuro,
-              centerTitle: true,
-              titleSpacing: 0,
-              title: Padding(
-                padding: EdgeInsets.only(
-                    top: MediaQuery.of(context).padding.top /
-                        2), // 👈 dá espaço no topo
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
+      child: Material(
+        color: Colors.transparent,
+        child: ClipRRect(
+          borderRadius:
+              const BorderRadius.vertical(bottom: Radius.circular(20)),
+          child: SizedBox(
+            // Preenche o slot do Scaffold (preferredSize + padding.top).
+            height: preferredSize.height + topInset,
+            width: double.infinity,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                DecoratedBox(decoration: BoxDecoration(gradient: gradiente)),
+                BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+                  child: const ColoredBox(color: Color(0x0DFFFFFF)),
+                ),
+                Column(
                   children: [
-                    Text(
-                      titulo,
-                      style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 19,
-                        color: Colors.white,
-                        letterSpacing: 0.5,
-                        shadows: [
-                          Shadow(
-                            color: Colors.black.withValues(alpha: 0.3),
-                            blurRadius: 5,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
+                    SizedBox(height: topInset),
+                    SizedBox(
+                      height: altura,
+                      width: double.infinity,
+                      child: IconTheme(
+                        data: const IconThemeData(
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                        child: Row(
+                          children: [
+                            SizedBox(
+                              width: 56,
+                              child: automaticamenteImplyLeading
+                                  ? IconButton(
+                                      tooltip: 'Voltar',
+                                      icon: Icon(
+                                        Icons.arrow_back_ios_new_rounded,
+                                        color: Colors.white
+                                            .withValues(alpha: 0.95),
+                                      ),
+                                      onPressed: () => Get.back(),
+                                    )
+                                  : null,
+                            ),
+                            Expanded(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    titulo,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    textAlign: TextAlign.center,
+                                    style: GoogleFonts.poppins(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 18,
+                                      color: Colors.white,
+                                      letterSpacing: 0.3,
+                                      height: 1.15,
+                                      shadows: [
+                                        Shadow(
+                                          color: Colors.black
+                                              .withValues(alpha: 0.28),
+                                          blurRadius: 5,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  if (tituloExtra != null) tituloExtra!,
+                                ],
+                              ),
+                            ),
+                            if (acoesList.isEmpty)
+                              const SizedBox(width: 56)
+                            else
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: acoesList,
+                              ),
+                          ],
+                        ),
                       ),
                     ),
-                    if (tituloExtra != null) tituloExtra!,
+                    if (bottom != null) bottom!,
                   ],
                 ),
-              ),
-              leading: automaticamenteImplyLeading
-                  ? Padding(
-                      padding: EdgeInsets.only(
-                          top: MediaQuery.of(context).padding.top / 3),
-                      child: IconButton(
-                        tooltip: 'Voltar',
-                        icon: Icon(
-                          Icons.arrow_back_ios_new_rounded,
-                          color: Colors.white.withValues(alpha: 0.95),
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: IgnorePointer(
+                    child: Container(
+                      height: 3,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.white.withValues(alpha: 0.4),
+                            Colors.white.withValues(alpha: 0.05),
+                          ],
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
                         ),
-                        onPressed: () => Get.back(),
                       ),
-                    )
-                  : null,
-              actions: acoes
-                  ?.map(
-                    (a) => Padding(
-                      padding: EdgeInsets.only(
-                          top: MediaQuery.of(context).padding.top / 3),
-                      child: a,
                     ),
-                  )
-                  .toList(),
-              bottom: bottom,
-            ),
-
-            // ✨ Detalhe decorativo inferior (brilho sutil)
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: Container(
-                height: 3,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Colors.white.withValues(alpha: 0.4),
-                      Colors.white.withValues(alpha: 0.05),
-                    ],
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
                   ),
                 ),
-              ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

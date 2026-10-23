@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/domain/entities/calculadora_festa.dart';
 import 'dart:async';
 import 'package:app_faca_festa/data/services/calculadora/calculadora_festa_remote_ai_service.dart';
 
@@ -159,6 +160,8 @@ void main() {
       c = CalculadoraFestaController(
           aiService: ai, repository: repo, itensBaseRepository: _Itens());
       c.estimativaSemEvento.value = true;
+      c.alterarBaseCalculo(
+          BaseCalculoFesta.manual); // Fixture define público manual confirmado.
       c.totalAdultos.value = 20;
       c.tipoEventoAtual.value = 'Casamento';
       c.itensEstimativa.add(regra());

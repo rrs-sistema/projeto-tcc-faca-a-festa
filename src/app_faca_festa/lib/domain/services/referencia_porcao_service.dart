@@ -142,7 +142,9 @@ class ReferenciaPorcaoService {
   List<ReferenciaPorcao> buscar(String nome, String papel) => referencias
       .where((r) =>
           r.papel == papel &&
-          r.aliases.contains(RevisaoCardapioService.normalizar(nome)))
+          r.aliases.any((a) =>
+              RevisaoCardapioService.normalizar(a) ==
+              RevisaoCardapioService.normalizar(nome)))
       .toList();
 
   static double rendimentoMedido(double entrada, double saida) {

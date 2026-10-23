@@ -10,7 +10,10 @@
     "start": "npm run shell",
     "deploy": "firebase deploy --only functions",
     "logs": "firebase functions:log",
-    "check:calculadora": "tsc --noEmit && node scripts/testCalculadoraPlanejamento.js"
+    "check:calculadora": "tsc --noEmit && node scripts/testCalculadoraPlanejamento.js && node scripts/testPlanejadorHibrido.js",
+    "check:financeiro": "tsc --noEmit && node scripts/testFinanceiroFundacao.js && node scripts/testLiquidacaoConcorrencia.js && node scripts/testAutorizacaoFinanceiro.js && node scripts/testPrevisaoGerente.js && node scripts/testFinanceiroFornecedor.js && node scripts/testEstoqueFornecedor.js && node scripts/testComissaoPlataforma.js && node scripts/testDashboardAdmin.js && node scripts/testSimulacaoOrcamento.js && node scripts/testFinanceiroIntegrado.js",
+    "check:financeiro:integrado": "tsc --noEmit && node scripts/testFinanceiroIntegrado.js",
+    "fixture:financeiro:integrado": "node scripts/prepararFinanceiroIntegradoEmulador.js"
   },
   "engines": {
     "node": "22"

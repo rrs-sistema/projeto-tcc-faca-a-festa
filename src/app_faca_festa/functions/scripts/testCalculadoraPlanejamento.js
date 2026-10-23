@@ -143,4 +143,34 @@ async function testarLimite() {
   assert.equal(estado.chamadas, 1);
   console.log('Calculadora: limite compartilhado e renovação OK');
 }
+
+
+const { validarPoliticaPublico } = carregar('services/calculadora/publicoPlanejamentoService.ts');
+for (const cfg of [{}, {base:'confirmados',base_confirmada:true,lista_completude:'em_preenchimento'},
+  {base:'manual',base_confirmada:true,publico:{adultos:0,criancas:0,bebes:0}}]) validarPoliticaPublico(cfg);
+for (const cfg of [{lista_completude:'automatica'}, {base:'capacidade'}, {base_confirmada:true},
+  {base:'manual',base_confirmada:true}, {publico:{adultos:-1,criancas:0,bebes:0}}]) assert.throws(() => validarPoliticaPublico(cfg));
+const zeroConfirmado=financeiroCalculadora({orcamento_disponivel:0,custo_total_estimado:500});
+assert.equal(zeroConfirmado.orcamento,0);assert.equal(zeroConfirmado.diferenca,500);
+console.log('Calculadora: política privada de público e zero confirmado OK');
+
+for (const cfg of [{duracao:6,perfil:'premium',margem:.1,verba_alimentacao:1450},{margem:0,verba_alimentacao:0},{margem:null,verba_alimentacao:null}]) validarPoliticaPublico(cfg);
+for (const cfg of [{duracao:0},{duracao:25},{duracao:1.5},{perfil:'luxo'},{margem:-.1},{margem:.31},{verba_alimentacao:-1},{verba_alimentacao:'1450'}]) assert.throws(() => validarPoliticaPublico(cfg));
+console.log('Calculadora: configuração uniforme, nulos, zero e limites OK');
+
+const {validarAgenda,validarOcorrencia}=carregar('services/calculadora/agendaServicoService.ts');
+const ocorrencia={id:'oc_1',id_cardapio:'oc_1',id_evento:'festa',id_modelo:'modelo',titulo:'Almoço',formato:'nao_definido',data_local:null,hora_local:null,fuso:null,duracao_minutos:null};
+validarAgenda([ocorrencia],'festa');validarOcorrencia({...ocorrencia,data_local:'2026-10-20',hora_local:'12:00',fuso:'America/Sao_Paulo',duracao_minutos:60},'2026-10-20','2026-10-21');
+for(const extra of [{data_local:'2026-02-30'},{hora_local:'25:00'},{duracao_minutos:0},{fuso:'Inválido/Inventado'},{id_modelo:'oc_1'},{data_local:'2026-03-08',hora_local:'02:30',fuso:'America/New_York'}]) assert.throws(()=>validarOcorrencia({...ocorrencia,...extra}));
+assert.throws(()=>validarAgenda([ocorrencia,ocorrencia]));assert.throws(()=>validarAgenda([ocorrencia],'outra'));
+console.log('Calculadora: agenda civil, fuso, intervalo e identidade OK');
+const {validarReferenciaContextual}=carregar('services/calculadora/catalogoContextualService.ts');
+const referencia={schema:1,motor_minimo:1,id:'referencia_qa',versao:1,tipo:'porcao',nome:'Sintético',aliases:['Sintético'],alimento_receita:'Sintético',servicos:['lanche'],formatos:['buffet'],periodos:['qualquer'],publicos:['todos'],obtencoes:['servir'],papel:'outro',unidade:'quilo',estado_consumo:'pronto',estado_compra:'pronto',contexto:'Somente teste',limitacoes:'Não usar como referência real',fonte:'https://example.test/qa',verificado_em:null,revisao_editorial:'Fixture',minimo:.1,maximo:.2,padrao:.15};
+validarReferenciaContextual(referencia);
+assert.throws(()=>validarReferenciaContextual({...referencia,id:123}));
+assert.throws(()=>validarReferenciaContextual({...referencia,fonte:'codigo:'}));
+for(const extra of [{schema:2},{motor_minimo:2},{versao:0},{padrao:1},{minimo:0},{fonte:'inventada'},{publicos:['desconhecido']},{hora_inicio:'09:00'},{duracao_minima:41,duracao_maxima:30},{campo_desconhecido:true}]) assert.throws(()=>validarReferenciaContextual({...referencia,...extra}));
+validarReferenciaContextual({...referencia,hora_inicio:'09:00',hora_fim:'10:00',duracao_minima:30,duracao_maxima:40});
+console.log('Calculadora: catálogo contextual, estados, faixas e schema OK');
+
 Promise.all([testarAcessoCallable(), testarLimite()]).catch((error) => { console.error(error); process.exit(1); });

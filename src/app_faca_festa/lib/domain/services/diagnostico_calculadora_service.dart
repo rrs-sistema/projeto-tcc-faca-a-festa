@@ -22,7 +22,8 @@ class DiagnosticoCalculadoraService {
   const DiagnosticoCalculadoraService();
 
   DiagnosticoCalculadora analisar(
-      {required int pessoas,
+      {bool avaliarComposicao = true,
+      required int pessoas,
       required List<CardapioItem> cardapio,
       required List<ItemEstimativaFinanceira> regras}) {
     const revisao = RevisaoCardapioService();
@@ -66,7 +67,7 @@ class DiagnosticoCalculadoraService {
           if (ajustes.isNotEmpty)
             'Unidades propostas para itens ainda sem quantidade final: ${ajustes.join(', ')}. '
                 'O cardápio só muda quando você revisar e aplicar as sugestões.',
-          if (acompanhamentos.length > 1)
+          if (avaliarComposicao && acompanhamentos.length > 1)
             'Há possíveis acompanhamentos na mesma refeição: ${acompanhamentos.join(', ')}. '
                 'A presença de outro acompanhamento não reduz a porção automaticamente. '
                 'Configure a porção para este cardápio; a divisão só ocorre quando você a ativa nos itens.',

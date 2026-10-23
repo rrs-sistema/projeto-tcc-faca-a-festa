@@ -212,6 +212,7 @@ extension _FornecedorDetalheHero on FornecedorDetalheScreen {
     required Fornecedor fornecedor,
     required FornecedorDetalhado detalhe,
     required int totalServicos,
+    required bool exibirContatoDireto,
   }) {
     return Container(
       padding: const EdgeInsets.all(14),
@@ -270,12 +271,16 @@ extension _FornecedorDetalheHero on FornecedorDetalheScreen {
               const SizedBox(width: 8),
               Expanded(
                 child: _buildMiniMetric(
-                  icon: Icons.phone_in_talk_rounded,
-                  value: fornecedor.telefone.isNotEmpty ||
-                          fornecedor.email.isNotEmpty
-                      ? 'Sim'
-                      : 'Não',
-                  label: 'contato',
+                  icon: exibirContatoDireto
+                      ? Icons.phone_in_talk_rounded
+                      : Icons.forum_rounded,
+                  value: exibirContatoDireto
+                      ? (fornecedor.telefone.isNotEmpty ||
+                              fornecedor.email.isNotEmpty
+                          ? 'Sim'
+                          : 'Não')
+                      : 'Chat',
+                  label: exibirContatoDireto ? 'contato' : 'mediado',
                   color: Colors.teal,
                 ),
               ),
@@ -373,11 +378,38 @@ extension _FornecedorDetalheHero on FornecedorDetalheScreen {
     required String? territorioDescricao,
     required double? distancia,
     required Color primary,
+    required bool exibirContatoDireto,
   }) {
-    final hasTelefone = fornecedor.telefone.isNotEmpty;
-    final hasEmail = fornecedor.email.isNotEmpty;
+    final hasTelefone = exibirContatoDireto && fornecedor.telefone.isNotEmpty;
+    final hasEmail = exibirContatoDireto && fornecedor.email.isNotEmpty;
     final hasTerritorio = territorioDescricao?.trim().isNotEmpty ?? false;
     final hasDistancia = distancia != null;
+
+    if (!exibirContatoDireto && !hasTerritorio && !hasDistancia) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(22),
+        ),
+        child: Column(
+          children: [
+            Icon(Icons.forum_outlined, color: Colors.teal.shade300, size: 34),
+            const SizedBox(height: 8),
+            Text(
+              'Contato direto não é exibido. Peça preço e converse pelo chat do app.',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(
+                color: Colors.black54,
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
     if (!hasTelefone && !hasEmail && !hasTerritorio && !hasDistancia) {
       return Container(
@@ -423,6 +455,18 @@ extension _FornecedorDetalheHero on FornecedorDetalheScreen {
       ),
       child: Column(
         children: [
+          if (!exibirContatoDireto)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Text(
+                'Telefone e e-mail ficam só com a plataforma. Use cotação e chat no app.',
+                style: GoogleFonts.poppins(
+                  fontSize: 12.2,
+                  color: const Color(0xFF64748B),
+                  height: 1.35,
+                ),
+              ),
+            ),
           if (hasTelefone)
             _buildContactLine(
               icon: Icons.call_rounded,
@@ -519,6 +563,7 @@ extension _FornecedorDetalheHero on FornecedorDetalheScreen {
     required Color primary,
     required FornecedorController fornecedorController,
     required FornecedorDetalhado detalhe,
+    required bool exibirContatoDireto,
   }) {
     return SafeArea(
       top: false,
@@ -580,18 +625,29 @@ extension _FornecedorDetalheHero on FornecedorDetalheScreen {
                 borderRadius: BorderRadius.circular(16),
               ),
               child: IconButton(
-                tooltip: 'Ver contatos',
+                tooltip: exibirContatoDireto
+                    ? 'Ver contatos'
+                    : 'Contato pelo app',
                 onPressed: () {
                   HapticFeedback.lightImpact();
                   Get.snackbar(
-                    'Contato do fornecedor',
-                    'Veja telefone, e-mail e região no final da página.',
+                    exibirContatoDireto
+                        ? 'Contato do fornecedor'
+                        : 'Contato mediado',
+                    exibirContatoDireto
+                        ? 'Veja telefone, e-mail e região no final da página.'
+                        : 'Peça preço e converse pelo chat. Telefone e e-mail não são exibidos.',
                     snackPosition: SnackPosition.BOTTOM,
                     margin: const EdgeInsets.all(16),
                   );
                 },
-                icon:
-                    Icon(Icons.contact_phone_rounded, color: primary, size: 21),
+                icon: Icon(
+                  exibirContatoDireto
+                      ? Icons.contact_phone_rounded
+                      : Icons.forum_rounded,
+                  color: primary,
+                  size: 21,
+                ),
               ),
             ),
           ],

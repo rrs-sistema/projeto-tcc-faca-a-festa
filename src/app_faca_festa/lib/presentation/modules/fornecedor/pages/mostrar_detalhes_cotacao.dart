@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:get/get.dart';
 
 import 'package:app_faca_festa/core/utils/biblioteca.dart';
+import 'package:app_faca_festa/core/utils/numeric_input.dart';
 import 'package:app_faca_festa/domain/entities/avaliacao.dart';
 import 'package:app_faca_festa/domain/entities/cotacao.dart';
 import 'package:app_faca_festa/domain/entities/cotacao_chat.dart';
@@ -41,6 +42,32 @@ void mostrarDetalhesCotacao(
     ),
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
+  );
+}
+
+void _abrirAcompanhamentoOrganizador({
+  required Cotacao cotacao,
+  required EventoController eventoController,
+}) {
+  final idEvento = cotacao.idEvento.trim().isNotEmpty
+      ? cotacao.idEvento.trim()
+      : (eventoController.eventoAtualEntidade?.idEvento ?? '').trim();
+  if (idEvento.isEmpty) {
+    Get.snackbar(
+      'Pagamento',
+      'Não foi possível identificar o evento deste contrato.',
+      backgroundColor: Colors.redAccent,
+      colorText: Colors.white,
+    );
+    return;
+  }
+  final nome = eventoController.eventoAtualEntidade?.nomeEvento;
+  Get.toNamed(
+    '/acompanhamento-organizador',
+    arguments: {
+      'idEvento': idEvento,
+      if (nome != null && nome.trim().isNotEmpty) 'nomeEvento': nome.trim(),
+    },
   );
 }
 
@@ -219,6 +246,96 @@ class _DetalhesCotacaoContent extends StatelessWidget {
                             ],
                           ),
                         ),
+                        if (cotacao.status.prontoParaContratar) ...[
+                          const SizedBox(height: 12),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.green.shade50,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.green.shade200),
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Icon(Icons.handshake_outlined,
+                                    color: Colors.green.shade700, size: 20),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'O fornecedor já enviou o preço. '
+                                    'Quem fecha o negócio é você: toque em '
+                                    'Contratar este no fornecedor escolhido.',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 12,
+                                      height: 1.35,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.green.shade800,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                        if (cotacao.status == StatusCotacao.concluida) ...[
+                          const SizedBox(height: 12),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.blue.shade50,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.blue.shade200),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Icon(Icons.payments_outlined,
+                                        color: Colors.blue.shade700, size: 20),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        'Contrato criado. Declare o pagamento '
+                                        'à plataforma e acompanhe a execução.',
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 12,
+                                          height: 1.35,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.blue.shade900,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                FilledButton.icon(
+                                  onPressed: () =>
+                                      _abrirAcompanhamentoOrganizador(
+                                    cotacao: cotacao,
+                                    eventoController: eventoController,
+                                  ),
+                                  icon: const Icon(
+                                      Icons.account_balance_wallet_outlined,
+                                      size: 18),
+                                  label: const Text(
+                                      'Declarar pagamento / acompanhar'),
+                                  style: FilledButton.styleFrom(
+                                    backgroundColor: Colors.blue.shade700,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                         const SizedBox(height: 16),
 
                         // === OBSERVAÇÃO ===
@@ -392,6 +509,11 @@ class _DetalhesCotacaoContent extends StatelessWidget {
                                                 _linhaIconeMenor(
                                                     Icons.payments_outlined,
                                                     "Pgto: ${data.condicaoPagamento}"),
+                                              if (data.valorCotado != null &&
+                                                  data.valorCotado! > 0)
+                                                _linhaIconeMenor(
+                                                    Icons.attach_money_rounded,
+                                                    "Valor cotado: ${NumericInput.dinheiro(data.valorCotado!)}"),
                                             ],
                                           ),
                                         ),
@@ -444,7 +566,8 @@ class _DetalhesCotacaoContent extends StatelessWidget {
                                                                   TextOverflow
                                                                       .ellipsis)),
                                                       Text(
-                                                          "R\$ ${(valor * qtd).toStringAsFixed(2)}",
+                                                          NumericInput.dinheiro(
+                                                              valor * qtd),
                                                           style: GoogleFonts
                                                               .poppins(
                                                                   fontSize: 11,
@@ -512,17 +635,30 @@ class _DetalhesCotacaoContent extends StatelessWidget {
                                               status == 'respondida')
                                             _btnAcao(
                                                 Icons.check_circle_outline,
-                                                "Contratar este",
+                                                data.valorCotado != null &&
+                                                        data.valorCotado! > 0
+                                                    ? 'Contratar este · ${NumericInput.dinheiro(data.valorCotado!)}'
+                                                    : 'Contratar este',
                                                 Colors.green.shade600,
                                                 () => cotacaoController
                                                     .confirmarFornecedorEscolhido(
                                                         idFornecedor,
                                                         cotacao.id)),
-                                          if ([
-                                            'respondido',
-                                            'respondida',
-                                            'fechado'
-                                          ].contains(status))
+                                          if (status == 'fechado' ||
+                                              status == 'fechada' ||
+                                              status == 'concluida' ||
+                                              status == 'concluido')
+                                            _btnAcao(
+                                                Icons.payments_outlined,
+                                                'Declarar pagamento',
+                                                Colors.blue.shade700,
+                                                () =>
+                                                    _abrirAcompanhamentoOrganizador(
+                                                  cotacao: cotacao,
+                                                  eventoController:
+                                                      eventoController,
+                                                )),
+                                          if (data.chatAberto)
                                             _btnAcao(
                                                 Icons.chat_rounded,
                                                 "Chat",

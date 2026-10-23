@@ -46,11 +46,14 @@ class AuthFestaCard extends StatelessWidget {
   const AuthFestaCard({
     super.key,
     required this.child,
-    this.padding = const EdgeInsets.fromLTRB(20, 20, 20, 18),
+    this.padding = const EdgeInsets.fromLTRB(22, 22, 22, 20),
   });
 
   final Widget child;
   final EdgeInsetsGeometry padding;
+
+  /// Largura confortável de formulário em desktop/web (evita OTP/botão esticado).
+  static const double larguraMaxima = 420;
 
   @override
   Widget build(BuildContext context) {
@@ -59,11 +62,17 @@ class AuthFestaCard extends StatelessWidget {
       padding: padding,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0x14FF2D7B)),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF111827).withValues(alpha: 0.06),
-            blurRadius: 18,
+            color: const Color(0xFF111827).withValues(alpha: 0.07),
+            blurRadius: 28,
+            offset: const Offset(0, 14),
+          ),
+          BoxShadow(
+            color: AuthFestaBrand.rosaIcone.withValues(alpha: 0.06),
+            blurRadius: 40,
             offset: const Offset(0, 8),
           ),
         ],
@@ -183,7 +192,12 @@ class AuthFestaShell extends StatelessWidget {
                 constraints: BoxConstraints(minHeight: constraints.maxHeight),
                 child: Align(
                   alignment: Alignment.center,
-                  child: content,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      maxWidth: AuthFestaCard.larguraMaxima,
+                    ),
+                    child: content,
+                  ),
                 ),
               ),
             );

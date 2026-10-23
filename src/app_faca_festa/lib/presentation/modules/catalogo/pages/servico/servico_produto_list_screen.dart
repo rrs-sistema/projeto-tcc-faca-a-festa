@@ -187,7 +187,7 @@ class _ServicoProdutoListScreenState extends State<ServicoProdutoListScreen> {
               actions: adminActions,
             )
           : FestaAppBar(
-              titulo: 'Serviços e Produtos',
+              titulo: 'Catálogo de venda',
               themeController: theme,
               acoes: [
                 Container(

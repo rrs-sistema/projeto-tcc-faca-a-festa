@@ -23,6 +23,8 @@ class EnderecoSectionController {
 
   final BuscarCepService _cepService;
   String _ultimoCepConsultado = '';
+  int _geracaoConsulta = 0;
+  bool suspenderConsulta = false;
 
   EnderecoSectionController({
     required BuscarCepService cepService,
@@ -64,32 +66,37 @@ class EnderecoSectionController {
     if (consultandoCep.value) return;
     if (!forcar && cep == _ultimoCepConsultado) return;
 
+    final geracao = ++_geracaoConsulta;
     consultandoCep.value = true;
     mensagemCep.value = '';
     _ultimoCepConsultado = cep;
 
     try {
       final resultado = await _cepService.buscar(cep: cep);
+      if (geracao != _geracaoConsulta) return;
       _preencherCampos(resultado);
       mensagemCep.value = '';
       if (numeroController.text.trim().isEmpty) {
         numeroFocusNode.requestFocus();
       }
     } on BuscarCepException catch (e) {
+      if (geracao != _geracaoConsulta) return;
       _ultimoCepConsultado = '';
       mensagemCep.value = e.mensagem;
       _mostrarErroCep(e.mensagem);
     } catch (e) {
+      if (geracao != _geracaoConsulta) return;
       _ultimoCepConsultado = '';
       const mensagem = 'Não foi possível consultar o CEP. Tente novamente.';
       mensagemCep.value = mensagem;
       _mostrarErroCep(mensagem);
     } finally {
-      consultandoCep.value = false;
+      if (geracao == _geracaoConsulta) consultandoCep.value = false;
     }
   }
 
   void limpar() {
+    _geracaoConsulta++;
     cepController.clear();
     logradouroController.clear();
     numeroController.clear();
@@ -105,6 +112,7 @@ class EnderecoSectionController {
   }
 
   void dispose() {
+    _geracaoConsulta++;
     cepController.removeListener(_onCepAlterado);
     cepController.dispose();
     logradouroController.dispose();
@@ -117,6 +125,7 @@ class EnderecoSectionController {
   }
 
   void _onCepAlterado() {
+    if (suspenderConsulta) return;
     final cep = cepController.text.replaceAll(RegExp(r'\D'), '');
     if (cep.length != 8) {
       if (cep.length < 8) {

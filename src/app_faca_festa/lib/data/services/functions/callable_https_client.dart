@@ -70,28 +70,7 @@ class CallableHttpsClient {
           )
           .timeout(timeout ?? _timeout);
 
-      final body = _decodificar(response.body);
-      final error = body['error'];
-      if (error is Map) {
-        throw CallableHttpsException(
-          _codigoDeStatus(error['status']?.toString()),
-          error['message']?.toString(),
-        );
-      }
-
-      if (response.statusCode < 200 || response.statusCode >= 300) {
-        throw CallableHttpsException(
-          response.statusCode == 401 ? 'unauthenticated' : 'internal',
-          'Não foi possível concluir a verificação.',
-        );
-      }
-
-      final result = body['result'];
-      if (result is Map<String, dynamic>) return result;
-      if (result is Map) {
-        return result.map((key, value) => MapEntry(key.toString(), value));
-      }
-      return const {};
+      return _interpretarResposta(response);
     });
   }
 
@@ -111,29 +90,55 @@ class CallableHttpsClient {
           )
           .timeout(timeout ?? _timeout);
 
-      final body = _decodificar(response.body);
-      final error = body['error'];
-      if (error is Map) {
-        throw CallableHttpsException(
-          _codigoDeStatus(error['status']?.toString()),
-          error['message']?.toString(),
-        );
-      }
-
-      if (response.statusCode < 200 || response.statusCode >= 300) {
-        throw const CallableHttpsException(
-          'internal',
-          'Não foi possível concluir a verificação.',
-        );
-      }
-
-      final result = body['result'];
-      if (result is Map<String, dynamic>) return result;
-      if (result is Map) {
-        return result.map((key, value) => MapEntry(key.toString(), value));
-      }
-      return const {};
+      return _interpretarResposta(response);
     });
+  }
+
+  Map<String, dynamic> _interpretarResposta(http.Response response) {
+    final raw = response.body;
+    final contentType = response.headers['content-type'] ?? '';
+    final pareceHtml = contentType.contains('text/html') ||
+        raw.trimLeft().startsWith('<!') ||
+        raw.trimLeft().toLowerCase().startsWith('<html');
+
+    if (pareceHtml) {
+      final code = response.statusCode == 404 ? 'not-found' : 'unavailable';
+      throw CallableHttpsException(
+        code,
+        response.statusCode == 404
+            ? 'Função indisponível neste ambiente (HTTP 404). '
+                'O serviço respondeu HTML em vez de JSON.'
+            : 'Resposta inválida do servidor (HTML). '
+                'A function pode estar fora do ar ou com URL incorreta.',
+      );
+    }
+
+    final body = _decodificar(raw);
+    final error = body['error'];
+    if (error is Map) {
+      throw CallableHttpsException(
+        _codigoDeStatus(error['status']?.toString()),
+        error['message']?.toString(),
+      );
+    }
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw CallableHttpsException(
+        response.statusCode == 401
+            ? 'unauthenticated'
+            : response.statusCode == 404
+                ? 'not-found'
+                : 'internal',
+        'Não foi possível concluir a verificação.',
+      );
+    }
+
+    final result = body['result'];
+    if (result is Map<String, dynamic>) return result;
+    if (result is Map) {
+      return result.map((key, value) => MapEntry(key.toString(), value));
+    }
+    return const {};
   }
 
   Uri _functionUri(String nomeFunction) {
@@ -147,12 +152,19 @@ class CallableHttpsClient {
 
   Map<String, dynamic> _decodificar(String raw) {
     if (raw.trim().isEmpty) return const {};
-    final decoded = jsonDecode(raw);
-    if (decoded is Map<String, dynamic>) return decoded;
-    if (decoded is Map) {
-      return decoded.map((key, value) => MapEntry(key.toString(), value));
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is Map<String, dynamic>) return decoded;
+      if (decoded is Map) {
+        return decoded.map((key, value) => MapEntry(key.toString(), value));
+      }
+      return const {};
+    } on FormatException {
+      throw const CallableHttpsException(
+        'unavailable',
+        'Resposta não-JSON da function (possível HTML de erro/404).',
+      );
     }
-    return const {};
   }
 
   String _codigoDeStatus(String? status) {

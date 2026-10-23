@@ -34,7 +34,7 @@ class OrcamentoGastoRemoteDatasource {
   }) async {
     final refOrcamento = _db.collection('orcamento').doc(idOrcamento);
 
-    if (custo <= 0) {
+    if (!custo.isFinite || !pago.isFinite || custo <= 0) {
       return OrcamentoValidacaoResultado.erro(
         'O custo do item deve ser maior que zero.',
       );
@@ -113,8 +113,25 @@ class OrcamentoGastoRemoteDatasource {
     required String idGasto,
     required double valorTotal,
   }) {
-    return _gastosRef(idOrcamento).doc(idGasto).update({
-      'pago': valorTotal,
+    if (!valorTotal.isFinite || valorTotal < 0) {
+      throw ArgumentError('Confira o pagamento.');
+    }
+    final ref = _gastosRef(idOrcamento).doc(idGasto);
+    return _db.runTransaction((tx) async {
+      final doc = await tx.get(ref), data = doc.data();
+      if (data == null ||
+          data['id_orcamento'] != null && data['id_orcamento'] != idOrcamento) {
+        throw StateError('Despesa não encontrada neste orçamento.');
+      }
+      final custo = _comoDouble(data['custo']),
+          pago = _comoDouble(data['pago']);
+      if (valorTotal < pago || valorTotal > custo) {
+        throw ArgumentError('O pagamento deve respeitar o saldo da despesa.');
+      }
+      tx.update(ref, {
+        'pago': valorTotal,
+        'pagamento_atualizado_em': FieldValue.serverTimestamp()
+      });
     });
   }
 

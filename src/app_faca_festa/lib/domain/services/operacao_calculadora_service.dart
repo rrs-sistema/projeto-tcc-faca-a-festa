@@ -1,4 +1,11 @@
+import 'agenda_servico_service.dart';
+import '../entities/ocorrencia_servico.dart';
+import '../entities/confirmacao_configuracao_calculadora.dart';
+import 'publico_planejamento_service.dart';
 import 'dart:convert';
+import '../entities/contexto_servico_planejador.dart';
+import 'package:collection/collection.dart';
+import 'revisao_pos_evento_service.dart';
 import '../entities/cardapio_item.dart';
 import '../entities/convidados_equivalentes.dart';
 import '../entities/estimativa_financeira.dart';
@@ -39,16 +46,23 @@ class OperacaoCalculadoraService {
     'amendoim': 'Sem amendoim',
     'outra': 'Outra necessidade',
   };
-  Map<String, dynamic> refeicao(Map<String, dynamic> operacao, String id) =>
-      mapa(mapa(operacao['refeicoes'])[id]);
+  Map<String, dynamic> refeicao(Map<String, dynamic> operacao, String id) => {
+        ...mapa(mapa(operacao['refeicoes'])[id]),
+        if (const AgendaServicoService().porCardapio(operacao, id)
+            case final o?)
+          'ocorrencia': o
+      };
   ConvidadosEquivalentes publico(
       Map<String, dynamic> config, ConvidadosEquivalentes padrao) {
     final p = config['publico'];
-    if (p is! Map) return padrao;
+    final extra = mapa(config['publico_extra']);
+    int count(String k, int padrao) =>
+        (p is Map ? inteiro(p[k]) : padrao) +
+        (extra.isEmpty ? 0 : inteiro(extra[k]));
     return ConvidadosEquivalentes(
-        adultos: inteiro(p['adultos']),
-        criancas: inteiro(p['criancas']),
-        bebes: inteiro(p['bebes']));
+        adultos: count('adultos', padrao.adultos),
+        criancas: count('criancas', padrao.criancas),
+        bebes: count('bebes', padrao.bebes));
   }
 
   ItemEstimativaFinanceira regraComPublico(ItemEstimativaFinanceira regra,
@@ -56,6 +70,12 @@ class OperacaoCalculadoraService {
     final meta = Map<String, dynamic>.from(regra.premissas)
       ..remove('publico_refeicao')
       ..remove('destino_publico');
+    if (config['ocorrencia'] is Map) {
+      final o = OcorrenciaServico.fromMap(mapa(config['ocorrencia']));
+      meta['id_ocorrencia'] = o.id;
+      meta['duracao_servico_minutos'] = o.duracaoMinutos;
+      meta['agenda_servico'] = o.toMap();
+    }
     final destino = mapa(
         mapa(config['destinos_itens'])[regra.premissas['id_item_cardapio']]);
     if ((destino['modo'] ?? 'todos') == 'todos') {
@@ -84,6 +104,15 @@ class OperacaoCalculadoraService {
   }
 
   void validarRefeicao(Map<String, dynamic> config) {
+    if (config['publico_extra'] != null) {
+      final extra = mapa(config['publico_extra']);
+      for (final k in ['adultos', 'criancas', 'bebes']) {
+        inteiro(extra[k]);
+      }
+    }
+    if (config['ocorrencia'] != null) {
+      OcorrenciaServico.fromMap(mapa(config['ocorrencia']));
+    }
     final p = config['publico'];
     if ((p != null && p is! Map) ||
         (config['grupos'] != null && config['grupos'] is! List) ||
@@ -145,7 +174,11 @@ class OperacaoCalculadoraService {
     }
     if (p is Map) {
       for (final k in ['adultos', 'criancas', 'bebes']) {
-        if (grupos.fold<int>(0, (s, g) => s + inteiro(g[k])) > inteiro(p[k])) {
+        if (grupos.fold<int>(0, (s, g) => s + inteiro(g[k])) >
+            inteiro(p[k]) +
+                (config['publico_extra'] is Map
+                    ? inteiro(config['publico_extra'][k])
+                    : 0)) {
           throw ArgumentError(
               'Os grupos não podem repetir pessoas nem superar o público da refeição.');
         }
@@ -155,14 +188,128 @@ class OperacaoCalculadoraService {
 
   Map<String, dynamic> aplicar(
       Map<String, dynamic> atual, Map<String, dynamic> acao) {
+    if (atual['versao'] != null && atual['versao'] != 1) {
+      throw StateError('Atualize o aplicativo antes de alterar esta operação.');
+    }
+    if (acao['tipo'] == 'configuracao_planejamento') {
+      final comando = ConfirmacaoConfiguracaoCalculadora(
+          id: acao['comando_id'] as String,
+          revisaoEsperada: acao['revisao'] as int,
+          alteracoes: mapa(acao['alteracoes']));
+      final recibos =
+          mapa(mapa(atual['configuracao_planejamento'])['confirmacoes']);
+      if (recibos.containsKey(comando.id)) {
+        if (recibos[comando.id] !=
+            ConfirmacaoConfiguracaoCalculadora.assinatura(comando.alteracoes)) {
+          throw StateError(
+              'Esta confirmação já foi usada com outras escolhas.');
+        }
+        return mapa(jsonDecode(jsonEncode(atual)));
+      }
+    }
     if ((atual['revisao'] ?? 0) != acao['revisao']) {
       throw StateError(
           'O planejamento foi alterado em outro acesso. Reabra a tela e confira os dados.');
     }
     final novo = mapa(jsonDecode(jsonEncode(atual)));
     switch (acao['tipo']) {
+      case 'configuracao_planejamento':
+        final mudancas = mapa(acao['alteracoes']);
+        final cfg = {...mapa(novo['configuracao_planejamento']), ...mudancas};
+        validarConfiguracaoPublico(cfg);
+        final recibos = mapa(cfg['confirmacoes']);
+        recibos[acao['comando_id']] =
+            ConfirmacaoConfiguracaoCalculadora.assinatura(mudancas);
+        while (recibos.length > 20) {
+          recibos.remove(recibos.keys.first);
+        }
+        cfg['confirmacoes'] = recibos;
+        cfg['campos_alterados'] = mudancas.keys.toList();
+        cfg['revisao'] = (atual['revisao'] as num? ?? 0).toInt() + 1;
+        novo['configuracao_planejamento'] = cfg;
+      case 'publico_planejamento':
+        final mudancas = mapa(acao['alteracoes']);
+        if (mudancas.isEmpty ||
+            mudancas.keys.any((k) => ![
+                  'base',
+                  'base_confirmada',
+                  'publico',
+                  'lista_completude'
+                ].contains(k))) {
+          throw ArgumentError('Confira a escolha de público.');
+        }
+        final cfg = {...mapa(novo['configuracao_planejamento']), ...mudancas};
+        validarConfiguracaoPublico(cfg);
+        if (mudancas.containsKey('base') &&
+            mudancas['base_confirmada'] != true) {
+          throw ArgumentError('Confirme a fonte de público.');
+        }
+        cfg['campos_alterados'] = mudancas.keys.toList();
+        cfg['revisao'] = (atual['revisao'] as num? ?? 0).toInt() + 1;
+        novo['configuracao_planejamento'] = cfg;
+      case 'regras':
+        final recebidas = lista(acao['regras']);
+        if (recebidas.isEmpty || recebidas.length > 60) {
+          throw ArgumentError('Selecione até 60 ajustes para salvar.');
+        }
+        final exec = mapa(novo['execucao']);
+        final regras = lista(exec['regras']);
+        final anteriores = mapa(acao['anteriores']);
+        final ids = <String>{};
+        var mudou = false;
+        for (final raw in recebidas) {
+          final regra = ItemEstimativaFinanceira.fromPlanejamento(raw);
+          if (regra.id.isEmpty ||
+              regra.id.contains('/') ||
+              !ids.add(regra.id) ||
+              regra.nome.trim().isEmpty ||
+              (numero(regra.quantidadePorConvidadoEquivalente) <= 0 &&
+                  regra.selecionado) ||
+              numero(regra.rendimento) <= 0 ||
+              numero(regra.numeroServicos) <= 0) {
+            throw ArgumentError('Confira a identificação e o consumo do item.');
+          }
+          numero(regra.valorUnitarioMedio);
+          numero(regra.tamanhoEmbalagem);
+          final indice = regras.indexWhere((r) => r['id'] == regra.id);
+          final atual = indice < 0 ? null : regras[indice];
+          if (const DeepCollectionEquality().equals(atual, raw)) continue;
+          if (!anteriores.containsKey(regra.id) ||
+              !const DeepCollectionEquality()
+                  .equals(atual, anteriores[regra.id])) {
+            throw StateError(
+                'Este item foi alterado em outro acesso. Reabra o ajuste para conferir os valores.');
+          }
+          if (indice < 0) {
+            regras.add(raw);
+          } else {
+            regras[indice] = raw;
+          }
+          mudou = true;
+        }
+        if (regras.length > 60) {
+          throw ArgumentError('O evento já atingiu 60 regras de consumo.');
+        }
+        if (!mudou) return atual;
+        novo['execucao'] = {
+          ...exec,
+          'regras': regras,
+          'contexto_desatualizado': true
+        };
+      case 'revisao_pos_evento':
+        novo['revisao_pos_evento'] = const RevisaoPosEventoService()
+            .preparar(mapa(novo['revisao_pos_evento']), acao);
+      case 'agenda':
+        final o = OcorrenciaServico.fromMap(mapa(acao['ocorrencia']));
+        novo.addAll(const AgendaServicoService().atualizar(novo, o));
+        final config = {
+          ...mapa(mapa(novo['refeicoes'])[o.cardapio]),
+          ...mapa(acao['config'])
+        }..remove('ocorrencia');
+        validarRefeicao(config);
+        novo['refeicoes'] = {...mapa(novo['refeicoes']), o.cardapio: config};
       case 'refeicao':
-        final config = mapa(acao['config']);
+        final config = mapa(acao['config'])..remove('ocorrencia');
         validarRefeicao(config);
         final id = acao['id_cardapio']?.toString() ?? '';
         if (id.isEmpty) throw ArgumentError('Selecione uma refeição.');
@@ -217,7 +364,9 @@ class OperacaoCalculadoraService {
         }
         final reservas = mapa(lote['reservas']);
         final qtd = numero(r['quantidade']);
-        final chave = destino(ref, item);
+        final chave = r['ingrediente'] == null
+            ? destino(ref, item)
+            : jsonEncode([ref, item, r['ingrediente']]);
         if (qtd == 0) {
           reservas.remove(chave);
         } else {
@@ -239,7 +388,63 @@ class OperacaoCalculadoraService {
     return novo;
   }
 
+  void validarConfiguracaoPublico(Map<String, dynamic> cfg) {
+    ConfirmacaoConfiguracaoCalculadora.validar(cfg);
+    if (cfg.containsKey('confirmacoes') &&
+        (cfg['confirmacoes'] is! Map ||
+            (cfg['confirmacoes'] as Map).length > 20 ||
+            (cfg['confirmacoes'] as Map)
+                .values
+                .any((v) => v is! String || v.length > 5000))) {
+      throw ArgumentError('Confirmações inválidas.');
+    }
+
+    if (cfg.containsKey('lista_completude') &&
+            !CompletudeLista.values
+                .any((e) => e.valor == cfg['lista_completude']) ||
+        cfg.containsKey('base_confirmada') && cfg['base_confirmada'] is! bool ||
+        cfg.containsKey('base') && basePublicoDoValor(cfg['base']) == null ||
+        cfg['base_confirmada'] == true &&
+            basePublicoDoValor(cfg['base']) == null) {
+      throw ArgumentError('Configuração de público inválida.');
+    }
+    if (cfg.containsKey('publico')) {
+      final p = cfg['publico'];
+      if (p is! Map ||
+          p.keys.any((k) => !['adultos', 'criancas', 'bebes'].contains(k))) {
+        throw ArgumentError('Público manual inválido.');
+      }
+      for (final k in ['adultos', 'criancas', 'bebes']) {
+        inteiro(p[k]);
+      }
+    }
+    if (cfg['base'] == 'manual' &&
+        cfg['base_confirmada'] == true &&
+        cfg['publico'] is! Map) {
+      throw ArgumentError('Informe o público manual confirmado.');
+    }
+  }
+
   void validarDocumento(Map<String, dynamic> documento) {
+    if (documento['versao'] != null && documento['versao'] != 1) {
+      throw ArgumentError(
+          'Operação exige uma versão mais recente do aplicativo.');
+    }
+    if (documento['planejador'] != null &&
+        (documento['planejador'] is! Map ||
+            mapa(documento['planejador']).length > 20)) {
+      throw ArgumentError('Planejador inválido.');
+    }
+    for (final d in mapa(documento['planejador']).values) {
+      validarDecisaoServicoPlanejador(mapa(d));
+    }
+    const AgendaServicoService()
+        .ler(documento['agenda'], evento: documento['id_evento']?.toString());
+    if (documento['configuracao_planejamento'] != null &&
+        documento['configuracao_planejamento'] is! Map) {
+      throw ArgumentError('Configuração inválida.');
+    }
+    validarConfiguracaoPublico(mapa(documento['configuracao_planejamento']));
     for (final r in mapa(documento['refeicoes']).values) {
       validarRefeicao(mapa(r));
     }

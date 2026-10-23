@@ -158,16 +158,14 @@ class TotpMfaController extends GetxController {
       carregando.value = true;
       EasyLoading.show(status: 'Confirmando autenticador...');
       await _autenticacaoRepository.confirmarTotpMfa(codigoLimpo);
-      EasyLoading.dismiss();
       appController.marcarTotpVerificado();
       Get.offAllNamed('/splash');
     } on AutenticacaoException catch (e) {
-      EasyLoading.dismiss();
       _mostrarErro(_traduzErro(e.codigo, e.mensagem));
     } catch (_) {
-      EasyLoading.dismiss();
       _mostrarErro('Não foi possível confirmar o código. Tente novamente.');
     } finally {
+      EasyLoading.dismiss();
       carregando.value = false;
     }
   }
@@ -183,16 +181,14 @@ class TotpMfaController extends GetxController {
       carregando.value = true;
       EasyLoading.show(status: 'Confirmando e-mail...');
       await _autenticacaoRepository.confirmarEmailMfa(codigoLimpo);
-      EasyLoading.dismiss();
       appController.marcarTotpVerificado();
       Get.offAllNamed('/splash');
     } on AutenticacaoException catch (e) {
-      EasyLoading.dismiss();
       _mostrarErro(_traduzErro(e.codigo, e.mensagem));
     } catch (_) {
-      EasyLoading.dismiss();
       _mostrarErro('Não foi possível confirmar o código. Tente novamente.');
     } finally {
+      EasyLoading.dismiss();
       carregando.value = false;
     }
   }
@@ -208,16 +204,14 @@ class TotpMfaController extends GetxController {
       carregando.value = true;
       EasyLoading.show(status: 'Validando código...');
       await _autenticacaoRepository.verificarTotpMfa(codigoLimpo);
-      EasyLoading.dismiss();
       appController.marcarTotpVerificado();
       Get.offAllNamed('/splash');
     } on AutenticacaoException catch (e) {
-      EasyLoading.dismiss();
       _mostrarErro(_traduzErro(e.codigo, e.mensagem));
     } catch (_) {
-      EasyLoading.dismiss();
       _mostrarErro('Não foi possível validar o código. Tente novamente.');
     } finally {
+      EasyLoading.dismiss();
       carregando.value = false;
     }
   }
@@ -233,16 +227,14 @@ class TotpMfaController extends GetxController {
       carregando.value = true;
       EasyLoading.show(status: 'Validando código...');
       await _autenticacaoRepository.verificarEmailMfa(codigoLimpo);
-      EasyLoading.dismiss();
       appController.marcarTotpVerificado();
       Get.offAllNamed('/splash');
     } on AutenticacaoException catch (e) {
-      EasyLoading.dismiss();
       _mostrarErro(_traduzErro(e.codigo, e.mensagem));
     } catch (_) {
-      EasyLoading.dismiss();
       _mostrarErro('Não foi possível validar o código. Tente novamente.');
     } finally {
+      EasyLoading.dismiss();
       carregando.value = false;
     }
   }

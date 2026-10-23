@@ -88,6 +88,8 @@ CalculadoraFestaController controller({bool disponivel = true, Repo? repo}) {
       aiService: IA(), repository: repo ?? Repo(), itensBaseRepository: Base());
   c.idEventoAtual.value = 'festa';
   c.tipoEventoAtual.value = 'almoco';
+  c.alterarBaseCalculo(
+      BaseCalculoFesta.manual); // Público definido explicitamente pela fixture.
   c.totalAdultos.value = 10;
   c.margemPersonalizada.value = 0;
   c.revisarCardapio.value = true;

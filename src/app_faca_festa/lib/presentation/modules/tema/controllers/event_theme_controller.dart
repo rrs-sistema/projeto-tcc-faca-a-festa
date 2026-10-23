@@ -148,7 +148,7 @@ class EventThemeController extends GetxController {
   }) async {
     try {
       final cache = _cacheTemasFesta[idTema];
-      if (cache != null && (cache.capaEfetiva ?? '').trim().isNotEmpty) {
+      if (cache != null) {
         aplicarTemaFesta(cache, nomeTipo: nomeTipo);
         return true;
       }
@@ -420,9 +420,20 @@ class EventThemeController extends GetxController {
         ),
       ),
       chipTheme: ChipThemeData(
-        selectedColor: primary,
-        checkmarkColor: onPrimary,
-        labelStyle: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+        backgroundColor: const Color(0xFFF8FAFC),
+        disabledColor: const Color(0xFFE2E8F0),
+        selectedColor: primary.withValues(alpha: 0.14),
+        secondarySelectedColor: primary.withValues(alpha: 0.14),
+        checkmarkColor: primary,
+        side: const BorderSide(color: Color(0xFFCBD5E1)),
+        labelStyle: GoogleFonts.poppins(
+          fontWeight: FontWeight.w600,
+          color: const Color(0xFF334155),
+        ),
+        secondaryLabelStyle: GoogleFonts.poppins(
+          fontWeight: FontWeight.w700,
+          color: primary,
+        ),
       ),
     );
   }

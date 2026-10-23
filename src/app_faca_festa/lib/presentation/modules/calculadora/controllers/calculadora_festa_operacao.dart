@@ -1,6 +1,74 @@
 part of 'calculadora_festa_controller.dart';
 
 extension CalculadoraFestaOperacao on CalculadoraFestaController {
+  Map<String, dynamic>? regraPersistida(String id) {
+    final exec = OperacaoCalculadoraService.mapa(operacaoEvento['execucao']);
+    for (final raw in OperacaoCalculadoraService.lista(exec['regras'])) {
+      if (raw['id'] == id) {
+        return Map<String, dynamic>.from(jsonDecode(jsonEncode(raw)) as Map);
+      }
+    }
+    return null;
+  }
+
+  Future<void> salvarItemManual(ItemEstimativaFinanceira item,
+      {required Map<String, dynamic>? anterior}) async {
+    if (!possuiEventoVinculado) {
+      adicionarItemManual(item);
+      return;
+    }
+    final evento = idEventoAtual.value;
+    final sessao = sessaoPlanejador;
+    if ((item.premissas['id_evento']?.toString() ?? '').isNotEmpty &&
+        item.premissas['id_evento'] != evento) {
+      throw StateError('O ajuste pertence a outro evento.');
+    }
+    final regra =
+        item.copyWith(premissas: {...item.premissas, 'id_evento': evento});
+    await alterarOperacao({
+      'tipo': 'regras',
+      'regras': [regra.toPlanejamento()],
+      'anteriores': {regra.id: anterior}
+    });
+    if (idEventoAtual.value != evento ||
+        usandoContextoHistorico.value ||
+        sessao != sessaoPlanejador) return;
+    adicionarItemManual(regra);
+    _regrasExecucaoRecebidas[regra.id] =
+        assinaturaExecucao(regra.toPlanejamento());
+  }
+
+  Future<void> salvarAjustesManuais() async {
+    if (!possuiEventoVinculado ||
+        usandoContextoHistorico.value ||
+        regrasManuais.isEmpty) {
+      return;
+    }
+    final evento = idEventoAtual.value;
+    if (regrasManuais.any((r) =>
+        (r.premissas['id_evento']?.toString() ?? '').isNotEmpty &&
+        r.premissas['id_evento'] != evento)) {
+      throw StateError(
+          'Há ajustes de outro evento. Atualize os dados antes de salvar.');
+    }
+    final regras = regrasManuais
+        .map(
+            (r) => r.copyWith(premissas: {...r.premissas, 'id_evento': evento}))
+        .toList();
+    await alterarOperacao({
+      'tipo': 'regras',
+      'regras': regras.map((r) => r.toPlanejamento()).toList(),
+      'anteriores': {for (final r in regras) r.id: regraPersistida(r.id)}
+    });
+    if (idEventoAtual.value != evento || usandoContextoHistorico.value) return;
+    for (final r in regras) {
+      regrasManuais.removeWhere((atual) => atual.id == r.id);
+      regrasManuais.add(r);
+      _regrasExecucaoRecebidas[r.id] = assinaturaExecucao(r.toPlanejamento());
+    }
+    calcular();
+  }
+
   static const _motorOperacao = OperacaoCalculadoraService();
 
   List<String> restricoesDoItem(ItemEstimativaFinanceira regra) {
@@ -111,9 +179,20 @@ extension CalculadoraFestaOperacao on CalculadoraFestaController {
               .map((p) => '${titulosCardapiosEvento[e.key] ?? e.key}: $p')
       ];
 
-  Future<void> iniciarOperacaoEvento() async {
+  Future<void> iniciarOperacaoEvento({bool aguardarPrimeira = false}) async {
+    final primeira = Completer<void>();
+    void concluir() {
+      if (!primeira.isCompleted) primeira.complete();
+    }
+
+    consultaOperacaoIniciada.value = true;
+    unawaited(carregarPreferencias().catchError((Object _) {}));
+    final usuario = _uidAtual;
     final versao = ++_versaoOperacao;
-    await _operacaoSubscription?.cancel();
+    final anterior = _operacaoSubscription;
+    _operacaoSubscription = null;
+    await anterior?.cancel();
+    if (versao != _versaoOperacao) return;
     final id = idEventoAtual.value;
     if (id.isEmpty || usandoContextoHistorico.value) return;
     operacaoCarregada.value = false;
@@ -121,7 +200,8 @@ extension CalculadoraFestaOperacao on CalculadoraFestaController {
     try {
       _operacaoSubscription =
           _repository.observarOperacaoEvento(id).listen((dados) {
-        if (versao != _versaoOperacao ||
+        if (usuario != _uidAtual ||
+            versao != _versaoOperacao ||
             id != idEventoAtual.value ||
             usandoContextoHistorico.value) {
           return;
@@ -130,12 +210,16 @@ extension CalculadoraFestaOperacao on CalculadoraFestaController {
             (operacaoEvento['revisao'] as num? ?? 0)) {
           return;
         }
+        restaurarRegrasExecucao(dados);
+        restaurarConfiguracaoEntrada(dados);
         operacaoEvento.assignAll(dados);
         operacaoCarregada.value = true;
+        concluir();
         erroOperacao.value = '';
         calcular();
       }, onError: (Object e) {
-        if (versao != _versaoOperacao ||
+        if (usuario != _uidAtual ||
+            versao != _versaoOperacao ||
             id != idEventoAtual.value ||
             usandoContextoHistorico.value) {
           return;
@@ -143,12 +227,30 @@ extension CalculadoraFestaOperacao on CalculadoraFestaController {
         operacaoCarregada.value = false;
         erroOperacao.value =
             'Não foi possível consultar público, grupos e estoque da festa. Tente novamente.';
+        concluir();
         _agendarAnaliseIA();
       });
     } catch (_) {
+      if (usuario != _uidAtual ||
+          versao != _versaoOperacao ||
+          usandoContextoHistorico.value) {
+        return;
+      }
       operacaoCarregada.value = false;
       erroOperacao.value =
           'Não foi possível consultar público, grupos e estoque da festa. Tente novamente.';
+      concluir();
+    }
+    if (aguardarPrimeira) {
+      await primeira.future.timeout(const Duration(seconds: 8), onTimeout: () {
+        if (usuario == _uidAtual &&
+            versao == _versaoOperacao &&
+            !usandoContextoHistorico.value) {
+          operacaoCarregada.value = false;
+          erroOperacao.value =
+              'A confirmação do planejamento está indisponível. Atualize antes de calcular.';
+        }
+      });
     }
   }
 
@@ -160,13 +262,35 @@ extension CalculadoraFestaOperacao on CalculadoraFestaController {
       throw StateError(
           'Atualize os dados do evento antes de alterar o planejamento.');
     }
+    final usuario = _uidAtual;
+    final geracao = _versaoPreparacao;
     final id = idEventoAtual.value;
-    final resultado = await _repository.alterarOperacaoEvento(id, {
-      ...acao,
-      'revisao': acao['revisao'] ?? operacaoEvento['revisao'] ?? 0
-    });
-    if (id != idEventoAtual.value || usandoContextoHistorico.value) return;
-    operacaoEvento.assignAll(resultado);
-    calcular();
+    if (escritaContextoPendente.value) {
+      throw StateError('Aguarde a confirmação do planejamento.');
+    }
+    escritaContextoPendente.value = true;
+    try {
+      final resultado = await _repository.alterarOperacaoEvento(id, {
+        ...acao,
+        'revisao': acao['revisao'] ?? operacaoEvento['revisao'] ?? 0
+      });
+      if (usuario != _uidAtual ||
+          geracao != _versaoPreparacao ||
+          id != idEventoAtual.value ||
+          usandoContextoHistorico.value) {
+        return;
+      }
+      if ((resultado['revisao'] as num? ?? 0) <
+          (operacaoEvento['revisao'] as num? ?? 0)) {
+        return;
+      }
+      operacaoEvento.assignAll(resultado);
+      calcular();
+    } finally {
+      if (geracao == _versaoPreparacao) {
+        escritaContextoPendente.value = false;
+        _agendarAnaliseIA();
+      }
+    }
   }
 }

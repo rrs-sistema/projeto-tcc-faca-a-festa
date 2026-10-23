@@ -9,6 +9,8 @@ class UFCidadeController extends GetxController {
       : _ufsCidades = ufsCidades;
 
   final GerenciarUfsCidades _ufsCidades;
+  UFCidadeController novaSessao() =>
+      UFCidadeController(ufsCidades: _ufsCidades);
 
   final estados = <Estado>[].obs;
   final cidades = <Cidade>[].obs;

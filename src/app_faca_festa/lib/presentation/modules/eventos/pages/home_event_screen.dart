@@ -1,8 +1,7 @@
 import 'package:app_faca_festa/presentation/modules/cotacao/controllers/cotacao_controller.dart';
 import 'package:app_faca_festa/presentation/modules/cotacao/controllers/solicitacoes_controller.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:app_faca_festa/presentation/widgets/tema_capa_imagem.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shimmer/shimmer.dart';
@@ -620,15 +619,6 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
                       telaAmplia,
                     ),
                     _faixa(
-                      _buildBudgetChart(
-                        eventoController,
-                        orcamentoController.totalCustoEstimado,
-                        theme,
-                        onAbrir: homeEventNavController.irParaOrcamento,
-                      ),
-                      telaAmplia,
-                    ),
-                    _faixa(
                       _buildQuickActions(
                         theme: theme,
                         convidadoController: convidadoController,
@@ -763,18 +753,10 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
       children: [
         _trilhoFesta(theme),
         const SizedBox(height: 12),
-        _buildBudgetChart(
-          eventoController,
-          orcamentoController.totalCustoEstimado,
-          theme,
-          onAbrir: homeEventNavController.irParaOrcamento,
-          comoSliver: false,
-          padding: EdgeInsets.zero,
-        ),
         _buildProximasTarefas(
           theme,
           comoSliver: false,
-          padding: const EdgeInsets.only(top: 12),
+          padding: EdgeInsets.zero,
         ),
       ],
     );
@@ -965,6 +947,7 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
           eventoController: eventoController,
           themeController: theme,
           cardapioController: cardapioController,
+          convidadoController: convidadoController,
           fornecedorMigracaoAdminController: fornecedorMigracaoAdminController,
         ),
       );
@@ -998,10 +981,9 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
       child: Obx(() {
         final evento = eventoController.eventoAtual.value ??
             eventoController.eventoAtualEntidade!;
-        final totLista = convidadoController.totalConvidados;
-        final totConv =
-            totLista > 0 ? totLista : evento.totalConvidadosCalculado;
-        final conf = totLista > 0 ? convidadoController.totalConfirmados : 0;
+        final publico = convidadoController.publicoPlanejadoDoEvento(evento);
+        final totConv = publico.total ?? 0;
+        final conf = publico.confirmados ?? 0;
         final progConv = totConv > 0 ? conf / totConv : 0.0;
 
         final totOrc = orcamentoController.totalCustoEstimado.value;
@@ -1047,7 +1029,7 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
             _linhaStatus(
               titulo: HomeOrganizadorCopy.resumoConvidados,
               detalhe: HomeOrganizadorCopy.convidadosDetalhe(conf, totConv),
-              valor: totConv <= 0 ? '0' : '$conf',
+              valor: publico.confirmados?.toString() ?? '—',
               progresso: progConv,
               cor: cor,
               aoTocar: homeEventNavController.irParaConvidados,
@@ -1180,10 +1162,9 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
       ),
       child: Obx(() {
         final evento = eventoController.eventoAtual.value ?? eventoModel;
-        final totLista = convidadoController.totalConvidados;
-        final totConv =
-            totLista > 0 ? totLista : evento.totalConvidadosCalculado;
-        final conf = totLista > 0 ? convidadoController.totalConfirmados : 0;
+        final publico = convidadoController.publicoPlanejadoDoEvento(evento);
+        final totConv = publico.total ?? 0;
+        final conf = publico.confirmados ?? 0;
         final progConv = totConv > 0 ? conf / totConv : 0.0;
 
         final totOrc = orcamentoController.totalCustoEstimado.value;
@@ -1210,7 +1191,7 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
                 color: const Color(0xFF1F2937),
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             Row(
               mainAxisAlignment: agruparIndicadores
                   ? MainAxisAlignment.start
@@ -1219,7 +1200,7 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
                 for (final indicador in <Widget>[
                   _MiniCircularIndicator(
                     title: HomeOrganizadorCopy.resumoConvidados,
-                    value: totConv <= 0 ? '0' : '$conf/$totConv',
+                    value: publico.confirmados?.toString() ?? '—',
                     progress: progConv,
                     color: cor,
                     onTap: homeEventNavController.irParaConvidados,
@@ -1446,6 +1427,7 @@ Widget _buildQuickActions({
                             eventoController: eventoController,
                             themeController: theme,
                             cardapioController: cardapioController,
+                            convidadoController: convidadoController,
                             fornecedorMigracaoAdminController:
                                 fornecedorMigracaoAdminController,
                           ),
@@ -1652,146 +1634,6 @@ class ContadorEventoHeaderDelegate extends SliverPersistentHeaderDelegate {
   @override
   bool shouldRebuild(covariant ContadorEventoHeaderDelegate oldDelegate) =>
       true;
-}
-
-Widget _buildBudgetChart(
-  EventoController eventoController,
-  RxDouble totalCustoEstimado,
-  EventThemeController theme, {
-  VoidCallback? onAbrir,
-  bool comoSliver = true,
-  EdgeInsetsGeometry padding = const EdgeInsets.fromLTRB(16, 8, 16, 0),
-  bool preencherAltura = false,
-}) {
-  final card = Obx(() {
-    final total = totalCustoEstimado.value;
-    final limite = eventoController.eventoAtual.value?.custoEstimado ?? 0.0;
-    final percentualUsado = limite > 0 ? total / limite : 0.0;
-    final usado = percentualUsado.clamp(0.0, 1.0);
-    final primary = theme.primaryColor.value;
-
-    return Padding(
-      padding: padding,
-      child: Material(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        elevation: 0,
-        child: MouseRegion(
-          cursor:
-              onAbrir == null ? MouseCursor.defer : SystemMouseCursors.click,
-          child: InkWell(
-            onTap: onAbrir,
-            borderRadius: BorderRadius.circular(20),
-            child: Container(
-              alignment: preencherAltura ? Alignment.centerLeft : null,
-              padding: const EdgeInsets.only(
-                  left: 16, right: 12, top: 10, bottom: 10),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.04),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4))
-                ],
-              ),
-              child: Row(
-                children: [
-                  SizedBox(
-                    height: 60,
-                    width: 60,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        PieChart(PieChartData(
-                          startDegreeOffset: 270,
-                          sectionsSpace: 0,
-                          centerSpaceRadius: 22,
-                          borderData: FlBorderData(show: false),
-                          sections: [
-                            PieChartSectionData(
-                                value: usado * 100,
-                                color: primary,
-                                radius: 8,
-                                showTitle: false),
-                            PieChartSectionData(
-                                value: (1 - usado) * 100,
-                                color: Colors.grey.shade200,
-                                radius: 8,
-                                showTitle: false),
-                          ],
-                        )),
-                        Icon(Icons.attach_money_rounded,
-                            color: primary, size: 18),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(HomeOrganizadorCopy.gastoTitulo,
-                            style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                                color: const Color(0xFF1F2937))),
-                        const SizedBox(height: 4),
-                        Wrap(
-                          spacing: 10,
-                          runSpacing: 2,
-                          alignment: WrapAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              '${HomeOrganizadorCopy.gastoUsado}: R\$ ${Biblioteca.formatarValorDecimal(total)}',
-                              style: GoogleFonts.poppins(
-                                  fontSize: 11, color: Colors.grey.shade600),
-                            ),
-                            Text(
-                              '${HomeOrganizadorCopy.gastoPlanejado}: R\$ ${Biblioteca.formatarValorDecimal(limite)}',
-                              style: GoogleFonts.poppins(
-                                  fontSize: 11, color: Colors.grey.shade600),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 2),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: Text(
-                            '${Biblioteca.formatarValorDecimal(percentualUsado * 100)}%',
-                            style: GoogleFonts.poppins(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w800,
-                                color: primary),
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(10),
-                          child: LinearProgressIndicator(
-                              value: usado.toDouble(),
-                              minHeight: 6,
-                              backgroundColor: Colors.grey.shade200,
-                              valueColor: AlwaysStoppedAnimation(primary)),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Icon(
-                    Icons.chevron_right_rounded,
-                    color: primary.withValues(alpha: 0.7),
-                    size: 22,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  });
-  if (!comoSliver) return card;
-  return SliverToBoxAdapter(child: card);
 }
 
 Widget _buildSuppliersCarousel(
@@ -2058,10 +1900,10 @@ Widget _fornecedorCard({
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
-                    CachedNetworkImage(
-                      imageUrl: fornecedor.bannerUrl ?? '',
+                    TemaCapaImagem(
+                      url: fornecedor.bannerUrl,
                       fit: BoxFit.cover,
-                      errorWidget: (_, __, ___) => ColoredBox(
+                      fallback: ColoredBox(
                         color: cor.withValues(alpha: 0.08),
                         child: Icon(Icons.storefront_outlined,
                             color: cor, size: 28),

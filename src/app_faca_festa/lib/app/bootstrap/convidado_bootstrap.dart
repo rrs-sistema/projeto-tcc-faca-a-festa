@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/domain/repositories/calculadora_festa_repository.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:get/get.dart';
@@ -179,6 +180,21 @@ abstract final class ConvidadoBootstrap {
       Get.put<ConvidadoController>(
         ConvidadoController(
           repository: Get.find<ConvidadoRepository>(),
+          usuarioContexto: () => Get.isRegistered<AppController>()
+              ? Get.find<AppController>().usuarioLogado.value?.idUsuario
+              : null,
+          planejamentoResolver: () =>
+              Get.isRegistered<CalculadoraFestaRepository>() &&
+                      Get.isRegistered<AppController>() &&
+                      Get.find<AppController>()
+                              .usuarioLogado
+                              .value
+                              ?.tipo
+                              ?.trim()
+                              .toUpperCase() ==
+                          'O'
+                  ? Get.find<CalculadoraFestaRepository>()
+                  : null,
           presenteReservationRepository:
               Get.find<PresenteReservationRepository>(),
           conviteEmailService: Get.find<ConviteEmailService>(),

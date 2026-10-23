@@ -29,6 +29,7 @@ class CotacaoMensagem {
     required this.mensagem,
     required this.enviadoEm,
     required this.lido,
+    this.sistema = false,
   });
 
   final String idUsuario;
@@ -36,6 +37,9 @@ class CotacaoMensagem {
   final String mensagem;
   final DateTime enviadoEm;
   final bool lido;
+  final bool sistema;
+
+  bool get ehSistema => sistema || idUsuario == 'sistema';
 }
 
 class CotacaoServicoResumo {
@@ -58,6 +62,7 @@ class CotacaoFornecedorResumo {
     required this.prazoEntrega,
     required this.condicaoPagamento,
     required this.servicos,
+    this.valorCotado,
   });
 
   final String idFornecedor;
@@ -66,10 +71,21 @@ class CotacaoFornecedorResumo {
   final DateTime? prazoEntrega;
   final String? condicaoPagamento;
   final List<CotacaoServicoResumo> servicos;
+  final double? valorCotado;
 
   bool get temResposta {
     return observacaoFornecedor.trim().isNotEmpty ||
         prazoEntrega != null ||
-        (condicaoPagamento?.trim().isNotEmpty ?? false);
+        (condicaoPagamento?.trim().isNotEmpty ?? false) ||
+        (valorCotado != null && valorCotado! > 0);
+  }
+
+  bool get chatAberto {
+    final s = status.toLowerCase();
+    return s != 'cancelada' &&
+        s != 'cancelado' &&
+        s != 'recusado' &&
+        s != 'recusada' &&
+        s != 'perdeucotacao';
   }
 }

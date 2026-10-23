@@ -105,6 +105,7 @@ class RegisterController extends GetxController {
   Uint8List? bannerBytes;
 
   var carregando = false.obs;
+  final carregandoAtuacao = false.obs;
   final aceitePrivacidade = false.obs;
   RxBool exibirSenha = false.obs;
 

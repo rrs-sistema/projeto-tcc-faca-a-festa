@@ -18,11 +18,14 @@ class OrcamentoGastoController extends GetxController {
 
   final RxList<OrcamentoGasto> gastos = <OrcamentoGasto>[].obs;
   StreamSubscription<List<OrcamentoGasto>>? _gastosSub;
+  int _geracao = 0;
 
   /// Escuta os gastos de um orçamento específico
   void escutarGastos(String idOrcamento) {
+    final geracao = ++_geracao;
     unawaited(_gastosSub?.cancel());
     _gastosSub = _gastosOrcamento.observarGastos(idOrcamento).listen((lista) {
+      if (geracao != _geracao) return;
       gastos.assignAll(lista);
 
       _atualizarResumoGeral();
@@ -32,6 +35,7 @@ class OrcamentoGastoController extends GetxController {
   }
 
   Future<void> encerrarEscutas() async {
+    ++_geracao;
     await _gastosSub?.cancel();
     _gastosSub = null;
     gastos.clear();

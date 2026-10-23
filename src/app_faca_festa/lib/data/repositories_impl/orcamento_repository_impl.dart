@@ -1,10 +1,15 @@
+import 'package:app_faca_festa/domain/repositories/financeiro_evento_repository.dart';
 import 'package:app_faca_festa/core/services/update_operations.dart';
 import 'package:app_faca_festa/domain/repositories/orcamento_repository.dart';
 import 'package:app_faca_festa/domain/entities/orcamento.dart';
 import '../datasources/remote/orcamento_remote_datasource.dart';
 import '../models/orcamento/orcamento_model.dart';
 
-class OrcamentoRepositoryImpl implements OrcamentoRepository {
+class OrcamentoRepositoryImpl
+    implements OrcamentoRepository, FinanceiroEventoRepository {
+  @override
+  Stream<List<Map<String, dynamic>>> observarFinanceiroEvento(String evento) =>
+      remote.observarFinanceiroEvento(evento);
   OrcamentoRepositoryImpl(this.remote);
 
   final OrcamentoRemoteDatasource remote;

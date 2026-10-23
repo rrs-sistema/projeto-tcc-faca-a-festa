@@ -50,6 +50,36 @@ import 'package:app_faca_festa/presentation/modules/admin/pages/auditoria_dashbo
 import 'package:app_faca_festa/presentation/modules/convidado/pages/convidado_page.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/pages/convite_nao_encontrado_screen.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/pages/convite_redirect_page.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+import 'package:app_faca_festa/data/services/functions/callable_https_client.dart';
+import 'package:app_faca_festa/data/datasources/remote/comissao_plataforma_remote_datasource.dart';
+import 'package:app_faca_festa/data/datasources/remote/dashboard_financeiro_admin_remote.dart';
+import 'package:app_faca_festa/data/datasources/remote/estoque_fornecedor_remote_datasource.dart';
+import 'package:app_faca_festa/data/datasources/remote/financeiro_fornecedor_remote_datasource.dart';
+import 'package:app_faca_festa/data/datasources/remote/intermediacao_financeira_remote.dart';
+import 'package:app_faca_festa/data/datasources/remote/central_mediacao_remote.dart';
+import 'package:app_faca_festa/data/datasources/remote/acompanhamento_partes_remote.dart';
+import 'package:app_faca_festa/presentation/modules/financeiro/controllers/comissao_plataforma_controller.dart';
+import 'package:app_faca_festa/presentation/modules/financeiro/controllers/dashboard_financeiro_admin_controller.dart';
+import 'package:app_faca_festa/presentation/modules/financeiro/controllers/estoque_fornecedor_controller.dart';
+import 'package:app_faca_festa/presentation/modules/financeiro/controllers/financeiro_fornecedor_controller.dart';
+import 'package:app_faca_festa/presentation/modules/financeiro/controllers/financeiro_gerente_controller.dart';
+import 'package:app_faca_festa/presentation/modules/financeiro/controllers/intermediacao_financeira_controller.dart';
+import 'package:app_faca_festa/presentation/modules/financeiro/controllers/central_mediacao_controller.dart';
+import 'package:app_faca_festa/presentation/modules/financeiro/controllers/acompanhamento_partes_controller.dart';
+import 'package:app_faca_festa/presentation/modules/financeiro/pages/comissao_plataforma_page.dart';
+import 'package:app_faca_festa/presentation/modules/financeiro/pages/dashboard_financeiro_admin_page.dart';
+import 'package:app_faca_festa/presentation/modules/financeiro/pages/estoque_fornecedor_page.dart';
+import 'package:app_faca_festa/presentation/modules/financeiro/pages/financeiro_fornecedor_page.dart';
+import 'package:app_faca_festa/presentation/modules/financeiro/pages/financeiro_gerente_list_page.dart';
+import 'package:app_faca_festa/presentation/modules/financeiro/pages/intermediacao_financeira_page.dart';
+import 'package:app_faca_festa/presentation/modules/financeiro/pages/central_mediacao_page.dart';
+import 'package:app_faca_festa/presentation/modules/financeiro/pages/central_mediacao_detalhe_page.dart';
+import 'package:app_faca_festa/presentation/modules/financeiro/pages/acompanhamento_organizador_page.dart';
+import 'package:app_faca_festa/presentation/modules/financeiro/pages/acompanhamento_fornecedor_page.dart';
 import 'package:app_faca_festa/presentation/modules/fornecedor/pages/auditoria_fornecedor_screen.dart';
 import 'package:app_faca_festa/presentation/modules/fornecedor/pages/fornecedor_aguardando_aprovacao_screen.dart';
 import 'package:app_faca_festa/presentation/modules/fornecedor/pages/fornecedor_home_screen.dart';
@@ -68,6 +98,7 @@ import 'package:app_faca_festa/presentation/widgets/splash.dart';
 import 'package:app_faca_festa/presentation/modules/auth/pages/role_selector_screen.dart';
 import '../bindings/gift_binding.dart';
 import '../bootstrap/auditoria_bootstrap.dart';
+import '../bootstrap/financeiro_gerente_bootstrap.dart';
 import '../middleware/papel_middleware.dart';
 
 class EntradaAppPage extends StatelessWidget {
@@ -237,6 +268,138 @@ class AppRoutes {
           ],
         ),
         GetPage(
+          name: '/admin/comissoes',
+          page: () {
+            final remote = ComissaoPlataformaRemoteDatasource(
+              functions: Get.find<FirebaseFunctions>(),
+              httpsClient: Get.find<CallableHttpsClient>(),
+              firestore: Get.find<FirebaseFirestore>(),
+            );
+            final controller = Get.put(
+              ComissaoPlataformaController(
+                remote: remote,
+                usuarioAtual: () => Get.find<FirebaseAuth>().currentUser?.uid,
+                ehAdmin: () => true,
+              ),
+              tag: 'comissao-admin',
+            );
+            return ComissaoPlataformaPage(
+              controller: controller,
+              themeController: Get.find<EventThemeController>(),
+            );
+          },
+          middlewares: [
+            PapelMiddleware(tiposPermitidos: const ['A'])
+          ],
+        ),
+        GetPage(
+          name: '/admin/financeiro',
+          page: () {
+            const tag = 'dash-fin-admin';
+            if (Get.isRegistered<DashboardFinanceiroAdminController>(
+                tag: tag)) {
+              Get.delete<DashboardFinanceiroAdminController>(
+                  tag: tag, force: true);
+            }
+            final remote = DashboardFinanceiroAdminRemote(
+              functions: Get.find<FirebaseFunctions>(),
+              httpsClient: Get.find<CallableHttpsClient>(),
+              firestore: Get.find<FirebaseFirestore>(),
+            );
+            final controller = Get.put(
+              DashboardFinanceiroAdminController(
+                remote: remote,
+                usuarioAtual: () => Get.find<FirebaseAuth>().currentUser?.uid,
+              ),
+              tag: tag,
+            );
+            return DashboardFinanceiroAdminPage(
+              controller: controller,
+              themeController: Get.find<EventThemeController>(),
+            );
+          },
+          middlewares: [
+            PapelMiddleware(tiposPermitidos: const ['A'])
+          ],
+        ),
+        GetPage(
+          name: '/admin/intermediacao',
+          page: () {
+            const tag = 'intermediacao-admin';
+            if (Get.isRegistered<IntermediacaoFinanceiraController>(
+                tag: tag)) {
+              Get.delete<IntermediacaoFinanceiraController>(
+                  tag: tag, force: true);
+            }
+            final remote = IntermediacaoFinanceiraRemote(
+              functions: Get.find<FirebaseFunctions>(),
+              httpsClient: Get.find<CallableHttpsClient>(),
+            );
+            final controller = Get.put(
+              IntermediacaoFinanceiraController(remote: remote),
+              tag: tag,
+            );
+            return IntermediacaoFinanceiraPage(
+              controller: controller,
+              themeController: Get.find<EventThemeController>(),
+            );
+          },
+          middlewares: [
+            PapelMiddleware(tiposPermitidos: const ['A'])
+          ],
+        ),
+        GetPage(
+          name: '/admin/contratacoes-mediacao',
+          page: () {
+            const tag = 'central-mediacao-admin';
+            if (!Get.isRegistered<CentralMediacaoController>(tag: tag)) {
+              final remote = CentralMediacaoRemote(
+                functions: Get.find<FirebaseFunctions>(),
+                httpsClient: Get.find<CallableHttpsClient>(),
+                firestore: Get.find<FirebaseFirestore>(),
+              );
+              Get.put(CentralMediacaoController(remote: remote), tag: tag);
+            }
+            return CentralMediacaoPage(
+              controller: Get.find<CentralMediacaoController>(tag: tag),
+              themeController: Get.find<EventThemeController>(),
+            );
+          },
+          middlewares: [
+            PapelMiddleware(tiposPermitidos: const ['A'])
+          ],
+        ),
+        GetPage(
+          name: '/admin/contratacoes-mediacao/detalhe',
+          page: () {
+            const tag = 'central-mediacao-admin';
+            if (!Get.isRegistered<CentralMediacaoController>(tag: tag)) {
+              final remote = CentralMediacaoRemote(
+                functions: Get.find<FirebaseFunctions>(),
+                httpsClient: Get.find<CallableHttpsClient>(),
+                firestore: Get.find<FirebaseFirestore>(),
+              );
+              Get.put(CentralMediacaoController(remote: remote), tag: tag);
+            }
+            final args = Get.arguments;
+            String idOrcamento = '';
+            if (args is Map) {
+              idOrcamento = (args['idOrcamento'] ?? args['id_orcamento'] ?? '')
+                  .toString();
+            } else if (args is String) {
+              idOrcamento = args;
+            }
+            return CentralMediacaoDetalhePage(
+              controller: Get.find<CentralMediacaoController>(tag: tag),
+              themeController: Get.find<EventThemeController>(),
+              idOrcamento: idOrcamento,
+            );
+          },
+          middlewares: [
+            PapelMiddleware(tiposPermitidos: const ['A'])
+          ],
+        ),
+        GetPage(
           name: '/admin/auditoria',
           page: () => AuditoriaAdminScreen(
             controller: AuditoriaBootstrap.controllerAdmin(),
@@ -306,6 +469,88 @@ class AppRoutes {
           transition: Transition.cupertino,
         ),
         GetPage(
+          name: '/financeiroGerente',
+          page: () {
+            FinanceiroGerenteBootstrap.register();
+            return FinanceiroGerenteListPage(
+              controller: Get.find<FinanceiroGerenteController>(),
+              themeController: Get.find<EventThemeController>(),
+            );
+          },
+          middlewares: [
+            PapelMiddleware(tiposPermitidos: const ['O'])
+          ],
+          transition: Transition.cupertino,
+        ),
+        GetPage(
+          name: '/acompanhamento-organizador',
+          page: () {
+            const tag = 'acompanhamento-org';
+            if (!Get.isRegistered<AcompanhamentoPartesController>(tag: tag)) {
+              Get.put(
+                AcompanhamentoPartesController(
+                  remote: AcompanhamentoPartesRemote(
+                    functions: Get.find<FirebaseFunctions>(),
+                    httpsClient: Get.find<CallableHttpsClient>(),
+                  ),
+                ),
+                tag: tag,
+              );
+            }
+            final args = Get.arguments;
+            String idEvento = '';
+            String? nome;
+            if (args is Map) {
+              idEvento = (args['idEvento'] ?? args['id_evento'] ?? '').toString();
+              nome = args['nomeEvento']?.toString() ?? args['nome_evento']?.toString();
+            }
+            return AcompanhamentoOrganizadorPage(
+              controller: Get.find<AcompanhamentoPartesController>(tag: tag),
+              themeController: Get.find<EventThemeController>(),
+              idEvento: idEvento,
+              nomeEvento: nome,
+            );
+          },
+          middlewares: [
+            PapelMiddleware(tiposPermitidos: const ['O', 'A'])
+          ],
+        ),
+        GetPage(
+          name: '/acompanhamento-fornecedor',
+          page: () {
+            const tag = 'acompanhamento-forn';
+            if (!Get.isRegistered<AcompanhamentoPartesController>(tag: tag)) {
+              Get.put(
+                AcompanhamentoPartesController(
+                  remote: AcompanhamentoPartesRemote(
+                    functions: Get.find<FirebaseFunctions>(),
+                    httpsClient: Get.find<CallableHttpsClient>(),
+                  ),
+                ),
+                tag: tag,
+              );
+            }
+            final args = Get.arguments;
+            String idForn = '';
+            if (args is Map) {
+              idForn =
+                  (args['idFornecedor'] ?? args['id_fornecedor'] ?? '').toString();
+            }
+            if (idForn.isEmpty) {
+              idForn =
+                  Get.find<AppController>().usuarioLogado.value?.idUsuario ?? '';
+            }
+            return AcompanhamentoFornecedorPage(
+              controller: Get.find<AcompanhamentoPartesController>(tag: tag),
+              themeController: Get.find<EventThemeController>(),
+              idFornecedor: idForn,
+            );
+          },
+          middlewares: [
+            PapelMiddleware(tiposPermitidos: const ['F', 'A'])
+          ],
+        ),
+        GetPage(
           name: '/fornecedores',
           page: () => FornecedorLocalizacaoScreen(
             showLeading: true,
@@ -371,6 +616,108 @@ class AppRoutes {
           middlewares: [
             PapelMiddleware(tiposPermitidos: const ['F'])
           ],
+        ),
+        GetPage(
+          name: '/fornecedor/financeiro',
+          page: () {
+            final idArg = (Get.arguments as String?)?.trim() ?? '';
+            final id = idArg.isNotEmpty
+                ? idArg
+                : (Get.find<FornecedorController>()
+                        .fornecedor
+                        .value
+                        ?.idFornecedor ??
+                    '');
+            final tag = 'fin-forn-$id';
+            if (Get.isRegistered<FinanceiroFornecedorController>(tag: tag)) {
+              Get.delete<FinanceiroFornecedorController>(tag: tag, force: true);
+            }
+            final remote = FinanceiroFornecedorRemoteDatasource(
+              functions: Get.find<FirebaseFunctions>(),
+              httpsClient: Get.find<CallableHttpsClient>(),
+            );
+            final controller = Get.put(
+              FinanceiroFornecedorController(
+                firestore: Get.find<FirebaseFirestore>(),
+                idFornecedor: id,
+                usuarioAtual: () => Get.find<FirebaseAuth>().currentUser?.uid,
+                remote: remote,
+              ),
+              tag: tag,
+            );
+            return FinanceiroFornecedorPage(
+              controller: controller,
+              themeController: Get.find<EventThemeController>(),
+            );
+          },
+          middlewares: [
+            PapelMiddleware(tiposPermitidos: const ['F'])
+          ],
+          transition: Transition.cupertino,
+        ),
+        GetPage(
+          name: '/fornecedor/estoque',
+          page: () {
+            final idArg = (Get.arguments as String?)?.trim() ?? '';
+            final id = idArg.isNotEmpty
+                ? idArg
+                : (Get.find<FornecedorController>()
+                        .fornecedor
+                        .value
+                        ?.idFornecedor ??
+                    '');
+            final tag = 'est-forn-$id';
+            if (Get.isRegistered<EstoqueFornecedorController>(tag: tag)) {
+              Get.delete<EstoqueFornecedorController>(tag: tag, force: true);
+            }
+            final remote = EstoqueFornecedorRemoteDatasource(
+              functions: Get.find<FirebaseFunctions>(),
+              httpsClient: Get.find<CallableHttpsClient>(),
+            );
+            final controller = Get.put(
+              EstoqueFornecedorController(
+                firestore: Get.find<FirebaseFirestore>(),
+                idFornecedor: id,
+                usuarioAtual: () => Get.find<FirebaseAuth>().currentUser?.uid,
+                remote: remote,
+              ),
+              tag: tag,
+            );
+            return EstoqueFornecedorPage(
+              controller: controller,
+              themeController: Get.find<EventThemeController>(),
+            );
+          },
+          middlewares: [
+            PapelMiddleware(tiposPermitidos: const ['F'])
+          ],
+          transition: Transition.cupertino,
+        ),
+        GetPage(
+          name: '/fornecedor/comissoes',
+          page: () {
+            final remote = ComissaoPlataformaRemoteDatasource(
+              functions: Get.find<FirebaseFunctions>(),
+              httpsClient: Get.find<CallableHttpsClient>(),
+              firestore: Get.find<FirebaseFirestore>(),
+            );
+            final controller = Get.put(
+              ComissaoPlataformaController(
+                remote: remote,
+                usuarioAtual: () => Get.find<FirebaseAuth>().currentUser?.uid,
+                ehAdmin: () => false,
+              ),
+              tag: 'comissao-pagador',
+            );
+            return ComissaoPlataformaPage(
+              controller: controller,
+              themeController: Get.find<EventThemeController>(),
+            );
+          },
+          middlewares: [
+            PapelMiddleware(tiposPermitidos: const ['F'])
+          ],
+          transition: Transition.cupertino,
         ),
         GetPage(
           name: '/conviteNaoEncontrado',

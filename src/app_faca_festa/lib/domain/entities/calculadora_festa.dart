@@ -6,17 +6,23 @@ enum BaseCalculoFesta {
   todosConvidados,
   apenasConfirmados,
   manual,
+  naoRecusados,
+  previstos,
 }
 
 extension BaseCalculoFestaExtension on BaseCalculoFesta {
   String get label {
     switch (this) {
       case BaseCalculoFesta.todosConvidados:
-        return 'Todos';
+        return 'Todos cadastrados';
       case BaseCalculoFesta.apenasConfirmados:
         return 'Confirmados';
       case BaseCalculoFesta.manual:
         return 'Manual';
+      case BaseCalculoFesta.naoRecusados:
+        return 'Não recusados';
+      case BaseCalculoFesta.previstos:
+        return 'Previstos';
     }
   }
 }
@@ -79,6 +85,7 @@ class CalculadoraFesta {
   final AnaliseCalculadoraIA? analiseIA;
 
   final Map<String, dynamic> contextoPlanejamento;
+  final bool distribuicaoEtariaHipotetica;
 
   const CalculadoraFesta({
     required this.idCalculo,
@@ -102,6 +109,7 @@ class CalculadoraFesta {
     this.dataConversaoOrcamento,
     this.analiseIA,
     this.contextoPlanejamento = const {},
+    this.distribuicaoEtariaHipotetica = false,
   });
 
   int get totalConvidados => totalAdultos + totalCriancas + totalBebes;
@@ -155,6 +163,7 @@ class CalculadoraFesta {
     bool limparAnaliseIA = false,
   }) {
     return CalculadoraFesta(
+      distribuicaoEtariaHipotetica: distribuicaoEtariaHipotetica,
       idCalculo: idCalculo ?? this.idCalculo,
       contextoPlanejamento: contextoPlanejamento ?? this.contextoPlanejamento,
       idEvento: idEvento ?? this.idEvento,

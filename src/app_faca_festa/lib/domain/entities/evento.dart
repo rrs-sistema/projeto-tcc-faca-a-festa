@@ -152,11 +152,21 @@ class Evento {
       totalAdultosCalculado + totalCriancasCalculado + totalBebesCalculado;
 
   int get totalConvidadosCalculado {
-    if (totalConvidados != null && totalConvidados! > 0) {
+    if (totalConvidados != null) {
       return totalConvidados!;
     }
     return totalConvidadosPorTipo;
   }
+
+  bool get previsaoPublicoInformada =>
+      totalConvidados != null ||
+      totalAdultos != null ||
+      totalCriancas != null ||
+      totalBebes != null;
+
+  bool get distribuicaoPublicoInformada =>
+      (totalAdultos != null || totalCriancas != null || totalBebes != null) &&
+      (totalConvidados == null || totalConvidados == totalConvidadosPorTipo);
 
   bool get possuiQuantidadePorTipo => totalConvidadosPorTipo > 0;
 

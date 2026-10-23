@@ -4,6 +4,8 @@ import 'package:app_faca_festa/core/utils/numeric_input.dart';
 import 'package:app_faca_festa/domain/entities/cardapio_item.dart';
 import 'package:app_faca_festa/domain/services/proposta_refeicao_service.dart';
 import '../controllers/calculadora_festa_controller.dart';
+import 'package:app_faca_festa/domain/services/prioridade_perguntas_service.dart';
+import 'calculadora_modal.dart';
 
 class CalculadoraPropostaCard extends StatelessWidget {
   const CalculadoraPropostaCard(
@@ -44,9 +46,12 @@ class CalculadoraPropostaCard extends StatelessWidget {
                         Icon(Icons.auto_awesome_outlined,
                             color: Theme.of(context).colorScheme.primary),
                         const SizedBox(width: 8),
-                        const Expanded(
-                            child: Text('Proposta para esta refeição',
-                                style: TextStyle(
+                        Expanded(
+                            child: Text(
+                                c.representaRefeicao
+                                    ? 'Proposta para esta refeição'
+                                    : 'Proposta para este cardápio',
+                                style: const TextStyle(
                                     fontSize: 16, fontWeight: FontWeight.w700)))
                       ]),
                       const SizedBox(height: 8),
@@ -109,12 +114,20 @@ class _Previa extends StatelessWidget {
             '${r.premissas['id_cardapio']}|${r.premissas['id_item_cardapio']}':
                 r
         };
+        final scheme = Theme.of(context).colorScheme;
         return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               for (final r in resultados)
-                Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6),
+                Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: scheme.surfaceContainerLowest,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: scheme.outlineVariant),
+                    ),
                     child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -123,25 +136,41 @@ class _Previa extends StatelessWidget {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                 Text(r.nome,
-                                    style: const TextStyle(fontSize: 14)),
+                                    style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600)),
+                                const SizedBox(height: 2),
                                 Text(
                                     '${regrasPorItem['${r.idCardapio}|${r.idItemCardapio}']?.premissas['proposta_apenas_servir'] == true ? 'Para servir' : 'Medida'}: '
                                     '${regrasPorItem['${r.idCardapio}|${r.idItemCardapio}']?.premissas['estado_compra'] ?? regrasPorItem['${r.idCardapio}|${r.idItemCardapio}']?.premissas['estado'] ?? 'conferir'}',
-                                    style: const TextStyle(
-                                        fontSize: 11, color: Color(0xFF526259)))
+                                    style: TextStyle(
+                                        fontSize: 11,
+                                        color: scheme.onSurfaceVariant))
                               ])),
                           const SizedBox(width: 10),
                           Flexible(
                               child: Text(r.quantidadeFormatada,
                                   textAlign: TextAlign.end,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w700,
-                                      color: Color(0xFF1B6528))))
+                                      color: scheme.primary)))
                         ])),
               if (proposta.preservados.isNotEmpty)
-                const Text('Referências existentes compatíveis foram mantidas.',
-                    style: TextStyle(fontSize: 12)),
+                Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                        'Referências existentes compatíveis foram mantidas.',
+                        style: TextStyle(
+                            fontSize: 12, color: scheme.onSurfaceVariant))),
+              for (final r in proposta.regras
+                  .where((r) => r.premissas['rendimento_estimado'] == true))
+                Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: Text(
+                        '${r.nome}: rendimento estimado de ${(r.rendimento * 100).round()}%, conforme a referência escolhida. Não é uma medição própria.',
+                        style: const TextStyle(
+                            fontSize: 12, color: Color(0xFF80591A)))),
               for (final p in proposta.pendencias)
                 Padding(
                     padding: const EdgeInsets.only(top: 8),
@@ -149,12 +178,12 @@ class _Previa extends StatelessWidget {
                         style: const TextStyle(
                             fontSize: 12, color: Color(0xFF80591A)))),
               if (proposta.respostas['amidos'] == 'dividir')
-                const Padding(
-                    padding: EdgeInsets.only(top: 8),
+                Padding(
+                    padding: const EdgeInsets.only(top: 8),
                     child: Text(
                         'Hipótese inicial: arroz e macarrão compartilham o acompanhamento (50% da referência de cada).',
-                        style:
-                            TextStyle(fontSize: 12, color: Color(0xFF526259)))),
+                        style: TextStyle(
+                            fontSize: 12, color: scheme.onSurfaceVariant))),
               if (proposta.regras
                   .any((r) => r.premissas['proposta_apenas_servir'] == true))
                 const Padding(
@@ -177,176 +206,240 @@ class CalculadoraPropostaDialog extends StatefulWidget {
 class _PropostaState extends State<CalculadoraPropostaDialog> {
   late final String assinatura;
   late final Map<String, String> respostas;
+  late final Map<String, String> respostasAnteriores;
   String? erro;
+
   @override
   void initState() {
     super.initState();
     assinatura = widget.controller.assinaturaProposta;
-    respostas = Map.of(widget.controller.respostasProposta);
+    respostasAnteriores = Map.of(widget.controller.respostasProposta);
+    respostas = Map.of(respostasAnteriores);
+  }
+
+  IconData _iconePergunta(String id) {
+    if (id == 'formato') return Icons.room_service_outlined;
+    if (id == 'servico') return Icons.restaurant_outlined;
+    if (id.startsWith('obtencao_')) return Icons.shopping_bag_outlined;
+    if (id.startsWith('referencia_')) return Icons.menu_book_outlined;
+    if (id.startsWith('rendimento_')) return Icons.science_outlined;
+    if (id == 'periodo' || id == 'duracao') return Icons.schedule_outlined;
+    return Icons.tune_rounded;
   }
 
   @override
   Widget build(BuildContext context) {
     final c = widget.controller;
+    final scheme = Theme.of(context).colorScheme;
     final proposta = c.proporRefeicao(respostas: respostas);
     final novas = proposta.regras
         .where((r) => !proposta.preservados.contains(r.id))
-        .length;
-    return Dialog(
-        backgroundColor: Colors.white,
-        insetPadding: const EdgeInsets.all(16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-        child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 600),
-            child: Column(mainAxisSize: MainAxisSize.min, children: [
-              Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
-                  child: Row(children: [
-                    const Icon(Icons.auto_awesome_outlined),
-                    const SizedBox(width: 8),
-                    Expanded(
-                        child: Text('Proposta · ${c.tituloCardapio}',
-                            style: const TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.w600))),
-                    IconButton(
-                        tooltip: 'Fechar',
-                        onPressed: () => Navigator.pop(context),
-                        icon: const Icon(Icons.close))
-                  ])),
-              const Divider(height: 1),
-              Flexible(
-                  child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            const Text(
-                                'Confira apenas as escolhas que mudam a quantidade. A prévia recalcula enquanto você escolhe.',
-                                style: TextStyle(fontSize: 13)),
-                            for (final q in proposta.perguntas) ...[
-                              const SizedBox(height: 14),
-                              Text(q.titulo,
-                                  style: const TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600)),
-                              const SizedBox(height: 6),
-                              if (q.opcoes.isEmpty)
-                                TextFormField(
-                                    key: ValueKey(q.id),
-                                    initialValue: respostas[q.id] ?? '',
-                                    decoration: InputDecoration(
-                                        border: const OutlineInputBorder()),
-                                    keyboardType:
-                                        const TextInputType.numberWithOptions(
-                                            decimal: true),
-                                    inputFormatters: [
-                                      NumericInput.decimal(casas: 2)
-                                    ],
-                                    onChanged: (v) =>
-                                        setState(() => respostas[q.id] = v))
-                              else
-                                DropdownButtonFormField<String>(
-                                    key: ValueKey(q.id),
-                                    value: proposta.respostas[q.id] ?? q.padrao,
-                                    isExpanded: true,
-                                    itemHeight: null,
-                                    selectedItemBuilder: (context) => q
-                                        .opcoes.values
-                                        .map((label) => Text(label,
-                                            maxLines: 2,
-                                            overflow: TextOverflow.ellipsis,
-                                            style:
-                                                const TextStyle(fontSize: 13)))
-                                        .toList(),
-                                    decoration: InputDecoration(
-                                        border: const OutlineInputBorder(),
-                                        isDense: true),
-                                    items: q.opcoes.entries
-                                        .map((e) => DropdownMenuItem(
-                                            value: e.key,
-                                            child: Text(e.value,
-                                                style: const TextStyle(
-                                                    fontSize: 13))))
-                                        .toList(),
-                                    onChanged: (v) {
-                                      if (v != null) {
-                                        setState(() => respostas[q.id] = v);
-                                      }
-                                    }),
-                            ],
-                            const SizedBox(height: 16),
-                            _Previa(controller: c, proposta: proposta),
-                            if (c.convidadosEquivalentes.bebes > 0)
-                              const Text(
-                                  'As novas referências não atribuem porção a bebês. Confira a alimentação com seus responsáveis.',
-                                  style: TextStyle(
-                                      fontSize: 12, color: Color(0xFF80591A))),
-                            ExpansionTile(
-                                tilePadding: EdgeInsets.zero,
-                                title: const Text('Premissas e fontes',
-                                    style: TextStyle(fontSize: 14)),
-                                children: [
-                                  for (final r in proposta.regras)
-                                    Padding(
-                                        padding:
-                                            const EdgeInsets.only(bottom: 12),
-                                        child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(r.nome,
-                                                  style: const TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.w600)),
-                                              Text(proposta.motivos[r.id] ?? '',
-                                                  style: const TextStyle(
-                                                      fontSize: 12)),
-                                              Text(
-                                                  '${r.porcaoReferenciaFormatada} por adulto equivalente; '
-                                                  '${(r.pesoCrianca * 100).round()}% para crianças; ${r.numeroServicos} serviço(s).',
-                                                  style: const TextStyle(
-                                                      fontSize: 12)),
-                                              SelectableText(
-                                                  '${r.premissas['fonte'] ?? 'Regra do organizador'}',
-                                                  style: const TextStyle(
-                                                      fontSize: 11)),
-                                            ])),
-                                  const Text(
-                                      'Referências iniciais, não validação de suficiência. A divisão entre acompanhamentos é uma hipótese da proposta, que você pode alterar.',
-                                      style: TextStyle(fontSize: 12)),
-                                ]),
-                            if (erro != null)
-                              Text(erro!,
-                                  style: const TextStyle(color: Colors.red)),
-                          ]))),
-              const Divider(height: 1),
-              Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
+        .toList();
+    final podeUsar = novas.isNotEmpty;
+    final prioridades = const PrioridadePerguntasService().ordenar(
+        proposta: proposta,
+        respostasExplicitas: respostasAnteriores,
+        gerar: (r) => c.proporRefeicao(respostas: r),
+        calcular: c.resultadosDaProposta);
+    final decisivas = prioridades.where((p) => p.decisiva).toList();
+    final opcionais = prioridades.where((p) => !p.decisiva).toList();
+
+    return CalculadoraModal(
+      titulo: 'Proposta · ${c.tituloCardapio}',
+      icone: Icons.auto_awesome_outlined,
+      onFechar: () => Navigator.pop(context),
+      rodape: calculadoraModalRodape(
+        context: context,
+        confirmar: proposta.pendencias.isEmpty
+            ? 'Usar no cálculo'
+            : 'Usar proposta parcial',
+        iconeConfirmar: Icons.check_rounded,
+        onConfirmar: !podeUsar
+            ? null
+            : () {
+                try {
+                  c.usarProposta(proposta, assinatura: assinatura);
+                  Navigator.pop(context);
+                } catch (e) {
+                  setState(() => erro = e is StateError
+                      ? e.message.toString()
+                      : 'Não foi possível usar a proposta.');
+                }
+              },
+        onCancelar: () => Navigator.pop(context),
+        dica: podeUsar
+            ? 'Atualiza somente as regras do cálculo. Compras, quantidades finais e orçamento são preservados.'
+            : 'Confirme as escolhas pendentes (ex.: como será servido) para habilitar.',
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const CalculadoraModalBanner(
+            texto:
+                'Confira apenas as escolhas que mudam a quantidade. A prévia recalcula enquanto você escolhe.',
+          ),
+          const SizedBox(height: 16),
+          if (decisivas.isNotEmpty)
+            CalculadoraModalSecao(
+              titulo: 'Decisões necessárias',
+              descricao: 'Desbloqueiam uma proposta compatível com o cardápio.',
+              filhos: [
+                for (var i = 0; i < decisivas.length; i++) ...[
+                  if (i > 0) const SizedBox(height: 12),
+                  Text(
+                    decisivas[i].motivo,
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      height: 1.35,
+                      color: scheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  _campo(decisivas[i].pergunta, proposta),
+                ],
+              ],
+            ),
+          if (opcionais.isNotEmpty)
+            Theme(
+              data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+              child: ExpansionTile(
+                tilePadding: EdgeInsets.zero,
+                childrenPadding: const EdgeInsets.only(bottom: 8),
+                title: Text(
+                  'Escolhas anteriores e ajustes opcionais',
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w700,
+                    color: scheme.onSurface,
+                  ),
+                ),
+                children: [
+                  for (final p in opcionais) ...[
+                    const SizedBox(height: 8),
+                    _campo(p.pergunta, proposta),
+                  ],
+                ],
+              ),
+            ),
+          CalculadoraModalSecao(
+            titulo: 'Prévia das quantidades',
+            descricao: 'Recalcula conforme as escolhas acima.',
+            filhos: [
+              _Previa(controller: c, proposta: proposta),
+              if (c.convidadosEquivalentes.bebes > 0) ...[
+                const SizedBox(height: 8),
+                const Text(
+                  'Confira o público coberto por cada referência. A alimentação de bebês precisa de avaliação com seus responsáveis.',
+                  style: TextStyle(fontSize: 12, color: Color(0xFF80591A)),
+                ),
+              ],
+            ],
+          ),
+          Theme(
+            data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+            child: ExpansionTile(
+              tilePadding: EdgeInsets.zero,
+              title: Text(
+                'Premissas e fontes',
+                style: TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w700,
+                  color: scheme.onSurface,
+                ),
+              ),
+              children: [
+                for (final r in proposta.regras)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                            'Atualiza somente as regras do cálculo. Compras, quantidades finais e orçamento são preservados.',
-                            style: TextStyle(fontSize: 12)),
-                        const SizedBox(height: 8),
-                        FilledButton(
-                            onPressed: novas == 0
-                                ? null
-                                : () {
-                                    try {
-                                      c.usarProposta(proposta,
-                                          assinatura: assinatura);
-                                      Navigator.pop(context);
-                                    } catch (e) {
-                                      setState(() => erro = e is StateError
-                                          ? e.message.toString()
-                                          : 'Não foi possível usar a proposta.');
-                                    }
-                                  },
-                            child: Text(proposta.pendencias.isEmpty
-                                ? 'Usar no cálculo'
-                                : 'Usar proposta parcial')),
-                      ])),
-            ])));
+                        Text(r.nome,
+                            style:
+                                const TextStyle(fontWeight: FontWeight.w600)),
+                        Text(proposta.motivos[r.id] ?? '',
+                            style: const TextStyle(fontSize: 12)),
+                        Text(
+                          '${r.porcaoReferenciaFormatada} por adulto equivalente; '
+                          '${(r.pesoCrianca * 100).round()}% para crianças; ${r.numeroServicos} serviço(s).',
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                        SelectableText(
+                          '${r.premissas['fonte'] ?? 'Regra do organizador'}',
+                          style: const TextStyle(fontSize: 11),
+                        ),
+                        if (r.premissas['rendimento_fonte'] != null)
+                          SelectableText(
+                            'Rendimento estimado: ${r.premissas['rendimento_fonte']}',
+                            style: const TextStyle(fontSize: 11),
+                          ),
+                      ],
+                    ),
+                  ),
+                Text(
+                  'Referências iniciais, não validação de suficiência. A divisão entre acompanhamentos é uma hipótese da proposta, que você pode alterar.',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (erro != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(erro!, style: TextStyle(color: scheme.error)),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _campo(PerguntaProposta q, PropostaRefeicao proposta) {
+    final icone = _iconePergunta(q.id);
+    if (q.opcoes.isEmpty) {
+      return TextFormField(
+        key: ValueKey(q.id),
+        initialValue: respostas[q.id] ?? '',
+        decoration: calculadoraModalCampo(context, q.titulo, icone),
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        inputFormatters: [NumericInput.decimal(casas: 2)],
+        onChanged: (v) => setState(() => respostas[q.id] = v),
+      );
+    }
+
+    final valorAtual = proposta.respostas[q.id] ?? q.padrao;
+    final opcoes =
+        q.opcoes.entries.where((e) => e.key.isNotEmpty).toList(growable: false);
+    final valorValido =
+        opcoes.any((e) => e.key == valorAtual) ? valorAtual : null;
+
+    return DropdownButtonFormField<String>(
+      key: ValueKey(q.id),
+      value: valorValido,
+      isExpanded: true,
+      itemHeight: null,
+      selectedItemBuilder: (_) => opcoes
+          .map((e) => Text(
+                e.value,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 13),
+              ))
+          .toList(),
+      decoration: calculadoraModalCampo(context, q.titulo, icone),
+      hint: const Text('Escolha para continuar',
+          style: TextStyle(fontSize: 13)),
+      items: opcoes
+          .map((e) => DropdownMenuItem(
+                value: e.key,
+                child: Text(e.value, style: const TextStyle(fontSize: 13)),
+              ))
+          .toList(),
+      onChanged: (v) {
+        if (v != null) setState(() => respostas[q.id] = v);
+      },
+    );
   }
 }

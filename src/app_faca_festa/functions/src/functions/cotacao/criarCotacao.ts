@@ -4,6 +4,7 @@ import { logger } from "firebase-functions";
 
 import { admin } from "../../shared/firebaseAdmin";
 import { exigirTipo, exigirUsuarioAutenticado } from "../../shared/auth";
+import { gravarMensagemSistemaParaFornecedores } from "./mensagensSistemaCotacao";
 
 const REGION = "southamerica-east1";
 const MAX_OBS = 2000;
@@ -119,11 +120,11 @@ export const criarCotacao = onCall(
       const fornecedor = fornecedorSnap.data() ?? {};
       const fornecedorRef = cotacaoRef.collection("fornecedores").doc(idFornecedor);
 
+      // Sem email/telefone no subdoc: evita contato direto org↔fornecedor
+      // fora do chat mediado (regra de mediação da plataforma).
       batch.set(fornecedorRef, {
         id_fornecedor: idFornecedor,
         nome_fornecedor: texto(fornecedor.razao_social) || "Fornecedor",
-        email: texto(fornecedor.email),
-        telefone: texto(fornecedor.telefone),
         status: "aguardando",
         data_envio: FieldValue.serverTimestamp(),
         respondido: false,
@@ -193,6 +194,13 @@ export const criarCotacao = onCall(
       });
       throw new HttpsError("internal", "Não foi possível enviar a cotação.");
     }
+
+    await gravarMensagemSistemaParaFornecedores(
+      db,
+      cotacaoRef.id,
+      fornecedoresIds,
+      `Novo pedido de preço (${categoriaNome || "serviço"}). Converse pelo chat do app — contato direto não é permitido.`,
+    );
 
     return {
       ok: true,

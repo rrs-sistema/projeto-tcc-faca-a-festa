@@ -1,18 +1,28 @@
 part of '../pages/orcamento_screen.dart';
 
-String _reais(double? valor) =>
-    'R\$ ${Biblioteca.formatarValorDecimal(valor)}';
+String _reais(double? valor) => 'R\$ ${Biblioteca.formatarValorDecimal(valor)}';
 
 Widget resumoCard(
   LinearGradient gradient, {
-  required double limite,
+  required double? limite,
   required double previsto,
   required double pago,
+  double cotado = 0,
+  double contratado = 0,
+  double saldoDevido = 0,
+  bool pendente = false,
+  VoidCallback? onConferir,
 }) {
-  final temLimite = limite > 0;
+  final temLimite = limite != null;
   final estourou = temLimite && previsto > limite;
-  final percentual =
-      temLimite ? (previsto / limite).clamp(0.0, 1.0) : 0.0;
+  final percentual = temLimite
+      ? (limite > 0
+              ? previsto / limite
+              : previsto > 0
+                  ? 1.0
+                  : 0.0)
+          .clamp(0.0, 1.0)
+      : 0.0;
   final destaque = !temLimite
       ? previsto
       : estourou
@@ -23,12 +33,13 @@ Widget resumoCard(
       : estourou
           ? 'Acima do limite'
           : 'Ainda cabe';
-  final apoio = temLimite ? 'Limite ${_reais(limite)}' : 'Defina o limite na festa';
+  final apoio =
+      temLimite ? 'Limite ${_reais(limite)}' : 'Defina o limite na festa';
 
   return Semantics(
     container: true,
     label:
-        '$titulo ${_reais(destaque)}. $apoio. Previsto ${_reais(previsto)}. Pago ${_reais(pago)}.',
+        '$titulo ${_reais(destaque)}. $apoio. Estimado ${_reais(previsto)}. Contratado ${_reais(contratado)}. Pago ${_reais(pago)}. Saldo ${_reais(saldoDevido)}.',
     child: Container(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       decoration: BoxDecoration(
@@ -115,14 +126,44 @@ Widget resumoCard(
               ],
             ],
           ),
+          Text(
+              pendente
+                  ? 'Cotado e contratado: consulta pendente'
+                  : 'Cotado: ${_reais(cotado)} · Contratado: ${_reais(contratado)} · Saldo devido: ${_reais(saldoDevido)}',
+              style: const TextStyle(color: Colors.white, fontSize: 12)),
           const SizedBox(height: 12),
           Row(
             children: [
-              _metricaResumo('Previsto', _reais(previsto)),
+              _metricaResumo('Estimado', _reais(previsto)),
               const SizedBox(width: 8),
-              _metricaResumo('Pago', _reais(pago)),
+              _metricaResumo('Pago líquido',
+                  pendente ? 'Consulta pendente' : _reais(pago)),
             ],
           ),
+          if (onConferir != null) ...[
+            const SizedBox(height: 10),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: onConferir,
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  iconColor: Colors.white,
+                  padding: EdgeInsets.zero,
+                  visualDensity: VisualDensity.compact,
+                ),
+                icon: const Icon(Icons.fact_check_outlined, size: 18),
+                label: Text(
+                  'Conferir totais',
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     ),

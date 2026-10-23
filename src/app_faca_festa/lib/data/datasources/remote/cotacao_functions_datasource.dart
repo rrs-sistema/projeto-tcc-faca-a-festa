@@ -40,6 +40,7 @@ class CotacaoFunctionsDatasource {
     DateTime? prazoEntrega,
     required String condicaoPagamento,
     required String observacaoFornecedor,
+    double? valorProposto,
   }) async {
     await _chamar('responderCotacao', {
       'idCotacao': idCotacao,
@@ -48,22 +49,33 @@ class CotacaoFunctionsDatasource {
         'prazoEntrega': prazoEntrega.toUtc().toIso8601String(),
       'condicaoPagamento': condicaoPagamento,
       'observacaoFornecedor': observacaoFornecedor,
+      if (valorProposto != null) 'valorProposto': valorProposto,
     });
   }
 
-  Future<String> fecharCotacao({
+  Future<Map<String, dynamic>> fecharCotacao({
     required String idCotacao,
     required String idFornecedor,
     required String nomeFornecedor,
     required String nomeSolicitante,
   }) async {
-    final data = await _chamar('fecharCotacao', {
+    return _chamar('fecharCotacao', {
       'idCotacao': idCotacao,
       'idFornecedor': idFornecedor,
       'nomeFornecedor': nomeFornecedor,
       'nomeSolicitante': nomeSolicitante,
     });
-    return (data['idEvento'] ?? '').toString();
+  }
+
+  Future<void> cancelarCotacao({
+    required String idCotacao,
+    String? idFornecedor,
+  }) async {
+    await _chamar('cancelarCotacao', {
+      'idCotacao': idCotacao,
+      if (idFornecedor != null && idFornecedor.isNotEmpty)
+        'idFornecedor': idFornecedor,
+    });
   }
 
   Future<Map<String, dynamic>> _chamar(

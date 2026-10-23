@@ -2,6 +2,12 @@ part of 'evento_cadastro_controller.dart';
 
 extension EventoCadastroPersistencia on EventoCadastroController {
   void carregarEvento(Evento evento) {
+    pararObservacaoCadastro();
+    _eventoConfirmado = true;
+    _cadastroConcluido = false;
+    _novoEventoPendente = false;
+    _eventoOriginal = evento;
+    rascunhoCalculadora = null;
     carregando.value = false;
     final currencyFormat =
         NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
@@ -32,26 +38,13 @@ extension EventoCadastroPersistencia on EventoCadastroController {
     horaFesta.text = evento.hora ?? '';
     padrinhos.assignAll(evento.padrinhos ?? []);
 
-    // ✅ Preenche a estimativa de convidados por tipo.
-    //
-    // Para eventos antigos, onde só existia total_convidados,
-    // mantemos compatibilidade jogando o total em adultos quando
-    // ainda não houver distribuição por adultos/crianças/bebês.
-    final adultosSalvos = evento.totalAdultos ?? 0;
-    final criancasSalvas = evento.totalCriancas ?? 0;
-    final bebesSalvos = evento.totalBebes ?? 0;
-    final totalPorTipoSalvo = adultosSalvos + criancasSalvas + bebesSalvos;
-    final totalSalvo = evento.totalConvidados ?? totalPorTipoSalvo;
-
-    final adultosParaTela = totalPorTipoSalvo > 0 ? adultosSalvos : totalSalvo;
-    final criancasParaTela = totalPorTipoSalvo > 0 ? criancasSalvas : 0;
-    final bebesParaTela = totalPorTipoSalvo > 0 ? bebesSalvos : 0;
-
-    totalAdultos.text = adultosParaTela > 0 ? adultosParaTela.toString() : '';
-    totalCriancas.text =
-        criancasParaTela > 0 ? criancasParaTela.toString() : '';
-    totalBebes.text = bebesParaTela > 0 ? bebesParaTela.toString() : '';
-    totalConvidados.text = totalSalvo > 0 ? totalSalvo.toString() : '';
+    // Legado mantém o total conhecido sem inventar a distribuição etária.
+    totalAdultos.text = evento.totalAdultos?.toString() ?? '';
+    totalCriancas.text = evento.totalCriancas?.toString() ?? '';
+    totalBebes.text = evento.totalBebes?.toString() ?? '';
+    totalConvidados.text = evento.previsaoPublicoInformada
+        ? evento.totalConvidadosCalculado.toString()
+        : '';
 
     // ✅ Formata custo estimado no padrão BR
     if (evento.custoEstimado != null && evento.custoEstimado! > 0) {
@@ -102,11 +95,15 @@ extension EventoCadastroPersistencia on EventoCadastroController {
     atualizarPreview();
   }
 
-  Future<void> salvarEvento() async {
+  Future<void> salvarEvento(
+      {Future<void> Function(RascunhoCalculadora, Evento)? vincularRascunho,
+      Future<void> Function(Evento, RascunhoCalculadora?)? aoConcluir}) async {
+    if (carregando.value) return;
     _log('===== INÍCIO salvarEvento $_versaoDiagnostico =====');
     _log('route=${Get.currentRoute} | args=${AuthFluxoArgs.of(Get.arguments)}');
 
     final user = app.usuarioLogado.value;
+    final identidadeCadastro = idRascunho;
     _logUsuario(user);
 
     if (user == null) {
@@ -242,18 +239,18 @@ extension EventoCadastroPersistencia on EventoCadastroController {
         _log('Endereço ignorado: convidado sem endereço preenchido.');
       }
 
-      // ✅ Quantidade de convidados por tipo
-      //
-      // O total geral é sempre derivado dos campos adultos/crianças/bebês
-      // para evitar inconsistência entre o total e a distribuição.
-      final totalAdultosValor = _parseIntController(totalAdultos);
-      final totalCriancasValor = _parseIntController(totalCriancas);
-      final totalBebesValor = _parseIntController(totalBebes);
-      final totalConvidadosValor =
-          totalAdultosValor + totalCriancasValor + totalBebesValor;
-
-      totalConvidados.text =
-          totalConvidadosValor > 0 ? totalConvidadosValor.toString() : '';
+      final idadesInformadas = [totalAdultos, totalCriancas, totalBebes]
+          .any((campo) => campo.text.trim().isNotEmpty);
+      final int? totalAdultosValor =
+          idadesInformadas ? _parseIntController(totalAdultos) : null;
+      final int? totalCriancasValor =
+          idadesInformadas ? _parseIntController(totalCriancas) : null;
+      final int? totalBebesValor =
+          idadesInformadas ? _parseIntController(totalBebes) : null;
+      final int? totalConvidadosValor = idadesInformadas
+          ? totalAdultosValor! + totalCriancasValor! + totalBebesValor!
+          : _eventoOriginal?.totalConvidados;
+      totalConvidados.text = totalConvidadosValor?.toString() ?? '';
 
       carregando.value = true;
 
@@ -267,9 +264,13 @@ extension EventoCadastroPersistencia on EventoCadastroController {
           ? end.ufController.text.trim().toUpperCase()
           : null;
 
+      final criandoNovo = idEvento.value.isEmpty || _novoEventoPendente;
+      // Identidade estável antes da rede, inclusive se a confirmação da gravação falhar.
+      idEvento.value = idEvento.value.isEmpty ? uuid.v4() : idEvento.value;
+      _novoEventoPendente = criandoNovo;
       // ✅ Criação da entidade do evento
       final evento = Evento(
-        idEvento: idEvento.value.isEmpty ? uuid.v4() : idEvento.value,
+        idEvento: idEvento.value,
         idTipoEvento: tipoAtual.idTipoEvento,
         idUsuario: user.idUsuario,
         nomeEvento: nomeEvento.text.trim().isNotEmpty
@@ -285,8 +286,15 @@ extension EventoCadastroPersistencia on EventoCadastroController {
         data: dataCompleta,
         dataFim: dataFim,
         hora: horaStr.isEmpty ? null : horaStr,
-        ativo: true,
-        status: StatusEvento.planejamento,
+        ativo: _eventoOriginal?.ativo ?? true,
+        status: _eventoOriginal?.status ?? StatusEvento.planejamento,
+        dataCadastro: _eventoOriginal?.dataCadastro,
+        mensagemConvidado: _eventoOriginal?.mensagemConvidado,
+        hashtagEvento: _eventoOriginal?.hashtagEvento,
+        siteEvento: _eventoOriginal?.siteEvento,
+        nomeGestante: _eventoOriginal?.nomeGestante,
+        tipoCha: _eventoOriginal?.tipoCha,
+        dataPrevistaNascimento: _eventoOriginal?.dataPrevistaNascimento,
         descricao: descricao.text,
         tema: tema.text.trim().isEmpty ? null : tema.text.trim(),
         idTema: idTema.value.trim().isEmpty ? null : idTema.value.trim(),
@@ -298,6 +306,11 @@ extension EventoCadastroPersistencia on EventoCadastroController {
         estiloCasamento: estiloCasamento.value,
         padrinhos: padrinhos.toList(),
         nomeNoiva: nomeNoiva.text,
+        nomeAniversariante: _eventoOriginal?.nomeAniversariante,
+        idade: int.tryParse(idade.text.trim()),
+        nomeBebe: bebe.text.trim().isEmpty
+            ? _eventoOriginal?.nomeBebe
+            : bebe.text.trim(),
         nomeNoivo: parceiro.text,
         nomeResponsavel: user.nome,
         idCidade: idCidade,
@@ -310,27 +323,79 @@ extension EventoCadastroPersistencia on EventoCadastroController {
         bairro: deveSalvarEndereco ? endereco.bairro : null,
       );
 
+      reconciliarEstimativa();
+      await salvarCadastroLocal(); // Inclui identidade estável ANTES da rede.
+      if (app.usuarioLogado.value?.idUsuario != user.idUsuario ||
+          identidadeCadastro != idRascunho) {
+        return;
+      }
       // ✅ Persistência delegada ao repository por meio do controller
       _log('Gravando evento ${evento.idEvento} no Firestore...');
+      final pendente = rascunhoCalculadora;
+      if (pendente != null) {
+        await _rascunhos?.salvar(user.idUsuario, evento.idEvento, pendente);
+      }
       await _repository.salvar(evento);
+      if (app.usuarioLogado.value?.idUsuario != user.idUsuario ||
+          identidadeCadastro != idRascunho) {
+        return;
+      }
+      _eventoConfirmado = true;
+      await salvarCadastroLocal();
+      idEvento.value = evento.idEvento;
+      _eventoOriginal = evento;
+      _novoEventoPendente = criandoNovo;
       _log('Evento ${evento.idEvento} gravado com sucesso.');
 
-      final criandoNovo = idEvento.value.isEmpty;
+      final rascunho = rascunhoCalculadora;
+      if (rascunho != null) {
+        try {
+          if (vincularRascunho == null) {
+            throw StateError('Vínculo da estimativa não configurado.');
+          }
+          await vincularRascunho(rascunho, evento);
+          if (app.usuarioLogado.value?.idUsuario != user.idUsuario ||
+              identidadeCadastro != idRascunho) {
+            return;
+          }
+          await _rascunhos?.remover(user.idUsuario, evento.idEvento);
+          rascunhoCalculadora = null;
+        } catch (_) {
+          carregando.value = false;
+          Get.snackbar('Evento salvo; estimativa pendente',
+              'Sua estimativa foi mantida. Tente salvar novamente ou reabra a edição deste evento para retomar o vínculo.');
+          return;
+        }
+      }
+      await concluirCadastroLocal(user.idUsuario, identidadeCadastro);
+      if (app.usuarioLogado.value?.idUsuario != user.idUsuario ||
+          identidadeCadastro != idRascunho) {
+        return;
+      }
       await app.ativarEventoOrganizador(evento);
+      _novoEventoPendente = false;
       carregando.value = false;
 
-      if (criandoNovo) {
+      if (aoConcluir != null) {
+        await aoConcluir(evento, rascunho);
+      } else if (criandoNovo) {
         app.abrirHomeOrganizador();
       } else {
         Get.back();
       }
     } catch (e, st) {
+      if (app.usuarioLogado.value?.idUsuario != user.idUsuario ||
+          identidadeCadastro != idRascunho) {
+        return;
+      }
       carregando.value = false;
       _log('ERRO salvarEvento: $e');
       debugPrintStack(label: '$_logTag stack salvarEvento', stackTrace: st);
       Get.snackbar(
         'Erro',
-        'Falha ao salvar evento: $e',
+        _eventoConfirmado
+            ? 'O evento está salvo. A conclusão ficou pendente; tente novamente.'
+            : 'Não foi possível confirmar o salvamento. Tente novamente; a identidade do evento foi preservada.',
         backgroundColor: Colors.redAccent,
         colorText: Colors.white,
       );
@@ -341,6 +406,18 @@ extension EventoCadastroPersistencia on EventoCadastroController {
   // 🔹 LIMPAR CAMPOS
   // ===============================
   void limpar({bool manterEndereco = false}) {
+    carregando.value = false;
+    pararObservacaoCadastro();
+    _usuarioCadastro = null;
+    _eventoConfirmado = false;
+    _cadastroConcluido = false;
+    tipoEventoSelecionado.value = null;
+    erroRascunhoLocal.value = '';
+    avisoReconciliacao.value = '';
+    _eventoOriginal = null;
+    _novoEventoPendente = false;
+    rascunhoCalculadora = null;
+    idRascunho = uuid.v4();
     idEvento.value = '';
     nomeEvento.clear();
     nomePessoalPrincipal.clear();

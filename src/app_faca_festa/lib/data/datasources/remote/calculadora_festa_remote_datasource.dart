@@ -1,9 +1,15 @@
+import 'compromissos_evento_remote.dart';
+import '../../services/transacao_firestore.dart';
+import 'agenda_servico_remote.dart';
+import 'package:cloud_functions/cloud_functions.dart';
+import 'plano_execucao_remote_datasource.dart';
+import 'package:app_faca_festa/domain/services/plano_execucao_service.dart';
 import 'package:app_faca_festa/domain/services/operacao_calculadora_service.dart';
 import 'package:app_faca_festa/domain/entities/estimativa_financeira.dart';
 import 'package:app_faca_festa/domain/services/receitas_salvas_calculadora_service.dart';
 import 'package:app_faca_festa/domain/services/conversao_orcamento_service.dart';
 import 'dart:async';
-import 'package:app_faca_festa/domain/services/compromisso_planejamento_service.dart';
+import 'package:collection/collection.dart';
 import 'package:app_faca_festa/domain/services/revisao_cardapio_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -25,6 +31,9 @@ import 'package:app_faca_festa/domain/entities/registro_consumo_calculadora.dart
 class CalculadoraFestaRemoteDatasource {
   final FirebaseFirestore _db;
   final FirebaseAuth _auth;
+  final FirebaseFunctions? _functions;
+  final Uri? agendaEmulador;
+  final Uri? planejadorEmulador;
 
   static const String collectionCalculadora = 'calculadora_festa';
   static const String collectionConvidado = 'convidado';
@@ -35,15 +44,110 @@ class CalculadoraFestaRemoteDatasource {
   CalculadoraFestaRemoteDatasource({
     required FirebaseFirestore firestore,
     required FirebaseAuth auth,
+    FirebaseFunctions? functions,
+    this.agendaEmulador,
+    this.planejadorEmulador,
   })  : _db = firestore,
-        _auth = auth;
+        _auth = auth,
+        _functions = functions;
+
+  Future<Map<String, dynamic>> chamarPlanejador(
+          String funcao, Map<String, dynamic> dados) =>
+      CallableCalculadoraRemote(_auth,
+              emulador: planejadorEmulador?.resolve(funcao))
+          .chamar(funcao, dados);
+
+  Future<Map<String, dynamic>> interpretarEntradaCalculadora(
+      Map<String, dynamic> entrada) async {
+    try {
+      if (_functions == null) {
+        return await chamarPlanejador('interpretarEntradaCalculadora', entrada);
+      }
+      final result = await _functions
+          .httpsCallable('interpretarEntradaCalculadora',
+              options:
+                  HttpsCallableOptions(timeout: const Duration(seconds: 120)))
+          .call<dynamic>(entrada);
+      return Map<String, dynamic>.from(result.data as Map);
+    } on FirebaseFunctionsException catch (e) {
+      throw StateError(e.message ?? 'A leitura ficou indisponível.');
+    }
+  }
+
+  Future<Map<String, dynamic>> aplicarEntradaCalculadora(
+      Map<String, dynamic> revisao) async {
+    try {
+      if (_functions == null) {
+        final result =
+            await chamarPlanejador('aplicarEntradaCalculadora', revisao);
+        if (result['aplicado'] is! bool) {
+          throw StateError('Não houve confirmação da aplicação.');
+        }
+        return result;
+      }
+      final result = await _functions
+          .httpsCallable('aplicarEntradaCalculadora',
+              options:
+                  HttpsCallableOptions(timeout: const Duration(seconds: 120)))
+          .call<dynamic>(revisao);
+      if (result.data is! Map || result.data['aplicado'] is! bool) {
+        throw StateError('Não houve confirmação da aplicação.');
+      }
+      return Map<String, dynamic>.from(result.data as Map);
+    } on FirebaseFunctionsException catch (e) {
+      throw StateError(e.message ?? 'Não foi possível aplicar a entrada.');
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> lerMemoriaCalculadora() async {
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) throw StateError('Entre na sua conta.');
+    final doc = await _db
+        .collection('calculadora_preferencias')
+        .doc(uid)
+        .get(const GetOptions(source: Source.server));
+    return OperacaoCalculadoraService.lista(doc.data()?['receitas']);
+  }
+
+  Future<void> gravarMemoriaCalculadora(List<Map<String, dynamic>> receitas,
+      {required List<Map<String, dynamic>> anteriores}) async {
+    final uid = _auth.currentUser?.uid;
+    if (uid == null || receitas.length > 60) {
+      throw StateError('Confira as receitas guardadas.');
+    }
+    final ref = _db.collection('calculadora_preferencias').doc(uid);
+    await _db.runTransaction((tx) async {
+      final doc = await tx.get(ref);
+      if (!const DeepCollectionEquality()
+          .equals(doc.data()?['receitas'] ?? [], anteriores)) {
+        throw StateError(
+            'As preferências mudaram em outro acesso. Atualize a memória antes de salvar.');
+      }
+      tx.set(ref, {'versao': 1, 'receitas': receitas});
+    });
+  }
+
+  Future<ContextoExecucaoPlano> carregarContextoExecucao(String evento) =>
+      PlanoExecucaoRemoteDatasource(_db, _auth,
+              functions: _functions,
+              emulador: planejadorEmulador?.resolve('aplicarPlanoCalculadora'))
+          .carregar(evento);
+  Future<bool> aplicarPlanoExecucao(PropostaExecucaoPlano proposta) =>
+      PlanoExecucaoRemoteDatasource(_db, _auth,
+              functions: _functions,
+              emulador: planejadorEmulador?.resolve('aplicarPlanoCalculadora'))
+          .aplicar(proposta);
 
   CollectionReference<Map<String, dynamic>> get _calculadoraCollection {
     return _db.collection(collectionCalculadora);
   }
 
-  Stream<Map<String, dynamic>> observarOperacaoEvento(String idEvento) =>
-      _db.collection('calculadora_operacao').doc(idEvento).snapshots().map((s) {
+  Stream<Map<String, dynamic>> observarOperacaoEvento(String idEvento) => _db
+          .collection('calculadora_operacao')
+          .doc(idEvento)
+          .snapshots(includeMetadataChanges: true)
+          .where((s) => !s.metadata.isFromCache && !s.metadata.hasPendingWrites)
+          .map((s) {
         final dados = s.data() ?? <String, dynamic>{};
         const OperacaoCalculadoraService().validarDocumento(dados);
         return dados;
@@ -55,6 +159,22 @@ class CalculadoraFestaRemoteDatasource {
     if (uid == null || idEvento.isEmpty) {
       throw StateError('Entre na sua conta e selecione o evento.');
     }
+    if (acao['tipo'] == 'agenda') {
+      return AgendaServicoRemote(_auth, emulador: agendaEmulador)
+          .confirmar(idEvento, acao);
+    }
+    if (acao['tipo'] == 'revisao_pos_evento') {
+      try {
+        final response = await (_functions ??
+                FirebaseFunctions.instanceFor(
+                    app: _auth.app, region: 'southamerica-east1'))
+            .httpsCallable('revisarRefeicaoCalculadora')
+            .call<dynamic>({'evento': idEvento, 'acao': acao});
+        return Map<String, dynamic>.from(response.data as Map);
+      } on FirebaseFunctionsException catch (e) {
+        throw StateError(e.message ?? 'Não foi possível salvar a revisão.');
+      }
+    }
     final ref = _db.collection('calculadora_operacao').doc(idEvento);
     return _db.runTransaction((tx) async {
       final evento = await tx.get(_db.collection('evento').doc(idEvento));
@@ -62,6 +182,38 @@ class CalculadoraFestaRemoteDatasource {
         throw StateError('Somente o organizador pode alterar o planejamento.');
       }
       final doc = await tx.get(ref);
+      if (acao['tipo'] == 'regras') {
+        for (final raw in OperacaoCalculadoraService.lista(acao['regras'])) {
+          final meta = OperacaoCalculadoraService.mapa(raw['premissas']);
+          if (meta['id_evento'] != idEvento) {
+            throw StateError('O ajuste pertence a outro evento.');
+          }
+          final menuId = meta['id_cardapio']?.toString() ?? '';
+          final itemId = meta['id_item_cardapio']?.toString() ?? '';
+          if (menuId.isEmpty && itemId.isEmpty) continue;
+          if (menuId.isEmpty ||
+              itemId.isEmpty ||
+              menuId.contains('/') ||
+              itemId.contains('/')) {
+            throw StateError('Confira a refeição e o item deste ajuste.');
+          }
+          final menu = await tx.get(_db.collection('cardapios').doc(menuId));
+          final item = await tx.get(_db
+              .collection('cardapios')
+              .doc(menuId)
+              .collection('itens')
+              .doc(itemId));
+          if (menu.data()?['id_evento'] != idEvento ||
+              menu.data()?['ativo'] == false ||
+              !item.exists ||
+              RevisaoCardapioService.normalizar(item.data()?['nome'] ?? '') !=
+                  RevisaoCardapioService.normalizar(raw['nome'] ?? '') ||
+              (item.data()?['publico_alvo'] ?? 'todos') != raw['publico']) {
+            throw StateError(
+                'O item do cardápio mudou. Reabra o ajuste antes de salvar.');
+          }
+        }
+      }
       if (acao['tipo'] == 'refeicao' ||
           (acao['tipo'] == 'reservar' &&
               OperacaoCalculadoraService.numero(OperacaoCalculadoraService.mapa(
@@ -87,8 +239,36 @@ class CalculadoraFestaRemoteDatasource {
           }
         }
       }
+      if (acao['tipo'] == 'configuracao_planejamento') {
+        final alteracoes = OperacaoCalculadoraService.mapa(acao['alteracoes']);
+        final verba = alteracoes['verba_alimentacao'];
+        final limite = evento.data()?['custo_estimado'];
+        if (verba is num && limite is num && verba > limite) {
+          throw StateError('A verba deve caber no limite total do evento.');
+        }
+      }
       final novo =
           const OperacaoCalculadoraService().aplicar(doc.data() ?? {}, acao);
+      if (_auth.currentUser?.uid != uid) {
+        throw StateError('Sua sessão mudou. Reabra o evento.');
+      }
+      if (const DeepCollectionEquality().equals(novo, doc.data() ?? {})) {
+        return {...novo, 'id_evento': idEvento, 'id_usuario': uid};
+      }
+      if (acao['tipo'] == 'configuracao_planejamento' &&
+          OperacaoCalculadoraService.mapa(acao['alteracoes'])
+              .containsKey('verba_alimentacao')) {
+        final cfg =
+            OperacaoCalculadoraService.mapa(novo['configuracao_planejamento']);
+        cfg['verba_confirmacao'] = {
+          'versao': 1,
+          'valor': cfg['verba_alimentacao'],
+          'fonte': 'organizador',
+          'confirmado_por': uid,
+          'confirmado_em': DateTime.now().toUtc().toIso8601String()
+        };
+        novo['configuracao_planejamento'] = cfg;
+      }
       final data = {...novo, 'id_evento': idEvento, 'id_usuario': uid};
       tx.set(ref, data);
       return data;
@@ -185,65 +365,11 @@ class CalculadoraFestaRemoteDatasource {
       });
 
   Future<List<Map<String, dynamic>>> listarCompromissosDoEvento(
-      String idEvento) async {
-    final snapshot = await _db
-        .collection(collectionOrcamentos)
-        .where('id_evento', isEqualTo: idEvento)
-        .get();
-    final resultados = await Future.wait(snapshot.docs.map((doc) async {
-      final gastos = await doc.reference.collection('orcamento_gasto').get();
-      return const CompromissoPlanejamentoService().mapear(doc.id, doc.data(),
-          gastos: gastos.docs.map((g) => g.data()).toList());
-    }));
-    return resultados.whereType<Map<String, dynamic>>().toList();
-  }
-
+          String evento) =>
+      CompromissosEventoRemote(_db).listarCompromissosDoEvento(evento);
   Stream<List<Map<String, dynamic>>> observarCompromissosDoEvento(
-      String idEvento) {
-    late StreamController<List<Map<String, dynamic>>> saida;
-    StreamSubscription? pais;
-    final filhos = <StreamSubscription>[];
-    var versao = 0;
-    saida = StreamController<List<Map<String, dynamic>>>(onListen: () {
-      pais = _db
-          .collection(collectionOrcamentos)
-          .where('id_evento', isEqualTo: idEvento)
-          .snapshots()
-          .listen((snapshot) async {
-        final atual = ++versao;
-        final antigos = filhos.toList();
-        filhos.clear();
-        await Future.wait(antigos.map((s) => s.cancel()));
-        if (atual != versao || saida.isClosed) return;
-        final cache = <String, Map<String, dynamic>?>{};
-        if (snapshot.docs.isEmpty) saida.add([]);
-        for (final doc in snapshot.docs) {
-          filhos.add(doc.reference
-              .collection('orcamento_gasto')
-              .snapshots()
-              .listen((gastos) {
-            if (atual != versao || saida.isClosed) return;
-            cache[doc.id] = const CompromissoPlanejamentoService().mapear(
-                doc.id, doc.data(),
-                gastos: gastos.docs.map((g) => g.data()).toList());
-            if (cache.length == snapshot.docs.length) {
-              saida
-                  .add(cache.values.whereType<Map<String, dynamic>>().toList());
-            }
-          }, onError: (Object e) {
-            if (atual == versao && !saida.isClosed) saida.addError(e);
-          }));
-        }
-      }, onError: (Object e) {
-        if (!saida.isClosed) saida.addError(e);
-      });
-    }, onCancel: () async {
-      versao++;
-      await pais?.cancel();
-      await Future.wait(filhos.map((s) => s.cancel()));
-    });
-    return saida.stream;
-  }
+          String evento) =>
+      CompromissosEventoRemote(_db).observarCompromissosDoEvento(evento);
 
   Future<List<ConvidadoModel>> listarConvidadosDoEvento(String idEvento) async {
     final id = idEvento.trim();
@@ -277,6 +403,49 @@ class CalculadoraFestaRemoteDatasource {
   ///
   /// Usa batch para garantir que o documento principal e os itens sejam
   /// gravados de forma consistente.
+  /// Criação única do snapshot inicial. Repetições nunca substituem um histórico.
+  Future<void> vincularEstimativaInicial(
+      {required CalculadoraFesta calculo,
+      required List<CalculadoraFestaItem> itens}) async {
+    final uid = _auth.currentUser?.uid;
+    final origem = calculo.contextoPlanejamento['id_rascunho_origem'];
+    if (uid == null ||
+        uid != calculo.idUsuario ||
+        calculo.idEvento.isEmpty ||
+        origem is! String ||
+        origem.isEmpty ||
+        itens.length > 499) {
+      throw StateError('Contexto inválido para vincular a estimativa.');
+    }
+    final ref = _calculoRef(calculo.idCalculo);
+    final payload =
+        _mapComDono(CalculadoraFestaModel.fromEntity(calculo).toMap());
+    await executarTransacaoFirestore(() => _db.runTransaction((tx) async {
+          final anterior = await tx.get(ref);
+          if (anterior.exists) {
+            final dados = anterior.data()!;
+            final contexto = dados['contexto_planejamento'] as Map? ?? {};
+            if (dados['id_usuario'] != uid ||
+                dados['id_evento'] != calculo.idEvento ||
+                contexto['id_rascunho_origem'] != origem) {
+              throw StateError('A identidade da estimativa já está em uso.');
+            }
+            return;
+          }
+          tx.set(ref, payload);
+          for (final item in itens) {
+            if (item.idEvento != calculo.idEvento ||
+                item.idCalculo != calculo.idCalculo ||
+                item.idItemResultado.isEmpty) {
+              throw StateError('Item de outro contexto.');
+            }
+            tx.set(
+                _itensCollection(calculo.idCalculo).doc(item.idItemResultado),
+                CalculadoraFestaItemModel.fromEntity(item).toMap());
+          }
+        }));
+  }
+
   Future<void> salvarSimulacao({
     required CalculadoraFesta calculo,
     required List<CalculadoraFestaItem> itens,

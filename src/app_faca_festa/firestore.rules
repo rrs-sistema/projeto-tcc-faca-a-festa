@@ -117,11 +117,14 @@ service cloud.firestore {
 
     match /usuarios/{userId} {
       allow read: if isAdmin() || (signedIn() && uid() == userId);
-      allow create: if isAdmin() || (signedIn() && uid() == userId);
+      allow create: if isAdmin() || (signedIn() && uid() == userId
+        && request.resource.data.get('tipo', '') != 'A'
+        && !request.resource.data.keys().hasAny(['migracao_planejamento']));
       allow update: if isAdmin()
         || (signedIn() && uid() == userId
+            && (resource.data.get('tipo', '') != 'A' || resource.data.get('ativo', false) == true)
             && !request.resource.data.diff(resource.data).affectedKeys()
-                .hasAny(['tipo', 'mfa_totp_ativo', 'mfa_email_ativo', 'mfa_metodo']));
+                .hasAny(['tipo', 'mfa_totp_ativo', 'mfa_email_ativo', 'mfa_metodo', 'migracao_planejamento']));
       allow delete: if isAdmin();
 
       match /enderecos/{enderecoId} {
@@ -212,7 +215,23 @@ service cloud.firestore {
 
     match /calculadora_itens_base/{id} {
       allow read: if signedIn();
-      allow write: if isAdmin();
+      allow create: if isAdmin() && !request.resource.data.keys().hasAny(['referencia_contextual','referencia_rascunho','governanca_contextual']);
+      allow update: if isAdmin()
+        && request.resource.data.get('referencia_contextual', null) == resource.data.get('referencia_contextual', null)
+        && request.resource.data.get('referencia_rascunho', null) == resource.data.get('referencia_rascunho', null)
+        && request.resource.data.get('governanca_contextual', null) == resource.data.get('governanca_contextual', null);
+      allow delete: if isAdmin() && !resource.data.keys().hasAny(['referencia_contextual','referencia_rascunho','governanca_contextual']);
+      match /versoes_contextuais/{versao} { allow read: if signedIn(); }
+      match /edicoes_contextuais/{pedido} { allow read: if isAdmin(); }
+      match /validacoes_contextuais/{versao} { allow read: if isAdmin(); }
+      match /estados_contextuais/{versao} { allow read: if isAdmin(); }
+    }
+
+    match /planejamento_compatibilidade/{eventoId} {
+      allow read: if isAdmin() || eventoDono(eventoId);
+      // Gravação, cópias e transições são exclusivas do serviço autorizado.
+      match /inspecoes/{id} { allow read: if isAdmin(); }
+      match /transicoes/{id} { allow read: if isAdmin(); }
     }
 
     match /calculadora_evento_itens/{id} {
@@ -225,24 +244,85 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    match /calculadora_preferencias/{userId} {
+      allow read, delete: if signedIn() && uid() == userId;
+      allow create, update: if signedIn() && uid() == userId
+        && request.resource.data.keys().hasOnly(['versao', 'receitas'])
+        && request.resource.data.versao == 1
+        && request.resource.data.receitas is list
+        && request.resource.data.receitas.size() <= 60;
+    }
+
+    function politicaPublicoValida(cfg) {
+      return cfg is map
+        && (!('verba_confirmacao' in cfg) || (cfg.verba_confirmacao is map
+          && cfg.verba_confirmacao.versao == 1 && cfg.verba_confirmacao.fonte == 'organizador'
+          && cfg.verba_confirmacao.confirmado_por == uid() && cfg.verba_confirmacao.confirmado_em is string))
+        && (!('duracao' in cfg) || (cfg.duracao is int && cfg.duracao >= 1 && cfg.duracao <= 24))
+        && (!('perfil' in cfg) || cfg.perfil in ['economico','padrao','premium'])
+        && (!('margem' in cfg) || cfg.margem == null || (cfg.margem is number && cfg.margem >= 0 && cfg.margem <= 0.3))
+        && (!('verba_alimentacao' in cfg) || cfg.verba_alimentacao == null || (cfg.verba_alimentacao is number && cfg.verba_alimentacao >= 0 && cfg.verba_alimentacao <= 1000000))
+        && (!('confirmacoes' in cfg) || (cfg.confirmacoes is map && cfg.confirmacoes.size() <= 20))
+        && (!('lista_completude' in cfg) || cfg.lista_completude in ['desconhecida', 'em_preenchimento', 'concluida'])
+        && (!('base_confirmada' in cfg) || cfg.base_confirmada is bool)
+        && (!('base' in cfg) || cfg.base in ['manual', 'previstos', 'todos', 'nao_recusados', 'confirmados'])
+        && (!('base_confirmada' in cfg) || !cfg.base_confirmada || 'base' in cfg)
+        && (!('publico' in cfg) || (cfg.publico is map
+          && cfg.publico.keys().hasOnly(['adultos', 'criancas', 'bebes'])
+          && cfg.publico.adultos is int && cfg.publico.adultos >= 0 && cfg.publico.adultos <= 1000000
+          && cfg.publico.criancas is int && cfg.publico.criancas >= 0 && cfg.publico.criancas <= 1000000
+          && cfg.publico.bebes is int && cfg.publico.bebes >= 0 && cfg.publico.bebes <= 1000000))
+        && (!('base' in cfg) || cfg.base != 'manual' || !('base_confirmada' in cfg) || !cfg.base_confirmada || 'publico' in cfg);
+    }
+
+    function agendaPreservada(eventoId) {
+      let path = /databases/$(database)/documents/calculadora_operacao/$(eventoId);
+      return request.resource.data.get('agenda', []) is list
+        && request.resource.data.get('agenda', []).size() <= 20
+        && request.resource.data.get('agenda', []) == (exists(path) ? get(path).data.get('agenda', []) : []);
+    }
+    function planejadorPreservado(eventoId) {
+      let path = /databases/$(database)/documents/calculadora_operacao/$(eventoId);
+      return request.resource.data.get('planejador', {}) is map
+        && request.resource.data.get('planejador', {}).size() <= 20
+        && request.resource.data.get('planejador', {}) == (exists(path) ? get(path).data.get('planejador', {}) : {});
+    }
     match /calculadora_operacao/{eventoId} {
+      match /agenda_confirmacoes/{pedido} { allow read: if eventoDono(eventoId); }
+      match /planejador_confirmacoes/{pedido} { allow read: if eventoDono(eventoId); }
+
+      match /entradas/{entradaId} { allow read: if eventoDono(eventoId); }
+      match /documentos/{documentoId} { allow read: if eventoDono(eventoId); }
+      match /aplicacoes/{pedido} {
+        allow read: if eventoDono(eventoId);
+      }
       allow read: if isAdmin() || eventoDono(eventoId);
       allow create, update: if eventoDono(eventoId)
         && request.resource.data.id_evento == eventoId
         && request.resource.data.id_usuario == uid()
         && request.resource.data.versao == 1
+        && (!exists(/databases/$(database)/documents/calculadora_operacao/$(eventoId))
+          || resource.data.get('versao', 1) == 1)
         && request.resource.data.revisao is int
         && request.resource.data.revisao > 0
+        && agendaPreservada(eventoId)
+        && planejadorPreservado(eventoId)
+        && request.resource.data.get('execucao', {}) is map
+        && request.resource.data.get('execucao', {}).diff(exists(/databases/$(database)/documents/calculadora_operacao/$(eventoId)) ? resource.data.get('execucao', {}) : {}).affectedKeys().hasOnly(['regras', 'contexto_desatualizado'])
+        && (!('configuracao_planejamento' in request.resource.data) || politicaPublicoValida(request.resource.data.configuracao_planejamento))
         && request.resource.data.keys().hasOnly([
-          'id_evento', 'id_usuario', 'versao', 'revisao', 'refeicoes', 'lotes'
+          'id_evento', 'id_usuario', 'versao', 'revisao', 'refeicoes', 'lotes', 'execucao', 'revisao_pos_evento', 'configuracao_planejamento', 'agenda', 'planejador'
         ]);
       allow delete: if isAdmin() || eventoDono(eventoId);
     }
 
     match /evento/{eventoId} {
       allow read: if signedIn();
-      allow create, update: if isAdmin()
+      allow create: if isAdmin()
         || (isTipo('O') && request.resource.data.id_usuario == uid());
+      allow update: if isAdmin()
+        || (isTipo('O') && eventoDono(eventoId)
+          && request.resource.data.id_usuario == uid());
       allow delete: if isAdmin() || eventoDono(eventoId);
 
       match /presentes/{presenteId} {
@@ -330,6 +410,8 @@ service cloud.firestore {
     }
 
     match /tarefa/{id} {
+      allow get: if signedIn() && id.matches('calc_exec_.+')
+        && !exists(/databases/$(database)/documents/tarefa/$(id));
       allow read: if isAdmin() || eventoDono(resource.data.id_evento)
         || convidadoComContaReal(resource.data.id_responsavel)
         || leituraTarefaPorConvite(resource.data);
@@ -348,11 +430,14 @@ service cloud.firestore {
     match /cardapios/{id} {
       allow read: if signedIn();
       allow create: if isAdmin() || eventoDono(request.resource.data.id_evento);
-      allow update, delete: if isAdmin() || eventoDono(resource.data.id_evento);
+      allow update: if isAdmin() || (eventoDono(resource.data.id_evento) && request.resource.data.id_evento == resource.data.id_evento && request.resource.data.get('id_modelo', null) == resource.data.get('id_modelo', null) && request.resource.data.get('somente_modelo', false) == resource.data.get('somente_modelo', false));
+      allow delete: if isAdmin() || eventoDono(resource.data.id_evento);
 
       match /itens/{itemId} {
         allow read: if signedIn();
-        allow write: if isAdmin()
+        allow create, update: if isAdmin()
+          || eventoDono(getAfter(/databases/$(database)/documents/cardapios/$(id)).data.id_evento);
+        allow delete: if isAdmin()
           || eventoDono(get(/databases/$(database)/documents/cardapios/$(id)).data.id_evento);
       }
     }
@@ -363,9 +448,58 @@ service cloud.firestore {
       allow update: if isAdmin() || (signedIn() && uid() == fornecedorId);
       allow delete: if isAdmin();
 
+      // Financeiro privado: somente o proprietário. Admin/organizador/outro
+      // fornecedor NÃO acessam margens/custos (nem agregados destas coleções).
+      function donoFornecedor() {
+        return signedIn() && uid() == fornecedorId;
+      }
+      function subcolecaoFinanceiroPrivada(nome) {
+        return nome in [
+          'custos_internos',
+          'contas_receber',
+          'contas_pagar',
+          'movimentos_caixa',
+          'comprovantes_financeiros',
+          'financeiro_resumo',
+          'estoque_itens',
+          'estoque_reservas',
+          'estoque_movimentos'
+        ];
+      }
+
+      match /custos_internos/{id} {
+        allow read, write: if donoFornecedor();
+      }
+      match /contas_receber/{id} {
+        allow read, write: if donoFornecedor();
+      }
+      match /contas_pagar/{id} {
+        allow read, write: if donoFornecedor();
+      }
+      match /movimentos_caixa/{id} {
+        allow read, write: if donoFornecedor();
+      }
+      match /comprovantes_financeiros/{id} {
+        allow read, write: if donoFornecedor();
+      }
+      match /financeiro_resumo/{id} {
+        allow read, write: if donoFornecedor();
+      }
+      // Estoque empresarial privado (não confundir com lotes da calculadora).
+      match /estoque_itens/{id} {
+        allow read, write: if donoFornecedor();
+      }
+      match /estoque_reservas/{id} {
+        allow read, write: if donoFornecedor();
+      }
+      match /estoque_movimentos/{id} {
+        allow read, write: if donoFornecedor();
+      }
+
       match /{subcolecao}/{docId} {
-        allow read: if signedIn();
-        allow write: if isAdmin() || uid() == fornecedorId;
+        allow read: if signedIn() && !subcolecaoFinanceiroPrivada(subcolecao);
+        allow write: if (isAdmin() || uid() == fornecedorId)
+          && !subcolecaoFinanceiroPrivada(subcolecao);
       }
     }
 
@@ -431,6 +565,14 @@ service cloud.firestore {
         );
     }
 
+    // Chat ativo: cotação não cancelada e participação não encerrada como perdedor/recusa.
+    function chatCotacaoAberto(cotacaoId, fornecedorId) {
+      let statusPai = cotacaoDoc(cotacaoId).status;
+      let statusForn = get(/databases/$(database)/documents/cotacao/$(cotacaoId)/fornecedores/$(fornecedorId)).data.status;
+      return statusPai != 'cancelada'
+        && !(statusForn in ['cancelada', 'recusado', 'perdeuCotacao']);
+    }
+
     function mensagemChatValida() {
       return request.resource.data.keys().hasOnly([
           'id_usuario',
@@ -447,6 +589,13 @@ service cloud.firestore {
         && request.resource.data.mensagem.size() <= 2000
         && request.resource.data.lido == false
         && request.resource.data.enviado_em is timestamp;
+    }
+
+    // Participante só pode marcar lido=true (não altera conteúdo).
+    function marcarMensagemLidaValida() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lido'])
+        && request.resource.data.lido == true
+        && resource.data.id_usuario != uid();
     }
 
     // Create/update sensíveis de cotação passam pelas callables (Admin SDK).
@@ -505,7 +654,13 @@ service cloud.firestore {
         // Chat é gravado pelo cliente (stream em tempo real).
         match /mensagens/{mensagemId} {
           allow create: if participanteChatCotacao(cotacaoId, fornecedorId)
+            && chatCotacaoAberto(cotacaoId, fornecedorId)
             && mensagemChatValida();
+
+          allow update: if participanteChatCotacao(cotacaoId, fornecedorId)
+            && marcarMensagemLidaValida();
+
+          allow delete: if false;
         }
       }
     }
@@ -549,13 +704,52 @@ service cloud.firestore {
             && get(/databases/$(database)/documents/orcamento/$(id)).data.id_fornecedor == uid()
           );
 
-        allow create: if isAdmin()
-          || eventoDono(get(/databases/$(database)/documents/orcamento/$(id)).data.id_evento)
-          || orcamentoDoSolicitante(get(/databases/$(database)/documents/orcamento/$(id)).data);
+        function despesaValida() {
+          return request.resource.data.get('id_orcamento', id) == id
+            && request.resource.data.custo is number && request.resource.data.custo > 0 && request.resource.data.custo <= 1000000
+            && request.resource.data.pago is number && request.resource.data.pago >= 0 && request.resource.data.pago <= request.resource.data.custo;
+        }
+        function podeAlterarDespesa() {
+          return isAdmin() || eventoDono(get(/databases/$(database)/documents/orcamento/$(id)).data.id_evento)
+            || orcamentoDoSolicitante(get(/databases/$(database)/documents/orcamento/$(id)).data);
+        }
+        allow create, update: if podeAlterarDespesa() && despesaValida();
+        allow delete: if podeAlterarDespesa();
+      }
 
-        allow update, delete: if isAdmin()
-          || eventoDono(get(/databases/$(database)/documents/orcamento/$(id)).data.id_evento)
-          || orcamentoDoSolicitante(get(/databases/$(database)/documents/orcamento/$(id)).data);
+      function orcamentoPaiExiste() {
+        return exists(/databases/$(database)/documents/orcamento/$(id));
+      }
+
+      function orcamentoPai() {
+        return get(/databases/$(database)/documents/orcamento/$(id)).data;
+      }
+
+      // get() sem exists() no pai falha a avaliação (PERMISSION_DENIED) em list/listen.
+      function podeLerFinanceiroOrcamento() {
+        return orcamentoPaiExiste() && (
+          isAdmin()
+          || eventoDono(orcamentoPai().id_evento)
+          || orcamentoDoSolicitante(orcamentoPai())
+          || (signedIn() && orcamentoPai().id_fornecedor == uid())
+        );
+      }
+
+      // Comandos críticos (contrato/liquidação) passam por Cloud Functions.
+      // Cliente autentizado só lê; escrita direta é negada.
+      match /obrigacoes/{obrigacaoId} {
+        allow read: if podeLerFinanceiroOrcamento();
+        allow write: if false;
+      }
+
+      match /liquidacoes/{liquidacaoId} {
+        allow read: if podeLerFinanceiroOrcamento();
+        allow write: if false;
+      }
+
+      match /liquidacoes_idempotencia/{chaveId} {
+        allow read: if podeLerFinanceiroOrcamento();
+        allow write: if false;
       }
     }
 
@@ -578,6 +772,14 @@ service cloud.firestore {
     }
 
     match /calculadora_festa/{id} {
+      // A leitura de um destino inicial ainda inexistente permite deduplicar a transação.
+      allow get: if signedIn() && id.matches('plano_inicial_.+')
+        && !exists(/databases/$(database)/documents/calculadora_festa/$(id));
+      // Deduplicação do vínculo de rascunho: somente o dono do evento pode
+      // consultar a ausência da identidade estável antes da transação.
+      allow get: if signedIn() && id.matches('^calc_[^_]+_[0-9]+$')
+        && eventoDono(id.split('_')[1])
+        && !exists(/databases/$(database)/documents/calculadora_festa/$(id));
       allow read, delete: if podeAcessarCalculadora(resource.data);
       allow create: if isAdmin() || (
         signedIn() && request.resource.data.id_usuario == uid()
@@ -654,6 +856,80 @@ service cloud.firestore {
             && resource.data.id_fornecedor == uid()
             && resource.data.visivel_fornecedor == true);
       allow create, update, delete: if false;
+    }
+
+    // Comissão da plataforma: escritas via Functions; leitura admin ou próprio pagador.
+    match /plataforma_comissao_politicas/{id} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+    match /plataforma_comissao_obrigacoes/{id} {
+      // list separado: OR com id_pagador faz query sem filtro falhar inteira.
+      allow list: if isAdmin()
+        || (signedIn() && resource.data.id_pagador == uid());
+      allow get: if isAdmin()
+        || (signedIn() && resource.data.id_pagador == uid());
+      allow write: if false;
+    }
+    match /plataforma_comissao_liquidacoes/{id} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+    match /plataforma_comissao_ajustes/{id} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+    match /plataforma_comissao_auditoria/{id} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    // Intermediação (recebimento → alocação → repasse): escrita só via Functions.
+    match /plataforma_recebimentos/{id} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+    match /plataforma_alocacoes/{id} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+    match /plataforma_repasses/{id} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+    match /plataforma_liberacao_repasses/{id} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+    match /plataforma_intermediacao_ajustes/{id} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+    match /plataforma_intermediacao_auditoria/{id} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    // Mediação (Prompt 03): escrita só via Functions; leitura admin.
+    // Cliente/fornecedor consultam via callable com filtro de visibilidade.
+    match /plataforma_mediacao_casos/{id} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+    match /plataforma_mediacao_registros/{id} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+    match /plataforma_mediacao_auditoria/{id} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    // Declarações de pagamento do cliente (Prompt 04) — escrita só Functions.
+    match /plataforma_pagamentos_declarados/{id} {
+      allow read: if isAdmin()
+        || (signedIn() && resource.data.autor_id == uid());
+      allow write: if false;
     }
   }
 }

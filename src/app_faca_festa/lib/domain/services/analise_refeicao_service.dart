@@ -14,6 +14,8 @@ class AnaliseRefeicaoService {
   const AnaliseRefeicaoService();
   AnaliseRefeicao analisar(List<ItemEstimativaFinanceira> regras,
       {required String refeicao,
+      String? servico,
+      bool avaliarComposicao = true,
       int adultos = 0,
       int criancas = 0,
       int bebes = 0}) {
@@ -36,13 +38,18 @@ class AnaliseRefeicaoService {
             !['principal', 'acompanhamento', 'bebida', 'outro']
                 .contains(i.premissas['papel_na_refeicao']))
         .toList();
+    if (!avaliarComposicao) {
+      return AnaliseRefeicao(
+          principais.length, acompanhamentos.length, bebidas.length, const []);
+    }
     if (desconhecidos.isNotEmpty) {
       pendencias.add(
           'Defina o papel de: ${desconhecidos.map((i) => i.nome).join(', ')}.');
     }
     final nome = RevisaoCardapioService.normalizar(refeicao);
-    final refeicaoCompleta =
-        RegExp(r'(^|_)(almoco|jantar|refeicao)(_|$)').hasMatch(nome);
+    final refeicaoCompleta = servico == null
+        ? RegExp(r'(^|_)(almoco|jantar|refeicao)(_|$)').hasMatch(nome)
+        : servico == 'refeicao';
     if (refeicaoCompleta && principais.isEmpty) {
       pendencias.add(
           'Nenhum prato principal foi identificado para esta refeição. Confira a composição.');

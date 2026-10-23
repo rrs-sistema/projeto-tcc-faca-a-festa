@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
 
+import 'package:app_faca_festa/app/bootstrap/cotacao_bootstrap.dart';
+import 'package:app_faca_festa/data/datasources/remote/cotacao_functions_datasource.dart';
 import 'package:app_faca_festa/data/datasources/remote/solicitacoes_remote_datasource.dart';
 import 'package:app_faca_festa/data/repositories_impl/solicitacoes_repository_impl.dart';
 import 'package:app_faca_festa/domain/repositories/solicitacoes_repository.dart';
@@ -12,10 +14,13 @@ class SolicitacoesBootstrap {
   SolicitacoesBootstrap._();
 
   static void register() {
+    CotacaoBootstrap.register();
+
     if (!Get.isRegistered<SolicitacoesRemoteDatasource>()) {
       Get.lazyPut<SolicitacoesRemoteDatasource>(
         () => SolicitacoesRemoteDatasource(
           firestore: Get.find<FirebaseFirestore>(),
+          functions: Get.find<CotacaoFunctionsDatasource>(),
         ),
         fenix: true,
       );

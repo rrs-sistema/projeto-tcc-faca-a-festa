@@ -1,6 +1,7 @@
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:app_faca_festa/data/services/functions/callable_https_client.dart';
 import 'package:get/get.dart';
 
 import 'package:app_faca_festa/data/datasources/remote/calculadora_festa_remote_datasource.dart';
@@ -29,6 +30,12 @@ abstract final class CalculadoraBootstrap {
       Get.lazyPut<ICalculadoraFestaAIService>(
         () => CalculadoraFestaRemoteAIService(
           executor: (payload) async {
+            if (CallableHttpsClient.necessarioNaPlataformaAtual) {
+              return Get.find<CallableHttpsClient>().call(
+                  'analisarCalculadoraFestaIA',
+                  payload,
+                  const Duration(seconds: 60));
+            }
             final callable = Get.find<FirebaseFunctions>().httpsCallable(
               'analisarCalculadoraFestaIA',
               options: HttpsCallableOptions(
@@ -71,6 +78,7 @@ abstract final class CalculadoraBootstrap {
       Get.lazyPut<CalculadoraItensBaseRemoteDatasource>(
         () => CalculadoraItensBaseRemoteDatasource(
           firestore: Get.find<FirebaseFirestore>(),
+          auth: Get.find<FirebaseAuth>(),
         ),
         fenix: true,
       );

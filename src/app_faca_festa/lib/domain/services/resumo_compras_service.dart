@@ -33,6 +33,8 @@ class ResumoCompras {
         'orcado': orcado,
         'pago': pago,
         'custo_projetado': orcado + custoConhecido,
+        'compra_adicional_projetada': custoConhecido,
+        'fonte_pago': 'despesas_registradas',
         'compras_restantes_conhecidas': custoConhecido,
         'precos_pendentes': precosPendentes,
         'quantidades_pendentes': quantidadesPendentes,
@@ -61,7 +63,9 @@ class ResumoComprasService {
     double valor(dynamic n) =>
         n is num && n.isFinite && n >= 0 ? n.toDouble() : 0;
     for (final gasto in compromissos) {
-      if (gasto['valor'] is! num ||
+      if (gasto['consulta_sincronizada'] == false ||
+          gasto['financeiro_valido'] == false ||
+          gasto['valor'] is! num ||
           !(gasto['valor'] as num).isFinite ||
           (gasto['valor'] as num) < 0) {
         consultaValida = false;
@@ -95,7 +99,10 @@ class ResumoComprasService {
       }
       if (item.falta! <= 0) continue;
       final preco = item.resultado.valorUnitarioMedio;
-      if (!preco.isFinite || preco <= 0 || !(item.falta! * preco).isFinite) {
+      if (item.regra?.vinculoPrecoCompativel == false ||
+          !preco.isFinite ||
+          preco <= 0 ||
+          !(item.falta! * preco).isFinite) {
         precos++;
         continue;
       }

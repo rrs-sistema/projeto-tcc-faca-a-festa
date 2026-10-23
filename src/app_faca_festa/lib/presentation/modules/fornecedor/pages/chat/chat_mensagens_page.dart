@@ -187,6 +187,23 @@ class ChatMensagensPage extends StatelessWidget {
         idFornecedor: idFornecedor,
       ),
       builder: (context, snap) {
+        if (snap.hasError) {
+          debugPrint('❌ Erro ao ouvir mensagens do chat: ${snap.error}');
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Text(
+                'Não foi possível carregar as mensagens.',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.poppins(
+                  color: Colors.black54,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          );
+        }
+
         if (!snap.hasData) {
           return Center(
               child: CircularProgressIndicator(color: primary, strokeWidth: 2));
@@ -209,11 +226,38 @@ class ChatMensagensPage extends StatelessWidget {
           itemCount: msgs.length,
           itemBuilder: (_, i) {
             final mensagem = msgs[i];
+            if (mensagem.ehSistema) {
+              return _buildMensagemSistema(mensagem);
+            }
             final isMe = mensagem.idUsuario == usuario.idUsuario;
             return _buildChatBubble(mensagem, isMe, primary);
           },
         );
       },
+    );
+  }
+
+  Widget _buildMensagemSistema(CotacaoMensagem data) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 24),
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade200,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            data.mensagem,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.poppins(
+              fontSize: 11.5,
+              color: Colors.grey.shade700,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -282,70 +326,99 @@ class ChatMensagensPage extends StatelessWidget {
   // 🔹 CAIXA DE ENTRADA (MENSAGEM)
   // ----------------------------------------------------------
   Widget _buildInputField(Color primary, Usuario usuario) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-          horizontal: 12, vertical: 8), // 🔹 Bem mais fina
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            blurRadius: 8,
-            color: Colors.black.withValues(alpha: 0.05),
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Expanded(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(
-                minHeight: 40, // 🔹 Altura mínima reduzida
-                maxHeight: 120, // 🔹 Limite máximo sensato
+    return StreamBuilder<List<CotacaoFornecedorResumo>>(
+      stream: cotacoes.observarFornecedoresDaCotacao(idCotacao),
+      builder: (context, snap) {
+        CotacaoFornecedorResumo? forn;
+        for (final f in snap.data ?? const <CotacaoFornecedorResumo>[]) {
+          if (f.idFornecedor == idFornecedor) {
+            forn = f;
+            break;
+          }
+        }
+        final aberto = forn == null || forn.chatAberto;
+
+        if (!aberto) {
+          return Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            color: Colors.grey.shade100,
+            child: Text(
+              'Esta conversa está encerrada para novas mensagens.',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(
+                fontSize: 12.5,
+                color: Colors.grey.shade700,
+                fontWeight: FontWeight.w600,
               ),
-              child: TextField(
-                controller: msgController,
-                keyboardType: TextInputType.multiline,
-                maxLines: null,
-                style: GoogleFonts.poppins(fontSize: 13),
-                decoration: InputDecoration(
-                  hintText: "Digite sua mensagem...",
-                  hintStyle: GoogleFonts.poppins(
-                      fontSize: 12.5, color: Colors.grey.shade500),
-                  filled: true,
-                  fillColor: const Color(
-                      0xFFF1F5F9), // Fundo suave para a área de texto
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20),
-                    borderSide: BorderSide.none,
+            ),
+          );
+        }
+
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                blurRadius: 8,
+                color: Colors.black.withValues(alpha: 0.05),
+                offset: const Offset(0, -2),
+              ),
+            ],
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Expanded(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    minHeight: 40,
+                    maxHeight: 120,
                   ),
-                  isDense: true,
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  child: TextField(
+                    controller: msgController,
+                    keyboardType: TextInputType.multiline,
+                    maxLines: null,
+                    style: GoogleFonts.poppins(fontSize: 13),
+                    decoration: InputDecoration(
+                      hintText: "Digite sua mensagem...",
+                      hintStyle: GoogleFonts.poppins(
+                          fontSize: 12.5, color: Colors.grey.shade500),
+                      filled: true,
+                      fillColor: const Color(0xFFF1F5F9),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(20),
+                        borderSide: BorderSide.none,
+                      ),
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 10),
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Padding(
-            padding: const EdgeInsets.only(bottom: 2),
-            child: InkWell(
-              onTap: () => _enviarMensagem(usuario),
-              borderRadius: BorderRadius.circular(50),
-              child: Container(
-                padding: const EdgeInsets.all(10), // 🔹 Botão menor e elegante
-                decoration: BoxDecoration(
-                  color: primary,
-                  shape: BoxShape.circle,
+              const SizedBox(width: 8),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 2),
+                child: InkWell(
+                  onTap: () => _enviarMensagem(usuario),
+                  borderRadius: BorderRadius.circular(50),
+                  child: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: primary,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.send_rounded,
+                        color: Colors.white, size: 18),
+                  ),
                 ),
-                child: const Icon(Icons.send_rounded,
-                    color: Colors.white, size: 18),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 

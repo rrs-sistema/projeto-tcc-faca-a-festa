@@ -59,9 +59,10 @@ abstract interface class CotacaoRepository {
     DateTime? prazoEntrega,
     String? condicaoPagamento,
     String? observacaoFornecedor,
+    double? valorProposto,
   });
 
-  Future<String> confirmarFornecedorEscolhido({
+  Future<Map<String, dynamic>> confirmarFornecedorEscolhido({
     required String idCotacao,
     required String idFornecedor,
     required String nomeFornecedor,

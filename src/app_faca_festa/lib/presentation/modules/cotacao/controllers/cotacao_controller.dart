@@ -36,6 +36,7 @@ class CotacaoController extends GetxController {
   final OrcamentoController? Function()? _orcamentoControllerResolver;
   final cotacoes = <Cotacao>[].obs;
   final carregando = false.obs;
+  final erroEscuta = ''.obs;
 
   StreamSubscription? _cotacaoStream;
   final Map<String, StreamSubscription> _subStreams = {};
@@ -68,6 +69,7 @@ class CotacaoController extends GetxController {
     if (idUsuario == null) return;
 
     carregando.value = true;
+    erroEscuta.value = '';
     _cotacaoStream?.cancel();
     _cancelarSubStreams();
 
@@ -75,6 +77,7 @@ class CotacaoController extends GetxController {
         _gerenciarCotacoes.observarMinhasCotacoes(idUsuario).listen((lista) {
       try {
         cotacoes.assignAll(lista);
+        erroEscuta.value = '';
         for (final cotacao in lista) {
           if (!_subStreams.containsKey(cotacao.id)) {
             _ouvirFornecedoresDaCotacao(cotacao.id);
@@ -82,12 +85,16 @@ class CotacaoController extends GetxController {
         }
         _atualizarContagens();
       } catch (e, s) {
+        erroEscuta.value =
+            'Não foi possível montar a lista de pedidos. Tente novamente.';
         debugPrint('❌ Erro ao processar cotações: $e\n$s');
       } finally {
         carregando.value = false;
       }
     }, onError: (e) {
       carregando.value = false;
+      erroEscuta.value =
+          'Não foi possível carregar seus pedidos de preço. Verifique a conexão e tente de novo.';
       debugPrint('❌ Erro ao escutar cotações: $e');
     });
   }
@@ -102,9 +109,11 @@ class CotacaoController extends GetxController {
       final cotacaoIndex = cotacoes.indexWhere((c) => c.id == idCotacao);
       if (cotacaoIndex != -1) {
         final cotacao = cotacoes[cotacaoIndex];
-        if (temResposta && cotacao.status != StatusCotacao.respondida) {
+        // Só promove pendente → parcial (não força respondida: o pai no
+        // Firestore é a fonte da verdade via stream principal).
+        if (temResposta && cotacao.status == StatusCotacao.pendente) {
           cotacoes[cotacaoIndex] =
-              cotacao.copyWith(status: StatusCotacao.respondida);
+              cotacao.copyWith(status: StatusCotacao.parcial);
           cotacoes.refresh();
 
           Get.snackbar(
@@ -145,33 +154,36 @@ class CotacaoController extends GetxController {
     try {
       EasyLoading.show(status: 'Fechando negócio... 🔒');
 
-      final idEvento = await _gerenciarCotacoes.confirmarFornecedorEscolhido(
+      final resultado = await _gerenciarCotacoes.confirmarFornecedorEscolhido(
         idCotacao: idCotacao,
         idFornecedor: idFornecedor,
         nomeFornecedor: fornecedor.razaoSocial,
         idSolicitante: appController.usuarioLogado.value?.idUsuario ?? '',
         nomeSolicitante: appController.usuarioLogado.value?.nome ?? '',
       );
+      final idEvento = (resultado['idEvento'] ?? '').toString();
 
-      // ===============================================================
-      // 🔹 Finalização de UX
-      // ===============================================================
       EasyLoading.dismiss();
       HapticFeedback.mediumImpact();
 
       Get.snackbar(
-        'Negócio fechado! 🎉',
-        'Orçamento criado e gasto inicial registrado.',
+        'Negócio fechado',
+        'Contrato criado. Declare o pagamento pela plataforma para a administração conferir.',
         backgroundColor: Colors.green.shade600,
         colorText: Colors.white,
         icon: const Icon(Icons.check_circle, color: Colors.white),
         snackPosition: SnackPosition.BOTTOM,
-        duration: const Duration(seconds: 3),
+        duration: const Duration(seconds: 4),
       );
 
-      // Atualizar listas
       ouvirMinhasCotacoes();
-      _resolverOrcamentoController()?.carregarOrcamentosDoEvento(idEvento);
+      if (idEvento.isNotEmpty) {
+        _resolverOrcamentoController()?.carregarOrcamentosDoEvento(idEvento);
+        await Get.toNamed(
+          '/acompanhamento-organizador',
+          arguments: {'idEvento': idEvento},
+        );
+      }
     } catch (e) {
       EasyLoading.dismiss();
       Get.snackbar(
@@ -210,6 +222,7 @@ class CotacaoController extends GetxController {
     _cotacaoStream = null;
     _cancelarSubStreams();
     cotacoes.clear();
+    erroEscuta.value = '';
     _atualizarContagens();
     carregando.value = false;
   }

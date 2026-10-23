@@ -1,0 +1,185 @@
+{
+  "versao": 1,
+  "data": "2026-10-19",
+  "repositorio": "D:\\repository\\unicesumar\\tcc\\app\\src\\app_faca_festa",
+  "quantidade": 12,
+  "prompts": [
+    {
+      "id": "01",
+      "arquivo": "01-contexto-e-prontidao.md",
+      "titulo": "Contexto único, prontidão e atualização das fontes",
+      "casos": [
+        "A11",
+        "A12",
+        "A13",
+        "A32",
+        "A34"
+      ]
+    },
+    {
+      "id": "02",
+      "arquivo": "02-cadastro-e-rascunho-duravel.md",
+      "titulo": "Cadastro, rascunho durável e vínculo recuperável",
+      "casos": [
+        "A01",
+        "A02",
+        "A03",
+        "A04",
+        "A05",
+        "A06"
+      ]
+    },
+    {
+      "id": "03",
+      "arquivo": "03-publico-e-completude.md",
+      "titulo": "Público, origem e completude da lista de convidados",
+      "casos": [
+        "A07",
+        "A08",
+        "A09",
+        "A10"
+      ]
+    },
+    {
+      "id": "04",
+      "arquivo": "04-persistencia-das-configuracoes.md",
+      "titulo": "Persistência uniforme das escolhas da calculadora",
+      "casos": [
+        "A14",
+        "A15",
+        "A16",
+        "A17",
+        "A32"
+      ]
+    },
+    {
+      "id": "05",
+      "arquivo": "05-agenda-e-ocorrencias.md",
+      "titulo": "Agenda e serviços alimentares por ocorrência",
+      "casos": [
+        "A19",
+        "A20",
+        "A21",
+        "A25"
+      ]
+    },
+    {
+      "id": "06",
+      "arquivo": "06-catalogo-contextual-versionado.md",
+      "titulo": "Referências e modelos contextuais configuráveis",
+      "casos": [
+        "A18",
+        "A22",
+        "A23",
+        "A24",
+        "A36"
+      ]
+    },
+    {
+      "id": "07",
+      "arquivo": "07-planejador-hibrido.md",
+      "titulo": "Planejador híbrido e perguntas por impacto",
+      "casos": [
+        "A18",
+        "A21",
+        "A22",
+        "A23",
+        "A24",
+        "A27"
+      ]
+    },
+    {
+      "id": "08",
+      "arquivo": "08-financeiro-e-capacidade.md",
+      "titulo": "Financeiro real, verba alimentar e capacidade",
+      "casos": [
+        "A26",
+        "A27",
+        "A28",
+        "A29"
+      ]
+    },
+    {
+      "id": "09",
+      "arquivo": "09-aplicacao-e-execucao.md",
+      "titulo": "Aplicação agrupada, estoque e execução idempotente",
+      "casos": [
+        "A24",
+        "A25",
+        "A29",
+        "A30",
+        "A31",
+        "A35"
+      ]
+    },
+    {
+      "id": "10",
+      "arquivo": "10-experiencia-integral.md",
+      "titulo": "Ergonomia e intuitividade da jornada completa",
+      "casos": [
+        "A02",
+        "A03",
+        "A06",
+        "A13",
+        "A15",
+        "A33",
+        "A34"
+      ]
+    },
+    {
+      "id": "11",
+      "arquivo": "11-migracao-e-governanca.md",
+      "titulo": "Compatibilidade, migração e governança do catálogo",
+      "casos": [
+        "A10",
+        "A22",
+        "A32",
+        "A35",
+        "A36"
+      ]
+    },
+    {
+      "id": "12",
+      "arquivo": "12-homologacao-ponta-a-ponta.md",
+      "titulo": "Homologação integral pelo cadastro e retomada real",
+      "casos": [
+        "A01",
+        "A02",
+        "A03",
+        "A04",
+        "A05",
+        "A06",
+        "A07",
+        "A08",
+        "A09",
+        "A10",
+        "A11",
+        "A12",
+        "A13",
+        "A14",
+        "A15",
+        "A16",
+        "A17",
+        "A18",
+        "A19",
+        "A20",
+        "A21",
+        "A22",
+        "A23",
+        "A24",
+        "A25",
+        "A26",
+        "A27",
+        "A28",
+        "A29",
+        "A30",
+        "A31",
+        "A32",
+        "A33",
+        "A34",
+        "A35",
+        "A36"
+      ]
+    }
+  ]
+}

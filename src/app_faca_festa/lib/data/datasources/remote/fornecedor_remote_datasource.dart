@@ -3,6 +3,10 @@ import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import '../../services/transacao_firestore.dart';
+import 'package:app_faca_festa/domain/entities/fornecedor_dados_cadastrais.dart';
+import 'package:app_faca_festa/domain/entities/fornecedor_cadastro_edicao.dart';
+import '../../models/usuario/usuario_model.dart';
 
 import '../../models/cotacao/cotacao_model.dart';
 import '../../models/endereco/endereco_usuario.dart';
@@ -16,6 +20,8 @@ import '../../models/servico_produto/fornecedor_produto_servico_model.dart';
 import '../../models/servico_produto/subcategoria_servico_model.dart';
 
 abstract interface class FornecedorRemoteDatasource {
+  Future<FornecedorCadastroEdicao> carregarCadastroEdicao(String idFornecedor);
+  Future<void> salvarCadastroEdicao(FornecedorCadastroAlteracao alteracao);
   Future<FornecedorAdminSnapshot> carregarSnapshotAdmin({
     required bool incluirEnderecos,
   });
@@ -52,6 +58,11 @@ abstract interface class FornecedorRemoteDatasource {
 
   Future<void> atualizarFornecedor(FornecedorModel fornecedor);
 
+  Future<void> atualizarDadosCadastrais({
+    required String idFornecedor,
+    required FornecedorDadosCadastrais dados,
+  });
+
   Future<void> salvarFornecedor(FornecedorModel fornecedor);
 
   Future<void> salvarCategoriaFornecedor(FornecedorCategoriaModel categoria);
@@ -81,6 +92,224 @@ abstract interface class FornecedorRemoteDatasource {
 }
 
 class FirebaseFornecedorRemoteDatasource implements FornecedorRemoteDatasource {
+  @override
+  Future<FornecedorCadastroEdicao> carregarCadastroEdicao(
+      String idFornecedor) async {
+    final doc =
+        await firestore.collection('fornecedor').doc(idFornecedor).get();
+    if (!doc.exists) throw StateError('Fornecedor não encontrado.');
+    final fornecedor = FornecedorModel.fromMap(
+        {...doc.data()!, 'id_fornecedor': doc.id},
+        documentId: doc.id);
+    final uid = fornecedor.idUsuario.trim();
+    if (uid.isEmpty) {
+      throw StateError(
+          'Este fornecedor não possui um usuário responsável vinculado.');
+    }
+    final resultados = await Future.wait([
+      firestore.collection('usuarios').doc(uid).get(),
+      firestore.collection('usuarios').doc(uid).collection('enderecos').get(),
+      firestore
+          .collection('fornecedor_categoria')
+          .where('id_fornecedor', isEqualTo: idFornecedor)
+          .get(),
+      firestore
+          .collection('fornecedor_servico')
+          .where('id_fornecedor', isEqualTo: idFornecedor)
+          .get(),
+    ]);
+    final usuarioDoc = resultados[0] as DocumentSnapshot<Map<String, dynamic>>;
+    if (!usuarioDoc.exists) {
+      throw StateError('O usuário responsável vinculado não foi encontrado.');
+    }
+    final enderecos =
+        (resultados[1] as QuerySnapshot<Map<String, dynamic>>).docs;
+    final end =
+        enderecos.where((e) => e.data()['principal'] == true).firstOrNull ??
+            enderecos.firstOrNull;
+    final categorias = (resultados[2] as QuerySnapshot<Map<String, dynamic>>)
+        .docs
+        .map((d) => FornecedorCategoriaModel.fromMap(d.data()))
+        .toList();
+    if (categorias.isEmpty) {
+      categorias.addAll(fornecedor.categorias
+          .where((c) => c.idCategoria.isNotEmpty)
+          .map((c) => FornecedorCategoriaModel(
+              idFornecedor: fornecedor.idFornecedor,
+              idCategoria: c.idCategoria,
+              nomeCategoria: c.nomeCategoria,
+              subcategorias: c.subcategorias)));
+    }
+    return FornecedorCadastroEdicao(
+      fornecedor: fornecedor,
+      usuario: UsuarioModel.fromMap({...usuarioDoc.data()!, 'id_usuario': uid}),
+      endereco: end == null
+          ? null
+          : EnderecoUsuarioModel.fromMap(
+              {...end.data(), 'id': end.id, 'id_usuario': uid}),
+      categorias: categorias,
+      vinculos: (resultados[3] as QuerySnapshot<Map<String, dynamic>>)
+          .docs
+          .map((d) =>
+              FornecedorProdutoServicoModel.fromMap({...d.data(), 'id': d.id}))
+          .toList(),
+      revisao: (doc.data()!['cadastro_revisao'] as num?)?.toInt() ?? 0,
+    );
+  }
+
+  @override
+  Future<void> salvarCadastroEdicao(
+      FornecedorCadastroAlteracao alteracao) async {
+    final origem = alteracao.origem;
+    final id = origem.fornecedor.idFornecedor;
+    final uid = origem.fornecedor.idUsuario;
+    if (id.isEmpty || uid.isEmpty || alteracao.endereco.idUsuario != uid) {
+      throw StateError('Vínculo do cadastro inválido. Reabra a edição.');
+    }
+    final categoriasAtuais = await firestore
+        .collection('fornecedor_categoria')
+        .where('id_fornecedor', isEqualTo: id)
+        .get();
+    final servicosAtuais = await firestore
+        .collection('fornecedor_servico')
+        .where('id_fornecedor', isEqualTo: id)
+        .get();
+    if (categoriasAtuais.size +
+            servicosAtuais.size +
+            alteracao.categorias.length +
+            alteracao.servicos.length >
+        450) {
+      throw StateError(
+          'Este catálogo excede o limite desta edição. Reduza a seleção antes de salvar.');
+    }
+    final fornecedorRef = firestore.collection('fornecedor').doc(id);
+    final usuarioRef = firestore.collection('usuarios').doc(uid);
+    final endereco = alteracao.endereco.copyWith(
+        id: origem.endereco?.id ?? 'principal',
+        principal: origem.endereco?.principal ?? true);
+    await executarTransacaoFirestore(() => firestore.runTransaction((tx) async {
+          final atual = await tx.get(fornecedorRef);
+          final usuario = await tx.get(usuarioRef);
+          if (!atual.exists ||
+              !usuario.exists ||
+              (atual.data()?['id_usuario'] ?? atual.data()?['idUsuario']) !=
+                  uid) {
+            throw StateError('O vínculo do fornecedor mudou. Reabra a edição.');
+          }
+          if (((atual.data()?['cadastro_revisao'] as num?)?.toInt() ?? 0) !=
+              origem.revisao) {
+            throw StateError(
+                'Outro administrador atualizou este cadastro. Reabra para revisar os dados atuais.');
+          }
+          tx.update(fornecedorRef, {
+            ...alteracao.dados.toMap(),
+            if (alteracao.novoBannerUrl != null)
+              'banner_url': alteracao.novoBannerUrl,
+            'tipoEventoIds': alteracao.tipoEventoIds,
+            'tipo_evento_ids': alteracao.tipoEventoIds,
+            'tipoEventoSlugs': alteracao.tipoEventoSlugs,
+            'tipo_evento_slugs': alteracao.tipoEventoSlugs,
+            'tipoEventoNomes': alteracao.tipoEventoNomes,
+            'tipo_evento_nomes': alteracao.tipoEventoNomes,
+            'categorias': alteracao.categorias
+                .map((c) => {
+                      'idCategoria': c.idCategoria,
+                      'nomeCategoria': c.nomeCategoria,
+                      'subcategorias': c.subcategorias
+                          .map((s) => {
+                                'idSubcategoria': s.idSubcategoria,
+                                'nomeSubcategoria': s.nomeSubcategoria
+                              })
+                          .toList()
+                    })
+                .toList(),
+            'cadastro_revisao': origem.revisao + 1,
+          });
+          tx.update(usuarioRef, {
+            'nome': alteracao.nomeResponsavel.trim(),
+            'cidade': endereco.nomeCidade,
+            'uf': endereco.uf
+          });
+          tx.set(
+              usuarioRef.collection('enderecos').doc(endereco.id),
+              EnderecoUsuarioModel.fromEntity(endereco).toMap(),
+              SetOptions(merge: true));
+          final categoriasPorId = {
+            for (final c in alteracao.categorias) c.idCategoria: c
+          };
+          final gravadas = <String>{};
+          for (final doc in categoriasAtuais.docs) {
+            final categoriaId = doc.data()['id_categoria']?.toString();
+            final categoria = categoriasPorId[categoriaId];
+            if (categoria == null || !gravadas.add(categoria.idCategoria)) {
+              tx.delete(doc.reference);
+            } else {
+              final map = FornecedorCategoriaModel.fromEntity(
+                      categoria.copyWith(idFornecedor: id))
+                  .toMap()
+                ..remove('data_cadastro');
+              tx.update(doc.reference, map);
+            }
+          }
+          for (final categoria in alteracao.categorias) {
+            if (!gravadas.add(categoria.idCategoria)) continue;
+            tx.set(
+                firestore
+                    .collection('fornecedor_categoria')
+                    .doc('${id}_${categoria.idCategoria}'),
+                FornecedorCategoriaModel.fromEntity(
+                        categoria.copyWith(idFornecedor: id))
+                    .toMap());
+          }
+          final selecionados = {for (final s in alteracao.servicos) s.id: s};
+          final encontrados = <String>{};
+          final preferidos = <String, String>{};
+          for (final doc in servicosAtuais.docs) {
+            final servicoId = (doc.data()['id_produto_servico'] ??
+                        doc.data()['idProdutoServico'])
+                    ?.toString() ??
+                '';
+            if (doc.data()['ativo'] != false) {
+              preferidos.putIfAbsent(servicoId, () => doc.id);
+            }
+          }
+          for (final doc in servicosAtuais.docs) {
+            final servicoId = (doc.data()['id_produto_servico'] ??
+                        doc.data()['idProdutoServico'])
+                    ?.toString() ??
+                '';
+            preferidos.putIfAbsent(servicoId, () => doc.id);
+          }
+          for (final doc in servicosAtuais.docs) {
+            final servicoId = (doc.data()['id_produto_servico'] ??
+                        doc.data()['idProdutoServico'])
+                    ?.toString() ??
+                '';
+            final selecionado = selecionados.containsKey(servicoId) &&
+                preferidos[servicoId] == doc.id;
+            // Mantém preço, fotos, notas e IDs existentes; não exclui histórico.
+            tx.update(doc.reference, {
+              'ativo': selecionado,
+              'data_atualizacao': FieldValue.serverTimestamp()
+            });
+            encontrados.add(servicoId);
+          }
+          for (final servico in selecionados.values) {
+            if (encontrados.contains(servico.id)) continue;
+            final vinculoId = '${id}_${servico.id}';
+            tx.set(
+                firestore.collection('fornecedor_servico').doc(vinculoId),
+                FornecedorProdutoServicoModel(
+                  id: vinculoId,
+                  idFornecedor: id,
+                  idProdutoServico: servico.id,
+                  idSubcategoria: servico.idSubcategoria,
+                  preco: 0,
+                ).toMap());
+          }
+        }));
+  }
+
   FirebaseFornecedorRemoteDatasource(
     this.firestore, {
     required this.storage,
@@ -471,6 +700,16 @@ class FirebaseFornecedorRemoteDatasource implements FornecedorRemoteDatasource {
         .doc(fornecedor.idFornecedor)
         .update(fornecedor.toMap());
   }
+
+  @override
+  Future<void> atualizarDadosCadastrais({
+    required String idFornecedor,
+    required FornecedorDadosCadastrais dados,
+  }) =>
+      firestore
+          .collection('fornecedor')
+          .doc(idFornecedor)
+          .update(dados.toMap());
 
   @override
   Future<void> salvarFornecedor(FornecedorModel fornecedor) {

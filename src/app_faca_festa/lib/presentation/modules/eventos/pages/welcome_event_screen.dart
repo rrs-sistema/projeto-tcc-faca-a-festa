@@ -285,6 +285,7 @@ class _WelcomeEventScreenState extends State<WelcomeEventScreen> {
                                           .tipoEventoSelecionado.value = tipo;
                                       EasyLoading.dismiss();
 
+                                      final rotaDeOrigem = Get.currentRoute;
                                       await showCadastroEventoBottomSheet(
                                         context,
                                         controller: eventoCadastroController,
@@ -301,8 +302,9 @@ class _WelcomeEventScreenState extends State<WelcomeEventScreen> {
                                       final eventoAtual =
                                           eventoController.eventoAtualEntidade;
                                       if (eventoAtual != null &&
-                                          Get.currentRoute !=
-                                              '/HomeEventScreen') {
+                                          Get.currentRoute == rotaDeOrigem) {
+                                        // A conclusão pode ter aberto a calculadora.
+                                        // Só retorna à Home se continuamos nesta tela.
                                         EasyLoading.dismiss();
                                         appController.abrirHomeOrganizador();
                                       }

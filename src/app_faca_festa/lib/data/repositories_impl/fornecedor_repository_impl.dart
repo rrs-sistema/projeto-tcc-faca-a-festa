@@ -10,11 +10,21 @@ import '../models/fornecedor/fornecedor_estatisticas_model.dart';
 import '../models/fornecedor/fornecedor_model.dart';
 import '../models/servico_produto/fornecedor_categoria_model.dart';
 import 'package:app_faca_festa/domain/entities/fornecedor.dart';
+import 'package:app_faca_festa/domain/entities/fornecedor_dados_cadastrais.dart';
+import 'package:app_faca_festa/domain/entities/fornecedor_cadastro_edicao.dart';
 
 class FornecedorRepositoryImpl implements FornecedorRepository {
   FornecedorRepositoryImpl(this.remote);
 
   final FornecedorRemoteDatasource remote;
+
+  @override
+  Future<FornecedorCadastroEdicao> carregarCadastroEdicao(
+          String idFornecedor) =>
+      remote.carregarCadastroEdicao(idFornecedor);
+  @override
+  Future<void> salvarCadastroEdicao(FornecedorCadastroAlteracao alteracao) =>
+      UpdateOperations.run(() => remote.salvarCadastroEdicao(alteracao));
 
   @override
   Future<FornecedorAdminSnapshot> carregarSnapshotAdmin({
@@ -108,6 +118,14 @@ class FornecedorRepositoryImpl implements FornecedorRepository {
       return remote.atualizarFornecedor(FornecedorModel.fromEntity(fornecedor));
     });
   }
+
+  @override
+  Future<void> atualizarDadosCadastrais({
+    required String idFornecedor,
+    required FornecedorDadosCadastrais dados,
+  }) =>
+      UpdateOperations.run(() => remote.atualizarDadosCadastrais(
+          idFornecedor: idFornecedor, dados: dados));
 
   @override
   Future<void> salvarFornecedor(Fornecedor fornecedor) {

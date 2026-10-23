@@ -21,6 +21,7 @@ import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/forne
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import './../../servico/servico_produto_list_screen.dart';
 import './territorio_atendimento_screen.dart';
+import './editar_fornecedor_cadastro_page.dart';
 
 class FornecedorListTile extends StatelessWidget {
   final Fornecedor fornecedor;
@@ -247,6 +248,39 @@ class FornecedorListTile extends StatelessWidget {
             children: [
               const SizedBox(width: 8), // margem inicial opcional
 
+              Obx(() => controller.podeEditarDadosFornecedor
+                  ? Padding(
+                      padding: const EdgeInsets.only(right: 10),
+                      child: OutlinedButton.icon(
+                        onPressed: () async {
+                          final salvo = await mostrarEditarFornecedorAdmin(
+                            context: context,
+                            idFornecedor: _idDocumento,
+                            controller: controller,
+                            categorias: categoriaController,
+                            subcategorias: subcategoriaController,
+                            servicos: servicoProdutoController,
+                          );
+                          if (salvo == true &&
+                              context.mounted &&
+                              controller.podeEditarDadosFornecedor) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content:
+                                      Text('Dados do fornecedor atualizados.')),
+                            );
+                          }
+                        },
+                        style: OutlinedButton.styleFrom(
+                            foregroundColor: primary,
+                            iconColor: primary,
+                            minimumSize: const Size(48, 48)),
+                        icon: const Icon(Icons.edit_outlined, size: 18),
+                        label: const Text('Editar dados'),
+                      ),
+                    )
+                  : const SizedBox.shrink()),
+
               _actionButton(
                 icon: FontAwesomeIcons.whatsapp,
                 label: 'WhatsApp',
@@ -276,7 +310,8 @@ class FornecedorListTile extends StatelessWidget {
                 bgColor: Colors.indigo.shade50,
                 borderColor: Colors.indigo.shade300,
                 onTap: () async {
-                  final servicoProdutoController = this.servicoProdutoController;
+                  final servicoProdutoController =
+                      this.servicoProdutoController;
                   await servicoProdutoController.toggleListenerFornecedor(
                       idFornecedor: fornecedor.idFornecedor);
 

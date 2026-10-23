@@ -122,6 +122,18 @@ class MenuDrawerFacaFesta extends StatelessWidget {
                       );
                     },
                   ),
+                  _menuItem(
+                    Icons.account_balance_wallet_outlined,
+                    'Financeiro',
+                    subtitle: 'Contratado, pago, falta contratar e previsão',
+                    color: primary,
+                    onTap: () {
+                      Get.back();
+                      Future.delayed(const Duration(milliseconds: 120), () {
+                        Get.toNamed('/financeiroGerente');
+                      });
+                    },
+                  ),
                   const SizedBox(height: 10),
                   _sectionTitle('Descobrir'),
                   _menuItem(

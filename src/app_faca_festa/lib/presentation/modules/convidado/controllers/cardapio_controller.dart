@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:app_faca_festa/domain/entities/cardapio.dart';
 import 'package:app_faca_festa/domain/entities/cardapio_item.dart';
 import 'package:app_faca_festa/domain/repositories/cardapio_repository.dart';
+import 'package:app_faca_festa/domain/services/criacao_cardapio_inicial_service.dart';
 
 class CardapioController extends GetxController {
   CardapioController({required CardapioRepository repository})
@@ -17,18 +18,43 @@ class CardapioController extends GetxController {
       <String, List<CardapioItem>>{}.obs;
   final RxBool carregando = false.obs;
   final RxString erro = ''.obs;
+  final RxBool criandoPropostaInicial = false.obs;
+
+  Future<bool> criarPropostaInicial(CriacaoCardapioInicial proposta) async {
+    if (criandoPropostaInicial.value) {
+      throw StateError('Aguarde a criação em andamento.');
+    }
+    final repo = _repository;
+    if (repo is! CriacaoCardapioInicialRepository) {
+      throw StateError('A gravação transacional não está disponível.');
+    }
+    try {
+      criandoPropostaInicial.value = true;
+      return await (repo as CriacaoCardapioInicialRepository)
+          .criarCardapioInicial(proposta);
+    } finally {
+      criandoPropostaInicial.value = false;
+    }
+  }
 
   StreamSubscription<List<Cardapio>>? _cardapiosSubscription;
   final Map<String, StreamSubscription<List<CardapioItem>>>
       _itensSubscriptions = {};
 
+  int _geracao = 0;
+
   Future<void> escutarCardapios(String idEvento) async {
+    final geracao = ++_geracao;
     carregando.value = true;
     erro.value = '';
     await _cancelarEscutas();
 
+    if (geracao != _geracao) return;
+    cardapios.clear();
+    itensPorCardapio.clear();
     _cardapiosSubscription = _repository.observarCardapios(idEvento).listen(
       (lista) {
+        if (geracao != _geracao) return;
         cardapios.assignAll(lista);
         final idsAtuais = lista.map((item) => item.idCardapio).toSet();
         for (final idCardapio in _itensSubscriptions.keys.toList()) {
@@ -44,6 +70,7 @@ class CardapioController extends GetxController {
         carregando.value = false;
       },
       onError: (Object error, StackTrace stackTrace) {
+        if (geracao != _geracao) return;
         erro.value = 'Não foi possível carregar os cardápios: $error';
         carregando.value = false;
       },
@@ -52,6 +79,7 @@ class CardapioController extends GetxController {
 
   void _escutarItensDoCardapio(String idCardapio) {
     if (_itensSubscriptions.containsKey(idCardapio)) return;
+    final geracao = _geracao;
     _itensSubscriptions[idCardapio] = _repository
         .observarItens(
       idCardapio,
@@ -59,11 +87,13 @@ class CardapioController extends GetxController {
     )
         .listen(
       (itens) {
+        if (geracao != _geracao || cardapioPorId(idCardapio) == null) return;
         itensPorCardapio[idCardapio] = itens;
         itensPorCardapio.refresh();
         unawaited(_sincronizarResumoCardapio(idCardapio, itens));
       },
       onError: (Object error, StackTrace stackTrace) {
+        if (geracao != _geracao) return;
         erro.value = 'Não foi possível carregar os itens do cardápio: $error';
       },
     );
@@ -235,19 +265,24 @@ class CardapioController extends GetxController {
       .replaceAll('ç', 'c');
 
   Future<void> _cancelarEscutas() async {
-    await _cardapiosSubscription?.cancel();
+    final cardapiosSub = _cardapiosSubscription;
+    final itensSubs = _itensSubscriptions.values.toList();
     _cardapiosSubscription = null;
-    for (final subscription in _itensSubscriptions.values) {
+    _itensSubscriptions.clear();
+    await cardapiosSub?.cancel();
+    for (final subscription in itensSubs) {
       await subscription.cancel();
     }
-    _itensSubscriptions.clear();
   }
 
-  Future<void> encerrarEscutas() => _cancelarEscutas();
+  Future<void> encerrarEscutas() {
+    _geracao++;
+    return _cancelarEscutas();
+  }
 
   @override
   void onClose() {
-    unawaited(_cancelarEscutas());
+    unawaited(encerrarEscutas());
     super.onClose();
   }
 }

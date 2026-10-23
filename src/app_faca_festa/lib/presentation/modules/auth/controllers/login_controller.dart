@@ -10,18 +10,44 @@ import 'package:app_faca_festa/domain/usecases/gerenciar_auditoria.dart';
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
 import 'package:app_faca_festa/presentation/modules/auth/widgets/auth_erro_login_sheet.dart';
 
+/// Contrato mínimo da sessão após o formulário de login autenticar.
+abstract class SessaoLoginPort {
+  void marcarLoginComSenha();
+  void marcarLoginComGoogle();
+  bool get fluxoConviteAtivo;
+  RxBool get acessoPorLink;
+  void guardarTokenConvite(String token);
+}
+
+class AppControllerSessaoLogin implements SessaoLoginPort {
+  AppControllerSessaoLogin(this._app);
+  final AppController _app;
+  @override
+  void marcarLoginComSenha() => _app.marcarLoginComSenha();
+  @override
+  void marcarLoginComGoogle() => _app.marcarLoginComGoogle();
+  @override
+  bool get fluxoConviteAtivo => _app.fluxoConviteAtivo;
+  @override
+  RxBool get acessoPorLink => _app.acessoPorLink;
+  @override
+  void guardarTokenConvite(String token) => _app.guardarTokenConvite(token);
+}
+
 class LoginController extends GetxController {
   LoginController({
     required AutenticacaoRepository autenticacaoRepository,
     required PerfilUsuarioRepository perfilRepository,
     AppController? appController,
     AppController? Function()? appControllerResolver,
+    SessaoLoginPort? sessaoLogin,
     GerenciarAuditoria? gerenciarAuditoria,
     GerenciarAuditoria? Function()? gerenciarAuditoriaResolver,
   })  : _autenticacaoRepository = autenticacaoRepository,
         _perfilRepository = perfilRepository,
         _appController = appController,
         _appControllerResolver = appControllerResolver,
+        _sessaoLogin = sessaoLogin,
         _gerenciarAuditoria = gerenciarAuditoria,
         _gerenciarAuditoriaResolver = gerenciarAuditoriaResolver;
 
@@ -29,6 +55,7 @@ class LoginController extends GetxController {
   final PerfilUsuarioRepository _perfilRepository;
   final AppController? _appController;
   final AppController? Function()? _appControllerResolver;
+  final SessaoLoginPort? _sessaoLogin;
   final GerenciarAuditoria? _gerenciarAuditoria;
   final GerenciarAuditoria? Function()? _gerenciarAuditoriaResolver;
 
@@ -39,9 +66,9 @@ class LoginController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    final app = _resolverAppControllerOrNull();
-    if (app != null) {
-      _capturarTokenDosArgumentos(app);
+    final sessao = _resolverSessaoOrNull();
+    if (sessao != null) {
+      _capturarTokenDosArgumentos(sessao);
     }
   }
 
@@ -59,9 +86,9 @@ class LoginController extends GetxController {
 
     try {
       carregando.value = true;
-      final app = _resolverAppController();
-      _capturarTokenDosArgumentos(app);
-      app.marcarLoginComSenha();
+      final sessao = _resolverSessao();
+      _capturarTokenDosArgumentos(sessao);
+      sessao.marcarLoginComSenha();
       await _autenticacaoRepository.entrar(
         email: email.value.trim(),
         senha: senha.value.trim(),
@@ -73,7 +100,7 @@ class LoginController extends GetxController {
         resumo: 'Login com e-mail e senha realizado.',
         metodo: 'senha',
       );
-      app.acessoPorLink.value = false;
+      sessao.acessoPorLink.value = false;
       Get.offAllNamed('/splash');
     } on AutenticacaoException catch (e) {
       await _registrarFalhaLogin(codigo: e.codigo, metodo: 'senha');
@@ -86,9 +113,9 @@ class LoginController extends GetxController {
   Future<void> loginComGoogle() async {
     try {
       carregando.value = true;
-      final app = _resolverAppController();
-      _capturarTokenDosArgumentos(app);
-      app.marcarLoginComGoogle();
+      final sessao = _resolverSessao();
+      _capturarTokenDosArgumentos(sessao);
+      sessao.marcarLoginComGoogle();
       final autenticou = await _autenticacaoRepository.entrarComGoogle();
       if (!autenticou) {
         return;
@@ -99,7 +126,7 @@ class LoginController extends GetxController {
         resumo: 'Login com Google realizado.',
         metodo: 'google',
       );
-      app.acessoPorLink.value = false;
+      sessao.acessoPorLink.value = false;
       Get.offAllNamed('/splash');
     } on AutenticacaoException catch (e) {
       if (e.foiCancelada) {
@@ -147,15 +174,14 @@ class LoginController extends GetxController {
   /// Conta nova no fluxo de convite é tipo C. Sem token, Google não vira O
   /// só porque o login não passou por `/register`.
   String _tipoPerfilInicial() {
-    final app = _resolverAppController();
-    if (app.fluxoConviteAtivo) return 'C';
+    if (_resolverSessao().fluxoConviteAtivo) return 'C';
     return 'O';
   }
 
-  void _capturarTokenDosArgumentos(AppController app) {
+  void _capturarTokenDosArgumentos(SessaoLoginPort sessao) {
     final args = AuthFluxoArgs.maybeOf(Get.arguments);
     if (args != null) {
-      app.guardarTokenConvite(args.conviteToken);
+      sessao.guardarTokenConvite(args.conviteToken);
     }
   }
 
@@ -206,16 +232,19 @@ class LoginController extends GetxController {
     }
   }
 
-  AppController _resolverAppController() {
-    final app = _resolverAppControllerOrNull();
-    if (app == null) {
-      throw StateError('AppController não configurado.');
+  SessaoLoginPort _resolverSessao() {
+    final sessao = _resolverSessaoOrNull();
+    if (sessao == null) {
+      throw StateError('Sessão de login não configurada.');
     }
-    return app;
+    return sessao;
   }
 
-  AppController? _resolverAppControllerOrNull() {
-    return _appController ?? _appControllerResolver?.call();
+  SessaoLoginPort? _resolverSessaoOrNull() {
+    if (_sessaoLogin != null) return _sessaoLogin;
+    final app = _appController ?? _appControllerResolver?.call();
+    if (app == null) return null;
+    return AppControllerSessaoLogin(app);
   }
 
   GerenciarAuditoria? _resolverGerenciarAuditoria() {

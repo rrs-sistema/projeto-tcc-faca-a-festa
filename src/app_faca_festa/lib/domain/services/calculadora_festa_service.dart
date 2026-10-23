@@ -2,6 +2,7 @@ import 'package:app_faca_festa/domain/entities/calculadora_festa.dart';
 import 'package:app_faca_festa/domain/entities/calculadora_festa_item.dart';
 import 'package:app_faca_festa/domain/entities/convidados_equivalentes.dart';
 import 'package:app_faca_festa/domain/entities/estimativa_financeira.dart';
+import 'rendimento_referencia_service.dart';
 
 class CalculadoraFestaService {
   const CalculadoraFestaService();
@@ -88,10 +89,11 @@ class CalculadoraFestaService {
             '${item.fatorDuracaoAplicado(estimativa.duracaoHoras).g} duração ÷ '
             '${item.rendimento.g} rendimento × ${(1 + margem).g} reserva '
             '= ${quantidade.g} ${item.unidade.label} após arredondamento.\n'
-            '${item.ajustarPorDuracao && !item.descartavel ? 'Ajuste por duração ativado: ${estimativa.duracaoHoras}h; escala heurística do aplicativo.' : 'A duração da festa não multiplica esta porção; informe o número de serviços se houver repetição.'}\n'
+            '${item.premissas['id_ocorrencia'] != null ? 'Ocorrência ${item.premissas['id_ocorrencia']}: duração local ${item.premissas['duracao_servico_minutos'] ?? 'não informada'} min. A duração global não multiplica esta ocorrência. ' : item.ajustarPorDuracao && !item.descartavel ? 'Ajuste por duração ativado: ${estimativa.duracaoHoras}h; escala heurística do aplicativo.' : 'A duração da festa não multiplica esta porção; informe o número de serviços se houver repetição.'}\n'
             'Perfil ${estimativa.perfil.nome}: ajuste de quantidade e ${(margem * 100).round()}% de reserva; não é medida de necessidade alimentar. '
             'Estado: ${item.premissas['estado'] ?? 'informado pelo organizador'}. '
             'Papel: ${item.premissas['papel_na_refeicao'] ?? 'a confirmar'}. '
+            '${const RendimentoReferenciaService().valida(item) ? 'Rendimento estimado por referência do SENAR-PR, não medido nesta receita. Fonte: ${RendimentoReferenciaService.fonte}. ' : ''}'
             '${item.premissas['origem'] == 'consumo_observado' ? 'Base retrospectiva: disponibilizado menos sobra não servida; o desperdício medido nos pratos foi preservado na porção de preparo. ' : ''}'
             '${item.premissas['ajustar_por_perfil'] == false ? 'Esta referência não recebe multiplicador de quantidade do perfil; a reserva continua aplicada. ' : ''}'
             '${item.premissas['unidade_original'] != null ? 'Unidade proposta ${item.unidade.label} para item inicialmente em ${item.premissas['unidade_original']}, ainda sem quantidade final. ' : ''}'
@@ -99,7 +101,7 @@ class CalculadoraFestaService {
             'embalagem ${item.tamanhoEmbalagem > 0 ? '${item.tamanhoEmbalagem} ${item.unidade.label}' : 'avulso'}. '
             'Referência: ${item.premissas['fonte'] ?? 'regra informada pelo organizador'}${item.premissas['revisada_pelo_organizador'] == true ? ' (revisada pelo organizador)' : ''}. '
             'Quantidade de compra arredondada conforme a unidade.',
-        valorUnitarioMedio: item.valorUnitarioMedio,
+        valorUnitarioMedio: item.precoCompativel ? item.valorUnitarioMedio : 0,
         custoEstimado: custo,
         quantidadePorConvidadoEquivalente:
             item.quantidadePorConvidadoEquivalente,

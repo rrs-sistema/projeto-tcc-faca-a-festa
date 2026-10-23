@@ -31,6 +31,34 @@ void main() {
     controller.onClose();
   });
 
+  test(
+      'legado recupera total conhecido sem inventar adultos e mantém zero explícito',
+      () {
+    Evento evento({int? adultos, int? criancas, int? bebes, int total = 40}) =>
+        Evento(
+            idEvento: 'evento',
+            idTipoEvento: 'retiro',
+            idUsuario: 'usuario',
+            nomeEvento: 'Retiro',
+            localEvento: '',
+            data: DateTime(2026),
+            totalConvidados: total,
+            totalAdultos: adultos,
+            totalCriancas: criancas,
+            totalBebes: bebes);
+    controller.carregarEvento(evento());
+    expect(controller.totalConvidados.text, '40');
+    expect(controller.totalAdultos.text, isEmpty);
+    expect(controller.totalCriancas.text, isEmpty);
+    expect(controller.totalBebes.text, isEmpty);
+    controller
+        .carregarEvento(evento(total: 0, adultos: 0, criancas: 0, bebes: 0));
+    expect(controller.totalConvidados.text, '0');
+    expect(controller.totalAdultos.text, '0');
+    expect(controller.totalCriancas.text, '0');
+    expect(controller.totalBebes.text, '0');
+  });
+
   group('planejamento com campos opcionais', () {
     test('um dia é o padrão e não exige término, hora ou custo', () {
       expect(controller.eventoVariosDias.value, isFalse);
@@ -64,6 +92,8 @@ void main() {
       expect(controller.validarCusto('-10,00'), isNotNull);
       controller.custoEstimado.text = 'R\$ 0,00';
       expect(controller.validarCusto(controller.custoEstimado.text), isNull);
+      expect(controller.custoEstimadoInformado, 0);
+      controller.custoEstimado.clear();
       expect(controller.custoEstimadoInformado, isNull);
       controller.custoEstimado.text = 'R\$ 0,50';
       expect(controller.validarCusto(controller.custoEstimado.text), isNull);

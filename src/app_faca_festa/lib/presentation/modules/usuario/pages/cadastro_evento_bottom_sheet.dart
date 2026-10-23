@@ -1,3 +1,6 @@
+import 'package:app_faca_festa/domain/entities/cadastro_evento_rascunho.dart';
+import 'dart:async';
+import 'package:app_faca_festa/domain/entities/rascunho_calculadora.dart';
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:flutter_easyloading/flutter_easyloading.dart';
@@ -34,6 +37,15 @@ Future<void> showCadastroEventoBottomSheet(
   required FornecedorMigracaoAdminController fornecedorMigracaoAdminController,
   Evento? eventoParaEdicao,
 }) async {
+  // A tela de tipos já definiu esta escolha. Limpar um formulário anterior não
+  // pode apagar a identidade do novo cadastro nem seu endereço pré-preenchido.
+  final tipoInicial = controller.tipoEventoSelecionado.value;
+  void iniciarNovo() {
+    controller.limpar(manterEndereco: true);
+    controller.tipoEventoSelecionado.value = tipoInicial;
+    controller.atualizarPreview();
+  }
+
   EasyLoading.show(status: 'A carregar informações...');
 
   await controller.carregarTiposEvento();
@@ -41,10 +53,84 @@ Future<void> showCadastroEventoBottomSheet(
 
   if (eventoParaEdicao != null) {
     controller.carregarEvento(eventoParaEdicao);
+    await controller.recuperarRascunho();
   } else {
-    controller.limpar(manterEndereco: true);
+    final LeituraCadastrosLocais locais;
+    try {
+      locais = await controller.listarCadastrosLocais();
+    } catch (_) {
+      EasyLoading.dismiss();
+      Get.snackbar('Rascunhos indisponíveis',
+          'Não foi possível ler os cadastros deste aparelho. Tente novamente.');
+      return;
+    }
+    if (locais.cadastros.isNotEmpty || locais.corrompidos.isNotEmpty) {
+      EasyLoading.dismiss();
+      final escolha = await showDialog<String>(
+          context: context,
+          builder: (dialogContext) => AlertDialog(
+                title: const Text('Continuar um cadastro?'),
+                content: SizedBox(
+                    width: double.maxFinite,
+                    child: SingleChildScrollView(
+                        child:
+                            Column(mainAxisSize: MainAxisSize.min, children: [
+                      const Text('Rascunhos guardados somente neste aparelho.'),
+                      if (locais.corrompidos.isNotEmpty)
+                        const Text(
+                            'Há um rascunho que não pôde ser lido. O original foi preservado.'),
+                      for (final c in locais.cadastros)
+                        ListTile(
+                            title: Text(
+                                (c.formulario['campos'] as Map?)?['nome']
+                                            ?.toString()
+                                            .isNotEmpty ==
+                                        true
+                                    ? (c.formulario['campos'] as Map)['nome']
+                                        .toString()
+                                    : 'Cadastro em andamento'),
+                            subtitle: Text(c.eventoConfirmado
+                                ? 'Evento salvo; conclusão pendente'
+                                : 'Retomar formulário e estimativa'),
+                            onTap: () => Navigator.pop(dialogContext, c.id),
+                            trailing: IconButton(
+                                tooltip: 'Descartar este rascunho',
+                                icon: const Icon(Icons.delete_outline),
+                                onPressed: () async {
+                                  await controller.descartarCadastroLocal(c);
+                                  if (dialogContext.mounted) {
+                                    Navigator.pop(dialogContext, 'novo');
+                                  }
+                                })),
+                    ]))),
+                actions: [
+                  TextButton(
+                      onPressed: () => Navigator.pop(dialogContext),
+                      child: const Text('Voltar')),
+                  TextButton(
+                      onPressed: () => Navigator.pop(dialogContext, 'novo'),
+                      child: const Text('Iniciar novo'))
+                ],
+              ));
+      if (escolha == null) return;
+      if (escolha != 'novo') {
+        try {
+          await controller.retomarCadastro(
+              locais.cadastros.firstWhere((c) => c.id == escolha));
+        } catch (_) {
+          Get.snackbar('Cadastro preservado',
+              'Não foi possível conferir o evento salvo. Tente retomar novamente.');
+          return;
+        }
+      } else {
+        iniciarNovo();
+      }
+    } else {
+      iniciarNovo();
+    }
   }
 
+  controller.observarCadastroLocal();
   final primary = theme.primaryColor.value;
   final dinheiroMask = FormMasks.dinheiro();
 
@@ -59,6 +145,8 @@ Future<void> showCadastroEventoBottomSheet(
   await showModalBottomSheet(
     context: context,
     isScrollControlled: true,
+    isDismissible: false,
+    enableDrag: false,
     backgroundColor: Colors.transparent,
     builder: (context) {
       return _CadastroEventoSheet(
@@ -109,7 +197,82 @@ class _CadastroEventoSheet extends StatefulWidget {
   State<_CadastroEventoSheet> createState() => _CadastroEventoSheetState();
 }
 
-class _CadastroEventoSheetState extends State<_CadastroEventoSheet> {
+class _CadastroEventoSheetState extends State<_CadastroEventoSheet>
+    with WidgetsBindingObserver {
+  final _rolagem = ScrollController();
+  void _inicioDaEtapa() => WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _rolagem.hasClients) _rolagem.jumpTo(0);
+      });
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) {
+      unawaited(controller.salvarCadastroLocal().catchError((Object _) {}));
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    controller.pararObservacaoCadastro();
+    _rolagem.dispose();
+    super.dispose();
+  }
+
+  bool _permitirSaida = false;
+  Future<void> _fechar() async {
+    if (controller.carregando.value) return;
+    try {
+      await controller.salvarCadastroLocal();
+      if (!mounted) return;
+      setState(() => _permitirSaida = true);
+      await WidgetsBinding.instance.endOfFrame;
+      if (mounted) Navigator.pop(context);
+    } catch (_) {
+      /* A mensagem observável mantém o formulário recuperável aberto. */
+    }
+  }
+
+  Future<void> _continuar(Evento evento, RascunhoCalculadora? rascunho) async {
+    if (!mounted) return;
+    setState(() => _permitirSaida = true);
+    await WidgetsBinding.instance.endOfFrame;
+    if (!mounted) return;
+    Navigator.pop(context);
+    if (rascunho == null) {
+      if (widget.eventoParaEdicao == null) {
+        controller.app.abrirHomeOrganizador();
+      }
+      return;
+    }
+    final rotaRetorno = Get.currentRoute;
+    await Get.to(() => CalculadoraFestaScreen(
+        idEvento: evento.idEvento,
+        idSimulacaoInicial: rascunho
+            .calculoPara(
+                evento.idEvento, evento.idUsuario, evento.custoEstimado)
+            .idCalculo,
+        tipoEvento: rascunho.tipoEvento,
+        orcamentoInicial: evento.custoEstimado,
+        calculadoraController: widget.calculadoraController,
+        eventoController: widget.eventoController,
+        themeController: widget.theme,
+        cardapioController: widget.cardapioController,
+        fornecedorMigracaoAdminController:
+            widget.fornecedorMigracaoAdminController));
+    if (controller.app.usuarioLogado.value?.idUsuario == evento.idUsuario &&
+        widget.eventoController.eventoAtualEntidade?.idEvento ==
+            evento.idEvento &&
+        Get.currentRoute == rotaRetorno) {
+      controller.app.abrirHomeOrganizador();
+    }
+  }
+
   int _passo = 0;
 
   static const _titulosPassos = ['A festa', 'Quando e onde', 'Convidados'];
@@ -117,181 +280,234 @@ class _CadastroEventoSheetState extends State<_CadastroEventoSheet> {
   EventoCadastroController get controller => widget.controller;
   Color get primary => widget.primary;
 
-  void _avancar() {
+  Future<void> _avancar() async {
     final valido = controller.formKey.currentState?.validate() ?? false;
     if (!valido) return;
-    setState(() => _passo++);
+    try {
+      await controller.salvarCadastroLocal();
+    } catch (_) {
+      return;
+    }
+    if (mounted) {
+      FocusManager.instance.primaryFocus?.unfocus();
+      setState(() => _passo++);
+      _inicioDaEtapa();
+    }
   }
 
   void _voltar() {
     if (_passo == 0) return;
     setState(() => _passo--);
+    _inicioDaEtapa();
   }
 
   @override
   Widget build(BuildContext context) {
-    return FractionallySizedBox(
-      heightFactor: 0.90,
-      child: Container(
-        decoration: const BoxDecoration(
-          color: Color(0xFFF8FAFC),
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: SafeArea(
-          top: false,
-          child: Column(
-            children: [
-              Center(
-                child: Container(
-                  margin: const EdgeInsets.only(top: 12, bottom: 8),
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
+    return PopScope(
+        canPop: _permitirSaida,
+        onPopInvokedWithResult: (didPop, result) {
+          if (!didPop) unawaited(_fechar());
+        },
+        child: Padding(
+            padding: EdgeInsets.only(
+                bottom: MediaQuery.viewInsetsOf(context).bottom),
+            child: FractionallySizedBox(
+              heightFactor: 0.90,
+              child: Container(
+                decoration: const BoxDecoration(
+                  color: Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
                 ),
-              ),
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: primary.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Icon(Icons.celebration_rounded,
-                          color: primary, size: 20),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            controller.isEditando
-                                ? 'Editar Evento'
-                                : 'Novo Evento',
-                            style: GoogleFonts.poppins(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w800,
-                              color: const Color(0xFF111827),
-                            ),
+                child: SafeArea(
+                  top: false,
+                  child: Column(
+                    children: [
+                      Center(
+                        child: Container(
+                          margin: const EdgeInsets.only(top: 12, bottom: 8),
+                          width: 40,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade300,
+                            borderRadius: BorderRadius.circular(10),
                           ),
-                          Text(
-                            'Preencha em 3 passos curtos.',
-                            style: GoogleFonts.poppins(
-                              fontSize: 11,
-                              color: Colors.grey.shade600,
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
-                    ),
-                    IconButton(
-                      visualDensity: VisualDensity.compact,
-                      icon: const Icon(Icons.close_rounded, size: 22),
-                      onPressed: () => Get.back(),
-                    ),
-                  ],
-                ),
-              ),
-              Divider(color: Colors.grey.shade200, height: 1),
-              Expanded(
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  padding: EdgeInsets.only(
-                    left: 10,
-                    right: 10,
-                    top: 10,
-                    bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-                  ),
-                  child: Form(
-                    key: controller.formKey,
-                    autovalidateMode: AutovalidateMode.onUserInteraction,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        CadastroPassosBar(
-                          atual: _passo,
-                          titulos: _titulosPassos,
-                          cor: primary,
-                        ),
-                        if (_passo == 0) ...[
-                          Obx(() => EventoPreviewTituloWidget(
-                                controller: controller,
-                                tipoEvento: widget.tipoNormalizado,
-                                nomeEvento: controller.nomeEventoPreview.value,
-                                corPrincipal: primary,
-                              )),
-                          const SizedBox(height: 10),
-                        ],
-                        ..._buildCamposPorTipo(
-                          primary,
-                          controller,
-                          widget.theme,
-                          widget.temasController,
-                          widget.eventoParaEdicao,
-                          context,
-                          widget.dinheiroMask,
-                          passo: _passo,
-                          calculadoraController: widget.calculadoraController,
-                          eventoController: widget.eventoController,
-                          cardapioController: widget.cardapioController,
-                          fornecedorMigracaoAdminController:
-                              widget.fornecedorMigracaoAdminController,
-                        ),
-                        const SizedBox(height: 10),
-                        if (_passo < 2)
-                          CadastroPassosAcoes(
-                            cor: primary,
-                            continuarLabel: 'Continuar',
-                            onContinuar: _avancar,
-                            onVoltar: _passo == 0 ? null : _voltar,
-                          )
-                        else
-                          Column(
-                            children: [
-                              SizedBox(
-                                width: double.infinity,
-                                height: 44,
-                                child: OutlinedButton(
-                                  onPressed: _voltar,
-                                  style: OutlinedButton.styleFrom(
-                                    foregroundColor: primary,
-                                    iconColor: primary,
-                                    side: BorderSide(
-                                      color: primary.withValues(alpha: 0.45),
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                  ),
-                                  child: Text(
-                                    'Voltar',
-                                    style: GoogleFonts.poppins(
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 8),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: primary.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(10),
                               ),
-                              const SizedBox(height: 10),
-                              _buildAcoes(primary, controller),
-                            ],
+                              child: Icon(Icons.celebration_rounded,
+                                  color: primary, size: 20),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    controller.isEditando
+                                        ? 'Editar Evento'
+                                        : 'Novo Evento',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w800,
+                                      color: const Color(0xFF111827),
+                                    ),
+                                  ),
+                                  Text(
+                                    'Preencha em 3 passos curtos.',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 11,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Obx(() => IconButton(
+                                  tooltip: 'Guardar rascunho e fechar',
+                                  icon:
+                                      const Icon(Icons.close_rounded, size: 22),
+                                  onPressed: controller.carregando.value
+                                      ? null
+                                      : _fechar,
+                                )),
+                          ],
+                        ),
+                      ),
+                      Obx(() => Column(children: [
+                            if (controller.erroRascunhoLocal.value.isNotEmpty)
+                              Padding(
+                                  padding: const EdgeInsets.all(8),
+                                  child: Text(
+                                      controller.erroRascunhoLocal.value,
+                                      style:
+                                          const TextStyle(color: Colors.red))),
+                            if (controller.avisoReconciliacao.value.isNotEmpty)
+                              Padding(
+                                  padding: const EdgeInsets.all(8),
+                                  child: Text(
+                                      controller.avisoReconciliacao.value)),
+                          ])),
+                      Divider(color: Colors.grey.shade200, height: 1),
+                      Expanded(
+                        child: SingleChildScrollView(
+                          controller: _rolagem,
+                          physics: const BouncingScrollPhysics(),
+                          padding: EdgeInsets.only(
+                            left: 10,
+                            right: 10,
+                            top: 10,
+                            bottom: 24,
                           ),
-                      ],
-                    ),
+                          child: Form(
+                            key: controller.formKey,
+                            autovalidateMode:
+                                AutovalidateMode.onUserInteraction,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                CadastroPassosBar(
+                                  atual: _passo,
+                                  titulos: _titulosPassos,
+                                  cor: primary,
+                                ),
+                                if (_passo == 0) ...[
+                                  Obx(() => EventoPreviewTituloWidget(
+                                        controller: controller,
+                                        tipoEvento: widget.tipoNormalizado,
+                                        nomeEvento:
+                                            controller.nomeEventoPreview.value,
+                                        corPrincipal: primary,
+                                      )),
+                                  const SizedBox(height: 10),
+                                ],
+                                ..._buildCamposPorTipo(
+                                  primary,
+                                  controller,
+                                  widget.theme,
+                                  widget.temasController,
+                                  widget.eventoParaEdicao,
+                                  context,
+                                  widget.dinheiroMask,
+                                  passo: _passo,
+                                  calculadoraController:
+                                      widget.calculadoraController,
+                                  eventoController: widget.eventoController,
+                                  cardapioController: widget.cardapioController,
+                                  fornecedorMigracaoAdminController:
+                                      widget.fornecedorMigracaoAdminController,
+                                ),
+                                const SizedBox(height: 10),
+                                if (_passo < 2)
+                                  CadastroPassosAcoes(
+                                    cor: primary,
+                                    continuarLabel: 'Continuar',
+                                    onContinuar: _avancar,
+                                    onVoltar: _passo == 0 ? null : _voltar,
+                                  )
+                                else
+                                  Column(
+                                    children: [
+                                      SizedBox(
+                                        width: double.infinity,
+                                        child: OutlinedButton(
+                                          onPressed: _voltar,
+                                          style: OutlinedButton.styleFrom(
+                                            foregroundColor: primary,
+                                            iconColor: primary,
+                                            side: BorderSide(
+                                              color: primary.withValues(
+                                                  alpha: 0.45),
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                            ),
+                                          ),
+                                          child: Text(
+                                            'Voltar',
+                                            style: GoogleFonts.poppins(
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 10),
+                                      if (controller.rascunhoCalculadora !=
+                                              null &&
+                                          controller.idEvento.value.isNotEmpty)
+                                        const Padding(
+                                            padding:
+                                                EdgeInsets.only(bottom: 12),
+                                            child: Text(
+                                                'Há uma estimativa pendente de vínculo. Salve para concluir, preservando suas escolhas.',
+                                                style:
+                                                    TextStyle(fontSize: 12))),
+                                      _buildAcoes(primary, controller,
+                                          widget.calculadoraController,
+                                          onCancelar: _fechar,
+                                          aoConcluir: _continuar),
+                                    ],
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-            ],
-          ),
-        ),
-      ),
-    );
+            )));
   }
 }
 
@@ -354,7 +570,7 @@ List<Widget> _buildCamposPorTipo(
               temasController: temasController,
               theme: theme,
               primary: primary,
-              obrigatorio: true,
+              obrigatorio: false,
             ),
           ],
           if (tipoNormalizado == 'formatura' ||
@@ -946,6 +1162,15 @@ Widget _buildCampoPadrinhos(
 Widget _buildSecaoConvidadosEstimados(
     Color primary, EventoCadastroController controller) {
   void atualizarTotal() {
+    if ([
+      controller.totalAdultos,
+      controller.totalCriancas,
+      controller.totalBebes
+    ].every((campo) => campo.text.trim().isEmpty)) {
+      controller.totalConvidados.text =
+          controller.totalPrevistoSalvo?.toString() ?? '';
+      return;
+    }
     final adultos = _parseIntText(controller.totalAdultos.text);
     final criancas = _parseIntText(controller.totalCriancas.text);
     final bebes = _parseIntText(controller.totalBebes.text);
@@ -1051,7 +1276,7 @@ Widget _buildSecaoConvidadosEstimados(
         ),
         const SizedBox(height: 10),
         _CompactInputField(
-          label: 'Total de convidados',
+          label: 'Total previsto (informe as idades para calcular consumo)',
           icon: Icons.summarize_rounded,
           controller: controller.totalConvidados,
           readOnly: true,
@@ -1074,6 +1299,8 @@ Widget _buildBotaoCalculadoraFesta(
 }) {
   final idEvento = eventoParaEdicao?.idEvento.trim() ?? '';
   final eventoJaSalvo = idEvento.isNotEmpty;
+  final estimativaPendente = controller.rascunhoCalculadora != null;
+  final estimativaIsolada = !eventoJaSalvo || estimativaPendente;
 
   return _SectionCard(
     title: 'Assistente de Quantidades',
@@ -1091,9 +1318,8 @@ Widget _buildBotaoCalculadoraFesta(
           ),
         ),
         const SizedBox(height: 10),
-        SizedBox(
-          width: double.infinity,
-          height: 38,
+        ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 48),
           child: OutlinedButton.icon(
             style: OutlinedButton.styleFrom(
               foregroundColor: primary,
@@ -1103,11 +1329,39 @@ Widget _buildBotaoCalculadoraFesta(
                   borderRadius: BorderRadius.circular(10)),
               padding: EdgeInsets.zero,
             ),
-            onPressed: () {
+            onPressed: () async {
+              try {
+                await controller.salvarCadastroLocal();
+              } catch (_) {
+                return;
+              }
+              var premissas = controller.assinaturaPremissas;
+              final idRascunhoAberto = controller.idRascunho;
+              final dono = controller.app.usuarioLogado.value?.idUsuario;
               FocusManager.instance.primaryFocus?.unfocus();
               Get.to(
                 () => CalculadoraFestaScreen(
-                  idEvento: eventoJaSalvo ? idEvento : null,
+                  idEvento: estimativaIsolada ? '' : idEvento,
+                  nomeRascunho: controller.nomeEventoPreview.value,
+                  periodoRascunho: controller.dataFesta.text.isEmpty
+                      ? null
+                      : '${controller.dataFesta.text}${controller.dataFimFesta.text.isEmpty ? '' : ' a ${controller.dataFimFesta.text}'}',
+                  orcamentoInicial: controller.custoEstimadoInformado,
+                  idRascunho: estimativaIsolada ? controller.idRascunho : null,
+                  rascunho:
+                      estimativaIsolada ? controller.rascunhoCalculadora : null,
+                  persistirRascunho: estimativaIsolada
+                      ? (rascunho) async {
+                          if (controller.idRascunho != idRascunhoAberto ||
+                              controller.app.usuarioLogado.value?.idUsuario !=
+                                  dono) {
+                            return;
+                          }
+                          await controller.receberRascunho(rascunho,
+                              premissasOriginais: premissas);
+                          premissas = controller.assinaturaPremissas;
+                        }
+                      : null,
                   tipoEvento: _resolverTipoEventoCalculadora(controller),
                   permitirEstimativaSemEvento: true,
                   adultosIniciais: _parseIntText(controller.totalAdultos.text),
@@ -1126,9 +1380,11 @@ Widget _buildBotaoCalculadoraFesta(
             },
             icon: const Icon(Icons.calculate_rounded, size: 18),
             label: Text(
-              eventoJaSalvo
-                  ? 'Abrir calculadora da festa'
-                  : 'Calcular estimativa',
+              estimativaPendente
+                  ? 'Retomar estimativa'
+                  : eventoJaSalvo
+                      ? 'Abrir calculadora da festa'
+                      : 'Calcular estimativa',
               style: GoogleFonts.poppins(
                   fontWeight: FontWeight.w800, fontSize: 12),
             ),
@@ -1139,83 +1395,36 @@ Widget _buildBotaoCalculadoraFesta(
   );
 }
 
-Widget _buildAcoes(Color primary, EventoCadastroController controller) {
+Widget _buildAcoes(Color primary, EventoCadastroController controller,
+    CalculadoraFestaController calculadora,
+    {required Future<void> Function() onCancelar,
+    required Future<void> Function(Evento, RascunhoCalculadora?) aoConcluir}) {
   return Obx(() {
     final salvando = controller.carregando.value;
 
-    return Row(
-      children: [
-        Expanded(
-          child: SizedBox(
-            height: 44,
-            child: OutlinedButton.icon(
-              style: OutlinedButton.styleFrom(
-                foregroundColor: primary,
-                iconColor: primary,
-                side: BorderSide(color: primary.withValues(alpha: 0.55)),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10)),
-                padding: EdgeInsets.zero,
-              ),
-              onPressed: () => Get.back(),
-              icon: const Icon(Icons.close_rounded, size: 18),
-              label: Text(
-                'Cancelar',
-                style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w800, fontSize: 12),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: SizedBox(
-            height: 44,
-            child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primary,
-                foregroundColor: Colors.white,
-                iconColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10)),
-                padding: EdgeInsets.zero,
-              ),
-              onPressed: salvando
-                  ? null
-                  : () async {
-                      final valido =
-                          controller.formKey.currentState?.validate() ?? false;
-                      if (!valido) return;
-                      EasyLoading.show(status: 'A processar...');
-                      try {
-                        await controller.salvarEvento();
-                      } finally {
-                        EasyLoading.dismiss();
-                      }
-                    },
-              icon: salvando
-                  ? const SizedBox(
-                      width: 14,
-                      height: 14,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white))
-                  : Icon(
-                      controller.isEditando
-                          ? Icons.update_rounded
-                          : Icons.check_circle_rounded,
-                      size: 18,
-                      color: Colors.white,
-                    ),
-              label: Text(
-                controller.isEditando ? 'Atualizar' : 'Salvar',
-                style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w800, fontSize: 12),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
+    return CadastroPassosAcoes(
+        cor: primary,
+        continuarLabel: controller.eventoJaConfirmado &&
+                controller.rascunhoCalculadora != null
+            ? 'Concluir vínculo'
+            : controller.isEditando
+                ? 'Atualizar evento'
+                : 'Salvar evento',
+        voltarLabel: 'Guardar e sair',
+        onVoltar: onCancelar,
+        carregando: salvando,
+        onContinuar: () async {
+          final valido = controller.formKey.currentState?.validate() ?? false;
+          if (!valido) return;
+          EasyLoading.show(status: 'Salvando evento…');
+          try {
+            await controller.salvarEvento(
+                vincularRascunho: calculadora.vincularRascunho,
+                aoConcluir: aoConcluir);
+          } finally {
+            EasyLoading.dismiss();
+          }
+        });
   });
 }
 

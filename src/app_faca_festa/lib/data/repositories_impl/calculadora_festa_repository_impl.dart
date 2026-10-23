@@ -1,3 +1,9 @@
+import 'package:app_faca_festa/domain/repositories/vinculo_rascunho_repository.dart';
+import 'package:app_faca_festa/domain/repositories/planejador_hibrido_repository.dart';
+import 'package:app_faca_festa/domain/repositories/entrada_assistente_calculadora_repository.dart';
+import 'package:app_faca_festa/domain/repositories/memoria_calculadora_repository.dart';
+import 'package:app_faca_festa/domain/repositories/execucao_calculadora_repository.dart';
+import 'package:app_faca_festa/domain/services/plano_execucao_service.dart';
 import 'package:app_faca_festa/domain/entities/estimativa_financeira.dart';
 import 'package:app_faca_festa/core/services/update_operations.dart';
 import 'package:app_faca_festa/domain/entities/calculadora_festa.dart';
@@ -8,10 +14,47 @@ import 'package:app_faca_festa/domain/repositories/calculadora_festa_repository.
 
 import '../datasources/remote/calculadora_festa_remote_datasource.dart';
 
-class CalculadoraFestaRepositoryImpl implements CalculadoraFestaRepository {
+class CalculadoraFestaRepositoryImpl
+    implements
+        CalculadoraFestaRepository,
+        VinculoRascunhoRepository,
+        PlanejadorHibridoRepository,
+        ExecucaoCalculadoraRepository,
+        MemoriaCalculadoraRepository,
+        EntradaAssistenteCalculadoraRepository {
   CalculadoraFestaRepositoryImpl(this.remote);
 
   final CalculadoraFestaRemoteDatasource remote;
+  @override
+  Future<Map<String, dynamic>> sugerirCandidatosPlanejador(
+          Map<String, dynamic> entrada) =>
+      remote.chamarPlanejador('sugerirCandidatosCalculadora', entrada);
+  @override
+  Future<Map<String, dynamic>> confirmarPlanejador(
+          Map<String, dynamic> revisao) =>
+      remote.chamarPlanejador('confirmarPlanejadorCalculadora', revisao);
+  @override
+  Future<Map<String, dynamic>> interpretarEntradaCalculadora(
+          Map<String, dynamic> entrada) =>
+      remote.interpretarEntradaCalculadora(entrada);
+  @override
+  Future<Map<String, dynamic>> aplicarEntradaCalculadora(
+          Map<String, dynamic> revisao) =>
+      UpdateOperations.run(() => remote.aplicarEntradaCalculadora(revisao));
+  @override
+  Future<List<Map<String, dynamic>>> lerMemoriaCalculadora() =>
+      remote.lerMemoriaCalculadora();
+  @override
+  Future<void> gravarMemoriaCalculadora(List<Map<String, dynamic>> receitas,
+          {required List<Map<String, dynamic>> anteriores}) =>
+      UpdateOperations.run(() =>
+          remote.gravarMemoriaCalculadora(receitas, anteriores: anteriores));
+  @override
+  Future<ContextoExecucaoPlano> carregarContextoExecucao(String evento) =>
+      remote.carregarContextoExecucao(evento);
+  @override
+  Future<bool> aplicarPlanoExecucao(PropostaExecucaoPlano proposta) =>
+      UpdateOperations.run(() => remote.aplicarPlanoExecucao(proposta));
   @override
   Stream<Map<String, dynamic>> observarOperacaoEvento(String idEvento) =>
       remote.observarOperacaoEvento(idEvento);
@@ -61,6 +104,13 @@ class CalculadoraFestaRepositoryImpl implements CalculadoraFestaRepository {
       return remote.listarConvidadosDoEvento(idEvento);
     });
   }
+
+  @override
+  Future<void> vincularEstimativaInicial(
+          {required CalculadoraFesta calculo,
+          required List<CalculadoraFestaItem> itens}) =>
+      UpdateOperations.run(() =>
+          remote.vincularEstimativaInicial(calculo: calculo, itens: itens));
 
   @override
   Future<void> salvarSimulacao({

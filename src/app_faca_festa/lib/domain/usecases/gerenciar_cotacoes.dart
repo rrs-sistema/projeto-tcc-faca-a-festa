@@ -111,6 +111,7 @@ class GerenciarCotacoes {
     DateTime? prazoEntrega,
     String? condicaoPagamento,
     String? observacaoFornecedor,
+    double? valorProposto,
   }) {
     return repository.responderCotacao(
       idCotacao: idCotacao,
@@ -118,10 +119,11 @@ class GerenciarCotacoes {
       prazoEntrega: prazoEntrega,
       condicaoPagamento: condicaoPagamento,
       observacaoFornecedor: observacaoFornecedor,
+      valorProposto: valorProposto,
     );
   }
 
-  Future<String> confirmarFornecedorEscolhido({
+  Future<Map<String, dynamic>> confirmarFornecedorEscolhido({
     required String idCotacao,
     required String idFornecedor,
     required String nomeFornecedor,

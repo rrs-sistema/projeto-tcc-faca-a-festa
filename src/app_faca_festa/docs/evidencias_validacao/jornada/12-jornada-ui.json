@@ -1,0 +1,29 @@
+{
+  "projeto": "demo-jornada12",
+  "executado_em": "2026-10-21T11:03:14.340Z",
+  "fases": [
+    "rascunho",
+    "evento",
+    "vinculo",
+    "planejamento",
+    "retomada"
+  ],
+  "processos": [
+    23808,
+    10196,
+    15024,
+    26140,
+    21180
+  ],
+  "evento": "ece51d81-788f-47e6-8e0f-26a260fdcf77",
+  "eventos": 1,
+  "historicos": 2,
+  "cardapios": 1,
+  "recibos": 1,
+  "externo": {
+    "cep": "fixture determinística local",
+    "gps": "desligado",
+    "ia": "não homologada"
+  },
+  "resultado": "aprovado no roteiro UI coberto"
+}

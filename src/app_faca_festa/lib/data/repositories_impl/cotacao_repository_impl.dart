@@ -133,6 +133,7 @@ class CotacaoRepositoryImpl implements CotacaoRepository {
     DateTime? prazoEntrega,
     String? condicaoPagamento,
     String? observacaoFornecedor,
+    double? valorProposto,
   }) {
     return UpdateOperations.run(() async {
       return remote.responderCotacao(
@@ -141,12 +142,13 @@ class CotacaoRepositoryImpl implements CotacaoRepository {
         prazoEntrega: prazoEntrega,
         condicaoPagamento: condicaoPagamento,
         observacaoFornecedor: observacaoFornecedor,
+        valorProposto: valorProposto,
       );
     });
   }
 
   @override
-  Future<String> confirmarFornecedorEscolhido({
+  Future<Map<String, dynamic>> confirmarFornecedorEscolhido({
     required String idCotacao,
     required String idFornecedor,
     required String nomeFornecedor,

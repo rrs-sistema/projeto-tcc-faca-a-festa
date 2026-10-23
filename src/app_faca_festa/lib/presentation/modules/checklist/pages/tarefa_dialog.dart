@@ -439,7 +439,16 @@ class _TarefaFormState extends State<_TarefaForm> {
       ChoiceChip(
           label: Text(texto),
           selected: selecionado,
-          avatar: icone == null ? null : Icon(icone, size: 16),
+          avatar: icone == null
+              ? null
+              : Icon(icone,
+                  size: 16,
+                  color: _salvando
+                      ? const Color(0xFF9CA3AF)
+                      : selecionado
+                          ? widget.primary
+                          : const Color(0xFF47574D)),
+          checkmarkColor: _salvando ? const Color(0xFF9CA3AF) : widget.primary,
           onSelected: _salvando ? null : (_) => onTap(),
           selectedColor: widget.primary.withValues(alpha: .1),
           backgroundColor: Colors.white,

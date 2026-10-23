@@ -75,17 +75,22 @@ class OrcamentosAdminRemoteDatasource {
   ) async {
     var categoriaNome = orcamento.anotacoes ?? 'Outros';
     var custoEstimado = orcamento.custoEstimado ?? 0;
-    var valorPago = 0.0;
 
     final idCategoria = orcamento.idCategoria;
     if (idCategoria != null && idCategoria.isNotEmpty) {
       categoriaNome = await _buscarNomeCategoria(idCategoria, categoriaNome);
-    } else {
-      final gastos = await _buscarGastosDoOrcamento(orcamento.idOrcamento);
-      if (gastos != null) {
-        categoriaNome = gastos.nome;
-        custoEstimado = gastos.custoEstimado;
-        valorPago = gastos.valorPago;
+    }
+
+    // Sempre concilia com o detalhe autorizado (orcamento_gasto / liquidacoes).
+    // Ter categoria NÃO dispensa a consulta dos pagamentos detalhados.
+    final detalhe = await _buscarGastosDoOrcamento(orcamento.idOrcamento);
+    final valorPago = detalhe?.valorPago ?? 0.0;
+    if (idCategoria == null || idCategoria.isEmpty) {
+      if (detalhe != null) {
+        categoriaNome = detalhe.nome;
+        if (detalhe.custoEstimado > 0) {
+          custoEstimado = detalhe.custoEstimado;
+        }
       }
     }
 

@@ -20,7 +20,7 @@ export function financeiroCalculadora(payload: CalculadoraIARequest) {
   const custoConciliado = novoContrato
     ? numero(resumo!.orcado) + numero(resumo!.compras_restantes_conhecidas) : custo;
   const limite = payload.orcamento_disponivel ?? payload.orcamentoDisponivel;
-  const orcamento = !incompleto && typeof limite === "number" && Number.isFinite(limite) && limite > 0
+  const orcamento = !incompleto && typeof limite === "number" && Number.isFinite(limite) && limite >= 0
     ? limite : null;
   return {
     custo: custoConciliado,

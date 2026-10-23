@@ -8,7 +8,16 @@
 int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
                       _In_ wchar_t *command_line, _In_ int show_command)
 {
-  HANDLE app_mutex = CreateMutexW(nullptr, TRUE, L"FacaFesta_App_Mutex");
+  const wchar_t* mutex_name = L"FacaFesta_App_Mutex";
+#ifdef _DEBUG
+  // Integration tests run beside the installed app, using a demo Firebase project.
+  wchar_t fornecedor_qa[2] = {};
+  if (GetEnvironmentVariableW(L"FACA_FESTA_FORNECEDOR_QA", fornecedor_qa, 2) == 1 &&
+      fornecedor_qa[0] == L'1') {
+    mutex_name = L"FacaFesta_FornecedorQA_Mutex";
+  }
+#endif
+  HANDLE app_mutex = CreateMutexW(nullptr, TRUE, mutex_name);
   if (!app_mutex || GetLastError() == ERROR_ALREADY_EXISTS) {
     if (app_mutex) CloseHandle(app_mutex);
     return EXIT_FAILURE;

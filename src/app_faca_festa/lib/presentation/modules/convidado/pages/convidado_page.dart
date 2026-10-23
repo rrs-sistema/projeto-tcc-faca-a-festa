@@ -146,7 +146,8 @@ class _ConvidadosPageState extends State<ConvidadosPage>
             titulo: 'Convidados',
             automaticamenteImplyLeading: widget.automaticamenteImplyLeading,
             themeController: themeController,
-            altura: 124,
+            // Toolbar compacta: o inset da status bar já é tratado no FestaAppBar.
+            altura: 52,
             acoes: [
               IconButton(
                 tooltip: 'Exportar lista (CSV)',
@@ -166,9 +167,9 @@ class _ConvidadosPageState extends State<ConvidadosPage>
               ),
             ],
             bottom: PreferredSize(
-              preferredSize: const Size.fromHeight(66),
+              preferredSize: const Size.fromHeight(64),
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
+                padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
                 child: Container(
                   height: 52,
                   padding: const EdgeInsets.all(4),
@@ -218,26 +219,38 @@ class _ConvidadosPageState extends State<ConvidadosPage>
                     labelStyle: GoogleFonts.poppins(
                       fontWeight: FontWeight.w700,
                       fontSize: 11.5,
+                      height: 1.1,
                     ),
                     unselectedLabelStyle: GoogleFonts.poppins(
                       fontWeight: FontWeight.w600,
                       fontSize: 11.2,
+                      height: 1.1,
                     ),
                     tabs: const [
                       Tab(
-                          icon: Icon(Icons.people_alt_rounded, size: 18),
+                          height: 44,
+                          iconMargin: EdgeInsets.only(bottom: 2),
+                          icon: Icon(Icons.people_alt_rounded, size: 17),
                           text: 'Lista'),
                       Tab(
-                          icon: Icon(Icons.groups_rounded, size: 18),
+                          height: 44,
+                          iconMargin: EdgeInsets.only(bottom: 2),
+                          icon: Icon(Icons.groups_rounded, size: 17),
                           text: 'Grupos'),
                       Tab(
-                          icon: Icon(Icons.restaurant_menu_rounded, size: 18),
+                          height: 44,
+                          iconMargin: EdgeInsets.only(bottom: 2),
+                          icon: Icon(Icons.restaurant_menu_rounded, size: 17),
                           text: 'Cardápio'),
                       Tab(
-                          icon: Icon(Icons.table_restaurant_rounded, size: 18),
+                          height: 44,
+                          iconMargin: EdgeInsets.only(bottom: 2),
+                          icon: Icon(Icons.table_restaurant_rounded, size: 17),
                           text: 'Mesas'),
                       Tab(
-                          icon: Icon(Icons.query_stats_rounded, size: 18),
+                          height: 44,
+                          iconMargin: EdgeInsets.only(bottom: 2),
+                          icon: Icon(Icons.query_stats_rounded, size: 17),
                           text: 'Status'),
                     ],
                   ),

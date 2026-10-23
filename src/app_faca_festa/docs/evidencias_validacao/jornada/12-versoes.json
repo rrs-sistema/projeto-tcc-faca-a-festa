@@ -1,0 +1,64 @@
+{
+  "registrado_em": "2026-10-21T07:46:16.5400356-03:00",
+  "app": "1.0.14+16",
+  "git_base": "7419d28c34081ae0d15a2da5c85a5704bf39410b",
+  "workspace": "alterações anteriores preservadas; sem commit",
+  "motor": 6,
+  "proposta_refeicao": 1,
+  "catalogo": {
+    "versao_fixture": 1,
+    "schema": 1,
+    "motor_minimo": 1
+  },
+  "cadastro_local": 2,
+  "operacao": 1,
+  "flutter": "3.27.2 / 68415ad1d9",
+  "dart": "3.6.1",
+  "node": "v24.12.0",
+  "node_declarado": "22",
+  "firebase_cli": "15.10.0",
+  "java": "21.0.6",
+  "firebase_admin": "12.7.0",
+  "firebase_functions": "6.6.0",
+  "typescript": "4.9.5",
+  "backend_sha256_manifesto": "dd4116eeef1a82f7eb3cb5b294cf731769e427ba4ebe7386a6096ff3e8e46855",
+  "backend_arquivos": 76,
+  "arquivos": [
+    {
+      "arquivo": "firestore.rules",
+      "sha256": "ceeee41fee1346b9203ebc7c1fed42f0f63244dcc37a7efb5c3f50366ff3b788"
+    },
+    {
+      "arquivo": "pubspec.lock",
+      "sha256": "f46aaf6a6e7112befa8c1a9c278aa6a391596e62e693cd8bccd2271f47112817"
+    },
+    {
+      "arquivo": "functions/package-lock.json",
+      "sha256": "f0ce694872c4404dc4fc79b3713717ea162fe5b9492705db61e94ce6a27fab61"
+    },
+    {
+      "arquivo": "lib/app/bootstrap/calculadora_bootstrap.dart",
+      "sha256": "d9cbde7d6052ab33b199c1b6a4ad858f48b302a3e377c3479633cb040a630251"
+    },
+    {
+      "arquivo": "lib/data/datasources/remote/agenda_servico_remote.dart",
+      "sha256": "ab9e539a3b2338ea3fdb5803a705034669e463156b585903494f6daf6c6e7144"
+    },
+    {
+      "arquivo": "lib/data/datasources/remote/calculadora_festa_remote_datasource.dart",
+      "sha256": "4aa64379b3b365016bdb550012569bd90c781c7b0ab4c4502a054cdfbf89bdc9"
+    },
+    {
+      "arquivo": "lib/data/services/transacao_firestore.dart",
+      "sha256": "6985310844335c2c3a984a1635539432d6e6b26f8af9550710a3832931ed1a3c"
+    },
+    {
+      "arquivo": "lib/presentation/modules/eventos/pages/welcome_event_screen.dart",
+      "sha256": "4e81416fc2699fc622fb92faf75bb77af21e2c12929625cca4d21185fc2ea0b0"
+    },
+    {
+      "arquivo": "lib/presentation/modules/usuario/pages/cadastro_evento_bottom_sheet.dart",
+      "sha256": "3c81cadbe7daeac397e50e8a28d41bf7f1ed96c6c7c4a0ce331b6c236ffb91f2"
+    }
+  ]
+}

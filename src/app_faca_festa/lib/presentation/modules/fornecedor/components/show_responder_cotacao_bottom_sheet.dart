@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:get/get.dart';
 
-import 'package:app_faca_festa/core/utils/biblioteca.dart';
 import 'package:app_faca_festa/core/utils/form_validators.dart';
+import 'package:app_faca_festa/core/utils/numeric_input.dart';
 import 'package:app_faca_festa/domain/entities/cotacao_chat.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_cotacoes.dart';
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
@@ -29,6 +29,9 @@ Future<void> showResponderCotacaoBottomSheet({
   final prazoEntregaSelecionado = Rxn<DateTime>();
   final condicaoController = TextEditingController();
   final observacaoController = TextEditingController();
+  final valorPropostoController = TextEditingController(
+    text: ofertaDesejada > 0 ? NumericInput.dinheiro(ofertaDesejada) : '',
+  );
   final carregando = false.obs;
   final formKey = GlobalKey<FormState>();
   var autovalidateMode = AutovalidateMode.disabled;
@@ -219,7 +222,7 @@ Future<void> showResponderCotacaoBottomSheet({
                                             ),
                                           ),
                                           Text(
-                                            "R\$ ${Biblioteca.formatarValorDecimal(ofertaDesejada)}",
+                                            NumericInput.dinheiro(ofertaDesejada),
                                             style: GoogleFonts.poppins(
                                               fontSize: 14.5,
                                               color: Colors.white,
@@ -428,7 +431,7 @@ Future<void> showResponderCotacaoBottomSheet({
                                         ),
                                       ),
                                       Text(
-                                        "R\$ ${(valor * qtd).toStringAsFixed(2)}",
+                                        NumericInput.dinheiro(valor * qtd),
                                         style: GoogleFonts.poppins(
                                           fontSize: 13,
                                           color: Colors.green.shade700,
@@ -444,6 +447,34 @@ Future<void> showResponderCotacaoBottomSheet({
                         ),
 
                         const SizedBox(height: 20),
+
+                        // === Valor cotado (obrigatório ao aceitar) ===
+                        _buildLabel("Seu preço cotado *", primary),
+                        TextFormField(
+                          controller: valorPropostoController,
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          inputFormatters: [NumericInput.moeda()],
+                          validator: (value) => FormValidators.dinheiro(
+                            value,
+                            obrigatorio: true,
+                            campo: 'o preço cotado',
+                          ),
+                          decoration: InputDecoration(
+                            hintText: "Ex: R\$ 3.150,00",
+                            prefixIcon:
+                                Icon(Icons.attach_money_rounded, color: primary),
+                            errorMaxLines: 2,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            filled: true,
+                            fillColor: Colors.grey.shade50,
+                          ),
+                        ),
+
+                        const SizedBox(height: 16),
 
                         // === Prazo ===
                         _buildLabel("Prazo de entrega *", primary),
@@ -618,6 +649,10 @@ Future<void> showResponderCotacaoBottomSheet({
                                               condicao: condicaoController.text,
                                               observacao:
                                                   observacaoController.text,
+                                              valorProposto:
+                                                  NumericInput.parseMoeda(
+                                                valorPropostoController.text,
+                                              ),
                                               carregando: carregando,
                                               idFornecedor: idFornecedor,
                                               cotacoes: cotacoes,
@@ -839,6 +874,7 @@ Future<void> _enviarResposta({
   required DateTime? prazo,
   required String condicao,
   required String observacao,
+  double? valorProposto,
   required RxBool carregando,
   required String? idFornecedor,
   required GerenciarCotacoes cotacoes,
@@ -854,6 +890,7 @@ Future<void> _enviarResposta({
       prazoEntrega: prazo,
       condicaoPagamento: condicao.trim(),
       observacaoFornecedor: observacao.trim(),
+      valorProposto: aceitou ? valorProposto : null,
     );
 
     Get.back();

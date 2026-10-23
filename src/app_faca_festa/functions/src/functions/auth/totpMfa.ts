@@ -1,6 +1,6 @@
 import { defineSecret } from "firebase-functions/params";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
-import { Timestamp } from "firebase-admin/firestore";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { exigirLoginComSenha, exigirUsuarioAutenticado } from "../../shared/auth";
 import { admin } from "../../shared/firebaseAdmin";
 import { registrarAuditTrailSeguro } from "../auditoria/auditTrailService";
@@ -65,7 +65,7 @@ export const iniciarTotpMfa = onCall(
           pendente: true,
           ativo: false,
           tentativas: 0,
-          atualizadoEm: admin.firestore.FieldValue.serverTimestamp(),
+          atualizadoEm: FieldValue.serverTimestamp(),
         },
         { merge: true },
       );
@@ -115,8 +115,8 @@ export const confirmarTotpMfa = onCall(
         pendente: false,
         ativo: true,
         tentativas: 0,
-        confirmadoEm: admin.firestore.FieldValue.serverTimestamp(),
-        atualizadoEm: admin.firestore.FieldValue.serverTimestamp(),
+        confirmadoEm: FieldValue.serverTimestamp(),
+        atualizadoEm: FieldValue.serverTimestamp(),
       },
       { merge: true },
     );
@@ -163,7 +163,7 @@ export const verificarTotpMfa = onCall(
 
     await referenciaTotp(perfil.uid).update({
       tentativas: 0,
-      verificadoEm: admin.firestore.FieldValue.serverTimestamp(),
+      verificadoEm: FieldValue.serverTimestamp(),
     });
 
     await registrarAuditTrailSeguro({
@@ -244,7 +244,7 @@ async function validarCodigoTotp(
 
   if (!verificarTotp(secret, codigo)) {
     await referencia.update({
-      tentativas: admin.firestore.FieldValue.increment(1),
+      tentativas: FieldValue.increment(1),
       atualizadoEm: Timestamp.now(),
     });
     throw new HttpsError("permission-denied", "Código incorreto.");

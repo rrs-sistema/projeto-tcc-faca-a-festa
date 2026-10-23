@@ -45,7 +45,10 @@ extension _CalculadoraFestaLayout on _CalculadoraFestaScreenState {
           ),
           const SizedBox(height: 6),
           Text(
-            eventoController.eventoAtualEntidade?.duracaoDias != null &&
+            calculadoraController.possuiEventoVinculado &&
+                    eventoController.eventoAtualEntidade?.idEvento ==
+                        calculadoraController.idEventoAtual.value &&
+                    eventoController.eventoAtualEntidade?.duracaoDias != null &&
                     eventoController.eventoAtualEntidade!.duracaoDias > 1
                 ? 'Evento de ${eventoController.eventoAtualEntidade!.duracaoDias} dias. Calcule cada refeição e envie ao cardápio correspondente.'
                 : 'Sugestões inteligentes baseadas no público e duração.',
@@ -55,6 +58,14 @@ extension _CalculadoraFestaLayout on _CalculadoraFestaScreenState {
               fontWeight: FontWeight.w500,
             ),
           ),
+          if (calculadoraController.estimativaSemEvento.value)
+            Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Text(
+                    widget.persistirRascunho != null
+                        ? 'Esta estimativa acompanha o cadastro. Volte para concluir os dados e salvar o evento; confira acima a confirmação de armazenamento no aparelho.'
+                        : 'Estimativa nesta tela. Volte ao cadastro para salvar o evento e continuar o planejamento.',
+                    style: const TextStyle(fontSize: 14, color: Colors.white))),
         ],
       ),
     );
@@ -84,7 +95,8 @@ extension _CalculadoraFestaLayout on _CalculadoraFestaScreenState {
         final cardapios = cardapioController.cardapios
             .where((item) =>
                 item.idEvento == calculadoraController.idEventoAtual.value &&
-                item.ativo)
+                item.ativo &&
+                !item.somenteModelo)
             .toList();
 
         if (cardapioController.erro.value.isNotEmpty) {
@@ -166,6 +178,9 @@ extension _CalculadoraFestaLayout on _CalculadoraFestaScreenState {
                 ),
               ),
               const SizedBox(height: 4),
+              Text(calculadoraController.escopoCardapioAtual.label,
+                  style:
+                      const TextStyle(fontSize: 11, color: Color(0xFF53635B))),
               if (calculadoraController.pendenciasAlimentaresEvento.isNotEmpty)
                 Text(
                     '${calculadoraController.pendenciasAlimentaresEvento.length} pendência(s) de alimentação: confira os grupos e suas porções.',
@@ -177,7 +192,7 @@ extension _CalculadoraFestaLayout on _CalculadoraFestaScreenState {
                     style:
                         TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
                 subtitle: Text(
-                    '${calculadoraController.convidadosEquivalentes.totalInformado} pessoas nesta refeição',
+                    '${calculadoraController.convidadosEquivalentes.totalInformado} pessoas neste cardápio',
                     style: const TextStyle(fontSize: 12)),
                 children: [
                   TextButton.icon(
@@ -210,6 +225,34 @@ extension _CalculadoraFestaLayout on _CalculadoraFestaScreenState {
                       label: const Text('Estoque e reservas da festa')),
                 ],
               ),
+              TextButton.icon(
+                  onPressed: !calculadoraController.possuiEventoVinculado ||
+                          calculadoraController.usandoContextoHistorico.value ||
+                          !calculadoraController.operacaoCarregada.value
+                      ? null
+                      : () => showDialog<void>(
+                          context: context,
+                          builder: (_) => CalculadoraAgendaDialog(
+                              controller: calculadoraController,
+                              cardapios: cardapioController,
+                              evento: eventoController.eventoAtualEntidade)),
+                  icon: const Icon(Icons.event_note_outlined),
+                  label: const Text('Agenda de refeições e intervalos')),
+              TextButton.icon(
+                  onPressed: !calculadoraController.possuiEventoVinculado ||
+                          calculadoraController.usandoContextoHistorico.value ||
+                          !calculadoraController.operacaoCarregada.value ||
+                          !calculadoraController.cardapioDisponivel.value ||
+                          calculadoraController.itensCardapio.isEmpty
+                      ? null
+                      : () => showDialog<void>(
+                          context: context,
+                          barrierDismissible: false,
+                          builder: (_) => CalculadoraPlanejadorDialog(
+                              controller: calculadoraController,
+                              onManual: (item) => _editarRegra(item: item))),
+                  icon: const Icon(Icons.route_outlined),
+                  label: const Text('Planejar este serviço')),
               if (!calculadoraController.operacaoCarregada.value) ...[
                 Text(
                     calculadoraController.erroOperacao.value.isEmpty
@@ -262,7 +305,7 @@ extension _CalculadoraFestaLayout on _CalculadoraFestaScreenState {
                             strokeWidth: 2, color: Colors.white))
                     : const Icon(Icons.save_rounded, size: 20),
                 label: Text(
-                  salvando ? 'Salvando...' : 'Salvar',
+                  salvando ? 'Salvando...' : 'Salvar histórico',
                   style: GoogleFonts.poppins(
                       fontWeight: FontWeight.w700, fontSize: 14),
                 ),

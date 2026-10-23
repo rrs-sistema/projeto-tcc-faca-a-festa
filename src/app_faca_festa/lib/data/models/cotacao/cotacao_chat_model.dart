@@ -21,6 +21,7 @@ class CotacaoMensagemModel extends CotacaoMensagem {
     required super.mensagem,
     required super.enviadoEm,
     required super.lido,
+    super.sistema,
   });
 }
 
@@ -40,5 +41,6 @@ class CotacaoFornecedorResumoModel extends CotacaoFornecedorResumo {
     required super.prazoEntrega,
     required super.condicaoPagamento,
     required List<CotacaoServicoResumoModel> super.servicos,
+    super.valorCotado,
   });
 }

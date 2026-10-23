@@ -5,7 +5,7 @@ extension CalculadoraFestaAnaliseIa on CalculadoraFestaController {
       usandoContextoHistorico.value &&
       ((calculoAtual.value?.contextoPlanejamento['versao_motor'] as num?)
                   ?.toInt() ??
-              0) <
+              0) !=
           6;
 
   static const _avisoHistoricoAntigo =
@@ -30,6 +30,7 @@ extension CalculadoraFestaAnaliseIa on CalculadoraFestaController {
         (usandoContextoHistorico.value && analiseIA.value != null)) {
       return;
     }
+    final contexto = contextoEvento.assinatura;
     final estimativa = estimativaAtual.value;
     final calculoReferencia = calculoAtual.value;
     final versaoSolicitada = _versaoAnaliseIA.value;
@@ -58,7 +59,8 @@ extension CalculadoraFestaAnaliseIa on CalculadoraFestaController {
         idUsuario: calculoReferencia.idUsuario ?? _uidAtual,
       );
 
-      if (versaoSolicitada != _versaoAnaliseIA.value ||
+      if (contexto != contextoEvento.assinatura ||
+          versaoSolicitada != _versaoAnaliseIA.value ||
           requisicao != _ultimaRequisicaoIA) {
         return;
       }

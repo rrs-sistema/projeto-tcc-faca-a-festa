@@ -79,6 +79,17 @@ class _CurrencyFormatter extends TextInputFormatter {
     final digits =
         raw.replaceAll(RegExp(r'\D'), '').replaceFirst(RegExp(r'^0+'), '');
     if (digits.length > 14) return oldValue;
+    if (RegExp(r'^0+$').hasMatch(raw.replaceAll(RegExp(r'\D'), ''))) {
+      if (oldValue.selection.isCollapsed &&
+          oldValue.text.isNotEmpty &&
+          newValue.text ==
+              oldValue.text.substring(0, oldValue.text.length - 1)) {
+        return const TextEditingValue();
+      }
+      const text = 'R\$ 0,00';
+      return const TextEditingValue(
+          text: text, selection: TextSelection.collapsed(offset: text.length));
+    }
     // O pacote rejeita espaços, inclusive os do prefixo de um valor existente.
     final previous = NumericInput.limpar(oldValue.text);
     final result = _delegate.formatEditUpdate(

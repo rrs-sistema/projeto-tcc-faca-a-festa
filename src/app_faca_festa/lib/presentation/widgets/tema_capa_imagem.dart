@@ -23,7 +23,12 @@ class TemaCapaImagem extends StatelessWidget {
   final BorderRadius? borderRadius;
 
   bool get _temBytes => bytes != null && bytes!.isNotEmpty;
-  bool get _temUrl => (url ?? '').trim().isNotEmpty;
+  bool get _temUrl {
+    final uri = Uri.tryParse((url ?? '').trim());
+    return uri != null &&
+        (uri.scheme == 'http' || uri.scheme == 'https') &&
+        uri.host.isNotEmpty;
+  }
 
   @override
   Widget build(BuildContext context) {

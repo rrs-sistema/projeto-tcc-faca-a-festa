@@ -230,6 +230,7 @@ class _FornecedorHomeScreenState extends State<FornecedorHomeScreen> {
                                         widget.subcategoriaController,
                                     avaliacaoController:
                                         widget.avaliacaoController,
+                                    onAbrirPedidos: _scrollToCotacoes,
                                   ),
                                   const SizedBox(height: 12),
                                   Container(

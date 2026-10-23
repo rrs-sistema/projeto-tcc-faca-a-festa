@@ -64,6 +64,9 @@ class FornecedorDetalheScreen extends StatelessWidget {
     final distancia = fornecedorDetalhado.distanciaKm;
     final gradient = themeController.gradient.value;
     final primary = themeController.primaryColor.value;
+    // Contato direto (tel/e-mail) só para admin; organizador fala via chat/cotação.
+    final exibirContatoDireto =
+        appController.usuarioLogado.value?.tipo == 'A';
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final idFornecedor = fornecedorDetalhado.fornecedor.idFornecedor;
@@ -96,6 +99,7 @@ class FornecedorDetalheScreen extends StatelessWidget {
         primary: primary,
         fornecedorController: fornecedorController,
         detalhe: fornecedorDetalhado,
+        exibirContatoDireto: exibirContatoDireto,
       ),
       body: Obx(() {
         final fotos = fornecedorController.fotosServico
@@ -155,6 +159,7 @@ class FornecedorDetalheScreen extends StatelessWidget {
                               .where((s) =>
                                   s.idFornecedor == fornecedor.idFornecedor)
                               .length,
+                          exibirContatoDireto: exibirContatoDireto,
                         ),
                         if (fornecedor.descricao?.trim().isNotEmpty ??
                             false) ...[
@@ -203,8 +208,12 @@ class FornecedorDetalheScreen extends StatelessWidget {
                           ),
                         ],
                         sectionHeader(
-                          titulo: 'Informações de contato',
-                          icon: Icons.contact_phone_rounded,
+                          titulo: exibirContatoDireto
+                              ? 'Informações de contato'
+                              : 'Atendimento pela plataforma',
+                          icon: exibirContatoDireto
+                              ? Icons.contact_phone_rounded
+                              : Icons.forum_rounded,
                           iconColor: Colors.teal,
                         ),
                         _buildContatoCard(
@@ -212,6 +221,7 @@ class FornecedorDetalheScreen extends StatelessWidget {
                           territorioDescricao: territorio?.descricao,
                           distancia: distancia,
                           primary: primary,
+                          exibirContatoDireto: exibirContatoDireto,
                         ),
                       ],
                     ),

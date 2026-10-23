@@ -72,7 +72,8 @@ void main() {
       expect(map['id_tema'], 'safari');
     });
 
-    test('fromMap preserves fallbacks and numeric parsing', () {
+    test('fromMap preserves numeric parsing and explicit zero over age sum',
+        () {
       final evento = EventoModel.fromMap({
         'id_evento': 'evento-2',
         'id_tipo_evento': 'tipo-2',
@@ -94,8 +95,10 @@ void main() {
       expect(evento.totalAdultos, 40);
       expect(evento.totalCriancas, 8);
       expect(evento.totalBebes, isNull);
-      expect(evento.totalConvidados, 48);
-      expect(evento.totalConvidadosCalculado, 48);
+      expect(evento.totalConvidados, 0);
+      expect(evento.totalConvidadosCalculado, 0);
+      expect(evento.totalConvidadosPorTipo, 48);
+      expect(evento.distribuicaoPublicoInformada, false);
       expect(evento.status, StatusEvento.planejamento);
       expect(evento.ativo, isTrue);
     });

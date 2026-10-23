@@ -1,7 +1,9 @@
+import 'package:app_faca_festa/data/local/rascunho_calculadora_store.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:get/get.dart';
 
+import 'package:app_faca_festa/app/bootstrap/financeiro_gerente_bootstrap.dart';
 import 'package:app_faca_festa/app/bootstrap/uf_cidade_bootstrap.dart';
 import 'package:app_faca_festa/data/datasources/remote/evento_remote_ds.dart';
 import 'package:app_faca_festa/data/local/evento_ativo_store.dart';
@@ -15,6 +17,7 @@ import 'package:app_faca_festa/presentation/modules/convidado/controllers/cardap
 import 'package:app_faca_festa/presentation/modules/convidado/controllers/convidado_controller.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/controllers/grupo_convidado_controller.dart';
 import 'package:app_faca_festa/presentation/modules/checklist/controllers/tarefa_controller.dart';
+import 'package:app_faca_festa/presentation/modules/financeiro/controllers/financeiro_gerente_controller.dart';
 import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_controller.dart';
 import 'package:app_faca_festa/presentation/modules/inspiracao/controllers/inspiracao_controller.dart';
 import 'package:app_faca_festa/presentation/modules/orcamento/controllers/orcamento_controller.dart';
@@ -84,6 +87,10 @@ abstract final class EventoBootstrap {
               Get.isRegistered<CalculadoraFestaController>()
                   ? Get.find<CalculadoraFestaController>()
                   : null,
+          financeiroGerenteControllerOf: () =>
+              Get.isRegistered<FinanceiroGerenteController>()
+                  ? Get.find<FinanceiroGerenteController>()
+                  : null,
         ),
         permanent: true,
       );
@@ -103,6 +110,7 @@ abstract final class EventoBootstrap {
     if (!Get.isRegistered<EventoCadastroController>()) {
       Get.put(
         EventoCadastroController(
+          rascunhos: GetStorageRascunhoCalculadoraStore(),
           repository: Get.find<EventoRepository>(),
           buscarCepService: Get.find<BuscarCepService>(),
           ufCidadeController: Get.find<UFCidadeController>(),
@@ -123,5 +131,7 @@ abstract final class EventoBootstrap {
         permanent: true,
       );
     }
+
+    FinanceiroGerenteBootstrap.register();
   }
 }

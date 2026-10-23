@@ -14,6 +14,12 @@ class CategoriaServicoController extends GetxController {
         _auditoriaResolver = auditoriaResolver;
 
   final GerenciarCatalogoServico _catalogo;
+  Future<void> carregarParaFormulario() async {
+    categorias.assignAll(await _catalogo.listarCategorias());
+  }
+
+  CategoriaServicoController novaSessao() =>
+      CategoriaServicoController(catalogo: _catalogo);
   final AuditoriaRegistrar? _auditoria;
   final AuditoriaRegistrar? Function()? _auditoriaResolver;
   AuditoriaRegistrar get _registradorAuditoria =>

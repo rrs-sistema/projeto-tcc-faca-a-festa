@@ -2,7 +2,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import 'package:app_faca_festa/presentation/modules/legal/widgets/aviso_lgpd_card.dart';
 import 'package:app_faca_festa/domain/entities/orcamento.dart';
 import 'package:app_faca_festa/presentation/modules/orcamento/controllers/orcamento_controller.dart';
 import 'package:app_faca_festa/presentation/modules/fornecedor/dialogs/show_responder_orcamento_dialog.dart';
@@ -53,17 +52,7 @@ class OrcamentosScreen extends StatelessWidget {
         ),
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            const Padding(
-              padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
-              child: AvisoLgpdCard(texto: AvisoLgpdCard.acessoRestritoCotacao),
-            ),
-            Expanded(
-              child: _ListaOrcamentosFornecedor(controller: controller),
-            ),
-          ],
-        ),
+        child: _ListaOrcamentosFornecedor(controller: controller),
       ),
     );
   }

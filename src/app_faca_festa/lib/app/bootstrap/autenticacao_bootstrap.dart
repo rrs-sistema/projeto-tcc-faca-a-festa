@@ -21,6 +21,20 @@ import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/forne
 import 'package:app_faca_festa/presentation/modules/usuario/controllers/uf_cidade_controller.dart';
 
 abstract final class AutenticacaoBootstrap {
+  /// Sessão independente do formulário, sem registrar/sobrescrever o controller global.
+  static RegisterController criarFormularioFornecedor() => RegisterController(
+        autenticacaoRepository: Get.find<AutenticacaoRepository>(),
+        perfilUsuarioRepository: Get.find<PerfilUsuarioRepository>(),
+        fornecedores: Get.find<GerenciarFornecedores>(),
+        servicosProduto: Get.find<GerenciarServicosProduto>(),
+        catalogoServico: Get.find<GerenciarCatalogoServico>(),
+        appController: Get.find<AppController>(),
+        buscarCepService: Get.find<BuscarCepService>(),
+        ufCidadeController: Get.find<UFCidadeController>().novaSessao(),
+        uploadBanner: ({required bytes, required nomeArquivo, uid}) =>
+            Get.find<FornecedorController>()
+                .uploadBanner(bytes: bytes, nomeArquivo: nomeArquivo, uid: uid),
+      );
   static void register() {
     if (!Get.isRegistered<AutenticacaoRemoteDatasource>()) {
       Get.put<AutenticacaoRemoteDatasource>(
@@ -79,10 +93,10 @@ abstract final class AutenticacaoBootstrap {
             uid,
           }) =>
               Get.find<FornecedorController>().uploadBanner(
-                bytes: bytes,
-                nomeArquivo: nomeArquivo,
-                uid: uid,
-              ),
+            bytes: bytes,
+            nomeArquivo: nomeArquivo,
+            uid: uid,
+          ),
         ),
         fenix: true,
       );

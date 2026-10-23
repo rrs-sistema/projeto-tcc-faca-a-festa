@@ -156,7 +156,7 @@ class _EditUsuarioScreenState extends State<EditUsuarioScreen> {
                 physics: const BouncingScrollPhysics(),
                 keyboardDismissBehavior:
                     ScrollViewKeyboardDismissBehavior.onDrag,
-                padding: const EdgeInsets.fromLTRB(14, 16, 14, 16),
+                padding: const EdgeInsets.fromLTRB(14, FestaPageInsets.belowAppBar, 14, 16),
                 children: [
                   CadastroPassosBar(
                     atual: _passo,

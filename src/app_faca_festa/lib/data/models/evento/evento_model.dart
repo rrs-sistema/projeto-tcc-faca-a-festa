@@ -124,10 +124,10 @@ class EventoModel extends Evento {
       if (dataFim != null) 'data_fim': Timestamp.fromDate(dataFim!),
       'hora': hora,
       'custo_estimado': custoEstimado,
-      'total_convidados': totalConvidadosCalculado,
-      'total_adultos': totalAdultosCalculado,
-      'total_criancas': totalCriancasCalculado,
-      'total_bebes': totalBebesCalculado,
+      'total_convidados': totalConvidados,
+      'total_adultos': totalAdultos,
+      'total_criancas': totalCriancas,
+      'total_bebes': totalBebes,
       'status': status?.value ?? StatusEvento.planejamento.value,
       'descricao': descricao,
       'cep': cep,
@@ -243,9 +243,13 @@ class EventoModel extends Evento {
     return int.tryParse(value.toString());
   }
 
-  static int _parseTotalConvidados(Map<String, dynamic> map) {
+  static int? _parseTotalConvidados(Map<String, dynamic> map) {
     final total = _parseIntNullable(map['total_convidados']);
-    if (total != null && total > 0) return total;
+    if (total != null) return total;
+    if (['total_adultos', 'total_criancas', 'total_bebes']
+        .every((k) => map[k] == null)) {
+      return null;
+    }
 
     final adultos = _parseIntNullable(map['total_adultos']) ?? 0;
     final criancas = _parseIntNullable(map['total_criancas']) ?? 0;

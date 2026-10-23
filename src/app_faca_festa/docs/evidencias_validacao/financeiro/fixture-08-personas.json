@@ -1,0 +1,43 @@
+{
+  "projeto": "demo-financeiro-integrado",
+  "timezone": "America/Sao_Paulo",
+  "personas": [
+    {
+      "uid": "org-1",
+      "email": "org1@example.test",
+      "tipo": "O",
+      "papel": "organizador_a"
+    },
+    {
+      "uid": "org-2",
+      "email": "org2@example.test",
+      "tipo": "O",
+      "papel": "organizador_b"
+    },
+    {
+      "uid": "forn-1",
+      "email": "forn1@example.test",
+      "tipo": "F",
+      "papel": "fornecedor_a"
+    },
+    {
+      "uid": "forn-2",
+      "email": "forn2@example.test",
+      "tipo": "F",
+      "papel": "fornecedor_b"
+    },
+    {
+      "uid": "admin-1",
+      "email": "admin@example.test",
+      "tipo": "A",
+      "papel": "administrador"
+    }
+  ],
+  "cenarios": {
+    "contrato": "10000 contratado / 3000 pago / 7000 saldo",
+    "previsao": "limite 30000 / contratos 18000 / restantes 8000 → 26000",
+    "comissao": "5% de 10000 = 500 (política inativa até decisão comercial)"
+  },
+  "senha_sintetica": "TesteLocal123!",
+  "recusa_producao": true
+}

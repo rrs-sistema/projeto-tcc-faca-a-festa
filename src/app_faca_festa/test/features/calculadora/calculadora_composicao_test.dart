@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/domain/entities/calculadora_festa.dart';
 import 'package:app_faca_festa/domain/services/conversao_orcamento_service.dart';
 import 'dart:convert';
 import 'dart:io';
@@ -229,6 +230,8 @@ void main() {
       Get.reset();
     });
     c.idEventoAtual.value = 'qa';
+    c.alterarBaseCalculo(BaseCalculoFesta
+        .manual); // Público definido explicitamente pela fixture.
     c.totalAdultos.value = 100;
     c.itensEstimativa.assignAll(catalogoQA().map((i) => regraQA(i.nome,
             consumo: i.quantidadePorConvidadoEquivalente,

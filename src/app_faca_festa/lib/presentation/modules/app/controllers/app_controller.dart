@@ -26,6 +26,7 @@ import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_c
 import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_controller.dart';
 import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_localizacao_controller.dart';
 import 'package:app_faca_festa/presentation/modules/inspiracao/controllers/inspiracao_controller.dart';
+import 'package:app_faca_festa/presentation/modules/financeiro/controllers/financeiro_gerente_controller.dart';
 import 'package:app_faca_festa/presentation/modules/orcamento/controllers/orcamento_gasto_controller.dart';
 import 'package:app_faca_festa/presentation/modules/orcamento/controllers/orcamento_controller.dart';
 import 'package:app_faca_festa/presentation/modules/catalogo/controllers/servico_produto_controller.dart';
@@ -324,6 +325,9 @@ class AppController extends GetxController {
     await _resolverOrcamentoGastoController()?.encerrarEscutas();
     await _resolverFornecedorLocalizacaoController()?.encerrarEscutas();
     await _resolverInspiracaoController()?.encerrarEscutas();
+    if (Get.isRegistered<FinanceiroGerenteController>()) {
+      Get.find<FinanceiroGerenteController>().aoTrocarSessao();
+    }
   }
 
   Future<void> excluirDocumento(String colecao, String idDocumento) async {

@@ -4,6 +4,7 @@ extension _CalculadoraFestaCompras on _CalculadoraFestaScreenState {
   ItemListaCompras? get _pendenciaCompra {
     final itens = calculadoraController.listaCompras;
     for (final situacao in [
+      SituacaoCompra.planejarIngredientes,
       SituacaoCompra.revisarPorcao,
       SituacaoCompra.revisarDisponibilidade,
       SituacaoCompra.revisarServico,
@@ -24,8 +25,12 @@ extension _CalculadoraFestaCompras on _CalculadoraFestaScreenState {
     final faltaPreco = c.resumoCompras.precosPendentes > 0;
     final excedeLimite = (c.resumoCompras.saldoAposCompras ?? 0) < 0;
     final depois = _eventoEncerrado && !c.usandoContextoHistorico.value;
+    final revisada = OperacaoCalculadoraService.mapa(
+        OperacaoCalculadoraService.mapa(c.operacaoEvento['revisao_pos_evento'])[c.idCardapioAtual])['status'] == 'concluida';
     final texto = depois
-        ? 'A festa já passou. Registre o consumo, as sobras e eventuais faltas para melhorar o próximo planejamento.'
+        ? (revisada
+            ? 'Revisão desta refeição concluída. Você pode corrigir os resultados ou acrescentar medições. Despesas pendentes continuam no orçamento.'
+            : 'A festa já passou. Conte o que sobrou ou faltou; medições de quantidades são opcionais.')
         : semRegra.isNotEmpty
             ? 'Defina a porção de ${semRegra.first.nome} para incluir este item no cálculo.'
             : pendencia != null
@@ -97,6 +102,19 @@ extension _CalculadoraFestaCompras on _CalculadoraFestaScreenState {
       return;
     }
     switch (item.situacao) {
+      case SituacaoCompra.planejarIngredientes:
+        if (c.usandoContextoHistorico.value || c.estimativaSemEvento.value) {
+          Get.snackbar('Atualize o evento',
+              'Abra o planejamento atual do evento para organizar a execução.');
+          return;
+        }
+        await showDialog<bool>(
+            context: context,
+            barrierDismissible: false,
+            builder: (_) => Theme(
+                data: themeController.materialTheme,
+                child: CalculadoraExecucaoDialog(controller: c)));
+        return;
       case SituacaoCompra.revisarPorcao:
         await _editarRegra(
             regra: item.regra,

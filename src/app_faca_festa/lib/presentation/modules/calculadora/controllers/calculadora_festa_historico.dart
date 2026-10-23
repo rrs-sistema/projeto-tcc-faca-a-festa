@@ -2,8 +2,8 @@ part of 'calculadora_festa_controller.dart';
 
 extension CalculadoraFestaHistorico on CalculadoraFestaController {
   Future<void> salvarCalculo() async {
+    if (salvando.value) return;
     final calculo = calculoAtual.value;
-    final versao = _versaoAnaliseIA.value;
 
     if (!possuiEventoVinculado) {
       Get.snackbar(
@@ -27,8 +27,10 @@ extension CalculadoraFestaHistorico on CalculadoraFestaController {
 
     try {
       salvando.value = true;
+      await salvarAjustesManuais();
+      final versao = _versaoAnaliseIA.value;
 
-      final calculoParaSalvar = calculo.copyWith(
+      final calculoParaSalvar = (calculoAtual.value ?? calculo).copyWith(
         contextoPlanejamento: snapshotPlanejamento,
         orcamentoDisponivel: orcamentoDisponivel.value,
         limparOrcamentoDisponivel: orcamentoDisponivel.value == null,
@@ -42,9 +44,10 @@ extension CalculadoraFestaHistorico on CalculadoraFestaController {
         calculo: calculoParaSalvar,
         itens: itensCalculados.toList(),
       );
+      medicaoUso.registrarResultado('salvar_simulacao', sucesso: true);
 
       if (versao == _versaoAnaliseIA.value &&
-          calculoAtual.value?.idCalculo == calculo.idCalculo) {
+          calculoAtual.value?.idCalculo == calculoParaSalvar.idCalculo) {
         calculoAtual.value = calculoParaSalvar;
       }
       await carregarSimulacoesSalvas();
@@ -56,6 +59,7 @@ extension CalculadoraFestaHistorico on CalculadoraFestaController {
         colorText: Colors.white,
       );
     } on FirebaseException catch (e) {
+      medicaoUso.registrarResultado('salvar_simulacao', sucesso: false);
       final mensagem = e.code == 'permission-denied'
           ? 'Sem permissão para salvar. Confirme que você está logado e é o organizador desta festa.'
           : 'Não foi possível salvar a simulação: ${e.message ?? e.code}';
@@ -66,6 +70,7 @@ extension CalculadoraFestaHistorico on CalculadoraFestaController {
         colorText: Colors.white,
       );
     } catch (e) {
+      medicaoUso.registrarResultado('salvar_simulacao', sucesso: false);
       Get.snackbar(
         'Erro',
         'Não foi possível salvar a simulação: $e',
@@ -78,6 +83,7 @@ extension CalculadoraFestaHistorico on CalculadoraFestaController {
   }
 
   Future<void> carregarSimulacoesSalvas() async {
+    final geracao = _versaoPreparacao;
     final evento = idEventoAtual.value;
     if (!possuiEventoVinculado) {
       simulacoesSalvas.clear();
@@ -87,9 +93,10 @@ extension CalculadoraFestaHistorico on CalculadoraFestaController {
     try {
       carregandoSimulacoes.value = true;
       final simulacoes = await _repository.listarSimulacoesPorEvento(evento);
-      if (evento != idEventoAtual.value) return;
+      if (geracao != _versaoPreparacao || evento != idEventoAtual.value) return;
       simulacoesSalvas.assignAll(simulacoes);
     } catch (e) {
+      if (geracao != _versaoPreparacao) return;
       Get.snackbar(
         'Erro',
         'Não foi possível carregar as simulações: $e',
@@ -97,7 +104,7 @@ extension CalculadoraFestaHistorico on CalculadoraFestaController {
         colorText: Colors.white,
       );
     } finally {
-      carregandoSimulacoes.value = false;
+      if (geracao == _versaoPreparacao) carregandoSimulacoes.value = false;
     }
   }
 
@@ -155,6 +162,11 @@ extension CalculadoraFestaHistorico on CalculadoraFestaController {
           )));
       _modoEscolhido = true;
       final contexto = simulacao.contextoPlanejamento;
+      final politica =
+          OperacaoCalculadoraService.mapa(contexto['politica_publico']);
+      basePublicoConfirmada.value = politica['base_confirmada'] != false;
+      completudeLista.value = completudeDaLista(politica['lista_completude']);
+      restaurarVerbaAlimentacao(contexto['verba_alimentacao']);
       _versaoOperacao++;
       await _operacaoSubscription?.cancel();
       _operacaoSubscription = null;
@@ -189,6 +201,8 @@ extension CalculadoraFestaHistorico on CalculadoraFestaController {
         revisarCardapio.value = contexto['modo_revisao'] == true;
         idCardapioAtual = contexto['id_cardapio']?.toString() ?? '';
         tituloCardapio = contexto['titulo_cardapio']?.toString() ?? '';
+        escopoCardapioAtual =
+            EscopoCardapio.fromString(contexto['escopo_cardapio']?.toString());
         cardapioDisponivel.value = contexto['cardapio_disponivel'] == true;
         regrasRejeitadas.assignAll(
             List<String>.from(contexto['regras_rejeitadas'] as List? ?? []));
@@ -470,6 +484,7 @@ extension CalculadoraFestaHistorico on CalculadoraFestaController {
         idCardapio: idCardapio,
         itensSimulacao: historico,
       );
+      medicaoUso.registrarResultado('aplicar_cardapio', sucesso: true);
 
       if (versao == _versaoAnaliseIA.value &&
           calculoAtual.value?.idCalculo == calculo.idCalculo) {
@@ -497,6 +512,7 @@ extension CalculadoraFestaHistorico on CalculadoraFestaController {
         backgroundColor: Colors.redAccent,
         colorText: Colors.white,
       );
+      medicaoUso.registrarResultado('aplicar_cardapio', sucesso: false);
     } finally {
       enviandoParaCardapio.value = false;
     }

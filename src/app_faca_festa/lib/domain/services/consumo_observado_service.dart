@@ -55,6 +55,7 @@ class ConsumoObservadoService {
       String tipoEvento = '',
       Iterable<String> itensSemRegra = const [],
       List<Map<String, dynamic>> gruposAlimentares = const [],
+      Map<String, dynamic> servicoPlanejador = const {},
       List<String> publicoDietario = const []}) {
     final desconhecidos = itensSemRegra.toList()..sort();
     final itensRefeicao = cardapio
@@ -103,6 +104,8 @@ class ConsumoObservadoService {
       regra.pesoCrianca,
       regra.pesoBebe,
       itensRefeicao,
+      if (servicoPlanejador.isNotEmpty)
+        {'servico_planejador_v1': servicoPlanejador},
     ]);
   }
 

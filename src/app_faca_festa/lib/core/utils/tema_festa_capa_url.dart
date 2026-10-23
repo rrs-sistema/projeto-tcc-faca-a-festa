@@ -17,7 +17,12 @@ abstract final class TemaFestaCapaUrl {
     String slugOutro = 'outro',
   }) {
     final gravada = (imagemCapaUrl ?? '').trim();
-    if (gravada.isNotEmpty) return gravada;
-    return urlCapaStorage(idTema, slugOutro: slugOutro);
+    final uri = Uri.tryParse(gravada);
+    if (uri == null ||
+        (uri.scheme != 'https' && uri.scheme != 'http') ||
+        uri.host.isEmpty) {
+      return null;
+    }
+    return gravada;
   }
 }

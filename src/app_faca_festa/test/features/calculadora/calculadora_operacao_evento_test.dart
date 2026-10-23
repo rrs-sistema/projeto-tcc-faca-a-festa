@@ -405,6 +405,7 @@ void main() {
     expect(chip.backgroundColor, const Color(0xFFF5F8F6));
     expect(chip.selectedColor, const Color(0xFFDCEEDD));
     await tester.ensureVisible(vegetariano);
+    await tester.pumpAndSettle();
     await tester.tap(vegetariano);
     await tester.pumpAndSettle();
     final destinar = find.text('Destinar porções ao grupo');
@@ -415,6 +416,7 @@ void main() {
     await tester.enterText(campo('Arroz'), '0,2');
     final confirmar = find.byType(CheckboxListTile).first;
     await tester.ensureVisible(confirmar);
+    await tester.pumpAndSettle();
     await tester.tap(confirmar);
     await tester.pumpAndSettle();
     await tester.tap(find.text('Salvar ajustes'));

@@ -1,6 +1,8 @@
 import '../entities/cotacao.dart';
 import '../entities/evento.dart';
 import '../entities/fornecedor.dart';
+import '../entities/fornecedor_dados_cadastrais.dart';
+import '../entities/fornecedor_cadastro_edicao.dart';
 import '../entities/fornecedor_admin_snapshot.dart';
 import '../entities/fornecedor_categoria.dart';
 import '../entities/fornecedor_estatisticas.dart';
@@ -11,6 +13,12 @@ class GerenciarFornecedores {
   GerenciarFornecedores(this.repository);
 
   final FornecedorRepository repository;
+
+  Future<FornecedorCadastroEdicao> carregarCadastroEdicao(
+          String idFornecedor) =>
+      repository.carregarCadastroEdicao(idFornecedor);
+  Future<void> salvarCadastroEdicao(FornecedorCadastroAlteracao alteracao) =>
+      repository.salvarCadastroEdicao(alteracao);
 
   Future<FornecedorAdminSnapshot> carregarSnapshotAdmin({
     required bool incluirEnderecos,
@@ -74,6 +82,17 @@ class GerenciarFornecedores {
 
   Future<void> atualizarFornecedor(Fornecedor fornecedor) {
     return repository.atualizarFornecedor(fornecedor);
+  }
+
+  Future<void> atualizarDadosCadastrais({
+    required String idFornecedor,
+    required FornecedorDadosCadastrais dados,
+  }) {
+    if (idFornecedor.trim().isEmpty) {
+      throw ArgumentError('Fornecedor não identificado.');
+    }
+    return repository.atualizarDadosCadastrais(
+        idFornecedor: idFornecedor, dados: dados);
   }
 
   Future<void> salvarFornecedor(Fornecedor fornecedor) {

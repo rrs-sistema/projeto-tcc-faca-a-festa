@@ -29,6 +29,8 @@ import 'calculadora_composicao_test.dart'
 
 class EventoQA extends Fake implements EventoController {
   @override
+  final eventoAtual = Rx<Evento?>(null);
+  @override
   Evento? get eventoAtualEntidade => null;
   @override
   TipoEvento? get tipoEventoAtualEntidade => null;
@@ -152,6 +154,19 @@ void main() {
             ..addFont(rootBundle.load('assets/fonts/NotoSans-Regular.ttf')))
           .load();
     });
+    await tester.runAsync(() async {
+      for (final peso in [
+        FontWeight.w400,
+        FontWeight.w500,
+        FontWeight.w600,
+        FontWeight.w700,
+        FontWeight.w800,
+        FontWeight.w900
+      ]) {
+        GoogleFonts.poppins(fontWeight: peso);
+      }
+      await GoogleFonts.pendingFonts();
+    });
     Get.testMode = true;
     Get.put<FirebaseAuth>(AuthQA());
     tester.view.physicalSize = const Size(420, 910);
@@ -210,6 +225,8 @@ void main() {
     }
 
     for (var i = 0; i < 2; i++) {
+      await tester.scrollUntilVisible(find.text('Continuar'), 200,
+          scrollable: find.byType(Scrollable).first);
       await tester.ensureVisible(find.text('Continuar'));
       await tester.tap(find.text('Continuar'));
       await tester.pumpAndSettle();
@@ -225,13 +242,24 @@ void main() {
         expect(premium.hitTestable(), findsOneWidget);
         await tester.tap(premium);
         await tester.pumpAndSettle();
+        await tester.tap(find.text('Confirmar escolhas'));
+        await tester.pumpAndSettle();
         expect(calculadora.perfilSelecionado.value.nome, 'Premium');
         await tester.tap(padrao);
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Confirmar escolhas'));
         await tester.pumpAndSettle();
         await capturar('perfis-mobile');
         tester.platformDispatcher.textScaleFactorTestValue = 1.6;
         await tester.pumpAndSettle();
-        await tester.ensureVisible(premium);
+        final rolagem = find
+            .descendant(
+                of: find.byKey(const Key('rolagem_calculadora')),
+                matching: find.byType(Scrollable))
+            .first;
+        tester.state<ScrollableState>(rolagem).position.jumpTo(0);
+        await tester.pumpAndSettle();
+        await tester.scrollUntilVisible(premium, 150, scrollable: rolagem);
         await tester.pumpAndSettle();
         expect(premium.hitTestable(), findsOneWidget);
         expect(tester.takeException(), isNull);
@@ -243,8 +271,12 @@ void main() {
     }
     expect(calculadora.itensCalculados.length, 4);
     await capturar('proposta-refeicao-mobile');
-    final proposta = find.text('Conferir e usar proposta');
+    final proposta = find.text('Conferir esta proposta');
+    await tester.scrollUntilVisible(proposta, 250,
+        scrollable: find.byType(Scrollable).first);
+    await tester.pumpAndSettle();
     await tester.ensureVisible(proposta);
+    await tester.pumpAndSettle();
     await tester.tap(proposta);
     await tester.pumpAndSettle();
     await capturar('proposta-dialog-mobile');
@@ -254,13 +286,14 @@ void main() {
         find.text('4 de 4 itens com consumo configurado.'), 250,
         scrollable: find.byType(Scrollable).first);
     expect(find.text('4 de 4 itens com consumo configurado.'), findsOneWidget);
-    await tester.scrollUntilVisible(find.text('5,50 kg'), 250,
+    await tester.scrollUntilVisible(find.text('5,50 kg').first, 250,
         scrollable: find.byType(Scrollable).first);
-    expect(find.text('5,50 kg'), findsOneWidget);
+    expect(find.text('5,50 kg'), findsNWidgets(2));
     expect(tester.takeException(), isNull);
     await capturar('jornada-mobile');
     final detalhe = find.byTooltip('Ver cálculo e ajustar Arroz 🍚');
-    await tester.ensureVisible(detalhe);
+    await tester.scrollUntilVisible(detalhe, 200,
+        scrollable: find.byType(Scrollable).first);
     await tester.pumpAndSettle();
     await tester.tap(detalhe);
     await tester.pumpAndSettle();
@@ -323,6 +356,9 @@ void main() {
     final opcoesRefeicao = find.text('Público e estoque');
     await tester.scrollUntilVisible(opcoesRefeicao, -300,
         scrollable: find.byType(Scrollable).first);
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(opcoesRefeicao);
+    await tester.pumpAndSettle();
     await tester.tap(opcoesRefeicao);
     await tester.pumpAndSettle();
     await tester.tap(find.text('Público e alimentação desta refeição'));
@@ -422,7 +458,7 @@ void main() {
     expect(find.text('Regra de consumo'), findsOneWidget);
     expect(
         find.widgetWithText(TextFormField, 'Arroz da família'), findsOneWidget);
-    await tester.tap(find.text('Usar no cálculo'));
+    await tester.tap(find.text('Salvar porção e preço'));
     await tester.pumpAndSettle();
     final regraReutilizada = calculadora.regraDoResultado(
         calculadora.itensCalculados.firstWhere((i) => i.nome == 'Arroz 🍚'))!;
@@ -446,10 +482,11 @@ void main() {
     await tester.pumpAndSettle();
     await abrirOpcao('Revisão depois da festa');
     expect(find.text('Depois da festa'), findsOneWidget);
-    expect(find.text('Nenhum registro encontrado neste contexto'),
-        findsNWidgets(4));
-    await capturar('pos-festa-mobile');
-    await tester.tap(find.text('Concluir revisão'));
+    expect(find.text('A revisão fica disponível após a realização do evento.'),
+        findsOneWidget);
+    expect(find.text('Concluir revisão'), findsNothing);
+    await capturar('pos-festa-ainda-indisponivel-mobile');
+    await tester.pump(const Duration(seconds: 4));
     await tester.pumpAndSettle();
     await abrirOpcao('Avaliar esta experiência');
     expect(find.textContaining('Listas abertas:'), findsOneWidget);
@@ -469,6 +506,12 @@ void main() {
     await tester.pumpAndSettle();
     expect(avaliacaoCopiada, contains('Facilidade informada: 4 de 5'));
     expect(avaliacaoCopiada, isNot(contains('Arroz')));
+    expect(calculadora.medicaoUso.camposDistintosEditados, greaterThan(0));
+    expect(calculadora.medicaoUso.correcoes, greaterThan(0));
+    await tester.runAsync(() =>
+        File('.dart_tool/calculadora-linha-base-jornada.txt').writeAsString(
+            'Roteiro automatizado da jornada móvel, com dependências substituídas.\n'
+            'Não representa um estudo com usuários nem demonstra redução de trabalho.\n\n$avaliacaoCopiada'));
     tester.binding.defaultBinaryMessenger
         .setMockMethodCallHandler(SystemChannels.platform, null);
 

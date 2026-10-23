@@ -189,6 +189,38 @@
           "order": "DESCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "cotacao",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "id_usuario_solicitante",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "data_envio",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "cotacao",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "id_evento",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "id_usuario_solicitante",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "data_envio",
+          "order": "DESCENDING"
+        }
+      ]
     }
   ],
   "fieldOverrides": [

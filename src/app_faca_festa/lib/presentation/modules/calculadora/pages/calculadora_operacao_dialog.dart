@@ -87,13 +87,10 @@ class _RefeicaoState extends State<CalculadoraOperacaoDialog> {
     revisao = (c.operacaoEvento['revisao'] as num? ?? 0).toInt();
     config = OperacaoCalculadoraService.mapa(jsonDecode(jsonEncode(
         _ops.refeicao(Map<String, dynamic>.from(c.operacaoEvento), refeicao))));
-    config['servico'] ??= RegExp(r'almoco|almoço|jantar|refei')
-            .hasMatch(c.tituloCardapio.toLowerCase())
-        ? 'refeicao'
-        : 'lanche';
+    config['servico'] ??= 'refeicao';
     grupos = OperacaoCalculadoraService.lista(config['grupos']);
     herdar = config['publico'] == null;
-    final p = c.publicoDaRefeicao(refeicao);
+    final p = _ops.publico({...config, 'publico_extra': null}, c.publicoEvento);
     publico = {'adultos': p.adultos, 'criancas': p.criancas, 'bebes': p.bebes};
   }
 
@@ -324,7 +321,9 @@ class _RefeicaoState extends State<CalculadoraOperacaoDialog> {
   Widget build(BuildContext context) => PopScope(
       canPop: !salvando,
       child: CalculadoraModal(
-        titulo: 'Público da refeição',
+        titulo: c.representaRefeicao
+            ? 'Público da refeição'
+            : 'Público do cardápio',
         subtitulo: c.tituloCardapio,
         icone: Icons.groups_outlined,
         ocupado: salvando,
@@ -386,21 +385,23 @@ class _RefeicaoState extends State<CalculadoraOperacaoDialog> {
                       key: ValueKey('heranca-$herdar'),
                       child: contagens(publico, 'publico', enabled: !herdar)),
                   const SizedBox(height: 16),
-                  DropdownButtonFormField<String>(
-                      value: config['servico'] as String,
-                      isExpanded: true,
-                      decoration: _campo('Tipo de serviço'),
-                      items: const [
-                        DropdownMenuItem(
-                            value: 'refeicao',
-                            child: Text('Refeição principal',
-                                overflow: TextOverflow.ellipsis)),
-                        DropdownMenuItem(
-                            value: 'lanche', child: Text('Lanche ou coquetel'))
-                      ],
-                      onChanged: salvando
-                          ? null
-                          : (v) => setState(() => config['servico'] = v)),
+                  if (c.representaRefeicao)
+                    DropdownButtonFormField<String>(
+                        value: config['servico'] as String,
+                        isExpanded: true,
+                        decoration: _campo('Tipo de serviço'),
+                        items: const [
+                          DropdownMenuItem(
+                              value: 'refeicao',
+                              child: Text('Refeição principal',
+                                  overflow: TextOverflow.ellipsis)),
+                          DropdownMenuItem(
+                              value: 'lanche',
+                              child: Text('Lanche ou coquetel'))
+                        ],
+                        onChanged: salvando
+                            ? null
+                            : (v) => setState(() => config['servico'] = v)),
                   const SizedBox(height: 16),
                   const Text('Necessidades alimentares',
                       style: TextStyle(fontWeight: FontWeight.w700)),

@@ -26,6 +26,7 @@ class ResumoSection extends StatelessWidget {
     required this.categoriaController,
     required this.subcategoriaController,
     required this.avaliacaoController,
+    this.onAbrirPedidos,
   });
 
   final FornecedorController controller;
@@ -37,6 +38,7 @@ class ResumoSection extends StatelessWidget {
   final CategoriaServicoController categoriaController;
   final SubcategoriaServicoController subcategoriaController;
   final AvaliacaoServicoController avaliacaoController;
+  final VoidCallback? onAbrirPedidos;
 
   @override
   Widget build(BuildContext context) {
@@ -70,9 +72,56 @@ class ResumoSection extends StatelessWidget {
         _MetricData(
           title: 'Pedidos aguardando',
           value: controller.solicitacoesPendentes.value.toString(),
-          subtitle: 'aguardando ação',
+          subtitle: 'abrir lista de pedidos',
           icon: Icons.receipt_long_rounded,
           color: const Color(0xFF6366F1),
+          onTap: onAbrirPedidos,
+        ),
+        _MetricData(
+          title: 'Financeiro',
+          value: 'Privado',
+          subtitle: 'custos, caixa e resultado',
+          icon: Icons.account_balance_wallet_outlined,
+          color: const Color(0xFF0F766E),
+          onTap: () {
+            final id = controller.fornecedor.value?.idFornecedor ?? '';
+            if (id.isEmpty) {
+              Get.snackbar(
+                'Financeiro',
+                'Não foi possível identificar o fornecedor.',
+              );
+              return;
+            }
+            Get.toNamed('/fornecedor/financeiro', arguments: id);
+          },
+        ),
+        _MetricData(
+          title: 'Estoque interno',
+          value: 'Quantidades',
+          subtitle: 'materiais, reservas e consumo',
+          icon: Icons.warehouse_outlined,
+          color: const Color(0xFFB45309),
+          onTap: () {
+            final id = controller.fornecedor.value?.idFornecedor ?? '';
+            if (id.isEmpty) {
+              Get.snackbar(
+                'Estoque',
+                'Não foi possível identificar o fornecedor.',
+              );
+              return;
+            }
+            Get.toNamed('/fornecedor/estoque', arguments: id);
+          },
+        ),
+        _MetricData(
+          title: 'Comissões',
+          value: 'Pagador',
+          subtitle: 'suas obrigações com a plataforma',
+          icon: Icons.percent_rounded,
+          color: const Color(0xFF4338CA),
+          onTap: () {
+            Get.toNamed('/fornecedor/comissoes');
+          },
         ),
         _MetricData(
           title: 'Mensagens não lidas',
@@ -89,10 +138,10 @@ class ResumoSection extends StatelessWidget {
           ),
         ),
         _MetricData(
-          title: 'Serviços ativos',
+          title: 'Catálogo de venda',
           value: totalServicosAtivos.toString(),
-          subtitle: 'abrir catálogo',
-          icon: Icons.inventory_2_rounded,
+          subtitle: 'o que você oferece e o preço',
+          icon: Icons.storefront_outlined,
           color: const Color(0xFF8B5CF6),
           onTap: () async {
             final fornecedorAtual = controller.fornecedor.value;
@@ -153,6 +202,20 @@ class ResumoSection extends StatelessWidget {
           subtitle: 'histórico',
           icon: Icons.handshake_rounded,
           color: const Color(0xFF10B981),
+          onTap: () {
+            final id = controller.fornecedor.value?.idFornecedor ?? '';
+            if (id.isEmpty) {
+              Get.snackbar(
+                'Contratações',
+                'Não foi possível identificar o fornecedor.',
+              );
+              return;
+            }
+            Get.toNamed(
+              '/acompanhamento-fornecedor',
+              arguments: {'idFornecedor': id},
+            );
+          },
         ),
         _MetricData(
           title: 'Perfil completo',
@@ -369,30 +432,35 @@ class _MetricCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final clickable = data.onTap != null;
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: data.onTap,
-        borderRadius: BorderRadius.circular(18),
-        hoverColor:
-            clickable ? data.color.withValues(alpha: 0.04) : Colors.transparent,
-        splashColor:
-            clickable ? data.color.withValues(alpha: 0.08) : Colors.transparent,
-        child: Ink(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF8FAFC),
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(
-              color: clickable
-                  ? data.color.withValues(alpha: 0.22)
-                  : data.color.withValues(alpha: 0.12),
+    // Preenche a célula do GridView — sem isso o card encolhe ao conteúdo
+    // e títulos de 1 vs 2 linhas desalinhham as colunas visualmente.
+    return SizedBox.expand(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: data.onTap,
+          borderRadius: BorderRadius.circular(18),
+          hoverColor: clickable
+              ? data.color.withValues(alpha: 0.04)
+              : Colors.transparent,
+          splashColor: clickable
+              ? data.color.withValues(alpha: 0.08)
+              : Colors.transparent,
+          child: Ink(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: clickable
+                    ? data.color.withValues(alpha: 0.22)
+                    : data.color.withValues(alpha: 0.12),
+              ),
             ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
               Row(
                 children: [
                   Container(
@@ -454,6 +522,7 @@ class _MetricCard extends StatelessWidget {
                 ],
               ),
             ],
+            ),
           ),
         ),
       ),

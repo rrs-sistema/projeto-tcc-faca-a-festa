@@ -1,12 +1,16 @@
 import '../entities/cotacao.dart';
 import '../entities/evento.dart';
 import '../entities/fornecedor.dart';
+import '../entities/fornecedor_dados_cadastrais.dart';
+import '../entities/fornecedor_cadastro_edicao.dart';
 import '../entities/fornecedor_admin_snapshot.dart';
 import '../entities/fornecedor_categoria.dart';
 import '../entities/fornecedor_estatisticas.dart';
 import '../entities/fornecedor_produto_servico.dart';
 
 abstract interface class FornecedorRepository {
+  Future<FornecedorCadastroEdicao> carregarCadastroEdicao(String idFornecedor);
+  Future<void> salvarCadastroEdicao(FornecedorCadastroAlteracao alteracao);
   Future<FornecedorAdminSnapshot> carregarSnapshotAdmin({
     required bool incluirEnderecos,
   });
@@ -42,6 +46,11 @@ abstract interface class FornecedorRepository {
   );
 
   Future<void> atualizarFornecedor(Fornecedor fornecedor);
+
+  Future<void> atualizarDadosCadastrais({
+    required String idFornecedor,
+    required FornecedorDadosCadastrais dados,
+  });
 
   Future<void> salvarFornecedor(Fornecedor fornecedor);
 

@@ -5,6 +5,8 @@ import { randomUUID } from "crypto";
 
 import { admin } from "../../shared/firebaseAdmin";
 import { exigirTipo, exigirUsuarioAutenticado } from "../../shared/auth";
+import { tentarGerarComissaoAposContratacao } from "../financeiro/comandosComissaoPlataforma";
+import { gravarMensagemSistema } from "./mensagensSistemaCotacao";
 
 const REGION = "southamerica-east1";
 
@@ -63,6 +65,14 @@ export const fecharCotacao = onCall(
       throw new HttpsError("not-found", "Fornecedor não participa desta cotação.");
     }
 
+    const statusFornecedor = texto(fornecedorSnap.data()?.status).toLowerCase();
+    if (statusFornecedor !== "respondido" && statusFornecedor !== "respondida") {
+      throw new HttpsError(
+        "failed-precondition",
+        "Só é possível contratar fornecedor que já enviou o preço.",
+      );
+    }
+
     const servicosSnap = await fornecedorRef.collection("servicos").get();
     let valorTotal = 0;
     let idServicoContratado: string | null = null;
@@ -75,6 +85,19 @@ export const fecharCotacao = onCall(
       valorTotal += valor * quantidade;
       idServicoContratado ??= texto(item.id_produto_servico) || null;
       nomeServicoContratado ??= texto(item.nome_produto_servico) || null;
+    }
+
+    // Preferência: valor_cotado explícito da resposta do fornecedor.
+    const valorCotado = asNumber(fornecedorSnap.data()?.valor_cotado);
+    if (valorCotado > 0) {
+      valorTotal = valorCotado;
+    }
+
+    if (valorTotal <= 0) {
+      throw new HttpsError(
+        "failed-precondition",
+        "Cotação sem valor válido para contratar.",
+      );
     }
 
     const idEvento = texto(cotacao.id_evento);
@@ -116,19 +139,77 @@ export const fecharCotacao = onCall(
       fechado_por: perfil.uid,
     });
 
+    const valorCentavos = Math.round(valorTotal * 100);
     batch.set(orcRef, {
       id_orcamento: orcRef.id,
+      id_cotacao: idCotacao,
+      id_necessidade: idCotacao,
       id_evento: idEvento,
       id_fornecedor: idFornecedor,
       nome_fornecedor: nomeFornecedorFinal,
       custo_estimado: valorTotal,
+      valor_contratado: valorTotal,
+      valor_contratado_centavos: valorCentavos,
       id_solicitante: perfil.uid,
       nome_solicitante: nomeSolicitante,
       anotacoes: `Orçamento gerado automaticamente após fechamento da cotação "${categoriaNome}".`,
-      status: "em_negociacao",
-      orcamento_fechado: false,
-      id_servico_fornecido: "",
+      status: "fechado",
+      orcamento_fechado: true,
+      alternativa_ativa: true,
+      contrato_financeiro: {
+        schema: 1,
+        id_contrato: orcRef.id,
+        id_evento: idEvento,
+        id_orcamento: orcRef.id,
+        id_necessidade: idCotacao,
+        valor: { centavos: valorCentavos, moeda: "BRL" },
+        estado_comercial: "contratado",
+        estado_execucao: "nao_iniciado",
+        perspectiva: "evento_pagador",
+        retencao: { centavos: 0, moeda: "BRL" },
+        reembolso: { centavos: 0, moeda: "BRL" },
+        historico: [],
+        snapshot_identidade: {
+          schema: 1,
+          origem: "fechar_cotacao",
+          capturado_em: new Date().toISOString(),
+          id_evento: idEvento,
+          nome_evento: null,
+          id_organizador: null,
+          nome_organizador: null,
+          id_contratante: perfil.uid,
+          nome_contratante: nomeSolicitante,
+          id_pagador: perfil.uid,
+          nome_pagador: nomeSolicitante,
+          id_fornecedor: idFornecedor,
+          nome_fornecedor: nomeFornecedorFinal,
+          id_servico: idServicoContratado,
+          nome_servico: nomeServicoContratado || categoriaNome || null,
+          descricao_escopo:
+            categoriaNome || nomeServicoContratado || null,
+          quantidade: null,
+          unidade: null,
+          valor_centavos: valorCentavos,
+          id_operador_acompanhamento: null,
+        },
+        origem: "fechar_cotacao",
+      },
+      estado_execucao: "nao_iniciado",
+      id_servico_fornecido: idServicoContratado || "",
+      nome: nomeServicoContratado || categoriaNome || "",
       data_cadastro: FieldValue.serverTimestamp(),
+    });
+    batch.set(orcRef.collection("obrigacoes").doc("parcela-1"), {
+      schema: 1,
+      id_obrigacao: "parcela-1",
+      id_contrato: orcRef.id,
+      id_orcamento: orcRef.id,
+      id_evento: idEvento,
+      valor: { centavos: valorCentavos, moeda: "BRL" },
+      pago_liquido: { centavos: 0, moeda: "BRL" },
+      estado_liquidacao: "aberta",
+      numero_parcela: 1,
+      origem: "fechar_cotacao",
     });
 
     batch.set(orcRef.collection("orcamento_gasto").doc(gastoId), {
@@ -155,10 +236,40 @@ export const fecharCotacao = onCall(
       throw new HttpsError("internal", "Não foi possível fechar o negócio.");
     }
 
+    // Mensagens de sistema: vencedor e perdedores.
+    const valorFmt = valorTotal.toFixed(2).replace(".", ",");
+    await gravarMensagemSistema(
+      db,
+      idCotacao,
+      idFornecedor,
+      `Contrato fechado em R$ ${valorFmt}. Próximo passo: pagamento pela plataforma (declaração ao app).`,
+    );
+    for (const doc of fornecedoresSnap.docs) {
+      const id = texto(doc.data().id_fornecedor) || doc.id;
+      if (id === idFornecedor) continue;
+      await gravarMensagemSistema(
+        db,
+        idCotacao,
+        id,
+        "Esta cotação foi fechada com outro fornecedor.",
+      );
+    }
+
+    // Gatilho contratacao_confirmada: só gera se política ativa válida existir.
+    await tentarGerarComissaoAposContratacao({
+      idEvento,
+      idContrato: orcRef.id,
+      baseBrutaCentavos: valorCentavos,
+      idFornecedor,
+      idPagador: idFornecedor,
+      autorId: perfil.uid,
+    });
+
     return {
       ok: true,
       idEvento,
       idOrcamento: orcRef.id,
+      valorContratado: valorTotal,
     };
   },
 );

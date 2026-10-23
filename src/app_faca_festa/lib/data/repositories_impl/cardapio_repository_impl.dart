@@ -5,11 +5,17 @@ import 'package:app_faca_festa/domain/repositories/cardapio_repository.dart';
 import '../datasources/remote/cardapio_remote_datasource.dart';
 import '../models/cardapio/cardapio_item_model.dart';
 import '../models/cardapio/cardapio_model.dart';
+import '../../domain/services/criacao_cardapio_inicial_service.dart';
 
-class CardapioRepositoryImpl implements CardapioRepository {
+class CardapioRepositoryImpl
+    implements CardapioRepository, CriacaoCardapioInicialRepository {
   CardapioRepositoryImpl(this.remote);
 
   final CardapioRemoteDatasource remote;
+
+  @override
+  Future<bool> criarCardapioInicial(CriacaoCardapioInicial proposta) =>
+      UpdateOperations.run(() => remote.criarCardapioInicial(proposta));
 
   @override
   Stream<List<Cardapio>> observarCardapios(String idEvento) =>

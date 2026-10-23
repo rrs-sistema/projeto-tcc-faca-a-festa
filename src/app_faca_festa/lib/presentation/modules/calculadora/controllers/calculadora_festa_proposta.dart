@@ -1,7 +1,23 @@
 part of 'calculadora_festa_controller.dart';
 
 extension CalculadoraFestaProposta on CalculadoraFestaController {
+  CriacaoCardapioInicial prepararCardapioInicial(
+      DestinoPlanoEvento destino, CalculadoraFesta calculo, String titulo) {
+    if (estimativaSemEvento.value ||
+        usandoContextoHistorico.value ||
+        calculo.idEvento != idEventoAtual.value) {
+      throw StateError('Abra um evento salvo para criar o cardápio.');
+    }
+    return const CriacaoCardapioInicialService().preparar(
+        destino: destino,
+        calculo: calculo,
+        usuario: _uidAtual ?? '',
+        contexto: snapshotPlanejamento,
+        titulo: titulo);
+  }
+
   String get assinaturaProposta => jsonEncode({
+        'contexto': contextoEvento.assinatura,
         'snapshot': snapshotPlanejamento,
         'evento': idEventoAtual.value,
         'perfil': {
@@ -39,6 +55,21 @@ extension CalculadoraFestaProposta on CalculadoraFestaController {
     }
 
     return const PropostaRefeicaoService().gerar(
+        catalogo: catalogoParaPropostas,
+        contexto: {
+          if (config['servico'] != null) 'servico': config['servico'],
+          if (config['ocorrencia'] is Map &&
+              config['ocorrencia']['formato'] != 'nao_definido')
+            'formato': config['ocorrencia']['formato'],
+          if (config['ocorrencia'] is Map &&
+              config['ocorrencia']['hora_local'] != null)
+            'hora_local': config['ocorrencia']['hora_local'],
+          if (config['ocorrencia'] is Map &&
+              config['ocorrencia']['duracao_minutos'] != null)
+            'duracao_minutos': config['ocorrencia']['duracao_minutos'],
+        },
+        comporRefeicao: escopoCardapioAtual == EscopoCardapio.refeicao ||
+            escopoCardapioAtual == EscopoCardapio.naoDefinido,
         itens: itensCardapio.toList(),
         regras: regrasDisponiveis,
         respostas: respostas ?? respostasProposta,

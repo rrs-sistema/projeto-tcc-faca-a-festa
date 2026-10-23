@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/controllers/cardapio_controller.dart';
 import 'package:app_faca_festa/core/utils/form_validators.dart';
 import 'package:app_faca_festa/domain/entities/cardapio.dart';
+import 'cardapio_visual_options.dart';
 
 class CadastroCardapioBottomSheet extends StatefulWidget {
   final String idEvento;
@@ -28,27 +29,11 @@ class _CadastroCardapioBottomSheetState
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _tituloCtrl;
 
-  IconData _iconeSelecionado = Icons.restaurant_menu;
-  Color _corSelecionada = Colors.teal;
+  IconData _iconeSelecionado = Icons.restaurant_menu_rounded;
+  Color _corSelecionada = const Color(0xFF0D9488);
   bool _salvando = false;
-
-  final icones = [
-    Icons.restaurant_menu,
-    Icons.child_care,
-    Icons.cake,
-    Icons.local_drink,
-    Icons.fastfood,
-    Icons.local_pizza,
-  ];
-
-  final cores = [
-    Colors.teal,
-    Colors.pinkAccent,
-    Colors.orange,
-    Colors.blueAccent,
-    Colors.green,
-    Colors.purple,
-  ];
+  EscopoCardapio _escopo = EscopoCardapio.refeicao;
+  PublicoAlvoCardapio _publico = PublicoAlvoCardapio.todos;
 
   @override
   void initState() {
@@ -62,174 +47,290 @@ class _CadastroCardapioBottomSheetState
     super.dispose();
   }
 
+  void _aplicarPreset(CardapioPreset p) {
+    setState(() {
+      _tituloCtrl.text = p.titulo;
+      _iconeSelecionado = p.icone;
+      _corSelecionada = p.cor;
+      _escopo = p.escopo;
+    });
+  }
+
+  InputDecoration _decoracao(String label, {String? hint, IconData? icone}) {
+    final scheme = Theme.of(context).colorScheme;
+    return InputDecoration(
+      labelText: label,
+      hintText: hint,
+      prefixIcon: icone == null ? null : Icon(icone, size: 20),
+      filled: true,
+      fillColor: const Color(0xFFF8FAF9),
+      isDense: true,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+      enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: scheme.outlineVariant)),
+      focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: widget.primaryColor, width: 2)),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
-    final primaryColor = widget.primaryColor;
+    final teclado = MediaQuery.viewInsetsOf(context).bottom;
+    final primary = widget.primaryColor;
+    final icones =
+        CardapioVisualOptions.gradeComSelecionado(_iconeSelecionado);
+    final cores = CardapioVisualOptions.coresComSelecionada(_corSelecionada);
 
     return FractionallySizedBox(
-      heightFactor: 0.88,
-      child: Container(
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
+      heightFactor: 0.92,
+      child: Material(
+        color: theme.colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        clipBehavior: Clip.antiAlias,
         child: SafeArea(
           top: false,
           child: Padding(
-            padding:
-                EdgeInsets.only(left: 16, right: 16, bottom: bottomInset + 16),
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const SizedBox(height: 12),
-                    Center(
-                      child: Container(
-                        width: 50,
-                        height: 4,
+            padding: EdgeInsets.only(bottom: teclado),
+            child: Column(
+              children: [
+                const SizedBox(height: 10),
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                      color: const Color(0xFFCBD5E1),
+                      borderRadius: BorderRadius.circular(999)),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
                         decoration: BoxDecoration(
-                            color: Colors.grey.shade300,
-                            borderRadius: BorderRadius.circular(10)),
+                            color: primary.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(14)),
+                        child: Icon(Icons.menu_book_rounded,
+                            color: primary, size: 22),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Novo cardápio',
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.w800)),
+                            Text('Comece por um modelo ou personalize',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _Aviso(
+                            cor: primary,
+                            texto:
+                                'Criar o cardápio não agenda serviços. Depois, use a Agenda de refeições para marcar data e horário.',
+                          ),
+                          const SizedBox(height: 16),
+                          Text('Sugestões rápidas',
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.w800)),
+                          const SizedBox(height: 4),
+                          Text('Toque para preencher título, ícone e tipo.',
+                              style: TextStyle(
+                                  fontSize: 12,
+                                  color: theme.colorScheme.onSurfaceVariant)),
+                          const SizedBox(height: 10),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              for (final p in CardapioVisualOptions.presets)
+                                _PresetChip(
+                                  preset: p,
+                                  selecionado: _tituloCtrl.text.trim() ==
+                                          p.titulo &&
+                                      _iconeSelecionado.codePoint ==
+                                          p.icone.codePoint,
+                                  onTap: _salvando
+                                      ? null
+                                      : () => _aplicarPreset(p),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+                          TextFormField(
+                            controller: _tituloCtrl,
+                            enabled: !_salvando,
+                            style: const TextStyle(
+                                fontSize: 15, fontWeight: FontWeight.w600),
+                            decoration: _decoracao('Título',
+                                hint: 'Ex.: Almoço do sábado',
+                                icone: Icons.text_fields_rounded),
+                            validator: (value) => FormValidators.titulo(value,
+                                campo: 'o título', minimo: 2),
+                            onChanged: (_) => setState(() {}),
+                          ),
+                          const SizedBox(height: 18),
+                          Text('Tipo do cardápio',
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.w800)),
+                          const SizedBox(height: 8),
+                          for (final e in EscopoCardapio.values)
+                            if (e != EscopoCardapio.naoDefinido)
+                              _OpcaoEscopo(
+                                titulo:
+                                    CardapioVisualOptions.labelEscopoCurto(e),
+                                ajuda: CardapioVisualOptions.ajudaEscopo(e),
+                                selecionado: _escopo == e,
+                                cor: primary,
+                                onTap: _salvando
+                                    ? null
+                                    : () => setState(() => _escopo = e),
+                              ),
+                          const SizedBox(height: 14),
+                          Text('Público principal',
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.w800)),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              for (final p in PublicoAlvoCardapio.values)
+                                ChoiceChip(
+                                  label: Text(
+                                      CardapioVisualOptions.labelPublico(p)),
+                                  selected: _publico == p,
+                                  onSelected: _salvando
+                                      ? null
+                                      : (_) => setState(() => _publico = p),
+                                  selectedColor:
+                                      primary.withValues(alpha: 0.14),
+                                  labelStyle: TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      color: _publico == p
+                                          ? primary
+                                          : const Color(0xFF334155)),
+                                  side: BorderSide(
+                                      color: _publico == p
+                                          ? primary
+                                          : const Color(0xFFCBD5E1)),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 18),
+                          Text('Ícone',
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.w800)),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 10,
+                            runSpacing: 10,
+                            children: [
+                              for (final icon in icones)
+                                _IconeOpcao(
+                                  icone: icon,
+                                  selecionado: _iconeSelecionado.codePoint ==
+                                      icon.codePoint,
+                                  cor: primary,
+                                  onTap: _salvando
+                                      ? null
+                                      : () => setState(
+                                          () => _iconeSelecionado = icon),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 18),
+                          Text('Cor',
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.w800)),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 10,
+                            runSpacing: 10,
+                            children: [
+                              for (final color in cores)
+                                _CorOpcao(
+                                  cor: color,
+                                  selecionado: CardapioVisualOptions.mesmaCor(
+                                      _corSelecionada, color),
+                                  onTap: _salvando
+                                      ? null
+                                      : () => setState(
+                                          () => _corSelecionada = color),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 14),
-                    _Header(
-                      title: 'Novo Cardápio',
-                      subtitle: 'Crie uma nova categoria de itens',
-                      icon: Icons.menu_book_rounded,
-                      color: primaryColor,
-                    ),
-                    const SizedBox(height: 10),
-                    Divider(
-                        height: 1,
-                        color: theme.colorScheme.outlineVariant
-                            .withValues(alpha: 0.5)),
-                    const SizedBox(height: 16),
-                    _textField(
-                      controller: _tituloCtrl,
-                      label: 'Título',
-                      hint: 'Ex.: Comidas, Bebidas...',
-                      icon: Icons.text_fields,
-                      requiredField: true,
-                    ),
-                    const SizedBox(height: 16),
-                    Text('Ícone',
-                        style: theme.textTheme.bodyMedium
-                            ?.copyWith(fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 12,
-                      runSpacing: 12,
-                      children: icones
-                          .map((icon) => _buildIconOption(icon, primaryColor))
-                          .toList(),
-                    ),
-                    const SizedBox(height: 16),
-                    Text('Cor',
-                        style: theme.textTheme.bodyMedium
-                            ?.copyWith(fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 12,
-                      runSpacing: 12,
-                      children: cores
-                          .map((color) => _buildColorOption(color))
-                          .toList(),
-                    ),
-                    const SizedBox(height: 32),
-                    _FooterActions(
-                      isSaving: _salvando,
-                      onSubmit: _salvar,
-                      primaryColor: primaryColor,
-                    ),
-                  ],
+                  ),
                 ),
-              ),
+                Container(
+                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+                  decoration: const BoxDecoration(
+                    border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: _salvando ? null : () => Get.back<void>(),
+                          style: OutlinedButton.styleFrom(
+                              minimumSize: const Size.fromHeight(48),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14))),
+                          child: const Text('Cancelar'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        flex: 1,
+                        child: FilledButton.icon(
+                          onPressed: _salvando ? null : _salvar,
+                          icon: _salvando
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                      strokeWidth: 2, color: Colors.white))
+                              : const Icon(Icons.check_rounded, size: 18),
+                          label: Text(_salvando ? 'Salvando…' : 'Salvar'),
+                          style: FilledButton.styleFrom(
+                              backgroundColor: primary,
+                              minimumSize: const Size.fromHeight(48),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14))),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildIconOption(IconData icon, Color primaryColor) {
-    final selected = _iconeSelecionado == icon;
-    return GestureDetector(
-      onTap: () => setState(() => _iconeSelecionado = icon),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: selected
-              ? primaryColor.withValues(alpha: 0.15)
-              : Colors.transparent,
-          shape: BoxShape.circle,
-          border:
-              Border.all(color: selected ? primaryColor : Colors.grey.shade300),
-        ),
-        child: Icon(icon,
-            color: selected ? primaryColor : Colors.black54, size: 24),
-      ),
-    );
-  }
-
-  Widget _buildColorOption(Color color) {
-    final selected = _corSelecionada == color;
-    return GestureDetector(
-      onTap: () => setState(() => _corSelecionada = color),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        width: 36,
-        height: 36,
-        decoration: BoxDecoration(
-          color: color,
-          shape: BoxShape.circle,
-          border: Border.all(
-              color: selected ? Colors.black54 : Colors.transparent,
-              width: selected ? 2 : 0),
-        ),
-        child: selected
-            ? const Icon(Icons.check, color: Colors.white, size: 18)
-            : null,
-      ),
-    );
-  }
-
-  Widget _textField({
-    required TextEditingController controller,
-    required String label,
-    required IconData icon,
-    String? hint,
-    bool requiredField = false,
-  }) {
-    return TextFormField(
-      controller: controller,
-      style: const TextStyle(fontSize: 13),
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hint,
-        labelStyle: const TextStyle(fontSize: 13),
-        prefixIcon: Icon(icon, size: 18),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide:
-              BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
-        ),
-        isDense: true,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-      ),
-      validator: requiredField
-          ? (value) =>
-              FormValidators.titulo(value, campo: 'o título', minimo: 2)
-          : null,
     );
   }
 
@@ -242,9 +343,10 @@ class _CadastroCardapioBottomSheetState
         idCardapio: DateTime.now().millisecondsSinceEpoch.toString(),
         idEvento: widget.idEvento,
         titulo: _tituloCtrl.text.trim(),
+        escopo: _escopo,
         icone: _iconeSelecionado.codePoint.toString(),
-        corHex: _colorToHex(_corSelecionada),
-        publicoAlvo: PublicoAlvoCardapio.todos,
+        corHex: CardapioVisualOptions.corParaHex(_corSelecionada),
+        publicoAlvo: _publico,
         totalItens: 0,
         totalComidas: 0,
         totalBebidas: 0,
@@ -267,107 +369,195 @@ class _CadastroCardapioBottomSheetState
       if (mounted) setState(() => _salvando = false);
     }
   }
-
-  String _colorToHex(Color color) {
-    String channelToHex(double value) =>
-        (value * 255).round().clamp(0, 255).toRadixString(16).padLeft(2, '0');
-    return '#${channelToHex(color.a)}${channelToHex(color.r)}${channelToHex(color.g)}${channelToHex(color.b)}'
-        .toUpperCase();
-  }
 }
 
-class _Header extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final IconData icon;
-  final Color color;
+class _Aviso extends StatelessWidget {
+  const _Aviso({required this.cor, required this.texto});
+  final Color cor;
+  final String texto;
+  @override
+  Widget build(BuildContext context) => Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+          color: cor.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(14)),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Icon(Icons.info_outline_rounded, size: 18, color: cor),
+        const SizedBox(width: 10),
+        Expanded(
+            child: Text(texto,
+                style: TextStyle(
+                    fontSize: 12.5,
+                    height: 1.4,
+                    color: Theme.of(context).colorScheme.onSurface))),
+      ]));
+}
 
-  const _Header({
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-    required this.color,
-  });
-
+class _PresetChip extends StatelessWidget {
+  const _PresetChip(
+      {required this.preset,
+      required this.selecionado,
+      required this.onTap});
+  final CardapioPreset preset;
+  final bool selecionado;
+  final VoidCallback? onTap;
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Row(
-      children: [
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12)),
-          child: Icon(icon, color: color, size: 22),
+    return Material(
+      color: selecionado
+          ? preset.cor.withValues(alpha: 0.14)
+          : const Color(0xFFF8FAFC),
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(999),
+          side: BorderSide(
+              color: selecionado ? preset.cor : const Color(0xFFE2E8F0),
+              width: selecionado ? 1.5 : 1)),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Icon(preset.icone, size: 16, color: preset.cor),
+            const SizedBox(width: 6),
+            Text(preset.titulo,
+                style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                    color: selecionado
+                        ? preset.cor
+                        : const Color(0xFF334155))),
+          ]),
         ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title,
-                  style: theme.textTheme.titleMedium
-                      ?.copyWith(fontWeight: FontWeight.w800, fontSize: 16)),
-              Text(subtitle,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant, fontSize: 12)),
-            ],
-          ),
-        ),
-      ],
+      ),
     );
   }
 }
 
-class _FooterActions extends StatelessWidget {
-  final bool isSaving;
-  final VoidCallback onSubmit;
-  final Color primaryColor;
-
-  const _FooterActions({
-    required this.isSaving,
-    required this.onSubmit,
-    required this.primaryColor,
-  });
-
+class _OpcaoEscopo extends StatelessWidget {
+  const _OpcaoEscopo(
+      {required this.titulo,
+      required this.ajuda,
+      required this.selecionado,
+      required this.cor,
+      required this.onTap});
+  final String titulo, ajuda;
+  final bool selecionado;
+  final Color cor;
+  final VoidCallback? onTap;
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: OutlinedButton.icon(
-            onPressed: isSaving ? null : () => Get.back<void>(),
-            icon: const Icon(Icons.close, size: 16),
-            label: const Text('Cancelar', style: TextStyle(fontSize: 13)),
-            style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12))),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Material(
+        color: selecionado ? cor.withValues(alpha: 0.1) : Colors.white,
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+            side: BorderSide(
+                color: selecionado ? cor : const Color(0xFFE2E8F0),
+                width: selecionado ? 1.6 : 1)),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            child: Row(children: [
+              Icon(
+                  selecionado
+                      ? Icons.radio_button_checked_rounded
+                      : Icons.radio_button_off_rounded,
+                  color: selecionado ? cor : const Color(0xFF94A3B8),
+                  size: 22),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(titulo,
+                        style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: selecionado
+                                ? cor
+                                : const Color(0xFF0F172A))),
+                    const SizedBox(height: 2),
+                    Text(ajuda,
+                        style: const TextStyle(
+                            fontSize: 12,
+                            height: 1.3,
+                            color: Color(0xFF64748B))),
+                  ],
+                ),
+              ),
+            ]),
           ),
         ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: FilledButton.icon(
-            onPressed: isSaving ? null : onSubmit,
-            icon: isSaving
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                        strokeWidth: 2, color: Colors.white))
-                : const Icon(Icons.save_outlined, size: 16),
-            label: Text(isSaving ? 'Salvando...' : 'Salvar',
-                style: const TextStyle(fontSize: 13)),
-            style: FilledButton.styleFrom(
-                backgroundColor: primaryColor,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12))),
-          ),
+      ),
+    );
+  }
+}
+
+class _IconeOpcao extends StatelessWidget {
+  const _IconeOpcao(
+      {required this.icone,
+      required this.selecionado,
+      required this.cor,
+      required this.onTap});
+  final IconData icone;
+  final bool selecionado;
+  final Color cor;
+  final VoidCallback? onTap;
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: selecionado ? cor.withValues(alpha: 0.14) : const Color(0xFFF8FAFC),
+      shape: CircleBorder(
+          side: BorderSide(
+              color: selecionado ? cor : const Color(0xFFE2E8F0),
+              width: selecionado ? 2 : 1)),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const CircleBorder(),
+        child: SizedBox(
+          width: 46,
+          height: 46,
+          child: Icon(icone,
+              size: 22,
+              color: selecionado ? cor : const Color(0xFF64748B)),
         ),
-      ],
+      ),
+    );
+  }
+}
+
+class _CorOpcao extends StatelessWidget {
+  const _CorOpcao(
+      {required this.cor, required this.selecionado, required this.onTap});
+  final Color cor;
+  final bool selecionado;
+  final VoidCallback? onTap;
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: cor,
+      shape: CircleBorder(
+          side: BorderSide(
+              color: selecionado ? const Color(0xFF0F172A) : Colors.white,
+              width: selecionado ? 2.5 : 1)),
+      elevation: selecionado ? 2 : 0,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const CircleBorder(),
+        child: SizedBox(
+          width: 36,
+          height: 36,
+          child: selecionado
+              ? const Icon(Icons.check_rounded, color: Colors.white, size: 18)
+              : null,
+        ),
+      ),
     );
   }
 }

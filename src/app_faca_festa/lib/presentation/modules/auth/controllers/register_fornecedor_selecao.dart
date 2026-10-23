@@ -112,9 +112,11 @@ extension RegisterFornecedorSelecao on RegisterController {
   /// 🔹 Alterna o estado de seleção de um serviço
   void alternarServico(ServicoProduto servico, bool selecionado) {
     if (selecionado) {
-      servicosSelecionados.add(servico);
+      if (!servicosSelecionados.any((s) => s.id == servico.id)) {
+        servicosSelecionados.add(servico);
+      }
     } else {
-      servicosSelecionados.remove(servico);
+      servicosSelecionados.removeWhere((s) => s.id == servico.id);
     }
     servicosSelecionados.refresh();
   }

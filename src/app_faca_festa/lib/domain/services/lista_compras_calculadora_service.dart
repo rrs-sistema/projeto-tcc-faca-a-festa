@@ -4,8 +4,10 @@ import '../entities/convidados_equivalentes.dart';
 import '../entities/estimativa_financeira.dart';
 import '../entities/perfil_festa.dart';
 import 'revisao_cardapio_service.dart';
+import 'rendimento_referencia_service.dart';
 
 enum SituacaoCompra {
+  planejarIngredientes,
   revisarPorcao,
   revisarDisponibilidade,
   revisarServico,
@@ -38,6 +40,7 @@ class ItemListaCompras {
   final List<String> servicos;
 
   String get titulo => switch (situacao) {
+        SituacaoCompra.planejarIngredientes => 'Ver ingredientes da receita',
         SituacaoCompra.revisarPorcao => 'Conferir porção',
         SituacaoCompra.revisarDisponibilidade => 'Conferir o que já tem',
         SituacaoCompra.revisarServico => 'Confirmar serviço',
@@ -70,7 +73,8 @@ class ListaComprasCalculadoraService {
       double? margem,
       double? estoqueReservado,
       String? erroEstoque,
-      bool exigirEstoqueCentral = false}) {
+      bool exigirEstoqueCentral = false,
+      bool desdobrarFicha = false}) {
     final item =
         const RevisaoCardapioService().correspondente(resultado, cardapio);
     final estado = regra?.premissas['estado']?.toString() ?? '';
@@ -79,15 +83,18 @@ class ListaComprasCalculadoraService {
     final papel = regra?.premissas['papel_na_refeicao']?.toString() ?? '';
     final medidaConsumo =
         regra?.premissas['unidade_consumo']?.toString() ?? resultado.unidade;
-    final base = regra?.premissas['origem'] == 'referencia_organizador'
-        ? 'Referência da sua receita'
-        : regra?.premissas['origem'] == 'consumo_observado'
-            ? 'Base no seu consumo anterior'
-            : regra?.premissas['rendimento_medido'] == true
-                ? 'Rendimento medido pelo organizador'
-                : regra?.premissas['referencia_contextual'] != null
-                    ? 'Referência para este contexto'
-                    : 'Porção de planejamento';
+    final base =
+        regra != null && const RendimentoReferenciaService().valida(regra)
+            ? 'Rendimento estimado por referência; confira o preparo'
+            : regra?.premissas['origem'] == 'referencia_organizador'
+                ? 'Referência da sua receita'
+                : regra?.premissas['origem'] == 'consumo_observado'
+                    ? 'Base no seu consumo anterior'
+                    : regra?.premissas['rendimento_medido'] == true
+                        ? 'Rendimento medido pelo organizador'
+                        : regra?.premissas['referencia_contextual'] != null
+                            ? 'Referência para este contexto'
+                            : 'Porção de planejamento';
     ItemListaCompras construir(SituacaoCompra situacao, String orientacao,
         {double? falta, int? embalagens, List<String> servicos = const []}) {
       final preparo = regra != null &&
@@ -147,6 +154,10 @@ class ListaComprasCalculadoraService {
           falta: 0,
           servicos: [(gasto['descricao'] ?? 'Serviço contratado').toString()]);
     }
+    if (!desdobrarFicha && regra?.premissas['ficha_tecnica'] != null) {
+      return construir(SituacaoCompra.planejarIngredientes,
+          'Este item usa ficha técnica. Confira ingredientes, estoque e compras em Organizar compras e tarefas; não compre também o prato inteiro pela mesma necessidade.');
+    }
     if (regra?.premissas['grupo_incompativel'] == true) {
       return construir(SituacaoCompra.revisarPorcao,
           'Corrija o grupo de alternativas: papéis ou participações incompatíveis. Nenhuma porção foi reduzida.');
@@ -173,9 +184,10 @@ class ListaComprasCalculadoraService {
           'Defina o papel deste alimento na refeição para revisar a porção.');
     }
     if (estado != estadoCompra &&
-        regra.premissas['rendimento_medido'] != true) {
+        regra.premissas['rendimento_medido'] != true &&
+        !const RendimentoReferenciaService().valida(regra)) {
       return construir(SituacaoCompra.revisarPorcao,
-          'Informe o rendimento medido entre o estado de compra e o de preparo.');
+          'Confira o rendimento medido ou uma referência compatível entre compra e preparo.');
     }
     if (item == null) {
       return construir(SituacaoCompra.informarDisponibilidade,
@@ -201,10 +213,15 @@ class ListaComprasCalculadoraService {
           erroEstoque ??
               'Estoque antigo sem lote central. Cadastre o lote, reserve para esta refeição e zere o estoque local para impedir desconto duplicado.');
     }
-    final necessidade = resultado.quantidadeNecessaria ?? resultado.quantidade;
+    final necessidade = item.quantidadeFinal > 0
+        ? item.quantidadeFinal
+        : (resultado.quantidadeNecessaria ?? resultado.quantidade);
     if (!necessidade.isFinite ||
+        !item.quantidadeFinal.isFinite ||
+        item.quantidadeFinal < 0 ||
         necessidade < 0 ||
         (resultado.quantidadeNecessaria == null &&
+            item.quantidadeFinal <= 0 &&
             regra.tamanhoEmbalagem > 0)) {
       return construir(SituacaoCompra.revisarPorcao,
           'Recalcule esta simulação para separar a necessidade da embalagem antes de comprar.');

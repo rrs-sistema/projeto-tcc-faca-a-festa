@@ -8,6 +8,7 @@ import 'package:app_faca_festa/presentation/modules/convidado/controllers/grupo_
 import 'package:app_faca_festa/presentation/modules/checklist/controllers/tarefa_controller.dart';
 import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_controller.dart';
 import 'package:app_faca_festa/presentation/modules/inspiracao/controllers/inspiracao_controller.dart';
+import 'package:app_faca_festa/presentation/modules/financeiro/controllers/financeiro_gerente_controller.dart';
 import 'package:app_faca_festa/presentation/modules/orcamento/controllers/orcamento_gasto_controller.dart';
 import 'package:app_faca_festa/presentation/modules/orcamento/controllers/orcamento_controller.dart';
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
@@ -38,6 +39,7 @@ class GetxEventoSessionCoordinator implements EventoSessionCoordinator {
     required this.fornecedorControllerOf,
     required this.orcamentoGastoControllerOf,
     required this.calculadoraControllerOf,
+    this.financeiroGerenteControllerOf,
   });
 
   final EventThemeController Function() themeControllerOf;
@@ -51,6 +53,7 @@ class GetxEventoSessionCoordinator implements EventoSessionCoordinator {
   final FornecedorController? Function() fornecedorControllerOf;
   final OrcamentoGastoController? Function() orcamentoGastoControllerOf;
   final CalculadoraFestaController? Function() calculadoraControllerOf;
+  final FinanceiroGerenteController? Function()? financeiroGerenteControllerOf;
 
   StreamSubscription<void>? _orcamentosSub;
   StreamSubscription<void>? _convidadosSub;
@@ -146,5 +149,6 @@ class GetxEventoSessionCoordinator implements EventoSessionCoordinator {
     await inspiracaoControllerOf()?.encerrarEscutas();
     await orcamentoGastoControllerOf()?.encerrarEscutas();
     calculadoraControllerOf()?.limpar();
+    financeiroGerenteControllerOf?.call()?.aoTrocarSessao();
   }
 }

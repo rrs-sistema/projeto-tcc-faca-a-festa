@@ -1,5 +1,11 @@
 import '../entities/cardapio.dart';
 import '../entities/cardapio_item.dart';
+import '../services/criacao_cardapio_inicial_service.dart';
+
+abstract interface class CriacaoCardapioInicialRepository {
+  /// true: criado atomicamente; false: já existia e foi preservado.
+  Future<bool> criarCardapioInicial(CriacaoCardapioInicial proposta);
+}
 
 class ResumoCardapio {
   final int totalItens;

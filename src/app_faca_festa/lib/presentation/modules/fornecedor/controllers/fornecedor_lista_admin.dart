@@ -71,12 +71,17 @@ class FornecedorListaAdmin {
         incluirEnderecos: _tipoUsuario() == 'A',
       );
 
-      fornecedores.value = snapshot.fornecedores;
-      enderecos.value = snapshot.enderecos;
-      categoriasFornecedor.value = snapshot.categoriasFornecedor;
-      categorias.value = snapshot.categorias;
-      subCategorias.value = snapshot.subcategorias;
-      allServicosFornecedor.assignAll(snapshot.servicosFornecedor);
+      // O snapshot pode conter List<Model>. A lista editável deve aceitar
+      // entidades e não compartilhar a coleção original do repositório.
+      fornecedores.value = List<Fornecedor>.of(snapshot.fornecedores);
+      enderecos.value = List<EnderecoUsuario>.of(snapshot.enderecos);
+      categoriasFornecedor.value =
+          List<FornecedorCategoria>.of(snapshot.categoriasFornecedor);
+      categorias.value = List<CategoriaServico>.of(snapshot.categorias);
+      subCategorias.value =
+          List<SubcategoriaServico>.of(snapshot.subcategorias);
+      allServicosFornecedor.value =
+          List<FornecedorProdutoServico>.of(snapshot.servicosFornecedor);
     } catch (e) {
       _erro.value = 'Erro ao carregar fornecedores: $e';
     } finally {
@@ -143,7 +148,7 @@ class FornecedorListaAdmin {
 
   int servicosDoFornecedor(Fornecedor f) {
     return allServicosFornecedor
-        .where((s) => s.idFornecedor == f.idFornecedor)
+        .where((s) => s.idFornecedor == f.idFornecedor && s.ativo)
         .length;
   }
 
@@ -168,7 +173,7 @@ class FornecedorListaAdmin {
               .compareTo(b.razaoSocial.toLowerCase());
         });
     }
-    fornecedores.assignAll(lista);
+    fornecedores.value = lista;
   }
 
   Future<bool> aprovar(String idFornecedor) {

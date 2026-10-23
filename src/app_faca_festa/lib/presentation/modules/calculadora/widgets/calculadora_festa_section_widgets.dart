@@ -62,6 +62,240 @@ class _SectionCard extends StatelessWidget {
   }
 }
 
+class _MetricaPublicoTile extends StatelessWidget {
+  const _MetricaPublicoTile({
+    required this.rotulo,
+    required this.valor,
+    required this.primary,
+    this.destaque = false,
+  });
+
+  final String rotulo;
+  final String valor;
+  final Color primary;
+  final bool destaque;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+      decoration: BoxDecoration(
+        color: destaque ? primary.withValues(alpha: 0.08) : const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: destaque ? primary.withValues(alpha: 0.35) : const Color(0xFFE2E8F0),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            rotulo,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.poppins(
+              fontSize: 10.5,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF64748B),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            valor,
+            style: GoogleFonts.poppins(
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              height: 1.05,
+              color: destaque ? primary : const Color(0xFF0F172A),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _OpcaoFontePublico extends StatelessWidget {
+  const _OpcaoFontePublico({
+    required this.titulo,
+    required this.subtitulo,
+    required this.selected,
+    required this.enabled,
+    required this.primary,
+    required this.onTap,
+    this.contagem,
+  });
+
+  final String titulo;
+  final String subtitulo;
+  final String? contagem;
+  final bool selected;
+  final bool enabled;
+  final Color primary;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final corTitulo = !enabled
+        ? const Color(0xFF94A3B8)
+        : selected
+            ? primary
+            : const Color(0xFF0F172A);
+    final corSub = !enabled
+        ? const Color(0xFFCBD5E1)
+        : selected
+            ? primary.withValues(alpha: 0.85)
+            : const Color(0xFF64748B);
+    final fundo = !enabled
+        ? const Color(0xFFF8FAFC)
+        : selected
+            ? primary.withValues(alpha: 0.1)
+            : Colors.white;
+    final borda = !enabled
+        ? const Color(0xFFE2E8F0)
+        : selected
+            ? primary
+            : const Color(0xFFE2E8F0);
+
+    return Semantics(
+      button: true,
+      selected: selected,
+      enabled: enabled,
+      label: titulo,
+      child: Material(
+        color: fundo,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+          side: BorderSide(color: borda, width: selected ? 1.7 : 1),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 11, 12, 11),
+            child: Row(
+              children: [
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 160),
+                  width: 22,
+                  height: 22,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: selected ? primary : Colors.transparent,
+                    border: Border.all(
+                      color: !enabled
+                          ? const Color(0xFFCBD5E1)
+                          : selected
+                              ? primary
+                              : const Color(0xFF94A3B8),
+                      width: 1.6,
+                    ),
+                  ),
+                  child: selected
+                      ? const Icon(Icons.check_rounded,
+                          size: 14, color: Colors.white)
+                      : null,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        titulo,
+                        style: GoogleFonts.poppins(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w700,
+                          color: corTitulo,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitulo,
+                        style: GoogleFonts.poppins(
+                          fontSize: 11.5,
+                          height: 1.25,
+                          fontWeight: FontWeight.w500,
+                          color: corSub,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (contagem != null) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: selected
+                          ? primary.withValues(alpha: 0.14)
+                          : const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      contagem!,
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        color: selected ? primary : const Color(0xFF475569),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AvisoPublicoFaixa extends StatelessWidget {
+  const _AvisoPublicoFaixa({
+    required this.texto,
+    required this.tom,
+    required this.fundo,
+    this.icone = Icons.warning_amber_rounded,
+  });
+
+  final String texto;
+  final Color tom;
+  final Color fundo;
+  final IconData icone;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+      decoration: BoxDecoration(
+        color: fundo,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icone, size: 15, color: tom),
+          const SizedBox(width: 7),
+          Expanded(
+            child: Text(
+              texto,
+              style: GoogleFonts.poppins(
+                fontSize: 11.5,
+                height: 1.35,
+                fontWeight: FontWeight.w500,
+                color: tom,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _NumberField extends StatelessWidget {
   final TextEditingController controller;
   final String label;
@@ -81,31 +315,67 @@ class _NumberField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 40, // Altura restrita do TextField
-      child: TextField(
-        controller: controller,
-        enabled: enabled,
-        keyboardType: TextInputType.number,
-        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        onChanged: onChanged,
-        style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600),
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: GoogleFonts.poppins(fontSize: 11),
-          prefixIcon: Icon(icon, size: 16, color: primary),
-          isDense: true,
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(color: primary),
-          ),
-          filled: true,
-          fillColor: enabled ? Colors.grey.shade50 : Colors.grey.shade100,
+    final corIcone = enabled ? primary : const Color(0xFF64748B);
+    final corValor =
+        enabled ? const Color(0xFF0F172A) : const Color(0xFF334155);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Icon(icon, size: 14, color: corIcone),
+            const SizedBox(width: 4),
+            Expanded(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.poppins(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF475569),
+                ),
+              ),
+            ),
+          ],
         ),
-      ),
+        const SizedBox(height: 6),
+        TextField(
+          controller: controller,
+          enabled: enabled,
+          textAlign: TextAlign.center,
+          keyboardType: TextInputType.number,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          onChanged: onChanged,
+          style: GoogleFonts.poppins(
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: corValor,
+          ),
+          decoration: InputDecoration(
+            isDense: true,
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: enabled ? const Color(0xFFCBD5E1) : const Color(0xFFE2E8F0),
+              ),
+            ),
+            disabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: primary, width: 1.6),
+            ),
+            filled: true,
+            fillColor: enabled ? Colors.white : const Color(0xFFF1F5F9),
+          ),
+        ),
+      ],
     );
   }
 }

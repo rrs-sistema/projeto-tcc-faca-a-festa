@@ -1,3 +1,7 @@
+import 'package:app_faca_festa/domain/entities/convidados_equivalentes.dart';
+import 'package:app_faca_festa/domain/services/publico_planejamento_service.dart';
+import 'package:app_faca_festa/domain/services/operacao_calculadora_service.dart';
+import 'package:app_faca_festa/domain/repositories/calculadora_festa_repository.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -17,13 +21,61 @@ class ConvidadoController extends GetxController {
     required ConvidadoRepository repository,
     required PresenteReservationRepository presenteReservationRepository,
     ConviteEmailService? conviteEmailService,
+    CalculadoraFestaRepository? Function()? planejamentoResolver,
+    String? Function()? usuarioContexto,
     GrupoConvidadoController? grupoController,
     GrupoConvidadoController? Function()? grupoControllerResolver,
-  })  : _repository = repository,
+  })  : _planejamentoResolver = planejamentoResolver,
+        _usuarioContexto = usuarioContexto,
+        _repository = repository,
         _presenteReservationRepository = presenteReservationRepository,
         _conviteEmailService = conviteEmailService,
         _grupoController = grupoController,
         _grupoControllerResolver = grupoControllerResolver;
+
+  final CalculadoraFestaRepository? Function()? _planejamentoResolver;
+  final String? Function()? _usuarioContexto;
+  StreamSubscription<Map<String, dynamic>>? _publicoSub;
+  final configuracaoPublico = <String, dynamic>{}.obs;
+  final erroPublico = ''.obs;
+  final carregandoPublico = false.obs;
+  String resumoPublicoDoEvento(Evento evento) {
+    if (carregandoPublico.value) {
+      return 'Consultando a escolha de público. Previsão: ${PrevisaoPublico.doEvento(evento).total ?? "não informada"}.';
+    }
+    final resumo = publicoPlanejadoDoEvento(evento).resumo;
+    return erroPublico.value.isEmpty
+        ? resumo
+        : '$resumo · ${erroPublico.value}';
+  }
+
+  int _geracao = 0;
+  String? _usuarioEscuta;
+  PublicoPlanejado publicoPlanejadoDoEvento(Evento evento) {
+    final cfg = idEventoAtual.value == evento.idEvento &&
+            _usuarioEscuta == _usuarioContexto?.call()
+        ? configuracaoPublico
+        : <String, dynamic>{};
+    final manual = OperacaoCalculadoraService.mapa(cfg['publico']);
+    return const PublicoPlanejamentoService().resolver(
+        evento: evento.idEvento,
+        previsao: PrevisaoPublico.doEvento(evento),
+        convidados: convidados,
+        base: cfg['base_confirmada'] == false
+            ? null
+            : basePublicoDoValor(cfg['base']),
+        completude: completudeDaLista(cfg['lista_completude']),
+        listaDisponivel: idEventoAtual.value == evento.idEvento &&
+            _usuarioEscuta == _usuarioContexto?.call() &&
+            !carregando.value &&
+            erro.value.isEmpty,
+        manual: manual.isEmpty
+            ? null
+            : const OperacaoCalculadoraService().publico(
+                {'publico': manual},
+                const ConvidadosEquivalentes(
+                    adultos: 0, criancas: 0, bebes: 0)));
+  }
 
   final ConvidadoRepository _repository;
   final PresenteReservationRepository _presenteReservationRepository;
@@ -192,75 +244,134 @@ class ConvidadoController extends GetxController {
   /// 🔹 Escuta convidados do evento em tempo real
   /// =====================================================
   Future<void> escutarConvidados(String idEvento) async {
-    final idEventoLimpo = idEvento.trim();
-
-    if (idEventoLimpo.isEmpty) {
-      await _convidadosSub?.cancel();
-      _convidadosSub = null;
-      _convidadosPendentes.clear();
-      convidados.clear();
-      idEventoAtual.value = '';
+    final id = idEvento.trim();
+    if (id.isNotEmpty &&
+        idEventoAtual.value == id &&
+        _convidadosSub != null &&
+        _usuarioEscuta == _usuarioContexto?.call()) {
       return;
     }
-
-    if (idEventoAtual.value == idEventoLimpo && _convidadosSub != null) {
-      return;
-    }
-
-    await _convidadosSub?.cancel();
-
-    idEventoAtual.value = idEventoLimpo;
+    final geracao = ++_geracao;
+    final usuario = _usuarioContexto?.call();
+    _usuarioEscuta = usuario;
+    final anterior = _convidadosSub, publicoAnterior = _publicoSub;
+    _convidadosSub = null;
+    _publicoSub = null;
+    idEventoAtual.value = id;
     _convidadosPendentes.clear();
-    carregando.value = true;
+    convidados.clear();
+    configuracaoPublico.clear();
     erro.value = '';
-
-    _convidadosSub = _repository.observarPorEvento(idEventoLimpo).listen(
-      (resultado) {
-        _publicarConvidados(resultado.toList());
-        carregando.value = false;
-      },
-      onError: (e) {
-        erro.value = 'Erro ao carregar convidados: $e';
-        carregando.value = false;
-      },
-    );
+    erroPublico.value = '';
+    carregandoPublico.value = false;
+    carregando.value = id.isNotEmpty;
+    await anterior?.cancel();
+    await publicoAnterior?.cancel();
+    bool atual() =>
+        geracao == _geracao &&
+        id == idEventoAtual.value &&
+        usuario == _usuarioContexto?.call();
+    if (!atual() || id.isEmpty) return;
+    _convidadosSub = _repository.observarPorEvento(id).listen((resultado) {
+      if (!atual()) return;
+      _publicarConvidados(resultado.where((c) => c.idEvento == id).toList());
+      carregando.value = false;
+      erro.value = '';
+    }, onError: (Object e) {
+      if (!atual()) return;
+      erro.value = 'Não foi possível consultar a lista de convidados.';
+      carregando.value = false;
+    });
+    final repo = _planejamentoResolver?.call();
+    if (repo != null) {
+      carregandoPublico.value = true;
+      _publicoSub = repo.observarOperacaoEvento(id).listen((dados) {
+        if (!atual()) return;
+        carregandoPublico.value = false;
+        final cfg =
+            OperacaoCalculadoraService.mapa(dados['configuracao_planejamento']);
+        try {
+          const OperacaoCalculadoraService().validarConfiguracaoPublico(cfg);
+        } catch (_) {
+          erroPublico.value =
+              'A configuração privada de público precisa ser revisada.';
+          return;
+        }
+        configuracaoPublico.assignAll({
+          for (final k in [
+            'base',
+            'base_confirmada',
+            'publico',
+            'lista_completude'
+          ])
+            if (cfg.containsKey(k)) k: cfg[k]
+        });
+        erroPublico.value = '';
+      }, onError: (Object _) {
+        if (!atual()) return;
+        carregandoPublico.value = false;
+        erroPublico.value =
+            'A configuração privada de público está indisponível.';
+      });
+    }
   }
 
   Future<void> adicionarConvidado(Convidado model) async {
+    final geracao = _geracao;
+    final usuario = _usuarioContexto?.call();
     try {
       erro.value = '';
       final salvo = model.comTokenConvite();
       await _repository.salvar(salvo);
-      _mesclarConvidadoLocal(salvo);
+      if (geracao == _geracao && usuario == _usuarioContexto?.call()) {
+        _mesclarConvidadoLocal(salvo);
+      }
     } catch (e) {
-      erro.value = 'Erro ao salvar convidado: $e';
+      if (geracao == _geracao && usuario == _usuarioContexto?.call()) {
+        erro.value = 'Erro ao salvar convidado: $e';
+      }
       rethrow;
     }
   }
 
   Future<void> atualizarConvidado(Convidado model) async {
+    final geracao = _geracao;
+    final usuario = _usuarioContexto?.call();
     try {
       erro.value = '';
       await _repository.salvar(model);
-      _mesclarConvidadoLocal(model);
+      if (geracao == _geracao && usuario == _usuarioContexto?.call()) {
+        _mesclarConvidadoLocal(model);
+      }
     } catch (e) {
-      erro.value = 'Erro ao atualizar convidado: $e';
+      if (geracao == _geracao && usuario == _usuarioContexto?.call()) {
+        erro.value = 'Erro ao atualizar convidado: $e';
+      }
       rethrow;
     }
   }
 
   Future<void> excluirConvidado(String idConvidado) async {
+    final geracao = _geracao;
+    final usuario = _usuarioContexto?.call();
     try {
       await _repository.excluir(idConvidado);
+      if (geracao != _geracao || usuario != _usuarioContexto?.call()) return;
       _convidadosPendentes.remove(idConvidado);
       convidados.removeWhere((c) => c.idConvidado == idConvidado);
     } catch (e) {
-      erro.value = 'Erro ao excluir convidado: $e';
+      if (geracao == _geracao && usuario == _usuarioContexto?.call()) {
+        erro.value = 'Erro ao excluir convidado: $e';
+      }
       rethrow;
     }
   }
 
   void _mesclarConvidadoLocal(Convidado model) {
+    if (idEventoAtual.value.isNotEmpty &&
+        model.idEvento != idEventoAtual.value) {
+      return;
+    }
     final id = model.idConvidado.trim();
     if (id.isEmpty) return;
     _convidadosPendentes[id] = model;
@@ -428,11 +539,21 @@ class ConvidadoController extends GetxController {
 
   @override
   void onClose() {
+    _geracao++;
+    _publicoSub?.cancel();
     _convidadosSub?.cancel();
     super.onClose();
   }
 
   void limpar() {
+    _geracao++;
+    _usuarioEscuta = null;
+    _publicoSub?.cancel();
+    _publicoSub = null;
+    configuracaoPublico.clear();
+    erroPublico.value = "";
+    carregandoPublico.value = false;
+    carregando.value = false;
     _convidadosSub?.cancel();
     _convidadosSub = null;
 

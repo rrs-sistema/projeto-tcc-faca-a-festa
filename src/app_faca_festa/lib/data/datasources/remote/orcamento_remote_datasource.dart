@@ -1,3 +1,4 @@
+import 'compromissos_evento_remote.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -11,6 +12,8 @@ class OrcamentoRemoteDatasource {
   })  : _db = firestore,
         _auth = auth;
 
+  Stream<List<Map<String, dynamic>>> observarFinanceiroEvento(String evento) =>
+      CompromissosEventoRemote(_db).observarCompromissosDoEvento(evento);
   final FirebaseFirestore _db;
   final FirebaseAuth _auth;
 

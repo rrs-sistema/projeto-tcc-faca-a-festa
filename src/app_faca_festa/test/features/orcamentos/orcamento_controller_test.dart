@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/domain/repositories/financeiro_evento_repository.dart';
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -49,7 +50,8 @@ void main() {
     expect(controller.contratadosCount.value, 1);
     expect(controller.totalCustoEstimado.value, 350);
     expect(controller.totalCount.value, 2);
-    expect(controller.totalPagoGeral.value, 250);
+    expect(
+        controller.totalPagoGeral.value, 0); // Fechado não comprova pagamento.
     expect(controller.carregando.value, isFalse);
   });
 
@@ -66,6 +68,40 @@ void main() {
     expect(controller.carregando.value, isFalse);
   });
 
+  test(
+      'financeiro consulta pagamentos sem controller de gasto e rejeita callback após troca de sessão',
+      () async {
+    final financeiro = _FinanceiroRepositoryFake();
+    var usuario = 'owner';
+    final c = OrcamentoController(
+        orcamentos: GerenciarOrcamentos(financeiro),
+        usuarioAtual: () => usuario);
+    await c.carregarOrcamentosDoEvento('evento-1');
+    financeiro.financeiro.add([
+      {
+        'valor': 6500,
+        'estimado': 6500,
+        'contratado': true,
+        'pago': 500,
+        'despesas': 6500
+      }
+    ]);
+    await pumpEventQueue();
+    expect(c.totalPagoGeral.value, 500);
+    expect(c.totalContratado, 6500);
+    usuario = 'other';
+    financeiro.financeiro.add([
+      {'valor': 9999, 'pago': 9999}
+    ]);
+    await pumpEventQueue();
+    expect(c.totalPagoGeral.value, 500);
+    c.reset();
+    expect(c.totalPagoGeral.value, 0);
+    expect(c.resumoFinanceiro.value.completo, isFalse);
+    await c.encerrarEscutas();
+    financeiro.dispose();
+    await financeiro.financeiro.close();
+  });
   test('delegates create, answer and delete operations', () async {
     final orcamento = _orcamento(id: 'orcamento-1');
 
@@ -201,4 +237,12 @@ class _RespostaOrcamento {
   final double custoEstimado;
   final bool fechar;
   final String? anotacoes;
+}
+
+class _FinanceiroRepositoryFake extends _OrcamentoRepositoryFake
+    implements FinanceiroEventoRepository {
+  final financeiro = StreamController<List<Map<String, dynamic>>>();
+  @override
+  Stream<List<Map<String, dynamic>>> observarFinanceiroEvento(String evento) =>
+      financeiro.stream;
 }

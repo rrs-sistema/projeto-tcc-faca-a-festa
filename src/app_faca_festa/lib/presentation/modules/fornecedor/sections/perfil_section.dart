@@ -45,10 +45,10 @@ class PerfilSection extends StatelessWidget {
 
       final cards = [
         _CatalogMetric(
-          'Serviços ativos',
+          'Ofertas ativas',
           totalAtivos.toString(),
           'visíveis para o cliente',
-          Icons.inventory_2_rounded,
+          Icons.storefront_outlined,
           FornecedorPremiumPalette.primary,
         ),
         _CatalogMetric(
@@ -77,7 +77,7 @@ class PerfilSection extends StatelessWidget {
       return PremiumSectionShell(
         title: 'Catálogo inteligente',
         subtitle: 'Serviços, fotos, preços e ajustes que melhoram conversão.',
-        icon: Icons.inventory_2_rounded,
+        icon: Icons.storefront_outlined,
         color: FornecedorPremiumPalette.purple,
         trailing: _ScoreBadge(score: score),
         child: Column(

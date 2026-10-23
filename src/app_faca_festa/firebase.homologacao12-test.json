@@ -1,0 +1,5 @@
+{
+  "firestore":{"rules":"firestore.rules"},
+  "functions":{"source":".dart_tool/homologacao12-functions","codebase":"homologacao12-qa"},
+  "emulators":{"firestore":{"port":8080},"auth":{"port":9099},"functions":{"port":5001},"ui":{"enabled":false}}
+}

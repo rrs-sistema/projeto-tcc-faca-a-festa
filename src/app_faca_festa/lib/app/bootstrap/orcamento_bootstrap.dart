@@ -1,8 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 
 import 'package:app_faca_festa/app/bootstrap/orcamento_gasto_bootstrap.dart';
+import 'package:app_faca_festa/data/datasources/remote/financeiro_evento_remote_datasource.dart';
 import 'package:app_faca_festa/data/datasources/remote/orcamento_remote_datasource.dart';
 import 'package:app_faca_festa/data/repositories_impl/orcamento_repository_impl.dart';
 import 'package:app_faca_festa/domain/repositories/orcamento_repository.dart';
@@ -15,6 +17,16 @@ class OrcamentoBootstrap {
   OrcamentoBootstrap._();
 
   static void register() {
+    if (!Get.isRegistered<FinanceiroEventoRemoteDatasource>() &&
+        Get.isRegistered<FirebaseFunctions>()) {
+      Get.lazyPut<FinanceiroEventoRemoteDatasource>(
+        () => FinanceiroEventoRemoteDatasource(
+          functions: Get.find<FirebaseFunctions>(),
+        ),
+        fenix: true,
+      );
+    }
+
     if (!Get.isRegistered<OrcamentoRemoteDatasource>()) {
       Get.lazyPut<OrcamentoRemoteDatasource>(
         () => OrcamentoRemoteDatasource(
@@ -43,6 +55,7 @@ class OrcamentoBootstrap {
       Get.put(
         OrcamentoController(
           orcamentos: Get.find<GerenciarOrcamentos>(),
+          usuarioAtual: () => Get.find<FirebaseAuth>().currentUser?.uid,
           auditoria: Get.isRegistered<AuditoriaRegistrar>()
               ? Get.find<AuditoriaRegistrar>()
               : const AuditoriaRegistrarVazio(),

@@ -47,6 +47,20 @@ void main() {
     expect(f.formatEditUpdate(value('R\$ 1,00'), value('')).text, '');
   });
 
+  test('zero explícito é distinto de campo apagado', () {
+    final f = NumericInput.moeda();
+    final zero = f.formatEditUpdate(value(''), value('0'));
+    expect(zero.text, 'R\$ 0,00');
+    expect(NumericInput.parse(zero.text), 0);
+    expect(
+        f
+            .formatEditUpdate(
+                zero, value(zero.text.substring(0, zero.text.length - 1)))
+            .text,
+        isEmpty);
+    expect(f.formatEditUpdate(value('R\$ 200,00'), value('0,00')).text,
+        'R\$ 0,00');
+  });
   test('zero inicial e espaço inseparável legado aceitam digitação', () {
     final f = NumericInput.moeda();
     for (final inicial in ['R\$ 0,00', 'R\$\u00a00,00']) {

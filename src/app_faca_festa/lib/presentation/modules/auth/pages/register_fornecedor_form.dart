@@ -3,8 +3,10 @@ import 'package:image_picker/image_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:app_faca_festa/presentation/modules/auth/pages/components/fornecedor_cadastro_erro.dart';
 
 import './components/categoria_subcategoria_servico_section.dart';
+import './components/fornecedor_selecao_widgets.dart';
 import 'package:app_faca_festa/presentation/modules/catalogo/controllers/categoria_servico_controller.dart';
 import 'package:app_faca_festa/presentation/modules/catalogo/controllers/servico_produto_controller.dart';
 import 'package:app_faca_festa/presentation/modules/catalogo/controllers/subcategoria_servico_controller.dart';
@@ -28,6 +30,10 @@ class RegisterFornecedorForm extends StatefulWidget {
   final CategoriaServicoController categoriaController;
   final SubcategoriaServicoController subcategoriaController;
   final ServicoProdutoController servicoController;
+  final bool modoEdicao;
+  final Future<void> Function()? onSalvarEdicao;
+  final String? bannerInicialUrl;
+  final ValueChanged<int>? onPassoAlterado;
 
   const RegisterFornecedorForm({
     super.key,
@@ -40,6 +46,10 @@ class RegisterFornecedorForm extends StatefulWidget {
     required this.categoriaController,
     required this.subcategoriaController,
     required this.servicoController,
+    this.modoEdicao = false,
+    this.onSalvarEdicao,
+    this.bannerInicialUrl,
+    this.onPassoAlterado,
   });
 
   @override
@@ -52,6 +62,8 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
   var _cadastroGoogle = false;
   var _passo = 0;
   var _aceitePrivacidade = false;
+  String? _erroEdicao;
+  bool _tiposAlterados = false;
 
   static const _titulosPassos = ['Você', 'Empresa', 'Endereço', 'Atuação'];
 
@@ -114,13 +126,25 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
   @override
   void initState() {
     super.initState();
-    nomeCtrl = TextEditingController();
-    razaoCtrl = TextEditingController();
-    emailCtrl = TextEditingController();
+    nomeCtrl = TextEditingController(
+        text: widget.modoEdicao ? widget.controller.nome.value : '');
+    razaoCtrl = TextEditingController(
+        text: widget.modoEdicao ? widget.controller.razaoSocial.value : '');
+    emailCtrl = TextEditingController(
+        text: widget.modoEdicao ? widget.controller.email.value : '');
     senhaCtrl = TextEditingController();
-    cnpjCtrl = TextEditingController();
-    telefoneCtrl = TextEditingController();
-    descCtrl = TextEditingController();
+    cnpjCtrl = TextEditingController(
+        text: widget.modoEdicao ? widget.controller.cnpj.value : '');
+    telefoneCtrl = TextEditingController(
+        text: widget.modoEdicao ? widget.controller.telefone.value : '');
+    descCtrl = TextEditingController(
+        text: widget.modoEdicao ? widget.controller.descricao.value : '');
+    if (widget.modoEdicao) {
+      _tiposEventoSelecionados.addAll(_tiposEventoDisponiveis.where((tipo) =>
+          widget.controller.tipoEventoIds.contains(tipo.id) ||
+          widget.controller.tipoEventoSlugs.contains(tipo.slug) ||
+          widget.controller.tipoEventoNomes.contains(tipo.nome)));
+    }
   }
 
   @override
@@ -142,9 +166,31 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
     });
 
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    if (!_aceitePrivacidade) return;
+    if (!widget.modoEdicao && !_aceitePrivacidade) return;
 
     final controller = widget.controller;
+    if (widget.modoEdicao) {
+      if (controller.carregando.value) return;
+      _aplicarTiposEventoNoController(controller);
+      controller.carregando.value = true;
+      setState(() => _erroEdicao = null);
+      try {
+        await widget.onSalvarEdicao!();
+      } catch (e, stack) {
+        FlutterError.reportError(FlutterErrorDetails(
+          exception: e,
+          stack: stack,
+          library: 'cadastro do fornecedor',
+          context: ErrorDescription('ao salvar a edição do fornecedor'),
+        ));
+        if (mounted) {
+          setState(() => _erroEdicao = mensagemErroCadastroFornecedor(e));
+        }
+      } finally {
+        controller.carregando.value = false;
+      }
+      return;
+    }
     controller.aceitePrivacidade.value = true;
     _aplicarTiposEventoNoController(controller);
     controller.bannerBytes = widget.bannerBytes;
@@ -164,6 +210,7 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
       _autovalidateMode = AutovalidateMode.disabled;
       _passo++;
     });
+    widget.onPassoAlterado?.call(_passo);
   }
 
   void _continuarComGoogle() {
@@ -177,6 +224,7 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
       _autovalidateMode = AutovalidateMode.disabled;
       _passo--;
     });
+    widget.onPassoAlterado?.call(_passo);
   }
 
   @override
@@ -192,14 +240,16 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
         children: [
           CadastroPassosBar(
             atual: _passo,
-            titulos: _titulosPassos,
+            titulos: widget.modoEdicao
+                ? const ['Responsável', 'Empresa', 'Endereço', 'Atuação']
+                : _titulosPassos,
             cor: primary,
           ),
           if (_passo == 0) ..._passoConta(primary, controller),
           if (_passo == 1) ..._passoEmpresa(primary, controller),
           if (_passo == 2) ..._passoEndereco(primary, controller),
           if (_passo == 3) ..._passoAtuacao(primary, controller),
-          if (_passo == 3) ...[
+          if (_passo == 3 && !widget.modoEdicao) ...[
             const SizedBox(height: 12),
             AceitePrivacidadeTile(
               aceito: _aceitePrivacidade,
@@ -211,11 +261,24 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
             ),
           ],
           const SizedBox(height: 20),
+          if (_erroEdicao != null) ...[
+            Semantics(
+                liveRegion: true,
+                child: Text(_erroEdicao!,
+                    style: GoogleFonts.poppins(color: Colors.red.shade700))),
+            const SizedBox(height: 12),
+          ],
           Obx(
             () => CadastroPassosAcoes(
               cor: primary,
-              continuarLabel: _passo == 3 ? 'Cadastrar' : 'Continuar',
-              habilitado: _passo < 3 || _aceitePrivacidade,
+              continuarLabel: _passo == 3
+                  ? (widget.modoEdicao ? 'Salvar alterações' : 'Cadastrar')
+                  : 'Continuar',
+              habilitado:
+                  (widget.modoEdicao || _passo < 3 || _aceitePrivacidade) &&
+                      !widget.servicoController.carregando.value &&
+                      !controller.carregandoAtuacao.value &&
+                      !widget.subcategoriaController.carregando.value,
               onContinuar: _passo == 3
                   ? () => _cadastrar(comGoogle: _cadastroGoogle)
                   : _avancar,
@@ -223,7 +286,7 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
               carregando: controller.carregando.value,
             ),
           ),
-          if (_passo == 0) ...[
+          if (_passo == 0 && !widget.modoEdicao) ...[
             const SizedBox(height: 16),
             Row(
               children: [
@@ -245,9 +308,8 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
             Obx(
               () => AuthFestaGoogleButton(
                 label: 'Continuar com Google',
-                onPressed: controller.carregando.value
-                    ? null
-                    : _continuarComGoogle,
+                onPressed:
+                    controller.carregando.value ? null : _continuarComGoogle,
               ),
             ),
           ],
@@ -288,21 +350,22 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
           onChanged: (v) => controller.email.value = v,
         ),
         const SizedBox(height: 10),
-        CustomInputField(
-          label: 'Senha',
-          hintlabel: 'Mínimo 6 caracteres, com letra e número',
-          icon: Icons.lock_outline,
-          controller: senhaCtrl,
-          color: primary,
-          type: InputType.password,
-          isRequired: !_cadastroGoogle,
-          textInputAction: TextInputAction.next,
-          validator: (v) => FormValidators.senha(
-            v,
-            obrigatorio: !_cadastroGoogle,
+        if (!widget.modoEdicao)
+          CustomInputField(
+            label: 'Senha',
+            hintlabel: 'Mínimo 6 caracteres, com letra e número',
+            icon: Icons.lock_outline,
+            controller: senhaCtrl,
+            color: primary,
+            type: InputType.password,
+            isRequired: !_cadastroGoogle,
+            textInputAction: TextInputAction.next,
+            validator: (v) => FormValidators.senha(
+              v,
+              obrigatorio: !_cadastroGoogle,
+            ),
+            onChanged: (v) => controller.senha.value = v,
           ),
-          onChanged: (v) => controller.senha.value = v,
-        ),
         const SizedBox(height: 10),
         CustomInputField(
           label: 'Telefone',
@@ -402,7 +465,10 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
         },
         child: Container(
           width: double.infinity,
-          height: widget.bannerBytes == null ? null : 120,
+          height: widget.bannerBytes == null &&
+                  (widget.bannerInicialUrl ?? '').isEmpty
+              ? null
+              : 120,
           decoration: BoxDecoration(
             border: Border.all(
               color: color.withValues(alpha: 0.4),
@@ -421,12 +487,21 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
                       BlendMode.darken,
                     ),
                   )
-                : null,
+                : (widget.bannerInicialUrl ?? '').isNotEmpty
+                    ? DecorationImage(
+                        image: NetworkImage(widget.bannerInicialUrl!),
+                        fit: BoxFit.cover,
+                        onError: (_, __) {},
+                        colorFilter: ColorFilter.mode(
+                            Colors.black.withValues(alpha: .4),
+                            BlendMode.darken))
+                    : null,
           ),
           padding: widget.bannerBytes == null
               ? const EdgeInsets.all(16)
               : EdgeInsets.zero,
-          child: widget.bannerBytes == null
+          child: widget.bannerBytes == null &&
+                  (widget.bannerInicialUrl ?? '').isEmpty
               ? Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -472,145 +547,63 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
 
   Widget _tiposEventoSection(Color primary) {
     return FormField<List<_TipoEventoCadastro>>(
-      validator: (_) => FormValidators.selecao(
-        _tiposEventoSelecionados,
-        campo: 'pelo menos um tipo de evento atendido',
+      validator: (_) => widget.modoEdicao &&
+              !_tiposAlterados &&
+              widget.controller.tipoEventoIds.isNotEmpty
+          ? null
+          : FormValidators.selecao(_tiposEventoSelecionados,
+              campo: 'pelo menos um tipo de evento atendido'),
+      builder: (state) => FornecedorSecaoSelecao(
+        titulo: 'Tipos de evento atendidos *',
+        descricao:
+            'Marque os eventos em que você oferece seus serviços. Você pode escolher mais de um.',
+        cor: primary,
+        icone: Icons.celebration_outlined,
+        resumo:
+            '${_tiposEventoSelecionados.length} ${_tiposEventoSelecionados.length == 1 ? 'tipo selecionado' : 'tipos selecionados'}',
+        child:
+            Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          FornecedorOpcoesGrid(
+              children: _tiposEventoDisponiveis
+                  .map((tipo) => FornecedorEscolha(
+                        key: ValueKey('tipo-evento-${tipo.id}'),
+                        titulo: tipo.titulo,
+                        icone: tipo.icon,
+                        selecionado: _tiposEventoSelecionados
+                            .any((item) => item.id == tipo.id),
+                        cor: primary,
+                        habilitado: !widget.controller.carregando.value,
+                        onPressed: () {
+                          _alternarTipoEvento(tipo);
+                          state.didChange(_tiposEventoSelecionados);
+                        },
+                      ))
+                  .toList()),
+          if (widget.modoEdicao)
+            ...widget.controller.tipoEventoNomes
+                .where((nome) => !_tiposEventoDisponiveis
+                    .any((tipo) => tipo.nome == nome || tipo.titulo == nome))
+                .map((nome) => Padding(
+                    padding: const EdgeInsets.only(top: 10),
+                    child: Text('Também cadastrado: $nome',
+                        style: GoogleFonts.poppins(
+                            fontSize: 12, color: const Color(0xFF475569))))),
+          if (state.hasError)
+            Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Semantics(
+                    liveRegion: true,
+                    child: Text(state.errorText!,
+                        style: GoogleFonts.poppins(
+                            color: const Color(0xFFB91C1C), fontSize: 12.5)))),
+        ]),
       ),
-      builder: (state) {
-        return Container(
-          width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF8FAFC),
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(
-              color: state.hasError
-                  ? Colors.redAccent.withValues(alpha: 0.85)
-                  : const Color(0xFFF0E6EC),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.06),
-                blurRadius: 18,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    height: 38,
-                    width: 38,
-                    decoration: BoxDecoration(
-                      color: primary.withValues(alpha: 0.16),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: primary.withValues(alpha: 0.22),
-                      ),
-                    ),
-                    child: Icon(
-                      Icons.auto_awesome_rounded,
-                      color: primary,
-                      size: 22,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'Tipos de evento atendidos *',
-                      style: GoogleFonts.poppins(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF111827),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Em quais festas você costuma trabalhar?',
-                style: GoogleFonts.poppins(
-                  fontSize: 12.5,
-                  color: const Color(0xFF6B7280),
-                  height: 1.35,
-                ),
-              ),
-              const SizedBox(height: 14),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: _tiposEventoDisponiveis.map((tipo) {
-                  final selected = _tiposEventoSelecionados.any(
-                    (item) => item.id == tipo.id,
-                  );
-
-                  return FilterChip(
-                    selected: selected,
-                    showCheckmark: false,
-                    avatar: Icon(
-                      selected ? Icons.check_circle_rounded : tipo.icon,
-                      size: 18,
-                      color: selected ? Colors.white : primary,
-                    ),
-                    label: Text(tipo.titulo),
-                    labelStyle: GoogleFonts.poppins(
-                      fontSize: 12.5,
-                      fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
-                      color: selected ? Colors.white : Colors.grey.shade800,
-                    ),
-                    selectedColor: primary,
-                    backgroundColor: Colors.white.withValues(alpha: 0.92),
-                    side: BorderSide(
-                      color: selected
-                          ? primary.withValues(alpha: 0.0)
-                          : Colors.grey.shade200,
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 8,
-                    ),
-                    onSelected: (_) {
-                      _alternarTipoEvento(tipo);
-                      state.didChange(_tiposEventoSelecionados);
-                    },
-                  );
-                }).toList(),
-              ),
-              if (_tiposEventoSelecionados.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                Text(
-                  '${_tiposEventoSelecionados.length} tipo(s) selecionado(s)',
-                  style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: primary,
-                  ),
-                ),
-              ],
-              if (state.hasError) ...[
-                const SizedBox(height: 10),
-                Text(
-                  state.errorText!,
-                  style: GoogleFonts.poppins(
-                    color: Colors.redAccent,
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ],
-          ),
-        );
-      },
     );
   }
 
   void _alternarTipoEvento(_TipoEventoCadastro tipo) {
     setState(() {
+      _tiposAlterados = true;
       final jaSelecionado = _tiposEventoSelecionados.any(
         (item) => item.id == tipo.id,
       );
@@ -624,14 +617,29 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
   }
 
   void _aplicarTiposEventoNoController(RegisterController controller) {
+    if (widget.modoEdicao && !_tiposAlterados) return;
     final dynamic c = controller;
 
-    final ids = _tiposEventoSelecionados.map((item) => item.id).toList();
-    final slugs = _tiposEventoSelecionados.map((item) => item.slug).toList();
-    final nomes = _tiposEventoSelecionados
-        .expand((item) => <String>[item.nome, item.titulo])
-        .toSet()
-        .toList();
+    final ids = <String>{
+      ..._tiposEventoSelecionados.map((item) => item.id),
+      if (widget.modoEdicao)
+        ...controller.tipoEventoIds.where(
+            (id) => !_tiposEventoDisponiveis.any((tipo) => tipo.id == id))
+    }.toList();
+    final slugs = <String>{
+      ..._tiposEventoSelecionados.map((item) => item.slug),
+      if (widget.modoEdicao)
+        ...controller.tipoEventoSlugs.where(
+            (slug) => !_tiposEventoDisponiveis.any((tipo) => tipo.slug == slug))
+    }.toList();
+    final nomes = {
+      ..._tiposEventoSelecionados
+          .expand((item) => <String>[item.nome, item.titulo])
+          .toSet(),
+      if (widget.modoEdicao)
+        ...controller.tipoEventoNomes.where((nome) => !_tiposEventoDisponiveis
+            .any((tipo) => tipo.nome == nome || tipo.titulo == nome))
+    }.toList();
 
     bool aplicado = false;
 

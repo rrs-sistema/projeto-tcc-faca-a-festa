@@ -395,6 +395,45 @@ class AdminDashboardScreen extends StatelessWidget {
         },
       ),
       _AdminItem(
+        title: 'Financeiro',
+        subtitle: 'Oportunidades, contratos e receita',
+        icon: Icons.account_balance_rounded,
+        count: 0,
+        showCount: false,
+        color: const Color(0xFF0E7490),
+        signal: 'Comercial',
+        progress: 1,
+        onTap: () async {
+          await Get.toNamed('/admin/financeiro');
+        },
+      ),
+      _AdminItem(
+        title: 'Comissões',
+        subtitle: 'Política, simulação e extrato',
+        icon: Icons.percent_rounded,
+        count: 0,
+        showCount: false,
+        color: const Color(0xFF0F766E),
+        signal: 'Plataforma',
+        progress: 1,
+        onTap: () async {
+          await Get.toNamed('/admin/comissoes');
+        },
+      ),
+      _AdminItem(
+        title: 'Contratações e mediação',
+        subtitle: 'Partes, execução e casos por contrato',
+        icon: Icons.gavel_rounded,
+        count: 0,
+        showCount: false,
+        color: const Color(0xFF7C2D12),
+        signal: 'Mediação',
+        progress: 1,
+        onTap: () async {
+          await Get.toNamed('/admin/contratacoes-mediacao');
+        },
+      ),
+      _AdminItem(
         title: 'Auditoria',
         subtitle: 'Dashboard e histórico crítico',
         icon: Icons.dashboard_customize_rounded,

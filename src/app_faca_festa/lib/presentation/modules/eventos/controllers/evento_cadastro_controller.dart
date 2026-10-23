@@ -1,10 +1,15 @@
+import 'dart:async';
+import 'dart:convert';
+import 'package:app_faca_festa/domain/entities/cadastro_evento_rascunho.dart';
+import 'package:app_faca_festa/domain/services/rascunho_calculadora_store.dart';
+import 'package:app_faca_festa/domain/entities/rascunho_calculadora.dart';
+import 'package:app_faca_festa/core/utils/numeric_input.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 import 'package:get/get.dart';
 
 import 'package:app_faca_festa/app/routes/app_route_args.dart';
-import 'package:app_faca_festa/core/utils/biblioteca.dart';
 import 'package:app_faca_festa/core/utils/form_validators.dart';
 import 'package:app_faca_festa/domain/entities/endereco_usuario.dart';
 import 'package:app_faca_festa/domain/entities/evento.dart';
@@ -18,6 +23,7 @@ import 'package:app_faca_festa/presentation/modules/tema/tema_festa_view_model.d
 import 'package:app_faca_festa/presentation/modules/usuario/components/endereco/endereco_section_controller.dart';
 import 'package:app_faca_festa/presentation/modules/usuario/controllers/uf_cidade_controller.dart';
 
+part 'evento_cadastro_rascunho.dart';
 part 'evento_cadastro_tipos.dart';
 part 'evento_cadastro_endereco.dart';
 part 'evento_cadastro_persistencia.dart';
@@ -28,22 +34,82 @@ const String _versaoDiagnostico = 'v2026-06-16-cep-convidado-logs';
 class EventoCadastroController extends GetxController {
   EventoCadastroController({
     required EventoRepository repository,
+    RascunhoCalculadoraStore? rascunhos,
     required BuscarCepService buscarCepService,
     required UFCidadeController ufCidadeController,
     AppController? appController,
     AppController? Function()? appControllerResolver,
-  })  : _repository = repository,
+  })  : _rascunhos = rascunhos,
+        _repository = repository,
         _buscarCepService = buscarCepService,
         _ufCidadeController = ufCidadeController,
         _appController = appController,
         _appControllerResolver = appControllerResolver;
 
+  Timer? _debounceLocal;
+  Future<void> _filaLocal = Future.value();
+  String? _usuarioCadastro;
+  bool _observandoCadastro = false;
+  bool _eventoConfirmado = false;
+  bool _cadastroConcluido = false;
+  final erroRascunhoLocal = ''.obs;
+  final avisoReconciliacao = ''.obs;
+  final List<Worker> _workersCadastro = [];
   final EventoRepository _repository;
+  final RascunhoCalculadoraStore? _rascunhos;
   final BuscarCepService _buscarCepService;
   final UFCidadeController _ufCidadeController;
   final AppController? _appController;
   final AppController? Function()? _appControllerResolver;
   final uuid = const Uuid();
+  RascunhoCalculadora? rascunhoCalculadora;
+  String idRascunho = const Uuid().v4();
+  Evento? _eventoOriginal;
+  bool _novoEventoPendente = false;
+
+  Future<void> recuperarRascunho() async {
+    final usuario = app.usuarioLogado.value?.idUsuario;
+    if (usuario == null || idEvento.value.isEmpty) return;
+    RascunhoCalculadora? pendente;
+    try {
+      pendente = _rascunhos?.ler(usuario, idEvento.value);
+    } catch (_) {
+      erroRascunhoLocal.value =
+          'A estimativa local não pôde ser lida. O original foi preservado.';
+      return;
+    }
+    if (pendente != null) {
+      idRascunho = pendente.id;
+      rascunhoCalculadora = pendente;
+      await salvarCadastroLocal(); // Migra sem apagar a chave antiga.
+    }
+  }
+
+  Future<void> receberRascunho(RascunhoCalculadora rascunho,
+      {String? premissasOriginais}) async {
+    if (_cadastroConcluido ||
+        rascunho.id != idRascunho ||
+        (_usuarioCadastro != null &&
+            _usuarioCadastro != app.usuarioLogado.value?.idUsuario)) {
+      return;
+    }
+    rascunhoCalculadora = rascunho;
+    if (premissasOriginais != null &&
+        premissasOriginais != assinaturaPremissas) {
+      reconciliarEstimativa();
+      await salvarCadastroLocal();
+      return;
+    }
+    totalAdultos.text = '${rascunho.adultos}';
+    totalCriancas.text = '${rascunho.criancas}';
+    totalBebes.text = '${rascunho.bebes}';
+    totalConvidados.text =
+        '${rascunho.adultos + rascunho.criancas + rascunho.bebes}';
+    custoEstimado.text =
+        rascunho.limite == null ? '' : NumericInput.dinheiro(rascunho.limite!);
+    await salvarCadastroLocal();
+  }
+
   AppController get app {
     final controller = _appController ?? _appControllerResolver?.call();
     if (controller == null) {
@@ -83,6 +149,7 @@ class EventoCadastroController extends GetxController {
   final totalCriancas = TextEditingController();
   final totalBebes = TextEditingController();
   final totalConvidados = TextEditingController();
+  int? get totalPrevistoSalvo => _eventoOriginal?.totalConvidados;
 
   final tipoCerimonia = ''.obs;
   final estiloCasamento = ''.obs;
@@ -133,8 +200,7 @@ class EventoCadastroController extends GetxController {
 
   double? get custoEstimadoInformado {
     if (custoEstimado.text.trim().isEmpty) return null;
-    final valor = Biblioteca.toDouble(custoEstimado.text);
-    return valor > 0 ? valor : null;
+    return NumericInput.parseMoeda(custoEstimado.text);
   }
 
   final horaFesta = TextEditingController();
@@ -155,7 +221,9 @@ class EventoCadastroController extends GetxController {
   final nomeEventoPreview = ''.obs;
   final carregando = false.obs;
 
-  bool get isEditando => idEvento.value.isNotEmpty;
+  bool get eventoJaConfirmado => _eventoConfirmado;
+
+  bool get isEditando => idEvento.value.isNotEmpty && !_novoEventoPendente;
 
   /// Permite que a tela force o fluxo como convidado quando o cadastro vier
   /// da área/convite do convidado e o UsuarioModel ainda não tiver perfil salvo.
@@ -199,6 +267,12 @@ class EventoCadastroController extends GetxController {
     super.onInit();
     _log(
         'onInit $_versaoDiagnostico | route=${Get.currentRoute} | args=${AuthFluxoArgs.of(Get.arguments)}');
+  }
+
+  @override
+  void onClose() {
+    pararObservacaoCadastro();
+    super.onClose();
   }
 
   void configurarCadastroComoConvidado(bool value) {

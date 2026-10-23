@@ -1,5 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:developer' as developer;
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:uuid/uuid.dart';
+import 'package:app_faca_festa/domain/entities/referencia_contextual.dart';
+import 'agenda_servico_remote.dart';
 
 import '../../models/calculadora/calculadora_evento_item_model.dart';
 import '../../models/calculadora/calculadora_item_base_model.dart';
@@ -17,10 +21,96 @@ class CalculadoraItensBaseRemoteDatasource {
   static const String fieldUpdatedAt = 'updated_at';
 
   final FirebaseFirestore _firestore;
+  final FirebaseAuth? auth;
+  final Uri? catalogoEmulador;
+  String? get usuarioAtual => (auth ?? FirebaseAuth.instance).currentUser?.uid;
 
   CalculadoraItensBaseRemoteDatasource({
     required FirebaseFirestore firestore,
+    this.auth,
+    this.catalogoEmulador,
   }) : _firestore = firestore;
+
+  Future<CatalogoContextual> carregarCatalogoContextual() async {
+    final docs = await _itensBaseRef
+        .limit(501)
+        .get(const GetOptions(source: Source.server));
+    if (docs.size > 500) {
+      throw StateError('Catálogo excedeu a consulta suportada.');
+    }
+    final refs = <ReferenciaContextual>[];
+    var incompativeis = 0;
+    for (final doc in docs.docs) {
+      final d = doc.data(), r = d['referencia_contextual'];
+      if (d['ativo'] == false || r == null) continue;
+      if (r is! Map || r['motor_minimo'] != 1 || r['schema'] != 1) {
+        incompativeis++;
+        continue;
+      }
+      final ref = ReferenciaContextual(Map<String, dynamic>.from(r));
+      if (ref.id != doc.id ||
+          ref.dados['aprovado_por'] == null ||
+          ref.dados['aprovado_em'] == null) {
+        throw StateError('Publicação sem aprovação válida.');
+      }
+      refs.add(ref);
+    }
+    return CatalogoContextual(refs,
+        estado: refs.isEmpty ? 'vazio' : 'disponivel',
+        aviso: incompativeis > 0
+            ? 'Há referências que exigem uma versão mais recente do aplicativo.'
+            : refs.isEmpty
+                ? 'Nenhuma referência aprovada disponível. Seu cardápio continua livre.'
+                : '');
+  }
+
+  Future<ReferenciaContextual?> carregarReferencia(String id) async {
+    final doc = await _itensBaseRef
+        .doc(id)
+        .get(const GetOptions(source: Source.server));
+    final d = doc.data();
+    var r = d?['referencia_rascunho'] ?? d?['referencia_contextual'];
+    final ultima = d?['governanca_contextual']?['ultima_versao'];
+    if (d?['referencia_rascunho'] == null &&
+        ultima is int &&
+        (r == null || r['versao'] != ultima)) {
+      r = (await _itensBaseRef
+              .doc(id)
+              .collection('versoes_contextuais')
+              .doc('$ultima')
+              .get(const GetOptions(source: Source.server)))
+          .data();
+    }
+    return r is Map ? ReferenciaContextual(Map<String, dynamic>.from(r)) : null;
+  }
+
+  Future<void> selecionarVersao(
+      String id, int esperada, int? alvo, String pedido) async {
+    await CallableCalculadoraRemote(auth ?? FirebaseAuth.instance,
+            emulador: catalogoEmulador)
+        .chamar('editarCatalogoCalculadora', {
+      'id': id,
+      'acao': alvo == null ? 'desativar' : 'selecionar',
+      'versao_esperada': esperada,
+      'versao_alvo': alvo,
+      'pedido': pedido,
+    });
+  }
+
+  Future<ReferenciaContextual> editarReferencia(
+      ReferenciaContextual r, int esperada, String acao,
+      {String? pedido}) async {
+    final resultado = await CallableCalculadoraRemote(
+            auth ?? FirebaseAuth.instance,
+            emulador: catalogoEmulador)
+        .chamar('editarCatalogoCalculadora', {
+      'referencia': r.dados,
+      'versao_esperada': esperada,
+      'acao': acao,
+      'pedido': pedido ?? const Uuid().v4()
+    });
+    return ReferenciaContextual(resultado);
+  }
 
   CollectionReference<Map<String, dynamic>> get _itensBaseRef {
     return _firestore.collection(collectionItensBase);

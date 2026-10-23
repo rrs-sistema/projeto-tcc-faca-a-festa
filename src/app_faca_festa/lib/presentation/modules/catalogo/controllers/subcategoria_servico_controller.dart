@@ -14,6 +14,12 @@ class SubcategoriaServicoController extends GetxController {
         _sincronizarCategorias = sincronizarCategorias;
 
   final GerenciarCatalogoServico _catalogo;
+  Future<void> carregarParaFormulario() async {
+    todasSubcategorias.assignAll(await _catalogo.listarSubcategorias());
+  }
+
+  SubcategoriaServicoController novaSessao() =>
+      SubcategoriaServicoController(catalogo: _catalogo);
   final FutureOr<void> Function()? _sincronizarCategorias;
 
   final subcategorias = <SubcategoriaServico>[].obs;

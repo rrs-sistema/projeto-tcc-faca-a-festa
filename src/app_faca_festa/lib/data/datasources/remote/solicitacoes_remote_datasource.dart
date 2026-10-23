@@ -1,14 +1,20 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../models/cotacao/cotacao_model.dart';
+import 'package:app_faca_festa/domain/entities/cotacao.dart';
 import 'package:app_faca_festa/domain/entities/cotacao_chat.dart';
 import 'package:app_faca_festa/domain/repositories/solicitacoes_repository.dart';
+import 'cotacao_functions_datasource.dart';
 
 class SolicitacoesRemoteDatasource {
-  SolicitacoesRemoteDatasource({required FirebaseFirestore firestore})
-      : _db = firestore;
+  SolicitacoesRemoteDatasource({
+    required FirebaseFirestore firestore,
+    required CotacaoFunctionsDatasource functions,
+  })  : _db = firestore,
+        _functions = functions;
 
   final FirebaseFirestore _db;
+  final CotacaoFunctionsDatasource _functions;
 
   Stream<List<CotacaoModel>> observarSolicitacoesFornecedor(
     String idFornecedor,
@@ -28,6 +34,11 @@ class SolicitacoesRemoteDatasource {
         if (!cotacaoDoc.exists) continue;
 
         final cotacao = CotacaoModel.fromMap(cotacaoDoc.data()!, cotacaoDoc.id);
+        final fornData = fornecedorDoc.data();
+        // Status do fornecedor (não o do pai): assim respondidas/fechadas aparecem.
+        final statusFornecedor =
+            StatusCotacao.fromString(fornData['status']?.toString());
+        final valorCotado = (fornData['valor_cotado'] as num?)?.toDouble();
 
         final servicosSnap =
             await fornecedorDoc.reference.collection('servicos').get();
@@ -47,8 +58,10 @@ class SolicitacoesRemoteDatasource {
             idUsuarioSolicitante: cotacao.idUsuarioSolicitante,
             nomeUsuarioSolicitante: cotacao.nomeUsuarioSolicitante,
             dataCadastro: cotacao.dataCadastro,
-            status: cotacao.status,
-            valorEstimadoTotal: cotacao.valorEstimadoTotal,
+            status: statusFornecedor,
+            valorEstimadoTotal: (valorCotado != null && valorCotado > 0)
+                ? valorCotado
+                : cotacao.valorEstimadoTotal,
             descricao: cotacao.descricao,
             categoriaNome: cotacao.categoriaNome,
             fornecedores: const [],
@@ -58,7 +71,7 @@ class SolicitacoesRemoteDatasource {
       }
 
       resultado.sort((a, b) => b.dataCadastro.compareTo(a.dataCadastro));
-      return resultado.take(5).toList();
+      return resultado;
     });
   }
 
@@ -66,65 +79,17 @@ class SolicitacoesRemoteDatasource {
     required String idCotacao,
     required String canceladoPor,
   }) async {
-    final cotacaoRef = _db.collection('cotacao').doc(idCotacao);
-    final cotacaoDoc = await cotacaoRef.get();
-
-    if (!cotacaoDoc.exists) {
-      throw const SolicitacaoNaoEncontradaException();
-    }
-
-    final data = cotacaoDoc.data()!;
-    final statusAtual = data['status'] ?? 'pendente';
-    final idSolicitante = (data['id_usuario_solicitante'] ?? '').toString();
-
-    if (statusAtual != 'pendente' &&
-        statusAtual != 'aguardando' &&
-        statusAtual != 'parcial' &&
-        statusAtual != 'respondida') {
-      throw SolicitacaoNaoCancelavelException(statusAtual.toString());
-    }
-
-    // Organizador cancela a cotação inteira; fornecedor só a própria participação.
-    final ehSolicitante = idSolicitante == canceladoPor;
-    final fornecedoresSnap = await cotacaoRef.collection('fornecedores').get();
-
-    if (fornecedoresSnap.docs.isEmpty) {
-      throw const SolicitacaoSemFornecedorException();
-    }
-
-    final batch = _db.batch();
-
-    if (ehSolicitante) {
-      for (final doc in fornecedoresSnap.docs) {
-        batch.update(doc.reference, {
-          'status': 'cancelada',
-          'data_cancelamento': FieldValue.serverTimestamp(),
-        });
-      }
-      batch.update(cotacaoRef, {
-        'status': 'cancelada',
-        'data_cancelamento': FieldValue.serverTimestamp(),
-        'cancelado_por': canceladoPor,
-      });
-    } else {
-      QueryDocumentSnapshot<Map<String, dynamic>>? meuDoc;
-      for (final doc in fornecedoresSnap.docs) {
-        final id = (doc.data()['id_fornecedor'] ?? doc.id).toString();
-        if (id == canceladoPor) {
-          meuDoc = doc;
-          break;
-        }
-      }
-      if (meuDoc == null) {
+    try {
+      await _functions.cancelarCotacao(idCotacao: idCotacao);
+    } on CotacaoFunctionsException catch (e) {
+      final code = e.code.toLowerCase();
+      if (code.contains('not-found')) {
         throw const SolicitacaoNaoEncontradaException();
       }
-      batch.update(meuDoc.reference, {
-        'status': 'recusado',
-        'respondido': true,
-        'data_cancelamento': FieldValue.serverTimestamp(),
-      });
+      if (code.contains('failed-precondition')) {
+        throw SolicitacaoNaoCancelavelException(e.message);
+      }
+      rethrow;
     }
-
-    await batch.commit();
   }
 }

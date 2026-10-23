@@ -1,0 +1,11 @@
+const fs = require('node:fs'), path = require('node:path');
+const root = path.resolve(__dirname, '../..'), destino = path.join(root, '.dart_tool/execucao-functions');
+fs.mkdirSync(destino, { recursive: true });
+const modulos = path.join(root, 'functions/node_modules'), link = path.join(destino, 'node_modules');
+if (!fs.existsSync(link)) fs.symlinkSync(modulos, link, 'junction');
+fs.writeFileSync(path.join(destino, 'package.json'), JSON.stringify({ name: 'execucao-demo-functions', private: true, main: 'index.js', engines: { node: '22' }, dependencies: { 'firebase-functions': '^6.0.1', 'firebase-admin': '^12.7.0' } }));
+fs.writeFileSync(path.join(destino, 'index.js'), `const fs=require('node:fs'),ts=require(${JSON.stringify(path.join(modulos, 'typescript'))});
+require.extensions['.ts']=(m,file)=>m._compile(ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText,file);
+Object.assign(exports,require(${JSON.stringify(path.join(root, 'functions/src/functions/calculadora/aplicarPlanoCalculadora.ts'))}));
+`);
+console.log('Callable de execução preparada em .dart_tool/execucao-functions.');

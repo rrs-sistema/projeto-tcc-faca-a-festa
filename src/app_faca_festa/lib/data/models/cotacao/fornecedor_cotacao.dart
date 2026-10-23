@@ -8,20 +8,23 @@ enum StatusFornecedorCotacao {
   respondido,
   recusado,
   cancelada,
-  fechado;
+  fechado,
+  perdeuCotacao;
 
   String get label {
     switch (this) {
       case StatusFornecedorCotacao.aguardando:
-        return 'Aguardando resposta';
+        return 'Aguardando preço';
       case StatusFornecedorCotacao.respondido:
-        return 'Respondido';
+        return 'Preço recebido';
       case StatusFornecedorCotacao.recusado:
-        return 'cancelada';
-      case StatusFornecedorCotacao.cancelada:
         return 'Recusado';
+      case StatusFornecedorCotacao.cancelada:
+        return 'Cancelado';
       case StatusFornecedorCotacao.fechado:
-        return 'Fechado';
+        return 'Contratado';
+      case StatusFornecedorCotacao.perdeuCotacao:
+        return 'Não ficou com este';
     }
   }
 
@@ -37,6 +40,22 @@ enum StatusFornecedorCotacao {
         return 'cancelada';
       case StatusFornecedorCotacao.fechado:
         return 'fechado';
+      case StatusFornecedorCotacao.perdeuCotacao:
+        return 'perdeuCotacao';
+    }
+  }
+
+  /// Chat ainda aceita novas mensagens do cliente.
+  bool get chatAberto {
+    switch (this) {
+      case StatusFornecedorCotacao.cancelada:
+      case StatusFornecedorCotacao.recusado:
+      case StatusFornecedorCotacao.perdeuCotacao:
+        return false;
+      case StatusFornecedorCotacao.aguardando:
+      case StatusFornecedorCotacao.respondido:
+      case StatusFornecedorCotacao.fechado:
+        return true;
     }
   }
 
@@ -44,13 +63,17 @@ enum StatusFornecedorCotacao {
     if (value == null) return StatusFornecedorCotacao.aguardando;
     switch (value.trim().toLowerCase()) {
       case 'respondido':
+      case 'respondida':
         return StatusFornecedorCotacao.respondido;
       case 'recusado':
         return StatusFornecedorCotacao.recusado;
       case 'cancelada':
+      case 'cancelado':
         return StatusFornecedorCotacao.cancelada;
       case 'fechado':
         return StatusFornecedorCotacao.fechado;
+      case 'perdeucotacao':
+        return StatusFornecedorCotacao.perdeuCotacao;
       default:
         return StatusFornecedorCotacao.aguardando;
     }
@@ -65,11 +88,12 @@ class FornecedorCotacaoModel {
   final String idCotacao;
   final String idFornecedor;
   final String nomeFornecedor;
-  final DateTime? prazoEntrega; // ✅ Alterado para DateTime
+  final DateTime? prazoEntrega;
   final String? condicaoPagamento;
   final StatusFornecedorCotacao status;
   final String? observacaoFornecedor;
   final DateTime? dataResposta;
+  final double? valorCotado;
 
   const FornecedorCotacaoModel({
     required this.id,
@@ -81,11 +105,9 @@ class FornecedorCotacaoModel {
     this.status = StatusFornecedorCotacao.aguardando,
     this.observacaoFornecedor,
     this.dataResposta,
+    this.valorCotado,
   });
 
-  // ===========================================================
-  // 🔹 Converter para Firestore
-  // ===========================================================
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -99,12 +121,10 @@ class FornecedorCotacaoModel {
       'observacao_fornecedor': observacaoFornecedor,
       'data_resposta':
           dataResposta != null ? Timestamp.fromDate(dataResposta!) : null,
+      if (valorCotado != null) 'valor_cotado': valorCotado,
     };
   }
 
-  // ===========================================================
-  // 🔹 Converter do Firestore para Model
-  // ===========================================================
   factory FornecedorCotacaoModel.fromMap(Map<String, dynamic> map) {
     return FornecedorCotacaoModel(
       id: map['id']?.toString() ?? '',
@@ -120,12 +140,10 @@ class FornecedorCotacaoModel {
       dataResposta: map['data_resposta'] is Timestamp
           ? (map['data_resposta'] as Timestamp).toDate()
           : DateTime.tryParse(map['data_resposta']?.toString() ?? ''),
+      valorCotado: (map['valor_cotado'] as num?)?.toDouble(),
     );
   }
 
-  // ===========================================================
-  // 🔹 Atualização parcial
-  // ===========================================================
   FornecedorCotacaoModel copyWith({
     String? idFornecedor,
     String? nomeFornecedor,
@@ -134,6 +152,7 @@ class FornecedorCotacaoModel {
     StatusFornecedorCotacao? status,
     String? observacaoFornecedor,
     DateTime? dataResposta,
+    double? valorCotado,
   }) {
     return FornecedorCotacaoModel(
       id: id,
@@ -145,6 +164,7 @@ class FornecedorCotacaoModel {
       status: status ?? this.status,
       observacaoFornecedor: observacaoFornecedor ?? this.observacaoFornecedor,
       dataResposta: dataResposta ?? this.dataResposta,
+      valorCotado: valorCotado ?? this.valorCotado,
     );
   }
 }

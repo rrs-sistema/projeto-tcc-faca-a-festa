@@ -1,6 +1,102 @@
 part of '../pages/calculadora_festa_screen.dart';
 
 extension _CalculadoraPlanejamento on _CalculadoraFestaScreenState {
+  Future<void> _gerenciarMemoria() async {
+    final c = calculadoraController;
+    if (!_podeAlterarPlanejamento()) return;
+    try {
+      await c.carregarPreferencias();
+    } catch (_) {
+      Get.snackbar('Memória indisponível',
+          'Não foi possível consultar suas preferências. Tente novamente.');
+      return;
+    }
+    if (!mounted) return;
+    final assinatura = c.assinaturaProposta;
+    final regras = c.itensParaCalculo
+        .where((r) =>
+            r.premissas['revisada_pelo_organizador'] == true &&
+            (r.premissas['receita']?.toString().trim() ?? '').isNotEmpty)
+        .toList();
+    bool ocupada = false;
+    String? erro;
+    await showDialog<void>(
+        context: context,
+        builder: (ctx) => StatefulBuilder(builder: (ctx, atualizar) {
+              Future<void> gravar(ItemEstimativaFinanceira? regra) async {
+                atualizar(() {
+                  ocupada = true;
+                  erro = null;
+                });
+                try {
+                  if (assinatura != c.assinaturaProposta) {
+                    throw StateError(
+                        'O planejamento mudou. Reabra suas preferências.');
+                  }
+                  if (regra == null) {
+                    await c.esquecerPreferencias();
+                  } else {
+                    await c.guardarPreferencia(regra);
+                  }
+                  if (ctx.mounted) Navigator.pop(ctx);
+                } catch (e) {
+                  if (ctx.mounted) atualizar(() => erro = e.toString());
+                } finally {
+                  if (ctx.mounted) atualizar(() => ocupada = false);
+                }
+              }
+
+              return PopScope(
+                  canPop: !ocupada,
+                  child: AlertDialog(
+                    title: const Text('Minhas preferências'),
+                    content: SizedBox(
+                        width: 480,
+                        child: SingleChildScrollView(
+                            child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                              const Text(
+                                  'Guarde uma receita revisada para reutilizar automaticamente quando tipo de evento, refeição, duração e composição forem iguais. Valores e medições não são reaproveitados.'),
+                              const SizedBox(height: 12),
+                              Text(
+                                  '${c.preferenciasPrivadas.length} receita(s) guardada(s) na sua conta.'),
+                              if (regras.isEmpty)
+                                const Text(
+                                    'Identifique e revise uma receita para poder guardá-la.'),
+                              for (final regra in regras)
+                                ListTile(
+                                    contentPadding: EdgeInsets.zero,
+                                    title: Text(regra.nome),
+                                    subtitle:
+                                        Text(regra.porcaoReferenciaFormatada),
+                                    trailing:
+                                        const Icon(Icons.bookmark_add_outlined),
+                                    onTap:
+                                        ocupada ? null : () => gravar(regra)),
+                              if (erro != null)
+                                Text(erro!,
+                                    style: TextStyle(
+                                        color:
+                                            Theme.of(ctx).colorScheme.error)),
+                              if (c.preferenciasPrivadas.isNotEmpty)
+                                TextButton.icon(
+                                    onPressed:
+                                        ocupada ? null : () => gravar(null),
+                                    icon: const Icon(Icons.delete_outline),
+                                    label: const Text(
+                                        'Esquecer receitas guardadas')),
+                            ]))),
+                    actions: [
+                      TextButton(
+                          onPressed: ocupada ? null : () => Navigator.pop(ctx),
+                          child: const Text('Fechar'))
+                    ],
+                  ));
+            }));
+  }
+
   Future<void> _reutilizarReceita() async {
     final c = calculadoraController;
     if (!_podeAlterarPlanejamento()) return;
@@ -88,11 +184,20 @@ extension _CalculadoraPlanejamento on _CalculadoraFestaScreenState {
         return;
       }
     }
+    final eventoEdicao = calculadoraController.idEventoAtual.value;
+    final sessaoEdicao = calculadoraController.sessaoPlanejador;
+    final idRegra =
+        item == null ? regra?.id : 'menu_${item.idCardapio}_${item.idItem}';
+    final anterior =
+        idRegra == null ? null : calculadoraController.regraPersistida(idRegra);
     final resultado = await showDialog<ItemEstimativaFinanceira>(
         context: context,
         builder: (_) => Theme(
             data: themeController.materialTheme,
             child: CalculadoraRegraManualDialog(
+              catalogo: calculadoraController.catalogoContextual.value,
+              contextoReferencia: calculadoraController.contextoReferenciaPara(
+                  item?.idCardapio ?? calculadoraController.idCardapioAtual),
               inicial: regra,
               nome: item?.nome,
               id: item == null
@@ -101,9 +206,74 @@ extension _CalculadoraPlanejamento on _CalculadoraFestaScreenState {
               unidade: unidade,
               publico: item?.publicoAlvo.name ?? 'todos',
               tipo: item?.tipo.name ?? 'outro',
+              onSalvar: (editada) async {
+                if (calculadoraController.idEventoAtual.value != eventoEdicao ||
+                    calculadoraController.sessaoPlanejador != sessaoEdicao) {
+                  throw StateError(
+                      'O evento mudou. Reabra o ajuste para salvar.');
+                }
+                await calculadoraController.salvarItemManual(
+                    editada.copyWith(premissas: {
+                      ...editada.premissas,
+                      if (item != null) 'id_cardapio': item.idCardapio,
+                      if (item != null) 'id_item_cardapio': item.idItem,
+                    }),
+                    anterior: anterior);
+              },
+              confirmarLabel: calculadoraController.possuiEventoVinculado
+                  ? 'Salvar porção e preço'
+                  : 'Usar na estimativa',
             )));
-    if (resultado != null && mounted) {
-      calculadoraController.adicionarItemManual(resultado);
+    if (resultado != null &&
+        mounted &&
+        sessaoEdicao == calculadoraController.sessaoPlanejador) {
+      final antes = regra?.toPlanejamento() ?? <String, dynamic>{};
+      final depois = resultado.toPlanejamento();
+      var alterou = false;
+      for (final chave in [
+        'nome',
+        'categoria',
+        'tipo',
+        'publico',
+        'unidade',
+        'consumo',
+        'preco',
+        'selecionado'
+      ]) {
+        if (jsonEncode(antes[chave]) != jsonEncode(depois[chave])) {
+          alterou = true;
+          calculadoraController.medicaoUso
+              .registrarCampo('regra_${resultado.id}_$chave');
+        }
+      }
+      for (final chave in [
+        'papel_na_refeicao',
+        'estado',
+        'estado_compra',
+        'numero_servicos',
+        'rendimento',
+        'participacao',
+        'dividir_grupo',
+        'grupo',
+        'embalagem',
+        'peso_crianca',
+        'peso_bebe',
+        'receita',
+        'peso_base_medido',
+        'peso_pronto_medido',
+        'ajustar_por_perfil',
+        'ajustar_por_duracao'
+      ]) {
+        if (jsonEncode(regra?.premissas[chave]) !=
+            jsonEncode(resultado.premissas[chave])) {
+          alterou = true;
+          calculadoraController.medicaoUso
+              .registrarCampo('regra_${resultado.id}_premissa_$chave');
+        }
+      }
+      if (regra != null && alterou) {
+        calculadoraController.medicaoUso.registrarCorrecao();
+      }
       calculadoraController.medicaoUso.ajustes++;
     }
   }
@@ -573,103 +743,139 @@ extension _CalculadoraPlanejamento on _CalculadoraFestaScreenState {
         propostos.every((i) => i.valorUnitarioMedio > 0) &&
         c.itensSemRegra.isEmpty &&
         c.regrasRejeitadas.isEmpty;
-    final adotar = await showDialog<bool>(
+    var salvando = false;
+    String? erro;
+    final assinatura = c.assinaturaProposta;
+    await showDialog<bool>(
         context: context,
-        builder: (ctx) => Theme(
-            data: themeController.materialTheme,
-            child: _PlanejamentoDialog(
-              title: 'Comparar porções e reserva',
-              icon: Icons.compare_arrows_rounded,
-              primary: themeController.primaryColor.value,
-              confirmLabel: 'Usar cenário econômico',
-              cancelLabel: 'Manter atual',
-              onCancel: () => Navigator.pop(ctx),
-              onConfirm: () => Navigator.pop(ctx, true),
-              child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                            color: precosCompletos
-                                ? const Color(0xFFF1F6F2)
-                                : const Color(0xFFFFF7E8),
-                            borderRadius: BorderRadius.circular(12)),
-                        child: precosCompletos
-                            ? Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                    Text(
-                                        'Estimativa atual: ${c.custoTotalEstimadoFormatado}'),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                        'Proposta: ${_money(propostos.fold<double>(0, (s, i) => s + i.custoEstimado))}',
-                                        style: const TextStyle(
-                                            fontWeight: FontWeight.w700)),
-                                  ])
-                            : const Text(
-                                'Economia indisponível: faltam preços ou regras. Valores ausentes não representam custo zero.',
-                                style: TextStyle(
-                                    fontSize: 12, color: Color(0xFF80591A)))),
-                    const SizedBox(height: 12),
-                    const Text(
-                        'Confira as porções antes de adotar. Esta simulação não comprova que haverá comida suficiente.',
-                        style: TextStyle(fontSize: 12)),
-                    Theme(
-                        data: themeController.materialTheme
-                            .copyWith(dividerColor: Colors.transparent),
-                        child: ExpansionTile(
-                            tilePadding: EdgeInsets.zero,
-                            minTileHeight: 48,
-                            title: const Text('O que muda neste cenário',
-                                style: TextStyle(
-                                    fontSize: 13, fontWeight: FontWeight.w600)),
-                            children: const [
-                              Padding(
-                                  padding: EdgeInsets.only(bottom: 12),
-                                  child: Text(
-                                      'A opção Econômico usa 5% de reserva. A redução de 10% só vale para itens que usam o ajuste do perfil. '
-                                      'Referências contextuais e porções observadas mantêm sua base.',
-                                      style: TextStyle(
-                                          fontSize: 12, height: 1.45)))
-                            ])),
-                    for (final item in propostos) ...[
-                      const Divider(height: 1, color: Color(0xFFE8EDF2)),
-                      Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                Text(item.nome,
-                                    style: GoogleFonts.poppins(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
-                                        color: const Color(0xFF172B21))),
-                                const SizedBox(height: 6),
-                                Wrap(
-                                    alignment: WrapAlignment.spaceBetween,
-                                    spacing: 12,
-                                    runSpacing: 6,
+        builder: (ctx) => StatefulBuilder(
+            builder: (ctx, atualizar) => Theme(
+                data: themeController.materialTheme,
+                child: _PlanejamentoDialog(
+                  title: 'Comparar porções e reserva',
+                  icon: Icons.compare_arrows_rounded,
+                  primary: themeController.primaryColor.value,
+                  confirmLabel: 'Usar cenário econômico',
+                  cancelLabel: 'Manter atual',
+                  onCancel: () {
+                    if (!salvando) Navigator.pop(ctx);
+                  },
+                  onConfirm: () async {
+                    if (salvando) return;
+                    atualizar(() {
+                      salvando = true;
+                      erro = null;
+                    });
+                    try {
+                      if (assinatura != c.assinaturaProposta) {
+                        throw StateError(
+                            'O planejamento mudou. Revise o cenário.');
+                      }
+                      await c.confirmarConfiguracao(c
+                          .prepararConfirmacaoConfiguracao(
+                              {'perfil': 'economico', 'margem': null}));
+                      if (ctx.mounted) Navigator.pop(ctx, true);
+                    } catch (e) {
+                      if (ctx.mounted) {
+                        atualizar(() => erro = e is StateError
+                            ? e.message.toString()
+                            : 'Não foi possível guardar o cenário. Seus valores foram mantidos.');
+                      }
+                    } finally {
+                      if (ctx.mounted) atualizar(() => salvando = false);
+                    }
+                  },
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        if (erro != null)
+                          Text(erro!,
+                              style: const TextStyle(color: Colors.red)),
+                        if (salvando) const Text('Guardando cenário…'),
+                        Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                                color: precosCompletos
+                                    ? const Color(0xFFF1F6F2)
+                                    : const Color(0xFFFFF7E8),
+                                borderRadius: BorderRadius.circular(12)),
+                            child: precosCompletos
+                                ? Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      Text(
-                                          'Proposta: ${item.quantidadeFormatada}',
+                                        Text(
+                                            'Estimativa atual: ${c.custoTotalEstimadoFormatado}'),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                            'Proposta: ${_money(propostos.fold<double>(0, (s, i) => s + i.custoEstimado))}',
+                                            style: const TextStyle(
+                                                fontWeight: FontWeight.w700)),
+                                      ])
+                                : const Text(
+                                    'Economia indisponível: faltam preços ou regras. Valores ausentes não representam custo zero.',
+                                    style: TextStyle(
+                                        fontSize: 12,
+                                        color: Color(0xFF80591A)))),
+                        const SizedBox(height: 12),
+                        const Text(
+                            'Confira as porções antes de adotar. Esta simulação não comprova que haverá comida suficiente.',
+                            style: TextStyle(fontSize: 12)),
+                        Theme(
+                            data: themeController.materialTheme
+                                .copyWith(dividerColor: Colors.transparent),
+                            child: ExpansionTile(
+                                tilePadding: EdgeInsets.zero,
+                                minTileHeight: 48,
+                                title: const Text('O que muda neste cenário',
+                                    style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600)),
+                                children: const [
+                                  Padding(
+                                      padding: EdgeInsets.only(bottom: 12),
+                                      child: Text(
+                                          'A opção Econômico usa 5% de reserva. A redução de 10% só vale para itens que usam o ajuste do perfil. '
+                                          'Referências contextuais e porções observadas mantêm sua base.',
                                           style: TextStyle(
-                                              fontWeight: FontWeight.w700,
-                                              color: themeController
-                                                  .primaryColor.value)),
-                                      Text(
-                                          item.valorUnitarioMedio > 0
-                                              ? item.custoEstimadoFormatado
-                                              : 'Preço pendente',
-                                          style: const TextStyle(fontSize: 12)),
-                                    ]),
-                              ])),
-                    ],
-                  ]),
-            )));
-    if (adotar == true && mounted) {
-      c.aplicarPerfilPlanejamento(PerfilFesta.economico());
-    }
+                                              fontSize: 12, height: 1.45)))
+                                ])),
+                        for (final item in propostos) ...[
+                          const Divider(height: 1, color: Color(0xFFE8EDF2)),
+                          Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    Text(item.nome,
+                                        style: GoogleFonts.poppins(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w600,
+                                            color: const Color(0xFF172B21))),
+                                    const SizedBox(height: 6),
+                                    Wrap(
+                                        alignment: WrapAlignment.spaceBetween,
+                                        spacing: 12,
+                                        runSpacing: 6,
+                                        children: [
+                                          Text(
+                                              'Proposta: ${item.quantidadeFormatada}',
+                                              style: TextStyle(
+                                                  fontWeight: FontWeight.w700,
+                                                  color: themeController
+                                                      .primaryColor.value)),
+                                          Text(
+                                              item.valorUnitarioMedio > 0
+                                                  ? item.custoEstimadoFormatado
+                                                  : 'Preço pendente',
+                                              style: const TextStyle(
+                                                  fontSize: 12)),
+                                        ]),
+                                  ])),
+                        ],
+                      ]),
+                ))));
   }
 
   Widget _buildProximasAcoes(Color primary) {
@@ -691,6 +897,30 @@ extension _CalculadoraPlanejamento on _CalculadoraFestaScreenState {
             child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  TextButton.icon(
+                      onPressed: () async {
+                        if (!_podeAlterarPlanejamento()) return;
+                        await showDialog<void>(
+                            context: context,
+                            builder: (_) => Theme(
+                                data: themeController.materialTheme,
+                                child: CalculadoraComandoTextoDialog(
+                                    controller: c)));
+                      },
+                      icon: const Icon(Icons.auto_awesome_outlined),
+                      label: const Text('Planejar por texto')),
+                  TextButton.icon(
+                      onPressed: () async {
+                        if (!_podeAlterarPlanejamento()) return;
+                        await showDialog<void>(
+                            context: context,
+                            builder: (_) => Theme(
+                                data: themeController.materialTheme,
+                                child: CalculadoraEntradaInteligenteDialog(
+                                    controller: c)));
+                      },
+                      icon: const Icon(Icons.document_scanner_outlined),
+                      label: const Text('Interpretar pedido ou documento')),
                   _buildProximaDecisao(primary),
                   const SizedBox(height: 8),
                   ExpansionTile(
@@ -699,6 +929,10 @@ extension _CalculadoraPlanejamento on _CalculadoraFestaScreenState {
                           style: GoogleFonts.poppins(
                               fontSize: 13, fontWeight: FontWeight.w600)),
                       children: [
+                        TextButton.icon(
+                            onPressed: _gerenciarMemoria,
+                            icon: const Icon(Icons.bookmarks_outlined),
+                            label: const Text('Minhas preferências')),
                         if (c.itensCardapio.isNotEmpty)
                           TextButton.icon(
                               onPressed: _reutilizarReceita,

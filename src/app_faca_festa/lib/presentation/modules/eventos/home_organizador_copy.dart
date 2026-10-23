@@ -23,10 +23,6 @@ abstract final class HomeOrganizadorCopy {
   static const resumoOrcamento = 'Orçamento';
   static const resumoTarefas = 'Tarefas';
 
-  static const gastoTitulo = 'Gasto e planejado';
-  static const gastoUsado = 'Gasto';
-  static const gastoPlanejado = 'Planejado';
-
   static const atalhoCotacoes = 'Cotações';
   static const atalhoCalculadora = 'Calculadora';
   static const atalhoPresentes = 'Presentes';

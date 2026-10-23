@@ -48,6 +48,8 @@ void main() {
     c = CalculadoraFestaController(
         aiService: AiQA(), repository: repo, itensBaseRepository: BaseQA());
     c.idEventoAtual.value = 'evento';
+    c.alterarBaseCalculo(BaseCalculoFesta
+        .manual); // Público definido explicitamente pela fixture.
     c.totalAdultos.value = 10;
     c.itensEstimativa.assignAll([arrozObservado()]);
     c.calcular();

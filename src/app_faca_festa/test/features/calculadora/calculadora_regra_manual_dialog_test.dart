@@ -113,4 +113,56 @@ void main() {
         greaterThan(tester.getRect(find.byType(SingleChildScrollView)).top));
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets(
+      'cancelar e fechar não chamam a gravação mesmo com campos editados',
+      (tester) async {
+    var gravou = 0;
+    Future<void> abrir(BuildContext context) => showDialog<void>(
+        context: context,
+        builder: (_) => CalculadoraRegraManualDialog(
+            inicial: const ItemEstimativaFinanceira(
+                id: 'menu_almoco_arroz',
+                categoria: 'comida',
+                nome: 'Arroz',
+                tipoItem: 'comida',
+                publicoAlvo: 'todos',
+                unidade: UnidadeEstimativa.quilo,
+                quantidadePorConvidadoEquivalente: .05,
+                valorUnitarioMedio: 5.75),
+            confirmarLabel: 'Salvar porção e preço',
+            onSalvar: (_) async {
+              gravou++;
+            }));
+    await tester.pumpWidget(MaterialApp(
+        home: Builder(
+            builder: (context) => Scaffold(
+                body: TextButton(
+                    onPressed: () => abrir(context),
+                    child: const Text('Abrir'))))));
+    await tester.tap(find.text('Abrir'));
+    await tester.pumpAndSettle();
+    final preco = find.widgetWithText(TextFormField, 'Preço por kg');
+    await tester.ensureVisible(preco);
+    await tester.enterText(preco, '999');
+    FocusManager.instance.primaryFocus?.unfocus();
+    await tester.pumpAndSettle();
+    expect(find.text('Cancelar').hitTestable(), findsOneWidget);
+    await tester.tap(find.text('Cancelar'));
+    await tester.pumpAndSettle();
+    expect(find.byType(CalculadoraRegraManualDialog), findsNothing);
+    expect(gravou, 0);
+    await tester.tap(find.text('Abrir'));
+    await tester.pumpAndSettle();
+    final consumo =
+        find.widgetWithText(TextFormField, 'Quantidade por convidado');
+    await tester.ensureVisible(consumo);
+    await tester.enterText(consumo, '0,2');
+    expect(find.byTooltip('Fechar').hitTestable(), findsOneWidget);
+    await tester.tap(find.byTooltip('Fechar'));
+    await tester.pumpAndSettle();
+    expect(find.byType(CalculadoraRegraManualDialog), findsNothing);
+    expect(gravou, 0);
+    expect(tester.takeException(), isNull);
+  });
 }

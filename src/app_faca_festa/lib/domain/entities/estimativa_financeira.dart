@@ -1,5 +1,6 @@
 import 'convidados_equivalentes.dart';
 import 'perfil_festa.dart';
+import '../services/compatibilidade_planejamento_service.dart';
 
 enum UnidadeEstimativa {
   unidade,
@@ -108,6 +109,28 @@ class ItemEstimativaFinanceira {
           selecionado: m['selecionado'] != false,
           premissas: Map<String, dynamic>.from(m['premissas'] as Map? ?? {}));
 
+  List<String> get avisosCompatibilidade =>
+      const CompatibilidadePlanejamentoService().regra(toPlanejamento());
+
+  bool get vinculoPrecoCompativel {
+    String normal(String s) => s
+        .toLowerCase()
+        .replaceAll('quilo', 'kg')
+        .replaceAll('litro', 'l')
+        .replaceAll('unidade', 'un');
+    final medida = premissas['preco_unidade'],
+        estado = premissas['preco_estado'];
+    return (medida == null ||
+            normal(medida.toString()) == normal(unidade.label)) &&
+        (estado == null ||
+            estado == (premissas['estado_compra'] ?? premissas['estado']));
+  }
+
+  bool get precoCompativel =>
+      valorUnitarioMedio.isFinite &&
+      valorUnitarioMedio > 0 &&
+      vinculoPrecoCompativel;
+
   double get rendimento => (premissas['rendimento'] as num?)?.toDouble() ?? 1;
   double get tamanhoEmbalagem =>
       (premissas['embalagem'] as num?)?.toDouble() ?? 0;
@@ -132,8 +155,14 @@ class ItemEstimativaFinanceira {
           ? 1
           : perfil.multiplicadorQuantidade;
 
-  double fatorDuracaoAplicado(int horas) =>
-      descartavel || !ajustarPorDuracao ? 1 : _fatorDuracao(horas);
+  double fatorDuracaoAplicado(int horas) {
+    if (descartavel || !ajustarPorDuracao) return 1;
+    if (premissas['id_ocorrencia'] != null) {
+      final minutos = premissas['duracao_servico_minutos'];
+      return minutos is num ? _fatorDuracao((minutos / 60).ceil()) : 1;
+    }
+    return _fatorDuracao(horas);
+  }
 
   ConvidadosEquivalentes publicoEfetivo(ConvidadosEquivalentes padrao) {
     final p = premissas['publico_refeicao'];
@@ -250,7 +279,7 @@ class ItemEstimativaFinanceira {
       margemPersonalizada: margemPersonalizada,
     );
 
-    return quantidade * valorUnitarioMedio;
+    return precoCompativel ? quantidade * valorUnitarioMedio : 0;
   }
 
   static double _fatorDuracao(int duracaoHoras) {

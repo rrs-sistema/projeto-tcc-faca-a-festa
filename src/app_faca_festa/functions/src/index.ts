@@ -59,6 +59,75 @@ export {
 export { criarCotacao } from "./functions/cotacao/criarCotacao";
 export { responderCotacao } from "./functions/cotacao/responderCotacao";
 export { fecharCotacao } from "./functions/cotacao/fecharCotacao";
+export { cancelarCotacao } from "./functions/cotacao/cancelarCotacao";
+export {
+  registrarContratoFinanceiro,
+  cancelarContratoFinanceiro,
+  registrarLiquidacaoFinanceira,
+} from "./functions/financeiro/comandosFinanceiro";
+export { consultarPrevisaoFinanceiraGerente } from "./functions/financeiro/consultarPrevisaoGerente";
+export {
+  registrarCustoInternoFornecedor,
+  registrarRecebimentoFornecedor,
+  consultarResumoFinanceiroFornecedor,
+} from "./functions/financeiro/comandosFinanceiroFornecedor";
+export {
+  cadastrarItemEstoqueFornecedor,
+  registrarEntradaEstoqueFornecedor,
+  reservarEstoqueFornecedor,
+  retirarEstoqueFornecedor,
+  consumirEstoqueFornecedor,
+  cancelarReservaEstoqueFornecedor,
+  devolverEstoqueFornecedor,
+  consultarEstoqueFornecedor,
+} from "./functions/financeiro/comandosEstoqueFornecedor";
+export {
+  salvarPoliticaComissao,
+  ativarPoliticaComissao,
+  simularComissaoPlataforma,
+  gerarObrigacaoComissao,
+  liquidarComissaoManual,
+  registrarAjusteComissao,
+  consultarExtratoComissao,
+} from "./functions/financeiro/comandosComissaoPlataforma";
+export { consultarDashboardFinanceiroAdmin } from "./functions/financeiro/consultarDashboardFinanceiroAdmin";
+export {
+  simularOrcamentoEvento,
+  calcularPrecoFornecedor,
+  consultarTetoCotacaoFornecedor,
+} from "./functions/financeiro/simularOrcamentoEvento";
+export {
+  registrarRecebimentoPlataformaFn as registrarRecebimentoPlataforma,
+  alocarRecebimentoContratosFn as alocarRecebimentoContratos,
+  prepararRepasseFornecedorFn as prepararRepasseFornecedor,
+  confirmarRepasseManualFn as confirmarRepasseManual,
+  registrarAjustePosRepasseFn as registrarAjustePosRepasse,
+  consultarExtratoIntermediacaoFn as consultarExtratoIntermediacao,
+  salvarPoliticaLiberacaoRepasseFn as salvarPoliticaLiberacaoRepasse,
+  simularPosicaoIntermediacaoFn as simularPosicaoIntermediacao,
+} from "./functions/financeiro/comandosIntermediacaoFinanceira";
+export {
+  consultarCentralContratacoes,
+  consultarDetalheContratacao,
+} from "./functions/financeiro/consultarCentralContratacoes";
+export {
+  abrirCasoMediacaoFn as abrirCasoMediacao,
+  atribuirResponsavelCasoFn as atribuirResponsavelCaso,
+  registrarRegistroMediacaoFn as registrarRegistroMediacao,
+  solicitarInformacaoCasoFn as solicitarInformacaoCaso,
+  registrarDecisaoCasoFn as registrarDecisaoCaso,
+  fecharCasoMediacaoFn as fecharCasoMediacao,
+  recomendarBloqueioRevisaoFn as recomendarBloqueioRevisao,
+  consultarCasoMediacaoFn as consultarCasoMediacao,
+} from "./functions/financeiro/comandosMediacao";
+export {
+  consultarAcompanhamentoOrganizadorFn as consultarAcompanhamentoOrganizador,
+  consultarAcompanhamentoFornecedorFn as consultarAcompanhamentoFornecedor,
+  declararPagamentoPlataformaFn as declararPagamentoPlataforma,
+  informarEntregaFornecedorFn as informarEntregaFornecedor,
+  registrarAceiteClienteFn as registrarAceiteCliente,
+  abrirCasoMediacaoParteFn as abrirCasoMediacaoParte,
+} from "./functions/financeiro/comandosAcompanhamentoPartes";
 
 export {
     recomendarFornecedoresParaEvento,
@@ -66,3 +135,12 @@ export {
     migrarFornecedoresTiposEvento,
     atualizarFornecedoresTiposEventoManual,
 } from "./functions/fornecedores/recomendacao";
+
+export { aplicarPlanoCalculadora, revisarRefeicaoCalculadora } from "./functions/calculadora/aplicarPlanoCalculadora";
+
+export { interpretarEntradaCalculadora, aplicarEntradaCalculadora } from "./functions/calculadora/interpretarEntradaCalculadora";
+
+export { confirmarAgendaCalculadora } from "./functions/calculadora/confirmarAgendaCalculadora";
+export { editarCatalogoCalculadora } from "./functions/calculadora/editarCatalogoCalculadora";
+export { migrarPlanejamentoCalculadora } from "./functions/calculadora/migrarPlanejamentoCalculadora";
+export { sugerirCandidatosCalculadora, confirmarPlanejadorCalculadora } from "./functions/calculadora/planejarServicoCalculadora";

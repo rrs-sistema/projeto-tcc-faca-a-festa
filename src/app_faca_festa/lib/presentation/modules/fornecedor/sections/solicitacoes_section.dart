@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
+import 'package:app_faca_festa/core/utils/numeric_input.dart';
 import 'package:app_faca_festa/domain/entities/cotacao.dart';
 import 'package:app_faca_festa/domain/entities/sugestao_resposta_cotacao_ai.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_cotacoes.dart';
@@ -11,7 +12,7 @@ import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/forne
 import 'package:app_faca_festa/presentation/modules/cotacao/controllers/solicitacoes_controller.dart';
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import 'package:app_faca_festa/presentation/modules/fornecedor/components/show_responder_cotacao_bottom_sheet.dart';
-import 'package:app_faca_festa/presentation/modules/legal/widgets/aviso_lgpd_card.dart';
+enum _FiltroPedidos { todos, aguardando, respondidas, finalizadas }
 
 class SolicitacoesSection extends StatefulWidget {
   const SolicitacoesSection({
@@ -33,6 +34,7 @@ class SolicitacoesSection extends StatefulWidget {
 
 class _SolicitacoesSectionState extends State<SolicitacoesSection> {
   String? _fornecedorInicializado;
+  _FiltroPedidos _filtro = _FiltroPedidos.todos;
 
   FornecedorController get fornecedorController => widget.fornecedorController;
   SolicitacoesController get solicitacoesController =>
@@ -47,6 +49,29 @@ class _SolicitacoesSectionState extends State<SolicitacoesSection> {
 
     _fornecedorInicializado = idFornecedor;
     Future.microtask(() => solicitacoesController.inicializar(idFornecedor));
+  }
+
+  List<Cotacao> _filtrar(List<Cotacao> lista) {
+    switch (_filtro) {
+      case _FiltroPedidos.aguardando:
+        return lista.where((c) => c.status == StatusCotacao.pendente).toList();
+      case _FiltroPedidos.respondidas:
+        return lista
+            .where((c) =>
+                c.status == StatusCotacao.respondida ||
+                c.status == StatusCotacao.parcial)
+            .toList();
+      case _FiltroPedidos.finalizadas:
+        return lista
+            .where((c) =>
+                c.status == StatusCotacao.concluida ||
+                c.status == StatusCotacao.cancelada ||
+                c.status == StatusCotacao.recusado ||
+                c.status == StatusCotacao.perdeuCotacao)
+            .toList();
+      case _FiltroPedidos.todos:
+        return lista;
+    }
   }
 
   @override
@@ -75,53 +100,80 @@ class _SolicitacoesSectionState extends State<SolicitacoesSection> {
         );
       }
 
-      final lista = solicitacoesController.solicitacoes;
+      final todas = solicitacoesController.solicitacoes.toList();
+      final lista = _filtrar(todas);
+      final aguardando =
+          todas.where((c) => c.status == StatusCotacao.pendente).length;
+      final finalizadas = todas
+          .where((c) =>
+              c.status == StatusCotacao.concluida ||
+              c.status == StatusCotacao.cancelada ||
+              c.status == StatusCotacao.recusado ||
+              c.status == StatusCotacao.perdeuCotacao)
+          .length;
       final quentes = fornecedorController.ai.scoresCotacoes.values
           .where((s) => s.score >= 75)
           .length;
 
       return _CotacoesShell(
-        total: lista.length,
+        total: todas.length,
+        aguardando: aguardando,
+        finalizadas: finalizadas,
         quentes: quentes,
-        onAtualizarIa: lista.isEmpty
+        onAtualizarIa: todas.isEmpty
             ? null
             : () => fornecedorController.ai.carregarAiDasSolicitacoesPendentes(
                 forceRefresh: true),
+        filtro: _filtro,
+        onFiltro: (f) => setState(() => _filtro = f),
         child: lista.isEmpty
-            ? const _MensagemEstado(
+            ? _MensagemEstado(
                 icon: Icons.inbox_outlined,
-                title: 'Nenhum pedido de preço',
-                message:
-                    'Quando um organizador pedir preço, as oportunidades aparecem aqui.',
-                color: Color(0xFF6366F1),
+                title: todas.isEmpty
+                    ? 'Nenhum pedido de preço'
+                    : 'Nenhum pedido neste filtro',
+                message: todas.isEmpty
+                    ? 'Quando um organizador pedir preço, as oportunidades aparecem aqui.'
+                    : 'Troque o filtro acima para ver outros pedidos.',
+                color: const Color(0xFF6366F1),
               )
             : LayoutBuilder(
                 builder: (context, constraints) {
                   final usarDuasColunas = constraints.maxWidth >= 860;
 
-                  if (usarDuasColunas) {
-                    final itemWidth = (constraints.maxWidth - 12) / 2;
-
-                    return Wrap(
-                      spacing: 12,
-                      runSpacing: 12,
-                      children: List.generate(lista.length, (index) {
-                        return SizedBox(
-                          width: itemWidth,
-                          child:
-                              _buildCotacaoCard(context, lista[index], index),
-                        );
-                      }),
+                  if (!usarDuasColunas) {
+                    return ListView.separated(
+                      itemCount: lista.length,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      separatorBuilder: (_, __) => const SizedBox(height: 9),
+                      itemBuilder: (context, index) =>
+                          _buildCotacaoCard(context, lista[index], index),
                     );
                   }
 
-                  return ListView.separated(
-                    itemCount: lista.length,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    separatorBuilder: (_, __) => const SizedBox(height: 9),
-                    itemBuilder: (context, index) =>
-                        _buildCotacaoCard(context, lista[index], index),
+                  // Grid 2 colunas com altura mínima comum (sem IntrinsicHeight:
+                  // LayoutBuilder no card não calcula intrínseco).
+                  const gap = 12.0;
+                  final itemWidth = (constraints.maxWidth - gap) / 2;
+                  return Wrap(
+                    spacing: gap,
+                    runSpacing: gap,
+                    alignment: WrapAlignment.start,
+                    crossAxisAlignment: WrapCrossAlignment.start,
+                    children: List.generate(lista.length, (index) {
+                      return SizedBox(
+                        width: itemWidth,
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(minHeight: 168),
+                          child: _buildCotacaoCard(
+                            context,
+                            lista[index],
+                            index,
+                          ),
+                        ),
+                      );
+                    }),
                   );
                 },
               ),
@@ -135,6 +187,8 @@ class _SolicitacoesSectionState extends State<SolicitacoesSection> {
     final isGerando =
         fornecedorController.ai.isGerandoRespostaCotacaoAi(idCotacao);
 
+    final podeResponder = item.status == StatusCotacao.pendente;
+
     return _CotacaoInteligenteCard(
       solicitacao: item,
       idCotacao: idCotacao,
@@ -143,7 +197,7 @@ class _SolicitacoesSectionState extends State<SolicitacoesSection> {
       motivos: score?.motivosPositivos ?? const [],
       alertas: score?.alertas ?? const [],
       isGerandoResposta: isGerando,
-      onGerarResposta: isGerando
+      onGerarResposta: !podeResponder || isGerando
           ? null
           : () async {
               final sugestao =
@@ -155,7 +209,8 @@ class _SolicitacoesSectionState extends State<SolicitacoesSection> {
               if (!context.mounted) return;
               _abrirRespostaSugerida(context, item, sugestao);
             },
-      onResponder: () => _abrirResponderCotacao(context, item),
+      onResponder:
+          podeResponder ? () => _abrirResponderCotacao(context, item) : null,
     );
   }
 
@@ -700,14 +755,22 @@ class _BottomSheetHeader extends StatelessWidget {
 class _CotacoesShell extends StatelessWidget {
   final Widget child;
   final int? total;
+  final int aguardando;
+  final int finalizadas;
   final int quentes;
   final VoidCallback? onAtualizarIa;
+  final _FiltroPedidos? filtro;
+  final ValueChanged<_FiltroPedidos>? onFiltro;
 
   const _CotacoesShell({
     required this.child,
     this.total,
+    this.aguardando = 0,
+    this.finalizadas = 0,
     this.quentes = 0,
     this.onAtualizarIa,
+    this.filtro,
+    this.onFiltro,
   });
 
   @override
@@ -751,7 +814,7 @@ class _CotacoesShell extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Pedidos de preço',
+                          'Lista de pedidos',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.poppins(
@@ -762,8 +825,8 @@ class _CotacoesShell extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'Responda o que chegou hoje. O organizador espera o valor e o prazo.',
-                          maxLines: 1,
+                          'Aguardando, respondidas e finalizadas — tudo no mesmo lugar.',
+                          maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.poppins(
                               fontSize: 11.5, color: const Color(0xFF6B7280)),
@@ -780,8 +843,16 @@ class _CotacoesShell extends StatelessWidget {
                 children: [
                   if (total != null)
                     _Chip(
-                        text: '$total pendente${total == 1 ? '' : 's'}',
+                        text: '$total pedido${total == 1 ? '' : 's'}',
                         color: const Color(0xFF4F46E5)),
+                  if (aguardando > 0)
+                    _Chip(
+                        text: '$aguardando aguardando',
+                        color: const Color(0xFFF59E0B)),
+                  if (finalizadas > 0)
+                    _Chip(
+                        text: '$finalizadas finalizada${finalizadas == 1 ? '' : 's'}',
+                        color: const Color(0xFF10B981)),
                   if (quentes > 0)
                     _Chip(
                         text: '$quentes quente${quentes == 1 ? '' : 's'}',
@@ -827,11 +898,77 @@ class _CotacoesShell extends StatelessWidget {
               );
             },
           ),
-          const SizedBox(height: 12),
-          const AvisoLgpdCard(texto: AvisoLgpdCard.acessoRestritoCotacao),
+          if (filtro != null && onFiltro != null) ...[
+            const SizedBox(height: 12),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  _FiltroChip(
+                    label: 'Todos',
+                    selected: filtro == _FiltroPedidos.todos,
+                    onTap: () => onFiltro!(_FiltroPedidos.todos),
+                  ),
+                  const SizedBox(width: 6),
+                  _FiltroChip(
+                    label: 'Aguardando',
+                    selected: filtro == _FiltroPedidos.aguardando,
+                    onTap: () => onFiltro!(_FiltroPedidos.aguardando),
+                  ),
+                  const SizedBox(width: 6),
+                  _FiltroChip(
+                    label: 'Respondidas',
+                    selected: filtro == _FiltroPedidos.respondidas,
+                    onTap: () => onFiltro!(_FiltroPedidos.respondidas),
+                  ),
+                  const SizedBox(width: 6),
+                  _FiltroChip(
+                    label: 'Finalizadas',
+                    selected: filtro == _FiltroPedidos.finalizadas,
+                    onTap: () => onFiltro!(_FiltroPedidos.finalizadas),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 12),
           child,
         ],
+      ),
+    );
+  }
+}
+
+class _FiltroChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _FiltroChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: selected ? const Color(0xFF4F46E5) : const Color(0xFFF1F5F9),
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+          child: Text(
+            label,
+            style: GoogleFonts.poppins(
+              fontSize: 11.5,
+              fontWeight: FontWeight.w700,
+              color: selected ? Colors.white : const Color(0xFF475569),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -846,7 +983,7 @@ class _CotacaoInteligenteCard extends StatelessWidget {
   final List<String> alertas;
   final bool isGerandoResposta;
   final VoidCallback? onGerarResposta;
-  final VoidCallback onResponder;
+  final VoidCallback? onResponder;
 
   const _CotacaoInteligenteCard({
     required this.solicitacao,
@@ -872,6 +1009,8 @@ class _CotacaoInteligenteCard extends StatelessWidget {
         ? 'Solicitação aguardando resposta.'
         : solicitacao.descricao!;
     final valor = solicitacao.valorEstimadoTotal;
+    final podeResponder = onResponder != null;
+    final statusColor = _statusColor(solicitacao.status);
 
     final color = _scoreColor(score);
     final scoreLabel = score == null ? 'IA' : '${score!.toStringAsFixed(0)}%';
@@ -880,18 +1019,35 @@ class _CotacaoInteligenteCard extends StatelessWidget {
       ...alertas.take(1).map((e) => 'Atenção: $e'),
     ].where((e) => e.trim().isNotEmpty).toList();
 
+    final aiButton = _CompactActionButton(
+      label: isGerandoResposta ? 'Gerando...' : 'Gerar IA',
+      tooltip: 'Gerar resposta com IA',
+      icon: isGerandoResposta ? null : Icons.auto_awesome_rounded,
+      loading: isGerandoResposta,
+      outlined: true,
+      onTap: onGerarResposta,
+    );
+
+    final responderButton = _CompactActionButton(
+      label: podeResponder ? 'Responder' : solicitacao.status.label,
+      icon: podeResponder
+          ? Icons.reply_rounded
+          : Icons.check_circle_outline_rounded,
+      onTap: onResponder,
+    );
+
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(11),
       decoration: BoxDecoration(
         color: const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: color.withValues(alpha: 0.16)),
       ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final veryCompact = constraints.maxWidth < 430;
-
-          final header = Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _ScoreBadge(score: scoreLabel, nivel: nivel, color: color),
@@ -900,15 +1056,38 @@ class _CotacaoInteligenteCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      categoria,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.poppins(
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.w900,
-                        color: const Color(0xFF111827),
-                      ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            categoria,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.poppins(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w900,
+                              color: const Color(0xFF111827),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 7, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: statusColor.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            solicitacao.status.label,
+                            style: GoogleFonts.poppins(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: statusColor,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 2),
                     Text(
@@ -924,7 +1103,7 @@ class _CotacaoInteligenteCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       descricao,
-                      maxLines: 1,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.poppins(
                         fontSize: 11.5,
@@ -935,7 +1114,9 @@ class _CotacaoInteligenteCard extends StatelessWidget {
                     if (valor != null && valor > 0) ...[
                       const SizedBox(height: 4),
                       Text(
-                        'Valor estimado: ${_formatCurrency(valor)}',
+                        podeResponder
+                            ? 'Valor estimado: ${_formatCurrency(valor)}'
+                            : 'Seu preço: ${_formatCurrency(valor)}',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.poppins(
@@ -949,58 +1130,32 @@ class _CotacaoInteligenteCard extends StatelessWidget {
                 ),
               ),
             ],
-          );
-
-          final aiButton = _CompactActionButton(
-            label: isGerandoResposta ? 'Gerando...' : 'Gerar IA',
-            tooltip: 'Gerar resposta com IA',
-            icon: isGerandoResposta ? null : Icons.auto_awesome_rounded,
-            loading: isGerandoResposta,
-            outlined: true,
-            onTap: onGerarResposta,
-          );
-
-          final responderButton = _CompactActionButton(
-            label: 'Responder',
-            icon: Icons.reply_rounded,
-            onTap: onResponder,
-          );
-
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              header,
-              if (reasons.isNotEmpty) ...[
-                const SizedBox(height: 9),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: reasons
-                      .map((r) => _ReasonPill(text: r, color: color))
-                      .toList(),
-                ),
+          ),
+          if (reasons.isNotEmpty) ...[
+            const SizedBox(height: 9),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: reasons
+                  .map((r) => _ReasonPill(text: r, color: color))
+                  .toList(),
+            ),
+          ],
+          const SizedBox(height: 10),
+          if (podeResponder)
+            Row(
+              children: [
+                Expanded(child: aiButton),
+                const SizedBox(width: 8),
+                Expanded(child: responderButton),
               ],
-              const SizedBox(height: 10),
-              if (veryCompact)
-                Row(
-                  children: [
-                    Expanded(child: aiButton),
-                    const SizedBox(width: 8),
-                    Expanded(child: responderButton)
-                  ],
-                )
-              else
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Flexible(child: aiButton),
-                    const SizedBox(width: 8),
-                    Flexible(child: responderButton),
-                  ],
-                ),
-            ],
-          );
-        },
+            )
+          else
+            Align(
+              alignment: Alignment.centerRight,
+              child: responderButton,
+            ),
+        ],
       ),
     );
   }
@@ -1010,6 +1165,19 @@ class _CotacaoInteligenteCard extends StatelessWidget {
     if (score >= 75) return const Color(0xFFEF4444);
     if (score >= 45) return const Color(0xFFF59E0B);
     return const Color(0xFF64748B);
+  }
+
+  static Color _statusColor(StatusCotacao status) {
+    return switch (status) {
+      StatusCotacao.pendente => const Color(0xFFF59E0B),
+      StatusCotacao.respondida || StatusCotacao.parcial =>
+        const Color(0xFF2563EB),
+      StatusCotacao.concluida => const Color(0xFF10B981),
+      StatusCotacao.cancelada ||
+      StatusCotacao.recusado ||
+      StatusCotacao.perdeuCotacao =>
+        const Color(0xFFEF4444),
+    };
   }
 }
 
@@ -1410,9 +1578,7 @@ class _ReasonPill extends StatelessWidget {
   }
 }
 
-String _formatCurrency(double value) {
-  return 'R\$ ${value.toStringAsFixed(2).replaceAll('.', ',')}';
-}
+String _formatCurrency(double value) => NumericInput.dinheiro(value);
 
 String _formatarDataCotacao(DateTime? data) {
   if (data == null) return 'Data não informada';

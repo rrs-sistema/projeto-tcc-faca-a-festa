@@ -66,12 +66,14 @@ class CalculadoraFestaModel extends CalculadoraFesta {
     super.dataConversaoOrcamento,
     super.analiseIA,
     super.contextoPlanejamento = const {},
+    super.distribuicaoEtariaHipotetica,
   });
 
   factory CalculadoraFestaModel.fromEntity(CalculadoraFesta entity) {
     if (entity is CalculadoraFestaModel) return entity;
 
     return CalculadoraFestaModel(
+      distribuicaoEtariaHipotetica: entity.distribuicaoEtariaHipotetica,
       idCalculo: entity.idCalculo,
       contextoPlanejamento: entity.contextoPlanejamento,
       idEvento: entity.idEvento,
@@ -130,6 +132,7 @@ class CalculadoraFestaModel extends CalculadoraFesta {
   }) {
     return CalculadoraFestaModel(
       idCalculo: idCalculo ?? this.idCalculo,
+      distribuicaoEtariaHipotetica: distribuicaoEtariaHipotetica,
       contextoPlanejamento: contextoPlanejamento ?? this.contextoPlanejamento,
       idEvento: idEvento ?? this.idEvento,
       tipoEvento: tipoEvento ?? this.tipoEvento,
@@ -180,6 +183,7 @@ class CalculadoraFestaModel extends CalculadoraFesta {
     return {
       'id_calculo': idCalculo,
       'contexto_planejamento': contextoPlanejamento,
+      if (distribuicaoEtariaHipotetica) 'publico_hipotetico': true,
       'id_evento': idEvento,
       'tipo_evento': tipoEvento,
       'base_calculo': baseCalculo.name,
@@ -248,6 +252,8 @@ class CalculadoraFestaModel extends CalculadoraFesta {
       contextoPlanejamento: map['contexto_planejamento'] is Map
           ? Map<String, dynamic>.from(map['contexto_planejamento'] as Map)
           : const {},
+      distribuicaoEtariaHipotetica: map['publico_hipotetico'] == true ||
+          (totalPorTipo == 0 && totalLegado > 0),
       idCalculo: map['id_calculo']?.toString() ?? map['id']?.toString() ?? '',
       idEvento: map['id_evento']?.toString() ?? '',
       tipoEvento: map['tipo_evento']?.toString() ?? 'Evento',

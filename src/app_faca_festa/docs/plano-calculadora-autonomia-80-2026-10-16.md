@@ -195,3 +195,33 @@ Nenhum deploy está incluído neste plano. Publicação do aplicativo permanece 
 - Google PAIR, feedback e controle: https://pair.withgoogle.com/guidebook-v2/chapter/feedback-controls/
 
 As diretrizes externas orientam correção e supervisão; não demonstram o percentual de redução de trabalho deste produto.
+
+
+## 11. Acompanhamento de implementação — 17/10/2026
+
+| Entrega | Estado verificável |
+| --- | --- |
+| 0 — Coerência e linha de base técnica | Implementada; diagnóstico instrumentado não mede integralmente as intervenções humanas. |
+| 1 — Proposta inicial | Implementada nos formatos e referências documentados. Receitas próprias podem ser importadas com rendimento e ingredientes explícitos; receitas desconhecidas não recebem ficha inventada. |
+| 2 — Executor | Implementado; a transação no servidor também confere inserções nas fontes. Aplicação repetida, estoque, ingredientes e tarefas cobertos por testes autenticados em emuladores. |
+| 3 — Personalização e encerramento | Memória privada com adesão explícita e escopo compatível; revisão qualitativa persistida; medições separadas; texto para público, fonte, duração e perfil com aprovação do conjunto. |
+| 4 — Meta empírica | Avaliador e protocolo implementados. Sessões observadas com usuários e consumo real continuam pendentes; não há comprovação de 70%–80%. |
+
+O interpretador local de planejamento continua disponível. A entrega complementar de 17/10 ampliou a entrada com IA para compras, quantidades, estoque, preços, cotações, despesas, pagamentos vinculados e receitas, incluindo TXT, PDF e imagens. A interpretação gera propostas delimitadas e validadas, com revisão do conjunto e prevenção de duplicidade; não executa ações financeiras arbitrárias. Busca externa de preços continua adiada pelo usuário. Ver [entrada inteligente](calculadora-entrada-inteligente-2026-10-17.md).
+
+Detalhes e evidências atuais: [entrega 3](calculadora-fase3-personalizacao-2026-10-17.md) e [protocolo de avaliação](calculadora-protocolo-autonomia.md).
+
+
+### Atualização da entrega 4 — 17/10/2026
+
+Concluída a preparação da coleta assistida: roteiro, ordem alternada das versões, contagens observadas, pausas, retomada, persistência com revisão, preservação de falhas e exportação para o avaliador. As portas de cobertura e qualidade foram reforçadas. O aplicativo normal não recebeu um questionário adicional.
+
+As funções `aplicarPlanoCalculadora`, `revisarRefeicaoCalculadora` e `fecharCotacao` e as regras do Firestore foram publicadas por autorização explícita do usuário nesta etapa. Aplicativo e hosting não foram publicados.
+
+A execução empírica com participantes e as medições reais após o evento continuam pendentes de observação. Não são substituídas pelos testes técnicos. Ver [relatório da entrega 4](calculadora-fase4-piloto-2026-10-17.md).
+
+### Revisão de integração — 17/10/2026
+
+Corrigidos os lançamentos de pagamento para manter compatibilidade com o editor financeiro, os nomes/IDs das despesas da entrada inteligente e a conexão Firebase utilizada pelo executor. A propriedade dos eventos foi protegida contra alteração por outro organizador. Funções e regras atualizadas; aplicativo e hosting não publicados.
+
+Suíte geral: 574 testes aprovados. Entrada/financeiro/autorização: 67 verificações; executor/pós-evento: 54. Após a reconexão do aparelho, o roteiro ampliado foi concluído e aprovado no SM G990E/Android 16: evento, proposta, criação do cardápio, duas refeições compartilhando estoque, entrada inteligente, edição financeira, concorrência e recuperação após novo login. A execução encontrou e permitiu corrigir a normalização das datas entre Flutter e SDK Admin; propostas inalteradas deixaram de ser recusadas indevidamente. As três funções envolvidas foram atualizadas e verificadas como `ACTIVE`, com recusa de chamadas sem autenticação. Ver [relatório de integração](calculadora-jornada-integrada-2026-10-17.md).
