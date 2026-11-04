@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/presentation/widgets/operacao/operacao_skeleton.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
@@ -16,11 +17,13 @@ import 'package:app_faca_festa/presentation/widgets/festa_app_bar.dart';
 class AcompanhamentoFornecedorPage extends StatefulWidget {
   const AcompanhamentoFornecedorPage({
     super.key,
+    this.idOrcamento,
     required this.controller,
     required this.themeController,
     required this.idFornecedor,
   });
 
+  final String? idOrcamento;
   final AcompanhamentoPartesController controller;
   final EventThemeController themeController;
   final String idFornecedor;
@@ -37,7 +40,9 @@ class _AcompanhamentoFornecedorPageState
   @override
   void initState() {
     super.initState();
+    c.carregando.value = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       c.carregarFornecedor(widget.idFornecedor);
     });
   }
@@ -116,7 +121,10 @@ class _AcompanhamentoFornecedorPageState
   Widget build(BuildContext context) {
     return Obx(() {
       final busy = c.carregando.value;
-      final linhas = c.linhasForn.toList();
+      final linhas = c.linhasForn
+          .where((l) =>
+              widget.idOrcamento == null || l.idOrcamento == widget.idOrcamento)
+          .toList();
       final aviso = c.aviso.value.trim();
       final erro = c.erro.value.trim();
 
@@ -129,78 +137,79 @@ class _AcompanhamentoFornecedorPageState
             IconButton(
               tooltip: 'Atualizar',
               icon: const Icon(Icons.refresh, color: Colors.white),
-              onPressed: busy
-                  ? null
-                  : () => c.carregarFornecedor(widget.idFornecedor),
+              onPressed:
+                  busy ? null : () => c.carregarFornecedor(widget.idFornecedor),
             ),
           ],
         ),
-        body: busy && linhas.isEmpty
-            ? const Center(child: CircularProgressIndicator())
-            : LayoutBuilder(
-                builder: (context, constraints) {
-                  final pad = constraints.maxWidth >= 900 ? 28.0 : 16.0;
-                  return Align(
-                    alignment: Alignment.topCenter,
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 720),
-                      child: ListView(
-                        padding: EdgeInsets.fromLTRB(
-                          pad,
-                          FestaPageInsets.belowAppBar,
-                          pad,
-                          32,
-                        ),
-                        children: [
-                          const _InfoBanner(
-                            icon: Icons.account_balance_outlined,
-                            color: FornecedorPremiumPalette.indigo,
-                            title: 'Como funciona o repasse',
-                            body:
-                                'O cliente paga à plataforma. Isso não entra no seu caixa. '
-                                'Você recebe pelo repasse da Faça a Festa — sem botão “Sacar”.',
-                          ),
-                          if (aviso.isNotEmpty && !_avisoRedundante(aviso)) ...[
-                            const SizedBox(height: 10),
-                            _InfoBanner(
-                              icon: Icons.info_outline_rounded,
-                              color: FornecedorPremiumPalette.amber,
-                              title: 'Aviso da plataforma',
-                              body: aviso,
-                              soft: true,
-                            ),
-                          ],
-                          if (erro.isNotEmpty) ...[
-                            const SizedBox(height: 10),
-                            _InfoBanner(
-                              icon: Icons.error_outline_rounded,
-                              color: FornecedorPremiumPalette.rose,
-                              title: 'Não foi possível carregar',
-                              body: erro,
-                              soft: true,
-                            ),
-                          ],
-                          const SizedBox(height: 18),
-                          if (linhas.isEmpty)
-                            const _EmptyContratos()
-                          else ...[
-                            Text(
-                              '${linhas.length} contrato${linhas.length == 1 ? '' : 's'} · valores previstos (não são saldo bancário)',
-                              style: GoogleFonts.poppins(
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.w600,
-                                color: FornecedorPremiumPalette.muted,
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            ...linhas.map(_card),
-                          ],
-                        ],
-                      ),
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            final pad = constraints.maxWidth >= 900 ? 28.0 : 16.0;
+            return Align(
+              alignment: Alignment.topCenter,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 720),
+                child: ListView(
+                  padding: EdgeInsets.fromLTRB(
+                    pad,
+                    FestaPageInsets.belowAppBar,
+                    pad,
+                    32,
+                  ),
+                  children: [
+                    const _InfoBanner(
+                      icon: Icons.account_balance_outlined,
+                      color: FornecedorPremiumPalette.indigo,
+                      title: 'Como funciona o repasse',
+                      body:
+                          'O cliente paga à plataforma. Isso não entra no seu caixa. '
+                          'Você recebe pelo repasse da Faça a Festa — sem botão “Sacar”.',
                     ),
-                  );
-                },
+                    if (aviso.isNotEmpty && !_avisoRedundante(aviso)) ...[
+                      const SizedBox(height: 10),
+                      _InfoBanner(
+                        icon: Icons.info_outline_rounded,
+                        color: FornecedorPremiumPalette.amber,
+                        title: 'Aviso da plataforma',
+                        body: aviso,
+                        soft: true,
+                      ),
+                    ],
+                    if (erro.isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      _InfoBanner(
+                        icon: Icons.error_outline_rounded,
+                        color: FornecedorPremiumPalette.rose,
+                        title: 'Não foi possível carregar',
+                        body: erro,
+                        soft: true,
+                      ),
+                    ],
+                    const SizedBox(height: 18),
+                    if (busy)
+                      const OperacaoSkeleton(
+                          titulo: 'Seus contratos',
+                          icon: Icons.description_outlined)
+                    else if (linhas.isEmpty)
+                      const _EmptyContratos()
+                    else ...[
+                      Text(
+                        '${linhas.length} contrato${linhas.length == 1 ? '' : 's'} · valores previstos (não são saldo bancário)',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                          color: FornecedorPremiumPalette.muted,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      ...linhas.map(_card),
+                    ],
+                  ],
+                ),
               ),
+            );
+          },
+        ),
       );
     });
   }
@@ -215,18 +224,14 @@ class _AcompanhamentoFornecedorPageState
   }
 
   Widget _card(VisaoFornecedorContrato l) {
-    final evento = l.nomeEvento?.trim().isNotEmpty == true
-        ? l.nomeEvento!
-        : 'Evento';
-    final contratante = l.nomeContratante?.trim().isNotEmpty == true
-        ? l.nomeContratante!
-        : '—';
-    final servico = l.nomeServico?.trim().isNotEmpty == true
-        ? l.nomeServico!
-        : 'Serviço';
+    final evento =
+        l.nomeEvento?.trim().isNotEmpty == true ? l.nomeEvento! : 'Evento';
+    final contratante =
+        l.nomeContratante?.trim().isNotEmpty == true ? l.nomeContratante! : '—';
+    final servico =
+        l.nomeServico?.trim().isNotEmpty == true ? l.nomeServico! : 'Serviço';
     final podeEntregar = c.dominio.podeInformarEntrega(l.estadoExecucao);
-    final saldo = l.saldoPrevistoRepasseCentavos;
-    final liquido = l.direitoLiquidoCentavos;
+    final saldo = l.saldoContratoCentavos ?? l.saldoPrevistoRepasseCentavos;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
@@ -328,19 +333,26 @@ class _AcompanhamentoFornecedorPageState
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: _HeroRepasse(
-              titulo: 'A receber (previsto)',
-              valor: _reais(saldo > 0 ? saldo : liquido),
+              titulo: saldo < 0 ? 'Crédito excedente' : 'Saldo do contrato',
+              valor: _reais(saldo < 0 ? -saldo : saldo),
               subtitulo: saldo > 0
-                  ? 'Saldo ainda previsto de repasse'
-                  : 'Líquido após comissão prevista',
+                  ? 'Após recebimentos próprios e repasses registrados'
+                  : saldo < 0
+                      ? 'Conciliar destinação do excedente'
+                      : 'Contrato sem saldo pendente',
               onAjuda: () => _ValorAjuda.mostrar(
                 context,
                 'A receber (previsto)',
-                'Estimativa do que a plataforma pode repassar a você. '
-                    'Não é saldo bancário nem garantia de prazo.',
+                'Saldo contratual após os registros disponíveis. '
+                    'Não é confirmação bancária nem garantia de prazo.',
               ),
             ),
           ),
+          if (l.recebimentoProprioCentavos != 0)
+            Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text(
+                    'Recebimento próprio declarado: ${_reais(l.recebimentoProprioCentavos)}. Repasse ainda previsto na plataforma: ${_reais(l.saldoPrevistoRepasseCentavos)}. São origens diferentes.')),
           const SizedBox(height: 12),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -351,8 +363,7 @@ class _AcompanhamentoFornecedorPageState
                   _KpiTile(
                     label: 'Contratado',
                     valor: _reais(l.valorContratadoCentavos),
-                    ajuda:
-                        'Valor do serviço fechado com o organizador. '
+                    ajuda: 'Valor do serviço fechado com o organizador. '
                         'Base do contrato — ainda não é dinheiro no seu caixa.',
                   ),
                   _KpiTile(
@@ -361,16 +372,14 @@ class _AcompanhamentoFornecedorPageState
                     hint: l.comissaoJaDescontadaDoRepasse
                         ? 'já no cálculo do repasse'
                         : null,
-                    ajuda:
-                        'Parte estimada da plataforma. '
+                    ajuda: 'Parte estimada da plataforma. '
                         'Pode já estar descontada do cálculo de repasse.',
                   ),
                   _KpiTile(
                     label: 'Líquido',
                     valor: _reais(l.direitoLiquidoCentavos),
                     destaque: true,
-                    ajuda:
-                        'Quanto você deve receber após a comissão prevista '
+                    ajuda: 'Quanto você deve receber após a comissão prevista '
                         '(estimativa).',
                   ),
                   _KpiTile(
@@ -379,9 +388,14 @@ class _AcompanhamentoFornecedorPageState
                     hint: l.trataAlocadoComoCaixaProprio
                         ? null
                         : 'não é seu caixa',
-                    ajuda:
-                        'Valor pago/alocado pelo cliente na plataforma. '
+                    ajuda: 'Valor pago/alocado pelo cliente na plataforma. '
                         'Só o repasse confirmado conta como recebimento seu.',
+                  ),
+                  _KpiTile(
+                    label: 'Autorizado',
+                    valor: _reais(l.repasseAutorizadoCentavos),
+                    ajuda:
+                        'Valor autorizado ou em processamento; ainda não é recebimento confirmado.',
                   ),
                   _KpiTile(
                     label: 'Já repassado',
@@ -421,6 +435,8 @@ class _AcompanhamentoFornecedorPageState
                     ),
                     const SizedBox(height: 8),
                     kpis[4],
+                    const SizedBox(height: 8),
+                    kpis[5],
                   ],
                 );
               },

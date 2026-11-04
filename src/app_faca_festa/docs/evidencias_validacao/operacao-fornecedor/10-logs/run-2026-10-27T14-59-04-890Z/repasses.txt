@@ -1,0 +1,13 @@
+✓ Comissão externa parcial/integral e pagador organizador conciliados sem duplicidade.
+✓ Mediação: decisão e encerramento, resolução administrativa, revogação e nova conferência de repasse.
+✓ Repasse operacional: evento/autorização, comissão real, retenção, mediação, concorrência, idempotência e regras.
+[2026-10-27T15:00:16.815Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x81cd4601 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'update' @ L941
+[2026-10-27T15:00:16.848Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x81cd4602 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+evaluation error at L721:24 for 'update' @ L721, false for 'update' @ L721
+[2026-10-27T15:00:16.869Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x81cd4603 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+evaluation error at L721:24 for 'update' @ L721, false for 'update' @ L721
+[2026-10-27T15:00:16.923Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x81cd4604 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+evaluation error at L721:24 for 'update' @ L721, false for 'update' @ L721
+[2026-10-27T15:00:16.941Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x81cd4605 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'create' @ L945, false for 'update' @ L945

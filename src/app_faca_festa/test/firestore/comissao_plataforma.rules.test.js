@@ -1,3 +1,4 @@
+require("../../functions/scripts/exigirEmuladorDemo").exigirEmuladorDemo("demo-faca-festa-comissao");
 /**
  * Regras: políticas só admin; obrigações admin ou próprio pagador.
  * JDK 21+: npm run test:rules:comissao

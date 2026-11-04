@@ -234,7 +234,7 @@ export const abrirCasoMediacaoParteFn = onCall(
 
     return abrirCasoMediacao(admin.firestore(), {
       idEvento,
-      idContrato: texto((d.contrato_financeiro as { id?: string })?.id) || idOrcamento,
+      idContrato: texto((d.contrato_financeiro as { id_contrato?: string })?.id_contrato) || idOrcamento,
       idOrcamento,
       idFornecedor: idFornecedor || null,
       idContratante: idContratante || null,

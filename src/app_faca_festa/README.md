@@ -4,6 +4,10 @@ Aplicativo multiplataforma (Android, Web e Desktop) em **Flutter**, organizado e
 
 ## Documentação técnica
 
+A documentação consolidada para apresentação do TCC está em
+[`document/tcc/README.md`](document/tcc/README.md), com relatório editável em Word,
+fonte textual, requisitos, casos de uso, arquitetura e evidências de validação.
+
 A descrição das camadas, regras de dependência e organogramas está em:
 
 - [`document/arquitetura/README.md`](document/arquitetura/README.md) — índice

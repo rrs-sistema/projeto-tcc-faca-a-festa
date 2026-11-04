@@ -433,7 +433,7 @@ def step_web(flutter: str, deploy: bool) -> None:
 
 def step_apk(flutter: str) -> Path:
     run_flutter_build_with_retries(
-        [flutter, "build", "apk", "--release", *version_arguments()],
+        [flutter, "build", "apk", "--release", "--no-tree-shake-icons", *version_arguments()],
         label="Build APK Android (--release)",
         attempts=3,
         wait_seconds=10.0,
@@ -445,7 +445,7 @@ def step_apk(flutter: str) -> Path:
 
 def step_bundle(flutter: str, version_name: str, version_build: str) -> Path:
     run_flutter_build_with_retries(
-        [flutter, "build", "appbundle", "--release", "--no-pub", "--build-name", version_name, "--build-number", version_build],
+        [flutter, "build", "appbundle", "--release", "--no-tree-shake-icons", "--no-pub", "--build-name", version_name, "--build-number", version_build],
         label="Build App Bundle Android (--release)",
         attempts=3,
         wait_seconds=10.0,

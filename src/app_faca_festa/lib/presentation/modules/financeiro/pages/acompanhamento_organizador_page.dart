@@ -15,12 +15,14 @@ import 'package:app_faca_festa/presentation/widgets/festa_app_bar.dart';
 class AcompanhamentoOrganizadorPage extends StatefulWidget {
   const AcompanhamentoOrganizadorPage({
     super.key,
+    this.idOrcamento,
     required this.controller,
     required this.themeController,
     required this.idEvento,
     this.nomeEvento,
   });
 
+  final String? idOrcamento;
   final AcompanhamentoPartesController controller;
   final EventThemeController themeController;
   final String idEvento;
@@ -34,6 +36,51 @@ class AcompanhamentoOrganizadorPage extends StatefulWidget {
 class _AcompanhamentoOrganizadorPageState
     extends State<AcompanhamentoOrganizadorPage> {
   AcompanhamentoPartesController get c => widget.controller;
+
+  Future<void> _autorizarRepasse(String idOrcamento, bool autorizar) async {
+    final motivo = TextEditingController();
+    final confirmado = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+              title: Text(autorizar
+                  ? 'Autorizar pagamento ao fornecedor'
+                  : 'Revogar autorização antecipada'),
+              content: SizedBox(
+                  width: 440,
+                  child: Column(mainAxisSize: MainAxisSize.min, children: [
+                    Text(autorizar
+                        ? 'Você autoriza a administração a pagar este fornecedor antes da finalização do evento. O pagamento depende de saldo conferido e ausência de bloqueios de mediação.'
+                        : 'A administração deverá aguardar a finalização do evento. Esta ação não desfaz pagamentos já confirmados.'),
+                    const SizedBox(height: 16),
+                    TextField(
+                        controller: motivo,
+                        maxLength: 500,
+                        maxLines: 3,
+                        decoration: const InputDecoration(
+                            labelText: 'Motivo (mínimo de 10 caracteres)')),
+                  ])),
+              actions: [
+                TextButton(
+                    onPressed: () => Navigator.pop(ctx, false),
+                    child: const Text('Voltar')),
+                TextButton(
+                    onPressed: () {
+                      if (motivo.text.trim().length >= 10) {
+                        Navigator.pop(ctx, true);
+                      }
+                    },
+                    child: Text(autorizar
+                        ? 'Autorizar pagamento'
+                        : 'Revogar autorização'))
+              ],
+            ));
+    final texto = motivo.text.trim();
+    // O diálogo ainda pode estar concluindo a animação de saída.
+    WidgetsBinding.instance.addPostFrameCallback((_) => motivo.dispose());
+    if (confirmado == true) {
+      await c.autorizarRepasse(idOrcamento, texto, autorizar: autorizar);
+    }
+  }
 
   @override
   void initState() {
@@ -207,7 +254,10 @@ class _AcompanhamentoOrganizadorPageState
     final nomeEvento = (widget.nomeEvento ?? '').trim();
     return Obx(() {
       final busy = c.carregando.value;
-      final linhas = c.linhasOrg.toList();
+      final linhas = c.linhasOrg
+          .where((l) =>
+              widget.idOrcamento == null || l.idOrcamento == widget.idOrcamento)
+          .toList();
       return Scaffold(
         backgroundColor: const Color(0xFFF6F7FB),
         appBar: FestaAppBar(
@@ -217,9 +267,8 @@ class _AcompanhamentoOrganizadorPageState
             IconButton(
               tooltip: 'Atualizar',
               icon: const Icon(Icons.refresh_rounded, color: Colors.white),
-              onPressed: busy
-                  ? null
-                  : () => c.carregarOrganizador(widget.idEvento),
+              onPressed:
+                  busy ? null : () => c.carregarOrganizador(widget.idEvento),
             ),
           ],
         ),
@@ -478,9 +527,8 @@ class _AcompanhamentoOrganizadorPageState
     final fornecedor = l.nomeFornecedor?.trim().isNotEmpty == true
         ? l.nomeFornecedor!
         : 'Fornecedor não identificado';
-    final servico = l.nomeServico?.trim().isNotEmpty == true
-        ? l.nomeServico!
-        : 'Serviço';
+    final servico =
+        l.nomeServico?.trim().isNotEmpty == true ? l.nomeServico! : 'Serviço';
     final corPag = _corNivel(l.nivelPagamento, primary);
 
     return Container(
@@ -547,8 +595,7 @@ class _AcompanhamentoOrganizadorPageState
                 'Contratado',
                 _reais(l.valorContratadoCentavos),
                 primary,
-                ajuda:
-                    'Valor do serviço fechado com o fornecedor. '
+                ajuda: 'Valor do serviço fechado com o fornecedor. '
                     'É a base do contrato intermediado pela plataforma.',
               ),
               const SizedBox(width: 8),
@@ -571,8 +618,7 @@ class _AcompanhamentoOrganizadorPageState
                 'Confirmado',
                 _reais(l.valorConfirmadoCentavos),
                 primary,
-                ajuda:
-                    'Valor que a plataforma já conferiu/alocou. '
+                ajuda: 'Valor que a plataforma já conferiu/alocou. '
                     'Só a equipe confirma — a declaração sozinha não libera repasse.',
               ),
               const SizedBox(width: 8),
@@ -588,7 +634,8 @@ class _AcompanhamentoOrganizadorPageState
               ),
             ],
           ),
-          if (l.statusRepasse != null && l.statusRepasse!.trim().isNotEmpty) ...[
+          if (l.statusRepasse != null &&
+              l.statusRepasse!.trim().isNotEmpty) ...[
             const SizedBox(height: 10),
             Text(
               l.statusRepasse!,
@@ -672,6 +719,24 @@ class _AcompanhamentoOrganizadorPageState
               ),
             ),
           ),
+          const SizedBox(height: 8),
+          Text(
+              'O fornecedor recebe após o evento finalizado ou com sua autorização explícita.',
+              style: GoogleFonts.poppins(
+                  fontSize: 12, color: const Color(0xFF64748B))),
+          Wrap(spacing: 8, children: [
+            TextButton.icon(
+                onPressed: c.enviando.value
+                    ? null
+                    : () => _autorizarRepasse(l.idOrcamento, true),
+                icon: const Icon(Icons.verified_user_outlined, size: 18),
+                label: const Text('Autorizar pagamento antecipado')),
+            TextButton(
+                onPressed: c.enviando.value
+                    ? null
+                    : () => _autorizarRepasse(l.idOrcamento, false),
+                child: const Text('Revogar autorização')),
+          ]),
           if (l.estadoExecucao == 'entrega_informada') ...[
             const SizedBox(height: 8),
             Row(

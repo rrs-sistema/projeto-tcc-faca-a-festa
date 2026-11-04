@@ -1,3 +1,5 @@
+import 'package:app_faca_festa/presentation/widgets/operacao/operacao_skeleton.dart';
+import 'package:app_faca_festa/presentation/modules/financeiro/widgets/financeiro_contexto.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -51,6 +53,7 @@ class _ComissaoPlataformaPageState extends State<ComissaoPlataformaPage>
   @override
   void initState() {
     super.initState();
+    c.carregando.value = true;
     // Pagador não usa abas; mantém controller mínimo só se admin.
     _tabs = TabController(length: _admin ? 3 : 1, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) => c.carregar());
@@ -89,28 +92,42 @@ class _ComissaoPlataformaPageState extends State<ComissaoPlataformaPage>
             ),
           ],
         ),
-        body: loading
-            ? const Center(child: CircularProgressIndicator())
-            : LayoutBuilder(
-                builder: (context, constraints) {
-                  final w = constraints.maxWidth;
-                  final pad = (w >= 1100
-                      ? 28.0
-                      : w >= 720
-                          ? 20.0
-                          : 16.0);
-                  final maxW = _admin ? 1400.0 : 1240.0;
-                  return Align(
-                    alignment: Alignment.topCenter,
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(maxWidth: maxW),
-                      child: _admin
-                          ? _layoutAdmin(pad, w.clamp(0, maxW), err)
-                          : _layoutPagador(pad, w.clamp(0, maxW), err),
-                    ),
-                  );
-                },
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            final w = constraints.maxWidth;
+            final pad = (w >= 1100
+                ? 28.0
+                : w >= 720
+                    ? 20.0
+                    : 16.0);
+            final maxW = _admin ? 1400.0 : 1240.0;
+            return Align(
+              alignment: Alignment.topCenter,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: maxW),
+                child: loading
+                    ? ListView(
+                        padding: EdgeInsets.fromLTRB(
+                            pad, FestaPageInsets.belowAppBar, pad, 32),
+                        children: [
+                          _cabecalho(w),
+                          const SizedBox(height: 24),
+                          const OperacaoSkeleton(
+                              titulo: 'Resumo das comissões',
+                              icon: Icons.payments_outlined),
+                          const SizedBox(height: 16),
+                          const OperacaoSkeleton(
+                              titulo: 'Extrato',
+                              icon: Icons.receipt_long_outlined),
+                        ],
+                      )
+                    : _admin
+                        ? _layoutAdmin(pad, w.clamp(0, maxW), err)
+                        : _layoutPagador(pad, w.clamp(0, maxW), err),
               ),
+            );
+          },
+        ),
       );
     });
   }
@@ -127,7 +144,10 @@ class _ComissaoPlataformaPageState extends State<ComissaoPlataformaPage>
         ],
         if (c.carregando.value) ...[
           const SizedBox(height: 12),
-          LinearProgressIndicator(color: _accent, minHeight: 2),
+          const OperacaoSkeleton(
+              titulo: 'Atualizando comissões',
+              icon: Icons.payments_outlined,
+              linhas: 1),
         ],
         const SizedBox(height: 24),
         if (err.isEmpty || c.obrigacoes.isNotEmpty) _resumoPagador(),
@@ -191,6 +211,19 @@ class _ComissaoPlataformaPageState extends State<ComissaoPlataformaPage>
               ),
             Padding(
               padding: EdgeInsets.fromLTRB(pad, 14, pad, 0),
+              child: const FinanceiroAjuda(itens: {
+                'O que são comissões?':
+                    'As comissões são a remuneração da plataforma pelos contratos. O valor contratado com o fornecedor não é a receita da plataforma.',
+                'Gerada, recebida e a receber':
+                    'Gerada é a comissão prevista. Recebida já tem registro no extrato, inclusive retenção em repasse. A receber é a parcela ainda pendente.',
+                'Quem paga?':
+                    'A cobrança identifica o pagador definido pela política do contrato. Ele pode ser o fornecedor ou o organizador.',
+                'Registrar recebimento':
+                    'Abra a cobrança, informe o valor conferido e revise o pagador antes de confirmar. O registro não transfere dinheiro.',
+              }),
+            ),
+            Padding(
+              padding: EdgeInsets.fromLTRB(pad, 16, pad, 0),
               child: _sintese(w),
             ),
             Padding(
@@ -258,23 +291,12 @@ class _ComissaoPlataformaPageState extends State<ComissaoPlataformaPage>
       ],
     );
     final acao = _admin
-        ? FilledButton.icon(
-            onPressed: c.enviando.value ? null : _abrirNovaPolitica,
-            icon: const Icon(Icons.add_rounded, size: 18),
-            label: Text(
-              'Nova política',
-              style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.w700, fontSize: 13),
-            ),
-            style: FilledButton.styleFrom(
-              backgroundColor: _accent,
-              foregroundColor: Colors.white,
-              iconColor: Colors.white,
-              minimumSize: const Size(48, 48),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14)),
-            ),
+        ? OutlinedButton.icon(
+            onPressed: () => _tabs.animateTo(1),
+            icon: const Icon(Icons.settings_outlined, size: 18),
+            label: const Text('Regras de comissão'),
+            style: OutlinedButton.styleFrom(
+                foregroundColor: _accent, minimumSize: const Size(48, 48)),
           )
         : OutlinedButton.icon(
             onPressed: _abrirSimuladorPagador,
@@ -387,9 +409,9 @@ class _ComissaoPlataformaPageState extends State<ComissaoPlataformaPage>
   }
 
   Widget _sintese(double w) {
-    final geradoLabel = _admin ? 'Gerado' : 'Total gerado';
-    final recebidoLabel = _admin ? 'Recebido' : 'Pagamentos';
-    final saldoLabel = _admin ? 'A receber' : 'Saldo';
+    final geradoLabel = _admin ? 'Comissão gerada' : 'Total gerado';
+    final recebidoLabel = _admin ? 'Comissão recebida' : 'Pagamentos';
+    final saldoLabel = _admin ? 'Comissão a receber' : 'Saldo';
     final tiles = [
       _kpi(geradoLabel, _reaisCentavos(c.totalGeradoCentavos),
           Icons.receipt_long),
@@ -414,8 +436,10 @@ class _ComissaoPlataformaPageState extends State<ComissaoPlataformaPage>
         const SizedBox(height: 8),
         LayoutBuilder(
           builder: (context, box) {
-            final cols =
-                box.maxWidth >= 900 ? 3 : (box.maxWidth >= 520 ? 3 : 1);
+            final cols = box.maxWidth >= 760 &&
+                    MediaQuery.textScalerOf(context).scale(1) <= 1.3
+                ? 3
+                : 1;
             final gap = 10.0;
             final tileW = cols == 1
                 ? box.maxWidth
@@ -513,16 +537,8 @@ class _ComissaoPlataformaPageState extends State<ComissaoPlataformaPage>
     );
   }
 
-  String _refCobranca(Map<String, dynamic> o) {
-    final nome = (o['nome_evento'] ?? o['nomeEvento'] ?? '').toString().trim();
-    if (nome.isNotEmpty) return nome;
-    final id = o['id_obrigacao']?.toString() ?? o['id']?.toString() ?? '';
-    final evento = (o['id_evento'] ?? o['idEvento'] ?? '').toString();
-    final contrato = (o['id_contrato'] ?? o['idContrato'] ?? '').toString();
-    if (evento.isNotEmpty) return 'Evento · ${_curto(evento)}';
-    if (contrato.isNotEmpty) return 'Contrato · ${_curto(contrato)}';
-    return 'Cobrança · ${_curto(id)}';
-  }
+  String _refCobranca(Map<String, dynamic> o) =>
+      ComissaoPlataformaController.nomeEventoDe(o);
 
   String _taxaAplicada(Map<String, dynamic> o) {
     final bps = ComissaoPlataformaController.percentualBpsAplicadoDe(o);
@@ -555,7 +571,8 @@ class _ComissaoPlataformaPageState extends State<ComissaoPlataformaPage>
                   fontWeight: FontWeight.w600, fontSize: 12, color: _muted),
               dataTextStyle: GoogleFonts.poppins(fontSize: 13, color: _ink),
               columns: [
-                const DataColumn(label: Text('Referência')),
+                const DataColumn(label: Text('Evento')),
+                const DataColumn(label: Text('Fornecedor')),
                 if (_admin) const DataColumn(label: Text('Pagador')),
                 const DataColumn(label: Text('Taxa aplicada')),
                 const DataColumn(label: Text('Comissão'), numeric: true),
@@ -573,9 +590,20 @@ class _ComissaoPlataformaPageState extends State<ComissaoPlataformaPage>
                                 style: GoogleFonts.poppins(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w600)))),
+                        DataCell(SizedBox(
+                            width: 200,
+                            child: Text(
+                                ComissaoPlataformaController.nomeFornecedorDe(
+                                    o),
+                                maxLines: 3,
+                                overflow: TextOverflow.ellipsis))),
                         if (_admin)
-                          DataCell(Text(
-                              _curto((o['id_pagador'] ?? '—').toString()))),
+                          DataCell(SizedBox(
+                              width: 180,
+                              child: Text(
+                                  ComissaoPlataformaController.nomePagadorDe(o),
+                                  maxLines: 3,
+                                  overflow: TextOverflow.ellipsis))),
                         DataCell(Text(_taxaAplicada(o))),
                         DataCell(Text(_reaisCentavos(
                             ComissaoPlataformaController.valorOriginalDe(o)))),
@@ -587,7 +615,9 @@ class _ComissaoPlataformaPageState extends State<ComissaoPlataformaPage>
                                 fontWeight: FontWeight.w700,
                                 color: _ink))),
                         DataCell(ComissaoStatus(
-                            status: o['status']?.toString(), pagador: !_admin)),
+                            status: ComissaoPlataformaController
+                                .statusApresentacaoDe(o),
+                            pagador: !_admin)),
                         DataCell(_botaoDetalhes(o)),
                       ]))
                   .toList(),
@@ -621,10 +651,19 @@ class _ComissaoPlataformaPageState extends State<ComissaoPlataformaPage>
         Text(_refCobranca(o),
             style: GoogleFonts.poppins(
                 fontWeight: FontWeight.w600, fontSize: 15, color: _ink)),
+        const SizedBox(height: 8),
+        Text('Fornecedor: ${ComissaoPlataformaController.nomeFornecedorDe(o)}'),
+        if (_admin)
+          Text('Pagador: ${ComissaoPlataformaController.nomePagadorDe(o)}'),
         const SizedBox(height: 10),
-        ComissaoStatus(status: o['status']?.toString(), pagador: !_admin),
+        ComissaoStatus(
+            status: ComissaoPlataformaController.statusApresentacaoDe(o),
+            pagador: !_admin),
         const SizedBox(height: 18),
-        Text('Saldo da cobrança',
+        Text(
+            ComissaoPlataformaController.retencaoPrevistaDe(o)
+                ? 'Prevista para retenção (não somar ao repasse)'
+                : 'Saldo da comissão',
             style: GoogleFonts.poppins(fontSize: 12, color: _muted)),
         const SizedBox(height: 4),
         Text(_reaisCentavos(ComissaoPlataformaController.saldoDe(o)),
@@ -647,13 +686,20 @@ class _ComissaoPlataformaPageState extends State<ComissaoPlataformaPage>
     return ListView(
       padding: EdgeInsets.fromLTRB(pad, 14, pad, 28),
       children: [
+        Align(
+            alignment: Alignment.centerLeft,
+            child: FilledButton.icon(
+                onPressed: c.enviando.value ? null : _abrirNovaPolitica,
+                icon: const Icon(Icons.add_rounded),
+                label: const Text('Nova política'))),
+        const SizedBox(height: 16),
         Text(
           'Regra de comissão — percentual e vigência aplicados às novas contratações elegíveis.',
           style: GoogleFonts.poppins(fontSize: 13, color: _muted, height: 1.35),
         ),
         const SizedBox(height: 6),
         Text(
-          'Não há edição in-place: para mudar o percentual, crie outra política e ative-a. '
+          'Para mudar o percentual, crie outra política e ative-a. '
           'Cobranças já geradas mantêm a regra da época.',
           style:
               GoogleFonts.poppins(fontSize: 12.5, color: _muted, height: 1.35),
@@ -995,11 +1041,6 @@ class _ComissaoPlataformaPageState extends State<ComissaoPlataformaPage>
         ],
       ),
     );
-  }
-
-  String _curto(String id) {
-    if (id.length <= 14) return id;
-    return '${id.substring(0, 10)}…';
   }
 
   Future<void> _abrirNovaPolitica() async {

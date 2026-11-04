@@ -368,22 +368,35 @@ class _ServicoDetalheScreenState extends State<ServicoDetalheScreen> {
                   const SizedBox(height: 8),
                   Obx(() {
                     final media = avaliacaoController.mediaServico.value;
-                    final qtd = avaliacaoController.avaliacoesServico.length;
-                    return Row(
-                      children: [
-                        ...buildStarRating(media, size: 20),
-                        const SizedBox(width: 8),
-                        Text(
-                          qtd > 0
-                              ? "${media.toStringAsFixed(1)} • $qtd avaliações"
-                              : "Ainda sem avaliações",
-                          style: GoogleFonts.poppins(
-                              color: Colors.grey.shade800,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600),
-                        ),
-                      ],
-                    );
+                    final qtd = avaliacaoController.quantidadeServicoVerificada;
+                    return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (avaliacaoController
+                              .erroAvaliacoes.value.isNotEmpty)
+                            Text(avaliacaoController.erroAvaliacoes.value),
+                          if (avaliacaoController.erroAvaliacoes.value.isEmpty)
+                            Row(
+                              children: [
+                                ...buildStarRating(media, size: 20),
+                                const SizedBox(width: 8),
+                                Text(
+                                  qtd > 0
+                                      ? "${media.toStringAsFixed(1)} • $qtd avaliações"
+                                      : "Ainda sem avaliações",
+                                  style: GoogleFonts.poppins(
+                                      color: Colors.grey.shade800,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600),
+                                ),
+                              ],
+                            ),
+                          for (final a in avaliacaoController.avaliacoesServico)
+                            ListTile(
+                                title: Text('${a.nomeCliente} · ${a.nota}/5'),
+                                subtitle: Text(
+                                    '${a.verificada ? 'Entrega verificada' : 'Histórico sem verificação de entrega'}\n${a.comentario}${a.respostaFornecedor == null ? '' : '\nResposta pública do fornecedor: ${a.respostaFornecedor}'}')),
+                        ]);
                   }),
 
                   const SizedBox(height: 20),
@@ -395,7 +408,7 @@ class _ServicoDetalheScreenState extends State<ServicoDetalheScreen> {
                       'Diferenciais', Icons.workspace_premium_rounded, primary),
                   const SizedBox(height: 8),
                   Text(
-                    'Equipe criativa e dedicada, excelente reputação em eventos anteriores e atendimento personalizado. Torne sua celebração inesquecível com este fornecedor! 🎉',
+                    'Consulte a descrição do serviço e as avaliações verificadas para conhecer a experiência de outros contratantes.',
                     style: GoogleFonts.poppins(
                         fontSize: 13, height: 1.5, color: Colors.grey.shade700),
                   ),

@@ -1,0 +1,56 @@
+
+> build
+> tsc
+
+i  emulators: Starting emulators: firestore
+i  emulators: Detected demo project ID "demo-jornada-atendimentos", emulated services will use a demo configuration and attempts to access non-emulated services for this project will fail.
+i  firestore: Firestore Emulator logging to firestore-debug.log
++  firestore: Firestore Emulator UI websocket is running on 9150.
+i  Running script: node functions/scripts/testJornadaAtendimentosEmulator.js
+[2026-10-27T14:27:23.624Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x19b2ed88 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'update' @ L684
+[2026-10-27T14:27:23.660Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x19b2ed89 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'create' @ L682, false for 'update' @ L684
+[2026-10-27T14:27:23.685Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x19b2ed8a error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'update' @ L684
+[2026-10-27T14:27:23.873Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x19b2ed8b error. Code: 7 Message: 7 PERMISSION_DENIED: 
+evaluation error at L721:24 for 'update' @ L721, false for 'update' @ L721
+[2026-10-27T14:27:23.921Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x19b2ed8c error. Code: 7 Message: 7 PERMISSION_DENIED: 
+evaluation error at L721:24 for 'update' @ L721, false for 'update' @ L721
+[2026-10-27T14:27:24.133Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x19b2ed8d error. Code: 7 Message: 7 PERMISSION_DENIED: 
+evaluation error at L739:24 for 'delete' @ L739, false for 'delete' @ L739
+[2026-10-27T14:27:24.153Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x19b2ed8e error. Code: 7 Message: 7 PERMISSION_DENIED: No matching allow statements
+[2026-10-27T14:27:24.164Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x19b2ed86 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'update' @ L684
+[2026-10-27T14:27:24.202Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x19b2ed8f error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'create' @ L682, false for 'update' @ L684
+[2026-10-27T14:27:24.215Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x19b2ed90 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'update' @ L684
+[2026-10-27T14:27:24.262Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x19b2ed91 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+evaluation error at L721:24 for 'update' @ L721, false for 'update' @ L721
+[2026-10-27T14:27:24.301Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x19b2ed92 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+evaluation error at L721:24 for 'update' @ L721, false for 'update' @ L721
+[2026-10-27T14:27:24.328Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x19b2ed93 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+evaluation error at L739:24 for 'delete' @ L739, false for 'delete' @ L739
+[2026-10-27T14:27:24.347Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x19b2ed94 error. Code: 7 Message: 7 PERMISSION_DENIED: No matching allow statements
+[2026-10-27T14:27:24.417Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x19b2ed95 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'update' @ L684
+[2026-10-27T14:27:24.437Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x19b2ed96 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'create' @ L682, false for 'update' @ L684
+[2026-10-27T14:27:24.454Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x19b2ed97 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'update' @ L684
+[2026-10-27T14:27:24.489Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x19b2ed98 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+evaluation error at L721:24 for 'update' @ L721, false for 'update' @ L721
+[2026-10-27T14:27:24.521Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x19b2ed99 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+evaluation error at L721:24 for 'update' @ L721, false for 'update' @ L721
+[2026-10-27T14:27:24.547Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x19b2ed9a error. Code: 7 Message: 7 PERMISSION_DENIED: 
+evaluation error at L739:24 for 'delete' @ L739, false for 'delete' @ L739
+[2026-10-27T14:27:24.564Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x19b2ed9b error. Code: 7 Message: 7 PERMISSION_DENIED: No matching allow statements
+PASS transversal: mesma identidade na jornada, agenda, avaliação, resposta e painel; nota preservada.
+PASS jornada: versões/CAS/validade, contratação única, estados comerciais separados, preparação/início/entrega/aceite/contestação, chat contratado, vínculo legado, mediação e regras.
++  Script exited successfully (code 0)
+i  emulators: Shutting down emulators.
+i  firestore: Stopping Firestore Emulator
+!  Firestore Emulator has exited upon receiving signal: SIGINT
+i  hub: Stopping emulator hub
+i  logging: Stopping Logging Emulator

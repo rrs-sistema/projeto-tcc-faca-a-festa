@@ -112,7 +112,8 @@ void main() {
     expect(c.exportarCsv().split('\n').length, greaterThan(2));
   });
 
-  testWidgets('síntese distingue volume contratado de comissão', (tester) async {
+  testWidgets('síntese distingue volume contratado de comissão',
+      (tester) async {
     final theme = EventThemeController();
     final c = DashboardFinanceiroAdminController(
       consultarFn: ({
@@ -145,6 +146,9 @@ void main() {
     expect(find.text(NumericInput.dinheiro(5000)), findsWidgets);
     expect(find.byTooltip('Copiar CSV'), findsOneWidget);
     expect(find.text('Baixar relatório'), findsNothing);
+    await tester.ensureVisible(find.text('Filtrar consulta'));
+    await tester.tap(find.text('Filtrar consulta'));
+    await tester.pumpAndSettle();
     expect(find.text('Data do evento'), findsWidgets);
     expect(find.textContaining('Recorte pela data do evento'), findsWidgets);
   });

@@ -1,0 +1,18 @@
+00:00 +0: loading D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart
+00:00 +0: (setUpAll)
+00:00 +0: legado separa ganho de entrega e perda não vira contrato
+00:00 +1: reabertura retoma operação sem duplicar contratação
+00:00 +2: intenção de outro atendimento não é executada silenciosamente
+00:00 +3: resultado tardio de consulta não cruza sessão
+00:00 +4: proposta exige revisão humana, versão, preço, desconto e validade
+00:02 +5: compromisso navega preparação, execução, entrega e aceite com mesma identidade
+00:03 +6: cliente aceita exatamente a versão revisada no diálogo; revisão concorrente é rejeitada
+00:03 +7: proposta expirada não oferece aceite e perda não mostra compromisso
+00:03 +8: pós-aceite abre mediação existente sem editar preço contratado
+00:04 +9: troca de sessão descarta formulário e bloqueia comando antigo
+00:04 +10: falha de consulta tem retry sem fabricar compromisso
+00:04 +11: serviço não publicado é identificado sem liberar ações
+00:04 +12: próximo passo e ações legíveis em Size(390.0, 1000.0)
+00:04 +13: próximo passo e ações legíveis em Size(1280.0, 1100.0)
+00:05 +14: (tearDownAll)
+00:05 +14: All tests passed!

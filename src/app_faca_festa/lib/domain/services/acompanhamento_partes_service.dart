@@ -58,16 +58,14 @@ class VisaoOrganizadorContrato {
         codigo: (pp['codigo'] ?? '').toString(),
         rotulo: (pp['rotulo'] ?? '').toString(),
         responsavel: pp['responsavel']?.toString(),
-        ehPendenciaConfiguracao:
-            pp['ehPendenciaConfiguracao'] == true ||
-                pp['eh_pendencia_configuracao'] == true,
+        ehPendenciaConfiguracao: pp['ehPendenciaConfiguracao'] == true ||
+            pp['eh_pendencia_configuracao'] == true,
       );
     }
     return VisaoOrganizadorContrato(
       idContrato: (m['idContrato'] ?? m['id_contrato'] ?? '').toString(),
       idOrcamento: (m['idOrcamento'] ?? m['id_orcamento'] ?? '').toString(),
-      nomeFornecedor:
-          (m['nomeFornecedor'] ?? m['nome_fornecedor'])?.toString(),
+      nomeFornecedor: (m['nomeFornecedor'] ?? m['nome_fornecedor'])?.toString(),
       nomeServico: (m['nomeServico'] ?? m['nome_servico'])?.toString(),
       valorContratadoCentavos:
           c(m['valorContratadoCentavos'] ?? m['valor_contratado_centavos']),
@@ -77,8 +75,9 @@ class VisaoOrganizadorContrato {
           .toString(),
       valorDeclaradoCentavos:
           c(m['valorDeclaradoCentavos'] ?? m['valor_declarado_centavos']),
-      valorConfirmadoCentavos: c(m['valorConfirmadoPlataformaAlocadoCentavos'] ??
-          m['valor_confirmado_plataforma_alocado_centavos']),
+      valorConfirmadoCentavos: c(
+          m['valorConfirmadoPlataformaAlocadoCentavos'] ??
+              m['valor_confirmado_plataforma_alocado_centavos']),
       aPagarCentavos:
           c(m['aPagarPlataformaCentavos'] ?? m['a_pagar_plataforma_centavos']),
       estadoExecucao:
@@ -106,11 +105,17 @@ class VisaoFornecedorContrato {
     required this.estadoExecucao,
     required this.pendencias,
     required this.proximoPasso,
+    this.saldoContratoCentavos,
+    this.recebimentoProprioCentavos = 0,
+    this.repasseAutorizadoCentavos = 0,
     this.nomeEvento,
     this.nomeContratante,
     this.nomeServico,
   });
 
+  final int? saldoContratoCentavos;
+  final int recebimentoProprioCentavos;
+  final int repasseAutorizadoCentavos;
   final String idContrato;
   final String idOrcamento;
   final String? nomeEvento;
@@ -141,13 +146,17 @@ class VisaoFornecedorContrato {
         codigo: (pp['codigo'] ?? '').toString(),
         rotulo: (pp['rotulo'] ?? '').toString(),
         responsavel: pp['responsavel']?.toString(),
-        ehPendenciaConfiguracao:
-            pp['ehPendenciaConfiguracao'] == true ||
-                pp['eh_pendencia_configuracao'] == true,
+        ehPendenciaConfiguracao: pp['ehPendenciaConfiguracao'] == true ||
+            pp['eh_pendencia_configuracao'] == true,
       );
     }
     final pend = m['pendencias'];
     return VisaoFornecedorContrato(
+      saldoContratoCentavos: m['saldoContratoCentavos'] is num
+          ? (m['saldoContratoCentavos'] as num).toInt()
+          : null,
+      recebimentoProprioCentavos: c(m['recebimentoProprioCentavos']),
+      repasseAutorizadoCentavos: c(m['repasseAutorizadoCentavos']),
       idContrato: (m['idContrato'] ?? m['id_contrato'] ?? '').toString(),
       idOrcamento: (m['idOrcamento'] ?? m['id_orcamento'] ?? '').toString(),
       nomeEvento: (m['nomeEvento'] ?? m['nome_evento'])?.toString(),
@@ -158,12 +167,12 @@ class VisaoFornecedorContrato {
           c(m['valorContratadoCentavos'] ?? m['valor_contratado_centavos']),
       direitoLiquidoCentavos: c(m['direitoLiquidoPrevistoCentavos'] ??
           m['direito_liquido_previsto_centavos']),
-      comissaoPrevistaCentavos: c(
-          m['comissaoPrevistaCentavos'] ?? m['comissao_prevista_centavos']),
+      comissaoPrevistaCentavos:
+          c(m['comissaoPrevistaCentavos'] ?? m['comissao_prevista_centavos']),
       alocadoPlataformaCentavos: c(m['recebidoPlataformaAlocadoCentavos'] ??
           m['recebido_plataforma_alocado_centavos']),
-      repasseConfirmadoCentavos: c(
-          m['repasseConfirmadoCentavos'] ?? m['repasse_confirmado_centavos']),
+      repasseConfirmadoCentavos:
+          c(m['repasseConfirmadoCentavos'] ?? m['repasse_confirmado_centavos']),
       saldoPrevistoRepasseCentavos: c(m['saldoPrevistoRepasseCentavos'] ??
           m['saldo_previsto_repasse_centavos']),
       trataAlocadoComoCaixaProprio: m['trataAlocadoComoCaixaProprio'] == true,
@@ -204,8 +213,7 @@ class AcompanhamentoPartesService {
         estado != 'entrega_informada';
   }
 
-  bool podeAceitarOuContestar(String estado) =>
-      estado == 'entrega_informada';
+  bool podeAceitarOuContestar(String estado) => estado == 'entrega_informada';
 
   /// Cenário Ana × Débora (aceite).
   Map<String, Object?> cenarioAnaDebora({

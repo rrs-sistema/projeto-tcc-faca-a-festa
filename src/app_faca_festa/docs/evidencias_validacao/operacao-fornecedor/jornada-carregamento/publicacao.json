@@ -1,0 +1,11 @@
+{
+  "data": "2026-10-27",
+  "projeto": "faca-a-festa",
+  "regiao": "southamerica-east1",
+  "operacao": "functions:list somente leitura",
+  "functions": {
+    "consultarJornadaAtendimentoFn": false,
+    "movimentarComercialJornadaFn": false,
+    "executarJornadaAtendimentoFn": false
+  }
+}

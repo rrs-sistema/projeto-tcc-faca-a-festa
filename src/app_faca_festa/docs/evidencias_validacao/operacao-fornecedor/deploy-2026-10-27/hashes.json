@@ -1,0 +1,12 @@
+[
+  {
+    "Algorithm": "SHA256",
+    "Hash": "CB94816E568B10501B9B87047C0993C4B5648900AE42C84CC5D04AAC6DA267D7",
+    "Path": "D:\\repository\\unicesumar\\tcc\\app\\src\\app_faca_festa\\firestore.rules"
+  },
+  {
+    "Algorithm": "SHA256",
+    "Hash": "D958307E5EBF6E2A891DF2C03DA1750FC4AFD8D294A646650641F69F63336C34",
+    "Path": "D:\\repository\\unicesumar\\tcc\\app\\src\\app_faca_festa\\functions\\lib\\index.js"
+  }
+]

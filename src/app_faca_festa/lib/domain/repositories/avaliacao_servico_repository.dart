@@ -2,6 +2,10 @@ import '../entities/avaliacao.dart';
 import '../entities/avaliacao_servico.dart';
 
 abstract class AvaliacaoServicoRepository {
+  Future<List<Map<String, dynamic>>> contratosAvaliaveis(
+      {required String idFornecedor,
+      required String idEvento,
+      String? idServico});
   Stream<List<AvaliacaoServico>> observarAvaliacoesServico({
     required String idFornecedor,
     required String idServico,
@@ -21,6 +25,7 @@ abstract class AvaliacaoServicoRepository {
     required String comentario,
     String? idEvento,
     String? nomeEvento,
+    String? idOrcamento,
   });
 
   Stream<List<Avaliacao>> observarAvaliacoesFornecedor(
@@ -35,6 +40,7 @@ abstract class AvaliacaoServicoRepository {
     required String comentario,
     String? idEvento,
     String? nomeEvento,
+    String? idOrcamento,
   });
 
   Future<bool> podeAvaliarFornecedor({

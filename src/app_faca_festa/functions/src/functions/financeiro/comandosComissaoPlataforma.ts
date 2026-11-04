@@ -1,3 +1,5 @@
+import { centavosDeOrcamento } from "../../services/financeiro/dashboardAdminService";
+import { contratado } from "../../services/financeiro/liberacaoRepasseService";
 import { FieldValue } from "firebase-admin/firestore";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { randomUUID } from "crypto";
@@ -20,6 +22,12 @@ import {
   simular,
   validarPercentualBps,
 } from "../../services/financeiro/comissaoPlataformaService";
+
+async function referenciasContrato(tx: FirebaseFirestore.Transaction, db: FirebaseFirestore.Firestore, id: string) {
+  const direto = await tx.get(db.collection("orcamento").doc(id));
+  const espelhos = await tx.get(db.collection("orcamento").where("contrato_financeiro.id_contrato", "==", id));
+  return [...new Map([...(direto.exists ? [direto] : []), ...espelhos.docs].map(d => [d.id,d.ref])).values()];
+}
 
 const REGION = "southamerica-east1";
 const COL_POLITICAS = "plataforma_comissao_politicas";
@@ -283,6 +291,12 @@ export const gerarObrigacaoComissao = onCall(
       throw new HttpsError("permission-denied", "Sem permissão para gerar comissão.");
     }
     const data = (request.data ?? {}) as Record<string, unknown>;
+    const idContrato = texto(data.idContrato ?? data.id_contrato);
+    if (!idContrato) throw new HttpsError("invalid-argument", "Informe o contrato.");
+    const contrato = await admin.firestore().collection("orcamento").doc(idContrato).get();
+    if (perfil.tipo !== "A" && contrato.data()?.id_fornecedor !== perfil.uid) {
+      throw new HttpsError("permission-denied", "Comissão de outro fornecedor.");
+    }
     return gerarObrigacaoInterno(perfil.uid, data);
   },
 );
@@ -312,6 +326,9 @@ async function gerarObrigacaoInterno(
       const existente = await tx.get(obrRef);
       if (existente.exists) {
         const o = mapObrigacao(existente.id, existente.data()!);
+        if (o.idContrato !== idContrato || o.idEvento !== idEvento) {
+          throw new HttpsError("already-exists", "Chave já utilizada para outra contratação.");
+        }
         return {
           ok: true,
           idObrigacao: o.id,
@@ -330,6 +347,22 @@ async function gerarObrigacaoInterno(
         );
       }
       const politica = mapPolitica(polSnap.docs[0].id, polSnap.docs[0].data());
+      const contratoSnap = await tx.get(db.collection("orcamento").doc(idContrato));
+      const contrato = contratoSnap.data() ?? {};
+      if (!contratoSnap.exists || !contratado(contrato) || contrato.id_evento !== idEvento ||
+          centavosDeOrcamento(contrato).contratado !== base || !contrato.id_fornecedor) {
+        throw new HttpsError("failed-precondition", "Comissão exige contratação confirmada e valor correspondente ao contrato.");
+      }
+      if (data.automatico === true && politica.gatilho !== "contratacao_confirmada") {
+        throw new HttpsError("failed-precondition", "Comissão depende do gatilho definido na política.");
+      }
+      if (politica.gatilho === "evento_realizado") {
+        const evento = await tx.get(db.collection("evento").doc(idEvento));
+        if (evento.data()?.status !== "finalizado") throw new HttpsError("failed-precondition", "Comissão será gerada após o evento finalizado.");
+      }
+      const evento = await tx.get(db.collection("evento").doc(idEvento));
+      const pagador = politica.pagador === "fornecedor" ? contrato.id_fornecedor :
+        politica.pagador === "organizador" ? (evento.data()?.id_usuario || evento.data()?.idUsuario) : null;
       const obr = gerarObrigacao({
         politica,
         idObrigacao: chave,
@@ -338,13 +371,14 @@ async function gerarObrigacaoInterno(
         baseBrutaCentavos: base,
         descontosCentavos: Number(data.descontosCentavos ?? data.descontos_centavos ?? 0),
         exclusoesCentavos: Number(data.exclusoesCentavos ?? data.exclusoes_centavos ?? 0),
-        idPagador: texto(data.idPagador ?? data.id_pagador) || undefined,
-        idFornecedor: texto(data.idFornecedor ?? data.id_fornecedor) || undefined,
+        idPagador: pagador,
+        idFornecedor: contrato.id_fornecedor,
       });
 
       const venc = new Date();
       venc.setDate(venc.getDate() + politica.diasVencimentoAposGeracao);
 
+      tx.update(contratoSnap.ref, {repasse_revisao:FieldValue.increment(1)});
       tx.set(obrRef, {
         ...persistObrigacao(obr),
         status: "a_vencer",
@@ -389,7 +423,9 @@ export const liquidarComissaoManual = onCall(
           throw new HttpsError("not-found", "Obrigação não encontrada.");
         }
         const atual = mapObrigacao(obrSnap.id, obrSnap.data()!);
+        const referencias = await referenciasContrato(tx, db, atual.idContrato);
         const nova = liquidarManual(atual, valor);
+        for (const ref of referencias) tx.update(ref, {repasse_revisao:FieldValue.increment(1)});
         tx.update(
           obrRef,
           persistObrigacao(nova) as FirebaseFirestore.UpdateData<FirebaseFirestore.DocumentData>,
@@ -458,7 +494,9 @@ export const registrarAjusteComissao = onCall(
         const rev = (atual.politicaAplicada.reversao as "proporcional" | "nenhuma" | "manual") ||
           "proporcional";
         const ajuste = ajustePorReducaoElegivel(bps, reducao, rev);
+        const referencias = await referenciasContrato(tx, db, atual.idContrato);
         const nova = aplicarAjuste(atual, ajuste.ajusteCentavos);
+        for (const ref of referencias) tx.update(ref, {repasse_revisao:FieldValue.increment(1)});
         tx.update(obrRef, persistObrigacao(nova) as FirebaseFirestore.UpdateData<FirebaseFirestore.DocumentData>);
         tx.set(ajRef, {
           schema: 1,
@@ -511,7 +549,7 @@ export const consultarExtratoComissao = onCall(
     return {
       ok: true,
       modo: acesso.modo,
-      obrigacoes: snap.docs.map((d) => ({ id: d.id, ...d.data() })),
+      obrigacoes: snap.docs.map((d) => ({ id: d.id, ...d.data(), revisaoComissao:d.updateTime.toDate().toISOString() })),
       politicas,
     };
   },
@@ -528,6 +566,7 @@ export async function tentarGerarComissaoAposContratacao(params: {
 }): Promise<void> {
   try {
     await gerarObrigacaoInterno(params.autorId, {
+      automatico: true,
       idEvento: params.idEvento,
       idContrato: params.idContrato,
       baseBrutaCentavos: params.baseBrutaCentavos,

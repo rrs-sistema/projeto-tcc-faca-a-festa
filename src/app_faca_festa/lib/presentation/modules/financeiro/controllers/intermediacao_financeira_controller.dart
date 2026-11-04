@@ -219,17 +219,31 @@ class IntermediacaoFinanceiraController extends GetxController {
     }
   }
 
-  static int _int(dynamic v, {int padrao = 0}) =>
-      v is num ? v.toInt() : padrao;
+  static int _int(dynamic v, {int padrao = 0}) => v is num ? v.toInt() : padrao;
 
-  Future<bool> confirmarRepasse(String idRepasse) async {
+  Future<void> cancelarRepasse(String id) async {
+    if (enviando.value) return;
+    enviando.value = true;
+    erro.value = '';
+    try {
+      await remote.cancelarRepasse(id);
+      await carregarExtrato(idEvento.value);
+    } catch (e) {
+      erro.value = e.toString();
+    } finally {
+      enviando.value = false;
+    }
+  }
+
+  Future<bool> confirmarRepasse(String idRepasse,
+      {required String evidencias}) async {
     if (enviando.value) return false;
     enviando.value = true;
     erro.value = '';
     try {
       await remote.confirmarRepasseManual(
         idRepasse: idRepasse,
-        evidencias: 'Conferência manual — sem transferência bancária integrada.',
+        evidencias: evidencias,
       );
       await carregarExtrato(idEvento.value);
       return true;

@@ -5,8 +5,8 @@ assert.deepEqual(resumirAvaliacoes([]), {
   totalAvaliacoes: 0, mediaFornecedores: null,
 });
 assert.deepEqual(resumirAvaliacoes([
-  { media_avaliacoes: 5, total_avaliacoes: 2 },
-  { mediaAvaliacoes: 3, totalAvaliacoes: 6 },
+  { reputacao_verificada:{schema:2,media:5,quantidade:2} },
+  { reputacao_verificada:{schema:2,media:3,quantidade:6} },
 ]), { totalAvaliacoes: 8, mediaFornecedores: 3.5 });
 assert.deepEqual(resumirAvaliacoes([
   { media_avaliacoes: 6, total_avaliacoes: 10 },

@@ -1,0 +1,14 @@
+{
+  "buildConfig": {
+    "runtime": "nodejs22"
+  },
+  "name": "projects/faca-a-festa/locations/southamerica-east1/functions/consultarResumoFinanceiroFornecedor",
+  "serviceConfig": {
+    "availableMemory": "256Mi",
+    "maxInstanceCount": 20,
+    "maxInstanceRequestConcurrency": 80,
+    "timeoutSeconds": 60
+  },
+  "state": "ACTIVE",
+  "updateTime": "2026-10-27T15:03:16.420772909Z"
+}

@@ -1,3 +1,5 @@
+import 'package:firebase_auth/firebase_auth.dart';
+import '../../services/stream_da_sessao.dart';
 import 'dart:async';
 import 'dart:typed_data';
 
@@ -458,13 +460,16 @@ class FirebaseFornecedorRemoteDatasource implements FornecedorRemoteDatasource {
         cotacoesSub = firestore
             .collectionGroup('fornecedores')
             .where('id_fornecedor', isEqualTo: id)
-            .snapshots()
+            .snapshots(includeMetadataChanges: true)
+            .where((snapshot) => !snapshot.metadata.isFromCache)
             .listen((fornecedorSnap) {
           final cotacoesAtuais = <String>{};
 
           for (final f in fornecedorSnap.docs) {
             final cotacaoRef = f.reference.parent.parent;
-            if (cotacaoRef == null) continue;
+            if (cotacaoRef == null || cotacaoRef.parent.id != 'cotacao') {
+              continue;
+            }
 
             final idCotacao = cotacaoRef.id;
             cotacoesAtuais.add(idCotacao);
@@ -475,11 +480,15 @@ class FirebaseFornecedorRemoteDatasource implements FornecedorRemoteDatasource {
                 .collection('fornecedores')
                 .doc(id)
                 .collection('mensagens')
-                .where('id_usuario', isNotEqualTo: id)
-                .where('lido', isEqualTo: false)
-                .snapshots()
+                .snapshots(includeMetadataChanges: true)
+                .where((snapshot) => !snapshot.metadata.isFromCache)
                 .listen((msgSnap) {
-              contadores[idCotacao] = msgSnap.docs.length;
+              contadores[idCotacao] = msgSnap.docs
+                  .where((m) =>
+                      m.data()['lido'] != true &&
+                      m.data()['id_usuario'] != id &&
+                      m.data()['id_usuario'] != 'sistema')
+                  .length;
               emitirTotal();
             }, onError: controller.addError);
           }
@@ -500,7 +509,12 @@ class FirebaseFornecedorRemoteDatasource implements FornecedorRemoteDatasource {
       },
     );
 
-    return controller.stream;
+    return streamDaSessao(
+      fonte: controller.stream,
+      identidade: FirebaseAuth.instance.currentUser?.uid,
+      sessoes: FirebaseAuth.instance.authStateChanges().map((u) => u?.uid),
+      vazio: 0,
+    );
   }
 
   @override
@@ -623,7 +637,7 @@ class FirebaseFornecedorRemoteDatasource implements FornecedorRemoteDatasource {
 
     for (final doc in snapshot.docs) {
       final cotacaoRef = doc.reference.parent.parent;
-      if (cotacaoRef == null) continue;
+      if (cotacaoRef == null || cotacaoRef.parent.id != 'cotacao') continue;
 
       final cotacaoSnap = await cotacaoRef.get();
       if (!cotacaoSnap.exists) continue;
@@ -643,6 +657,8 @@ class FirebaseFornecedorRemoteDatasource implements FornecedorRemoteDatasource {
   Future<FornecedorEstatisticasModel> carregarEstatisticas(
     String idFornecedor,
   ) async {
+    final sessao = FirebaseAuth.instance.currentUser?.uid;
+    if (sessao != idFornecedor) throw StateError('Sessão inválida.');
     final orcSnap = await firestore
         .collection('orcamento')
         .where('id_fornecedor', isEqualTo: idFornecedor)
@@ -659,25 +675,30 @@ class FirebaseFornecedorRemoteDatasource implements FornecedorRemoteDatasource {
         .where('ativo', isEqualTo: true)
         .get();
 
-    final msgSnap = await firestore
-        .collectionGroup('mensagens')
-        .where('id_fornecedor', isEqualTo: idFornecedor)
-        .where('lida', isEqualTo: false)
-        .get();
-
-    final avalSnap = await firestore
-        .collection('avaliacoes')
+    // Consulta cada conversa autorizada; mensagens não têm leitura global.
+    final participacoes = await firestore
+        .collectionGroup('fornecedores')
         .where('id_fornecedor', isEqualTo: idFornecedor)
         .get();
-
-    var media = 0.0;
-    if (avalSnap.docs.isNotEmpty) {
-      final soma = avalSnap.docs
-          .map((d) => (d.data()['nota'] as num?)?.toDouble() ?? 0.0)
-          .fold<double>(0, (total, nota) => total + nota);
-      media = soma / avalSnap.docs.length;
+    var naoLidas = 0;
+    for (final p in participacoes.docs) {
+      if (p.reference.parent.parent?.parent.id != 'cotacao') continue;
+      final mensagens = await p.reference.collection('mensagens').get();
+      naoLidas += mensagens.docs
+          .where((m) =>
+              m.data()['lido'] != true &&
+              m.data()['id_usuario'] != idFornecedor &&
+              m.data()['id_usuario'] != 'sistema')
+          .length;
     }
 
+    final reputacaoSnap = await firestore.collection('fornecedor').doc(idFornecedor).get();
+    final reputacao = reputacaoSnap.data()?['reputacao_verificada'];
+    final media = reputacao is Map && reputacao['schema'] == 2 ? (reputacao['media'] as num).toDouble() : 0.0;
+
+    if (FirebaseAuth.instance.currentUser?.uid != sessao) {
+      throw StateError('Sessão alterada.');
+    }
     return FornecedorEstatisticasModel(
       solicitacoesPendentes: pendentes,
       servicosAtivos: servSnap.docs
@@ -688,7 +709,7 @@ class FirebaseFornecedorRemoteDatasource implements FornecedorRemoteDatasource {
             }),
           )
           .toList(),
-      mensagensNaoLidas: msgSnap.docs.length,
+      mensagensNaoLidas: naoLidas,
       avaliacaoMedia: media,
     );
   }

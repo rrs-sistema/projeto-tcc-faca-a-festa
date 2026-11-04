@@ -13,6 +13,16 @@ class AvaliacaoServicoController extends GetxController {
   }) : _avaliacoes = avaliacoes;
 
   final GerenciarAvaliacoesServico _avaliacoes;
+  Future<List<Map<String, dynamic>>> contratosAvaliaveis(
+          {required String idFornecedor,
+          required String idEvento,
+          String? idServico}) =>
+      _avaliacoes.repository.contratosAvaliaveis(
+          idFornecedor: idFornecedor, idEvento: idEvento, idServico: idServico);
+  int get quantidadeFornecedorVerificada =>
+      avaliacoesFornecedor.where((a) => a.verificada).length;
+  int get quantidadeServicoVerificada =>
+      avaliacoesServico.where((a) => a.verificada).length;
   StreamSubscription<List<AvaliacaoServico>>? _avaliacoesServicoSub;
   StreamSubscription<List<Avaliacao>>? _avaliacoesFornecedorSub;
 
@@ -21,18 +31,23 @@ class AvaliacaoServicoController extends GetxController {
 
   final RxList<Avaliacao> avaliacoesFornecedor = <Avaliacao>[].obs;
   final RxDouble mediaFornecedor = 0.0.obs;
+  final fornecedorCarregado = false.obs;
+  final erroAvaliacoes = ''.obs;
 
   /// Controle se o organizador pode avaliar ou não
   final permitidoAvaliarFornecedor = false.obs;
 
   // ======================================================
   // 1) CARREGAR AVALIAÇÕES DO SERVIÇO
-  //    /fornecedor_servico/{idFornecedor}_{idServico}/avaliacoes
+  //    Canônico: /fornecedor/{idFornecedor}/avaliacoes, tipo servico
   // ======================================================
   Future<void> carregarAvaliacoesServico({
     required String idFornecedor,
     required String idServico,
   }) async {
+    avaliacoesServico.clear();
+    mediaServico.value = 0;
+    erroAvaliacoes.value = '';
     await _avaliacoesServicoSub?.cancel();
     _avaliacoesServicoSub = _avaliacoes
         .observarAvaliacoesServico(
@@ -42,6 +57,10 @@ class AvaliacaoServicoController extends GetxController {
         .listen((lista) {
       avaliacoesServico.value = lista;
       _calcularMediaServico();
+    }, onError: (Object e) {
+      avaliacoesServico.clear();
+      mediaServico.value = 0;
+      erroAvaliacoes.value = 'Avaliações indisponíveis. Tente novamente.';
     });
   }
 
@@ -51,12 +70,14 @@ class AvaliacaoServicoController extends GetxController {
       return;
     }
 
-    final total = avaliacoesServico.fold<double>(
-      0.0,
-      (s, item) => s + item.nota,
-    );
+    final total = avaliacoesServico.where((a) => a.verificada).fold<double>(
+          0.0,
+          (s, item) => s + item.nota,
+        );
 
-    mediaServico.value = total / avaliacoesServico.length;
+    mediaServico.value = quantidadeServicoVerificada == 0
+        ? 0
+        : total / quantidadeServicoVerificada;
   }
 
   Future<double> getMediaServico({
@@ -78,6 +99,7 @@ class AvaliacaoServicoController extends GetxController {
     required String comentario,
     String? idEvento,
     String? nomeEvento,
+    String? idOrcamento,
   }) async {
     await _avaliacoes.adicionarAvaliacaoServico(
       idFornecedor: idFornecedor,
@@ -88,6 +110,7 @@ class AvaliacaoServicoController extends GetxController {
       comentario: comentario,
       idEvento: idEvento,
       nomeEvento: nomeEvento,
+      idOrcamento: idOrcamento,
     );
   }
 
@@ -96,11 +119,21 @@ class AvaliacaoServicoController extends GetxController {
   //    /fornecedor/{idFornecedor}/avaliacoes
   // ======================================================
   Future<void> carregarAvaliacoesFornecedor(String idFornecedor) async {
+    fornecedorCarregado.value = false;
+    erroAvaliacoes.value = '';
+    avaliacoesFornecedor.clear();
+    mediaFornecedor.value = 0;
     await _avaliacoesFornecedorSub?.cancel();
     _avaliacoesFornecedorSub =
         _avaliacoes.observarAvaliacoesFornecedor(idFornecedor).listen((lista) {
+      fornecedorCarregado.value = true;
       avaliacoesFornecedor.value = lista;
       _calcularMediaFornecedor();
+    }, onError: (Object e) {
+      fornecedorCarregado.value = false;
+      avaliacoesFornecedor.clear();
+      mediaFornecedor.value = 0;
+      erroAvaliacoes.value = 'Avaliações indisponíveis. Tente novamente.';
     });
   }
 
@@ -110,12 +143,14 @@ class AvaliacaoServicoController extends GetxController {
       return;
     }
 
-    final total = avaliacoesFornecedor.fold<double>(
-      0.0,
-      (s, item) => s + item.nota,
-    );
+    final total = avaliacoesFornecedor.where((a) => a.verificada).fold<double>(
+          0.0,
+          (s, item) => s + item.nota,
+        );
 
-    mediaFornecedor.value = total / avaliacoesFornecedor.length;
+    mediaFornecedor.value = quantidadeFornecedorVerificada == 0
+        ? 0
+        : total / quantidadeFornecedorVerificada;
   }
 
   Future<void> adicionarAvaliacaoFornecedor({
@@ -126,6 +161,7 @@ class AvaliacaoServicoController extends GetxController {
     required String comentario,
     String? idEvento,
     String? nomeEvento,
+    String? idOrcamento,
   }) async {
     await _avaliacoes.adicionarAvaliacaoFornecedor(
       idFornecedor: idFornecedor,
@@ -135,6 +171,7 @@ class AvaliacaoServicoController extends GetxController {
       comentario: comentario,
       idEvento: idEvento,
       nomeEvento: nomeEvento,
+      idOrcamento: idOrcamento,
     );
   }
 

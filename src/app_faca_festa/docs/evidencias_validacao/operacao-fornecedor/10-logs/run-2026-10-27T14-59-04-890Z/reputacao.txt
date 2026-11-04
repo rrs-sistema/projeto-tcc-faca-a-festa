@@ -1,0 +1,24 @@
+Error: 3 INVALID_ARGUMENT: Transaction is invalid or closed.
+    at callErrorFromStatus (D:\repository\unicesumar\tcc\app\src\app_faca_festa\functions\node_modules\@grpc\grpc-js\build\src\call.js:32:19)
+    at Object.onReceiveStatus (D:\repository\unicesumar\tcc\app\src\app_faca_festa\functions\node_modules\@grpc\grpc-js\build\src\client.js:359:73)
+    at Object.onReceiveStatus (D:\repository\unicesumar\tcc\app\src\app_faca_festa\functions\node_modules\@grpc\grpc-js\build\src\client-interceptors.js:327:181)
+    at D:\repository\unicesumar\tcc\app\src\app_faca_festa\functions\node_modules\@grpc\grpc-js\build\src\resolving-call.js:135:78
+    at process.processTicksAndRejections (node:internal/process/task_queues:84:11)
+for call at
+    at ServiceClientImpl.makeServerStreamRequest (D:\repository\unicesumar\tcc\app\src\app_faca_festa\functions\node_modules\@grpc\grpc-js\build\src\client.js:342:32)
+    at ServiceClientImpl.<anonymous> (D:\repository\unicesumar\tcc\app\src\app_faca_festa\functions\node_modules\@grpc\grpc-js\build\src\make-client.js:105:19)
+    at D:\repository\unicesumar\tcc\app\src\app_faca_festa\functions\node_modules\@google-cloud\firestore\build\src\v1\firestore_client.js:242:33
+    at D:\repository\unicesumar\tcc\app\src\app_faca_festa\functions\node_modules\google-gax\build\src\streamingCalls\streamingApiCaller.js:38:28
+    at D:\repository\unicesumar\tcc\app\src\app_faca_festa\functions\node_modules\google-gax\build\src\normalCalls\timeout.js:44:16
+    at Object.request (D:\repository\unicesumar\tcc\app\src\app_faca_festa\functions\node_modules\google-gax\build\src\streamingCalls\streaming.js:234:40)
+    at Timeout.makeRequest [as _onTimeout] (D:\repository\unicesumar\tcc\app\src\app_faca_festa\functions\node_modules\retry-request\index.js:159:28)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7) {
+  code: 3,
+  details: 'Transaction is invalid or closed.',
+  metadata: Metadata {
+    internalRepr: Map(1) { 'content-type' => [Array] },
+    opaqueData: Map(0) {},
+    options: {}
+  }
+}

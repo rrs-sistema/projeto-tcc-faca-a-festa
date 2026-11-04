@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:cloud_functions/cloud_functions.dart';
+import '../../services/consultas_em_andamento.dart';
 
 import 'package:app_faca_festa/data/services/functions/callable_https_client.dart';
 import 'package:app_faca_festa/data/services/functions/financeiro_callable_gateway.dart';
@@ -15,6 +17,8 @@ class FinanceiroFornecedorRemoteDatasource {
             );
 
   final FinanceiroCallableGateway _gateway;
+  final _consultas = ConsultasEmAndamento<Map<String, dynamic>>();
+  static const timeoutConsulta = Duration(seconds: 30);
 
   Future<Map<String, dynamic>> consultarResumo({
     required String idFornecedor,
@@ -24,20 +28,24 @@ class FinanceiroFornecedorRemoteDatasource {
     double? taxas,
     double? tributos,
   }) {
-    // Timeout curto: a tela não deve ficar bloqueada em cold start longo.
-    return _gateway.call(
-      'consultarResumoFinanceiroFornecedor',
-      {
-        'idFornecedor': idFornecedor,
-        if (idEvento != null) 'idEvento': idEvento,
-        if (saldoInicial != null) 'saldoInicial': saldoInicial,
-        if (comissao != null) 'comissao': comissao,
-        if (taxas != null) 'taxas': taxas,
-        if (tributos != null) 'tributos': tributos,
-      },
-      const Duration(seconds: 15),
-    );
+    final dados = {
+      'idFornecedor': idFornecedor,
+      if (idEvento != null) 'idEvento': idEvento,
+      if (saldoInicial != null) 'saldoInicial': saldoInicial,
+      if (comissao != null) 'comissao': comissao,
+      if (taxas != null) 'taxas': taxas,
+      if (tributos != null) 'tributos': tributos,
+    };
+    return _consultas.executar(
+        jsonEncode(dados),
+        () => _gateway.call(
+            'consultarResumoFinanceiroFornecedor', dados, timeoutConsulta));
   }
+
+  /// Compatibilidade com resumos publicados antes de incluírem os eventos.
+  /// A consulta usa o planejamento autorizado da própria sessão do fornecedor.
+  Future<Map<String, dynamic>> consultarEventosDoPlanejamento() =>
+      _gateway.call('consultarPlanejamentoFornecedorFn', {}, timeoutConsulta);
 
   Future<Map<String, dynamic>> registrarCusto({
     required String idFornecedor,
@@ -69,8 +77,19 @@ class FinanceiroFornecedorRemoteDatasource {
       if (idServico != null) 'idServico': idServico,
       if (referenciaComprovante != null)
         'referenciaComprovante': referenciaComprovante,
-    });
+    }).whenComplete(_consultas.invalidar);
   }
+
+  Future<Map<String, dynamic>> consultarOperacaoRecebimento({
+    required String idFornecedor,
+    required String chaveIdempotencia,
+    required Map<String, dynamic> pedido,
+  }) =>
+      _gateway.call('consultarOperacaoRecebimentoFornecedor', {
+        'idFornecedor': idFornecedor,
+        'chaveIdempotencia': chaveIdempotencia,
+        'pedido': pedido,
+      });
 
   Future<Map<String, dynamic>> registrarRecebimento({
     required String idFornecedor,
@@ -80,6 +99,8 @@ class FinanceiroFornecedorRemoteDatasource {
     String tipo = 'recebimento',
     bool execucaoConfirmada = false,
     String? idOrcamento,
+    List<Map<String, dynamic>>? alocacoes,
+    String? referenciaRecebimento,
     String? motivo,
   }) {
     return _gateway.call('registrarRecebimentoFornecedor', {
@@ -90,7 +111,10 @@ class FinanceiroFornecedorRemoteDatasource {
       'tipo': tipo,
       'execucaoConfirmada': execucaoConfirmada,
       if (idOrcamento != null) 'idOrcamento': idOrcamento,
+      if (alocacoes != null) 'alocacoes': alocacoes,
+      if (referenciaRecebimento != null)
+        'referenciaRecebimento': referenciaRecebimento,
       if (motivo != null) 'motivo': motivo,
-    });
+    }).whenComplete(_consultas.invalidar);
   }
 }

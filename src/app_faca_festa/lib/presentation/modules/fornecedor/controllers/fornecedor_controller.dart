@@ -1,3 +1,4 @@
+import 'dart:async';
 // ================================
 // 🔹 Controller reativo GetX
 // ================================
@@ -100,8 +101,11 @@ class FornecedorController extends GetxController {
       erro: erro,
       usecase: () => _fornecedores,
       usuarioEhFornecedor: _usuarioLogadoEhFornecedor,
+      usuarioAtual: () =>
+          _resolverAppController()?.usuarioLogado.value?.idUsuario,
       aoAtualizar: (atualizado) {
         if (atualizado.aptoParaOperar) {
+          unawaited(escutarServicosFornecedor(atualizado.idFornecedor));
           ai.carregarAiDasSolicitacoesPendentes();
         } else {
           ai.limparAiFornecedor();

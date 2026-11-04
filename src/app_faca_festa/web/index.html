@@ -49,12 +49,18 @@
   <div id="boot">
     <div class="spin"></div>
     <div>Faça a Festa</div>
-    <div id="boot-msg" style="margin-top:8px;font-size:14px;">Abrindo seu convite...</div>
+    <div id="boot-msg" style="margin-top:8px;font-size:14px;">Iniciando o Faça a Festa...</div>
   </div>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then(function (regs) {
-        for (var i = 0; i < regs.length; i++) regs[i].unregister();
+        for (var i = 0; i < regs.length; i++) {
+          // Remove somente o cache Flutter legado; preserva o worker de push.
+          var worker = regs[i].active || regs[i].waiting || regs[i].installing;
+          if (worker && new URL(worker.scriptURL).pathname.endsWith('/flutter_service_worker.js')) {
+            regs[i].unregister();
+          }
+        }
       });
     }
     function removeBoot() {

@@ -1,0 +1,133 @@
+00:00 +0: loading D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/painel_operacional_test.dart
+00:00 +0: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/painel_operacional_test.dart: (setUpAll)
+00:00 +0: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/painel_operacional_test.dart: última leitura fica desatualizada após cinco minutos e falha não inventa total
+00:00 +1: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/painel_operacional_test.dart: resultado de sessão anterior é descartado
+00:00 +2: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/painel_operacional_test.dart: fachada antiga não sobrescreve estatística da nova sessão
+00:00 +3: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/painel_operacional_test.dart: média com amostra convive com espera de 64h e clique/teclado abre registro certo
+00:01 +4: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/painel_operacional_test.dart: média com amostra convive com espera de 64h e clique/teclado abre registro certo
+00:01 +5: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/painel_operacional_test.dart: média com amostra convive com espera de 64h e clique/teclado abre registro certo
+00:01 +6: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/painel_operacional_test.dart: média com amostra convive com espera de 64h e clique/teclado abre registro certo
+00:01 +7: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/painel_operacional_test.dart: média com amostra convive com espera de 64h e clique/teclado abre registro certo
+00:01 +8: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/painel_operacional_test.dart: média com amostra convive com espera de 64h e clique/teclado abre registro certo
+00:02 +9: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/visao_restaurada_test.dart: visão rica resiste à falha consolidada em 360.0
+00:03 +10: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/visao_restaurada_test.dart: visão rica resiste à falha consolidada em 360.0
+00:03 +11: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/visao_restaurada_test.dart: visão rica resiste à falha consolidada em 360.0
+00:03 +12: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/visao_restaurada_test.dart: visão rica resiste à falha consolidada em 360.0
+00:04 +13: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/visao_restaurada_test.dart: visão rica resiste à falha consolidada em 360.0
+00:05 +14: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/agenda/agenda_fornecedor_test.dart: agenda mostra janelas com fuso e sem horário inventado
+00:05 +15: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/painel_operacional_test.dart: primeira consulta sem rede tem retry e não mostra valores seed
+00:06 +16: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/visao_restaurada_test.dart: visão rica resiste à falha consolidada em 1280.0
+00:06 +17: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/visao_restaurada_test.dart: visão rica resiste à falha consolidada em 1280.0
+00:07 +18: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/visao_restaurada_test.dart: visão rica resiste à falha consolidada em 1280.0
+00:07 +19: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/agenda/agenda_fornecedor_test.dart: configuração envia revisão e persiste retorno
+00:07 +20: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/agenda/agenda_fornecedor_test.dart: configuração envia revisão e persiste retorno
+00:08 +21: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/agenda/agenda_fornecedor_test.dart: configuração envia revisão e persiste retorno
+00:08 +22: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/painel_operacional_test.dart: evidência visual Size(1600.0, 1600.0)
+00:08 +23: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/painel_operacional_test.dart: evidência visual Size(1600.0, 1600.0)
+00:09 +24: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/painel_operacional_test.dart: evidência visual Size(1600.0, 1600.0)
+00:09 +25: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/agenda/agenda_fornecedor_test.dart: reagendamento revisado e conflito não altera compromisso
+00:10 +26: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/agenda/agenda_fornecedor_test.dart: agenda responsiva em 360 pixels
+00:10 +27: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/agenda/agenda_fornecedor_test.dart: movimento físico usa callable existente com chave estável
+00:13 +28: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/planejamento/planejamento_financeiro_test.dart: custo legado reabre e retoma a mesma chave após timeout
+00:13 +29: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/planejamento/planejamento_financeiro_test.dart: timeout e reabertura mantêm identidade/payload
+00:13 +30: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/planejamento/planejamento_financeiro_test.dart: consulta antiga não sobrevive troca de sessão
+00:13 +31: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/planejamento/planejamento_financeiro_test.dart: resultado previsto e caixa separados; desconhecido não vira zero
+00:14 +32: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/planejamento/planejamento_financeiro_test.dart: resultado previsto e caixa separados; desconhecido não vira zero
+00:15 +33: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/planejamento/planejamento_financeiro_test.dart: resultado previsto e caixa separados; desconhecido não vira zero
+00:15 +34: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/planejamento/planejamento_financeiro_test.dart: resultado previsto e caixa separados; desconhecido não vira zero
+00:15 +35: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/planejamento/planejamento_financeiro_test.dart: resultado previsto e caixa separados; desconhecido não vira zero
+00:15 +36: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/planejamento/planejamento_financeiro_test.dart: resultado previsto e caixa separados; desconhecido não vira zero
+00:15 +37: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/planejamento/planejamento_financeiro_test.dart: resultado previsto e caixa separados; desconhecido não vira zero
+00:15 +38: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/planejamento/planejamento_financeiro_test.dart: resultado previsto e caixa separados; desconhecido não vira zero
+00:15 +39: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/planejamento/planejamento_financeiro_test.dart: resultado previsto e caixa separados; desconhecido não vira zero
+00:15 +40: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/planejamento/planejamento_financeiro_test.dart: resultado previsto e caixa separados; desconhecido não vira zero
+00:17 +41: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/avaliacoes/gestao_reputacao_test.dart: erro com retry, comentário, distribuição e resposta persistida após reabrir
+00:18 +42: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/avaliacoes/gestao_reputacao_test.dart: erro com retry, comentário, distribuição e resposta persistida após reabrir
+00:20 +43: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/avaliacoes/gestao_reputacao_test.dart: erro com retry, comentário, distribuição e resposta persistida após reabrir
+00:21 +44: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/avaliacoes/gestao_reputacao_test.dart: erro com retry, comentário, distribuição e resposta persistida após reabrir
+00:21 +45: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/planejamento/planejamento_financeiro_test.dart: formulário antigo invalidado ao trocar sessão
+00:21 +46: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/planejamento/planejamento_financeiro_test.dart: formulário antigo invalidado ao trocar sessão
+00:21 +47: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/planejamento/planejamento_financeiro_test.dart: formulário antigo invalidado ao trocar sessão
+00:21 +48: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/planejamento/planejamento_financeiro_test.dart: formulário antigo invalidado ao trocar sessão
+00:21 +49: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/planejamento/planejamento_financeiro_test.dart: formulário antigo invalidado ao trocar sessão
+00:22 +50: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/avaliacoes/gestao_reputacao_test.dart: denúncia não apaga a crítica nem expõe notas internas
+00:22 +51: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: proposta exige revisão humana, versão, preço, desconto e validade
+00:23 +52: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: proposta exige revisão humana, versão, preço, desconto e validade
+00:23 +53: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: proposta exige revisão humana, versão, preço, desconto e validade
+00:23 +54: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: proposta exige revisão humana, versão, preço, desconto e validade
+00:23 +54: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/solicitacoes_controller_test.dart: delegates quote cancellation with current user name
+Encerramento comercial registrado para cotacao-1.
+00:23 +55: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: proposta exige revisão humana, versão, preço, desconto e validade
+00:23 +56: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: proposta exige revisão humana, versão, preço, desconto e validade
+00:23 +57: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: proposta exige revisão humana, versão, preço, desconto e validade
+00:23 +58: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: proposta exige revisão humana, versão, preço, desconto e validade
+00:23 +59: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: proposta exige revisão humana, versão, preço, desconto e validade
+00:24 +60: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: proposta exige revisão humana, versão, preço, desconto e validade
+00:26 +61: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: proposta exige revisão humana, versão, preço, desconto e validade
+00:26 +62: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: proposta exige revisão humana, versão, preço, desconto e validade
+00:27 +63: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: proposta exige revisão humana, versão, preço, desconto e validade
+00:28 +64: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: proposta exige revisão humana, versão, preço, desconto e validade
+00:28 +65: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: proposta exige revisão humana, versão, preço, desconto e validade
+00:28 +66: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: proposta exige revisão humana, versão, preço, desconto e validade
+00:28 +67: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: proposta exige revisão humana, versão, preço, desconto e validade
+00:28 +68: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: proposta exige revisão humana, versão, preço, desconto e validade
+00:28 +69: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: proposta exige revisão humana, versão, preço, desconto e validade
+00:29 +70: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: proposta exige revisão humana, versão, preço, desconto e validade
+00:29 +71: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/financeiro/financeiro_contratos_unificado_test.dart: resumo e lista mostram líquido e acompanham repasse em 360.0
+00:29 +72: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/financeiro/financeiro_contratos_unificado_test.dart: resumo e lista mostram líquido e acompanham repasse em 360.0
+00:29 +73: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/financeiro/financeiro_contratos_unificado_test.dart: resumo e lista mostram líquido e acompanham repasse em 360.0
+🎯 [ThemeController] Instância única ativa.
+00:30 +74: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: compromisso navega preparação, execução, entrega e aceite com mesma identidade
+00:30 +75: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: compromisso navega preparação, execução, entrega e aceite com mesma identidade
+00:30 +76: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: compromisso navega preparação, execução, entrega e aceite com mesma identidade
+00:31 +76: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/financeiro/financeiro_contratos_unificado_test.dart: resumo e lista mostram líquido e acompanham repasse em 1200.0
+🎯 [ThemeController] Instância única ativa.
+00:31 +77: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: compromisso navega preparação, execução, entrega e aceite com mesma identidade
+00:31 +78: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: compromisso navega preparação, execução, entrega e aceite com mesma identidade
+00:31 +79: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: compromisso navega preparação, execução, entrega e aceite com mesma identidade
+00:31 +80: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: compromisso navega preparação, execução, entrega e aceite com mesma identidade
+00:31 +81: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: compromisso navega preparação, execução, entrega e aceite com mesma identidade
+00:31 +82: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: compromisso navega preparação, execução, entrega e aceite com mesma identidade
+00:31 +83: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: compromisso navega preparação, execução, entrega e aceite com mesma identidade
+00:31 +84: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: compromisso navega preparação, execução, entrega e aceite com mesma identidade
+00:31 +85: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: compromisso navega preparação, execução, entrega e aceite com mesma identidade
+00:31 +86: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: compromisso navega preparação, execução, entrega e aceite com mesma identidade
+00:31 +87: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: compromisso navega preparação, execução, entrega e aceite com mesma identidade
+00:31 +88: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: compromisso navega preparação, execução, entrega e aceite com mesma identidade
+00:31 +89: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: compromisso navega preparação, execução, entrega e aceite com mesma identidade
+00:31 +90: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/financeiro/financeiro_contratos_unificado_test.dart: indisponibilidade apaga valores e não exibe zero
+🎯 [ThemeController] Instância única ativa.
+00:31 +91: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: cliente aceita exatamente a versão revisada no diálogo; revisão concorrente é rejeitada
+00:31 +92: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/financeiro/financeiro_contratos_unificado_test.dart: formulário exige distribuição válida, envia centavos sem presumir execução
+00:32 +93: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/financeiro/financeiro_contratos_unificado_test.dart: formulário exige distribuição válida, envia centavos sem presumir execução
+00:32 +94: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/financeiro/financeiro_contratos_unificado_test.dart: formulário exige distribuição válida, envia centavos sem presumir execução
+00:33 +95: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/financeiro/financeiro_contratos_unificado_test.dart: formulário exige distribuição válida, envia centavos sem presumir execução
+00:33 +96: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/financeiro/financeiro_contratos_unificado_test.dart: formulário exige distribuição válida, envia centavos sem presumir execução
+00:33 +97: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/financeiro/financeiro_contratos_unificado_test.dart: formulário exige distribuição válida, envia centavos sem presumir execução
+🎯 [ThemeController] Instância única ativa.
+00:35 +98: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/layout_operacional_test.dart: consulta inválida mantém filtros editáveis e limpar recupera o relatório
+00:36 +98: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/financeiro/financeiro_contratos_unificado_test.dart: crédito excedente permanece visível no resumo e contrato
+🎯 [ThemeController] Instância única ativa.
+00:36 +99: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/layout_operacional_test.dart: consulta inválida mantém filtros editáveis e limpar recupera o relatório
+00:36 +100: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/layout_operacional_test.dart: consulta inválida mantém filtros editáveis e limpar recupera o relatório
+00:37 +101: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/layout_operacional_test.dart: consulta inválida mantém filtros editáveis e limpar recupera o relatório
+00:37 +102: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/layout_operacional_test.dart: consulta inválida mantém filtros editáveis e limpar recupera o relatório
+00:37 +102: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/financeiro/financeiro_contratos_unificado_test.dart: estorno parcial reverte explicitamente a alocação original
+🎯 [ThemeController] Instância única ativa.
+00:37 +103: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/layout_operacional_test.dart: consulta inválida mantém filtros editáveis e limpar recupera o relatório
+00:37 +104: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/presentation/widgets/operacao/operacao_scaffold_test.dart: voltar tem contraste e retorna em Brightness.light / 1366.0
+00:38 +105: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/layout_operacional_test.dart: reputação mantém filtros após falha de uma consulta já carregada
+00:38 +106: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/layout_operacional_test.dart: agenda em 360.0 com dados
+00:39 +107: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/layout_operacional_test.dart: agenda em 360.0 com falha
+00:40 +108: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/layout_operacional_test.dart: agenda em 1366.0 com dados
+00:41 +109: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/layout_operacional_test.dart: agenda em 1366.0 com falha
+00:41 +110: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/layout_operacional_test.dart: financeiro em 360.0 com dados
+00:42 +111: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/layout_operacional_test.dart: financeiro em 360.0 com falha
+00:42 +112: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/layout_operacional_test.dart: financeiro em 1366.0 com dados
+00:43 +113: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/layout_operacional_test.dart: financeiro em 1366.0 com falha
+00:44 +114: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/layout_operacional_test.dart: reputacao em 360.0 com dados
+00:45 +115: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/layout_operacional_test.dart: reputacao em 360.0 com falha
+00:45 +116: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/layout_operacional_test.dart: reputacao em 1366.0 com dados
+00:46 +117: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/layout_operacional_test.dart: reputacao em 1366.0 com falha
+00:47 +118: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/layout_operacional_test.dart: (tearDownAll)
+00:47 +118: All tests passed!

@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import '../../services/comissao_identificacao_service.dart';
 
 import 'package:app_faca_festa/data/services/functions/callable_https_client.dart';
 import 'package:app_faca_festa/data/services/functions/financeiro_callable_gateway.dart';
@@ -105,18 +106,34 @@ class ComissaoPlataformaRemoteDatasource {
     bool ehAdmin = false,
   }) async {
     try {
-      return await _gateway.call('consultarExtratoComissao', {
+      final extrato = await _gateway.call('consultarExtratoComissao', {
         if (idEvento != null && idEvento.isNotEmpty) 'idEvento': idEvento,
         if (idPagador != null && idPagador.isNotEmpty) 'idPagador': idPagador,
       });
+      return _identificar(extrato, ehAdmin: ehAdmin);
     } on FinanceiroCallableException catch (e) {
       if (!e.podeUsarFallbackLocal || _db == null) rethrow;
-      return _extratoLocal(
+      final extrato = await _extratoLocal(
         idEvento: idEvento,
         idPagador: idPagador,
         ehAdmin: ehAdmin,
       );
+      return _identificar(extrato, ehAdmin: ehAdmin);
     }
+  }
+
+  Future<Map<String, dynamic>> _identificar(Map<String, dynamic> extrato,
+      {required bool ehAdmin}) async {
+    final db = _db;
+    if (db == null) return extrato;
+    return ComissaoIdentificacaoService((colecao, id) async {
+      try {
+        return (await db.collection(colecao).doc(id).get()).data();
+      } on FirebaseException {
+        // Falta de acesso ou referência removida não invalida o extrato.
+        return null;
+      }
+    }).completar(extrato, ehAdmin: ehAdmin);
   }
 
   Future<Map<String, dynamic>> _extratoLocal({

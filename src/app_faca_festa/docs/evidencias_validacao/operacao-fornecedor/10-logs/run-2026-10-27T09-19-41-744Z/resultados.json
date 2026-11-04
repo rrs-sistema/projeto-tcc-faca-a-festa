@@ -1,0 +1,119 @@
+[
+  {
+    "cenario": "atendimentos",
+    "projeto": "demo-chat-privado",
+    "script": "test/firestore/atendimentos.rules.test.js",
+    "inicio": "2026-10-27T09:19:41.750Z",
+    "fim": "2026-10-27T09:19:49.342Z",
+    "exitCode": 0,
+    "erro": null
+  },
+  {
+    "cenario": "contratos",
+    "projeto": "demo-financeiro-contratos",
+    "script": "functions/scripts/testVisaoContratoEmulator.js",
+    "inicio": "2026-10-27T09:19:49.343Z",
+    "fim": "2026-10-27T09:20:02.217Z",
+    "exitCode": 0,
+    "erro": null
+  },
+  {
+    "cenario": "recebimentos",
+    "projeto": "demo-caixa-fornecedor",
+    "script": "functions/scripts/testRecebimentosCaixaEmulator.js",
+    "inicio": "2026-10-27T09:20:02.219Z",
+    "fim": "2026-10-27T09:20:18.524Z",
+    "exitCode": 0,
+    "erro": null
+  },
+  {
+    "cenario": "repasses",
+    "projeto": "demo-repasse-operacional",
+    "script": "functions/scripts/testRepasseOperacionalEmulator.js",
+    "inicio": "2026-10-27T09:20:18.525Z",
+    "fim": "2026-10-27T09:20:47.390Z",
+    "exitCode": 0,
+    "erro": null
+  },
+  {
+    "cenario": "jornada",
+    "projeto": "demo-jornada-atendimentos",
+    "script": "functions/scripts/testJornadaAtendimentosEmulator.js",
+    "inicio": "2026-10-27T09:20:47.391Z",
+    "fim": "2026-10-27T09:21:25.840Z",
+    "exitCode": 0,
+    "erro": null
+  },
+  {
+    "cenario": "agenda",
+    "projeto": "demo-agenda-fornecedor",
+    "script": "functions/scripts/testAgendaFornecedorEmulator.js",
+    "inicio": "2026-10-27T09:21:25.841Z",
+    "fim": "2026-10-27T09:21:37.381Z",
+    "exitCode": 0,
+    "erro": null
+  },
+  {
+    "cenario": "agenda-regras",
+    "projeto": "demo-agenda-fornecedor",
+    "script": "test/firestore/agenda_fornecedor.rules.test.js",
+    "inicio": "2026-10-27T09:21:37.382Z",
+    "fim": "2026-10-27T09:21:38.803Z",
+    "exitCode": 0,
+    "erro": null
+  },
+  {
+    "cenario": "avaliacoes",
+    "projeto": "demo-avaliacoes-verificadas",
+    "script": "functions/scripts/testAvaliacoesVerificadasEmulator.js",
+    "inicio": "2026-10-27T09:21:38.805Z",
+    "fim": "2026-10-27T09:21:52.239Z",
+    "exitCode": 0,
+    "erro": null
+  },
+  {
+    "cenario": "reputacao",
+    "projeto": "demo-gestao-reputacao",
+    "script": "functions/scripts/testGestaoReputacaoEmulator.js",
+    "inicio": "2026-10-27T09:21:52.241Z",
+    "fim": "2026-10-27T09:22:15.166Z",
+    "exitCode": 0,
+    "erro": null
+  },
+  {
+    "cenario": "planejamento",
+    "projeto": "demo-planejamento-fornecedor",
+    "script": "functions/scripts/testPlanejamentoFornecedorEmulator.js",
+    "inicio": "2026-10-27T09:22:15.168Z",
+    "fim": "2026-10-27T09:22:27.494Z",
+    "exitCode": 0,
+    "erro": null
+  },
+  {
+    "cenario": "painel",
+    "projeto": "demo-painel-fornecedor",
+    "script": "functions/scripts/testPainelFornecedorEmulator.js",
+    "inicio": "2026-10-27T09:22:27.495Z",
+    "fim": "2026-10-27T09:22:29.592Z",
+    "exitCode": 0,
+    "erro": null
+  },
+  {
+    "cenario": "financeiro-regras",
+    "projeto": "demo-faca-festa-fin-forn",
+    "script": "test/firestore/financeiro_fornecedor.rules.test.js",
+    "inicio": "2026-10-27T09:22:29.593Z",
+    "fim": "2026-10-27T09:22:30.757Z",
+    "exitCode": 0,
+    "erro": null
+  },
+  {
+    "cenario": "comissao-regras",
+    "projeto": "demo-faca-festa-comissao",
+    "script": "test/firestore/comissao_plataforma.rules.test.js",
+    "inicio": "2026-10-27T09:22:30.759Z",
+    "fim": "2026-10-27T09:22:31.866Z",
+    "exitCode": 0,
+    "erro": null
+  }
+]

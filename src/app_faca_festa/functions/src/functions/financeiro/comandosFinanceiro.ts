@@ -1,3 +1,4 @@
+import { tentarGerarComissaoAposContratacao } from "./comandosComissaoPlataforma";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { admin } from "../../shared/firebaseAdmin";
 import { exigirUsuarioAutenticado } from "../../shared/auth";
@@ -31,6 +32,10 @@ export const registrarContratoFinanceiro = onCall(
       motivo: texto(data.motivo) || undefined,
     });
 
+    const contrato = await admin.firestore().collection("orcamento").doc(idOrcamento).get();
+    await tentarGerarComissaoAposContratacao({ idEvento, idContrato: resultado.idContrato,
+      baseBrutaCentavos: resultado.valor.centavos, autorId: perfil.uid,
+      idFornecedor: contrato.data()?.id_fornecedor });
     return {
       ok: true,
       idContrato: resultado.idContrato,

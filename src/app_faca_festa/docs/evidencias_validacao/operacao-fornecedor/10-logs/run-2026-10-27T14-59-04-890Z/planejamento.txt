@@ -1,0 +1,9 @@
+PASS planejamento: R$1.992,50 direto, R$600 caixa, baixas concorrentes/idempotência, estorno, estoque sem desembolso, saldo inicial, deduções, filtros, legado, CSV/paridade/fórmulas e regras privadas.
+[2026-10-27T15:02:08.528Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x7054fc15 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'update' @ L536, false for 'update' @ L551
+[2026-10-27T15:02:08.540Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x7054fc16 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'update' @ L517, false for 'update' @ L536, false for 'update' @ L551
+[2026-10-27T15:02:08.549Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x7054fc17 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'delete' @ L510, false for 'delete' @ L536, false for 'delete' @ L551
+[2026-10-27T15:02:08.558Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x7054fc18 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'create' @ L518, false for 'update' @ L518

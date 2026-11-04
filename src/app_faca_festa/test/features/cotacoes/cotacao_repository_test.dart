@@ -33,12 +33,35 @@ void main() {
       nomeSolicitante: 'Ana',
     );
 
-    expect(idEvento, 'evento-1');
+    expect(idEvento, {'idEvento': 'evento-1'});
     expect(remote.idCotacao, 'cotacao-1');
     expect(remote.idFornecedor, 'fornecedor-1');
     expect(remote.nomeFornecedor, 'Buffet Ana');
     expect(remote.idSolicitante, 'usuario-1');
     expect(remote.nomeSolicitante, 'Ana');
+  });
+
+  test(
+      'preserva contrato real de resposta, inclusive valor proposto e condições',
+      () async {
+    final remote = _CotacaoRemoteFake(idEvento: 'evento-1');
+    final r = CotacaoRepositoryImpl(remote);
+    final prazo = DateTime.utc(2026, 11, 1);
+    await r.responderCotacao(
+        idCotacao: 'q',
+        aceitou: true,
+        prazoEntrega: prazo,
+        condicaoPagamento: 'Condição aprovada',
+        observacaoFornecedor: 'Escopo confirmado',
+        valorProposto: 3150.50);
+    expect(remote.resposta, {
+      'idCotacao': 'q',
+      'aceitou': true,
+      'prazoEntrega': prazo,
+      'condicaoPagamento': 'Condição aprovada',
+      'observacaoFornecedor': 'Escopo confirmado',
+      'valorProposto': 3150.50
+    });
   });
 
   test('delega observacao de resposta de fornecedor por cotacao', () async {
@@ -87,7 +110,7 @@ class _CotacaoRemoteFake implements CotacaoRemoteDatasource {
   }
 
   @override
-  Future<String> confirmarFornecedorEscolhido({
+  Future<Map<String, dynamic>> confirmarFornecedorEscolhido({
     required String idCotacao,
     required String idFornecedor,
     required String nomeFornecedor,
@@ -99,7 +122,26 @@ class _CotacaoRemoteFake implements CotacaoRemoteDatasource {
     this.nomeFornecedor = nomeFornecedor;
     this.idSolicitante = idSolicitante;
     this.nomeSolicitante = nomeSolicitante;
-    return idEvento;
+    return {'idEvento': idEvento};
+  }
+
+  Map<String, dynamic>? resposta;
+  @override
+  Future<void> responderCotacao(
+      {required String idCotacao,
+      required bool aceitou,
+      DateTime? prazoEntrega,
+      String? condicaoPagamento,
+      String? observacaoFornecedor,
+      double? valorProposto}) async {
+    resposta = {
+      'idCotacao': idCotacao,
+      'aceitou': aceitou,
+      'prazoEntrega': prazoEntrega,
+      'condicaoPagamento': condicaoPagamento,
+      'observacaoFornecedor': observacaoFornecedor,
+      'valorProposto': valorProposto
+    };
   }
 
   @override

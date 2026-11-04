@@ -127,6 +127,9 @@ class LinhaCentralContratacao {
     this.idCasoAberto,
     this.nomeOrganizador,
     this.nomePagador,
+    this.comissaoCentavos,
+    this.liquidoFornecedorCentavos,
+    this.regraRepasse,
   });
 
   final String idContrato;
@@ -140,6 +143,9 @@ class LinhaCentralContratacao {
   final String? escopoCurto;
   final String? nomeOrganizador;
   final String? nomePagador;
+  final int? comissaoCentavos;
+  final int? liquidoFornecedorCentavos;
+  final String? regraRepasse;
   final int valorContratadoCentavos;
   final int recebidoClienteCentavos;
   final int repassadoCentavos;
@@ -185,25 +191,30 @@ class LinhaCentralContratacao {
       dataEvento: (m['dataEvento'] ?? m['data_evento'])?.toString(),
       nomeContratante:
           (m['nomeContratante'] ?? m['nome_contratante'])?.toString(),
-      nomeFornecedor:
-          (m['nomeFornecedor'] ?? m['nome_fornecedor'])?.toString(),
+      nomeFornecedor: (m['nomeFornecedor'] ?? m['nome_fornecedor'])?.toString(),
       nomeServico: (m['nomeServico'] ?? m['nome_servico'])?.toString(),
       escopoCurto: (m['escopoCurto'] ?? m['escopo_curto'])?.toString(),
       nomeOrganizador:
           (m['nomeOrganizador'] ?? m['nome_organizador'])?.toString(),
       nomePagador: (m['nomePagador'] ?? m['nome_pagador'])?.toString(),
-      valorContratadoCentavos: cent(
-          m['valorContratadoCentavos'] ?? m['valor_contratado_centavos']),
-      recebidoClienteCentavos: cent(
-          m['recebidoClienteCentavos'] ?? m['recebido_cliente_centavos']),
+      comissaoCentavos: (m['comissao_centavos'] as num?)?.toInt(),
+      liquidoFornecedorCentavos:
+          (m['liquido_fornecedor_centavos'] as num?)?.toInt(),
+      regraRepasse: m['regra_repasse']?.toString(),
+      valorContratadoCentavos:
+          cent(m['valorContratadoCentavos'] ?? m['valor_contratado_centavos']),
+      recebidoClienteCentavos:
+          cent(m['recebidoClienteCentavos'] ?? m['recebido_cliente_centavos']),
       repassadoCentavos:
           cent(m['repassadoCentavos'] ?? m['repassado_centavos']),
-      aReceberClienteCentavos: cent(
-          m['aReceberClienteCentavos'] ?? m['a_receber_cliente_centavos']),
-      pendenteRepasseCentavos: cent(
-          m['pendenteRepasseCentavos'] ?? m['pendente_repasse_centavos']),
-      estadoComercial:
-          (m['estadoComercial'] ?? m['estado_comercial'] ?? '').toString(),
+      aReceberClienteCentavos:
+          cent(m['aReceberClienteCentavos'] ?? m['a_receber_cliente_centavos']),
+      pendenteRepasseCentavos:
+          cent(m['pendenteRepasseCentavos'] ?? m['pendente_repasse_centavos']),
+      estadoComercial: (m['estadoComercial'] ?? m['estado_comercial'] ?? '')
+          .toString()
+          .trim()
+          .toLowerCase(),
       estadoExecucao:
           (m['estadoExecucao'] ?? m['estado_execucao'] ?? '').toString(),
       casoAberto: m['casoAberto'] == true || m['caso_aberto'] == true,
@@ -247,9 +258,8 @@ class RegistroMediacaoView {
       texto: (m['texto'] ?? '').toString(),
       autorId: (m['autorId'] ?? m['autor_id'] ?? '').toString(),
       criadoEm: (m['criadoEm'] ?? m['criado_em'] ?? '').toString(),
-      efeitoFinanceiroExecutado:
-          m['efeitoFinanceiroExecutado'] == true ||
-              m['efeito_financeiro_executado'] == true,
+      efeitoFinanceiroExecutado: m['efeitoFinanceiroExecutado'] == true ||
+          m['efeito_financeiro_executado'] == true,
     );
   }
 }

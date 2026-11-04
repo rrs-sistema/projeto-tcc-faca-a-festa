@@ -1,3 +1,5 @@
+import 'caixa_fornecedor_service.dart';
+export 'caixa_fornecedor_service.dart';
 import 'package:app_faca_festa/domain/entities/financeiro/alerta_financeiro.dart';
 
 /// Visão privada do fornecedor: vendas ≠ lucro; adiantamento ≠ receita realizada.
@@ -5,6 +7,11 @@ class ResumoFinanceiroFornecedor {
   const ResumoFinanceiroFornecedor({
     required this.idFornecedor,
     this.idEvento,
+    this.liquidoPrevisto,
+    this.comissaoContratada,
+    this.repasseAutorizado,
+    this.recebimentoNaoAlocado = 0,
+    this.creditoExcedente = 0,
     this.contratado = 0,
     this.recebido = 0,
     this.aReceber = 0,
@@ -36,6 +43,11 @@ class ResumoFinanceiroFornecedor {
 
   final String idFornecedor;
   final String? idEvento;
+  final double? liquidoPrevisto;
+  final double? comissaoContratada;
+  final double? repasseAutorizado;
+  final double recebimentoNaoAlocado;
+  final double creditoExcedente;
   final double contratado;
   final double recebido;
   final double aReceber;
@@ -73,6 +85,13 @@ class VendaFornecedorFato {
     required this.id,
     required this.idEvento,
     required this.valorContratado,
+    this.liquidoPrevisto,
+    this.comissao,
+    this.repasseAutorizado = 0,
+    this.recebimentoProprioDeclarado = 0,
+    this.revisao,
+    this.repasseConfirmado = 0,
+    this.saldoContrato,
     this.recebidoConfirmado = 0,
     this.adiantamentoCaixa = 0,
     this.receitaRealizada = 0,
@@ -86,20 +105,30 @@ class VendaFornecedorFato {
   final String id;
   final String idEvento;
   final double valorContratado;
+  final double? liquidoPrevisto;
+  final double? comissao;
+  final double repasseAutorizado;
+  final double recebimentoProprioDeclarado;
+  final String? revisao;
 
   /// Recebimento na perspectiva do fornecedor (não copia pagamento do cliente).
+  final double repasseConfirmado;
+  final double? saldoContrato;
   final double recebidoConfirmado;
   final double adiantamentoCaixa;
   final double receitaRealizada;
   final bool execucaoConfirmada;
   final String? categoria;
   final String? nomeServico;
+
   /// aguardando_repasse | parcial | recebido
   final String? situacao;
   final DateTime? vencimento;
 
-  double get aReceber =>
-      (valorContratado - recebidoConfirmado).clamp(0, double.infinity);
+  double get aReceber => situacao == 'cancelado'
+      ? 0
+      : (saldoContrato ??
+          (liquidoPrevisto ?? valorContratado) - recebidoConfirmado);
 }
 
 class CustoFornecedorFato {
@@ -131,11 +160,14 @@ class MovimentoCaixaFornecedor {
     required this.id,
     required this.valor,
     required this.entrada,
+    this.referenciaRecebimento,
+    this.chaveIdempotencia,
     this.idEvento,
     this.vencimento,
     this.descricao,
   });
 
+  final String? referenciaRecebimento, chaveIdempotencia;
   final String id;
   final double valor;
   final bool entrada;
@@ -153,6 +185,7 @@ class ResumoFinanceiroFornecedorService {
     List<VendaFornecedorFato> vendas = const [],
     List<CustoFornecedorFato> custos = const [],
     List<MovimentoCaixaFornecedor> movimentos = const [],
+    List<RecebimentoCaixaFato>? recebimentos,
     double? saldoInicialInformado,
     double? comissaoInformada,
     double? taxasInformadas,
@@ -160,6 +193,22 @@ class ResumoFinanceiroFornecedorService {
     bool consultaCompleta = true,
     DateTime? agora,
   }) {
+    final caixa = recebimentos == null
+        ? null
+        : conciliarCaixaFornecedor(
+            recebimentos: recebimentos,
+            contratosConhecidos: vendas.map((v) => v.id).toSet(),
+            movimentos: movimentos
+                .map((m) => CaixaMovimentoFato(
+                    id: m.id,
+                    idEvento: m.idEvento ?? '',
+                    valorCentavos: (m.valor * 100).round(),
+                    entrada: m.entrada,
+                    referencia: m.referenciaRecebimento,
+                    chave: m.chaveIdempotencia,
+                    origem: m.descricao))
+                .toList(),
+            idEvento: idEvento);
     final agoraRef = agora ?? DateTime.now();
     var contratado = 0.0,
         recebido = 0.0,
@@ -167,6 +216,7 @@ class ResumoFinanceiroFornecedorService {
         receitaRealizada = 0.0,
         adiantamentos = 0.0,
         contasVencidas = 0.0;
+    var creditoExcedente = 0.0;
     var custoRealizado = 0.0, custoRestante = 0.0, outras = 0.0;
     var temOutras = false;
     var completo = consultaCompleta;
@@ -181,11 +231,22 @@ class ResumoFinanceiroFornecedorService {
         continue;
       }
       contratado += v.valorContratado;
-      recebido += v.recebidoConfirmado;
+      recebido += caixa == null ? v.recebidoConfirmado : v.repasseConfirmado;
       adiantamentos += v.adiantamentoCaixa;
       // A receber independente dos custos.
-      final saldo = v.valorContratado - v.recebidoConfirmado;
-      aReceber += saldo;
+      final saldo = v.situacao == 'cancelado'
+          ? 0.0
+          : v.saldoContrato ??
+              (caixa == null
+                  ? v.aReceber
+                  : (v.liquidoPrevisto ?? v.valorContratado) -
+                      v.repasseConfirmado -
+                      (caixa.porContrato[v.id] ?? 0) / 100);
+      if (saldo >= 0) {
+        aReceber += saldo;
+      } else {
+        creditoExcedente -= saldo;
+      }
       if (v.execucaoConfirmada) {
         receitaRealizada +=
             v.receitaRealizada > 0 ? v.receitaRealizada : v.valorContratado;
@@ -261,23 +322,52 @@ class ResumoFinanceiroFornecedorService {
     final margem =
         receitaRealizada > 0 ? receitaRealizada - custoRealizado : null;
 
-    var entradas = 0.0, saidas = 0.0;
-    for (final m in movimentos) {
-      if (idEvento != null && m.idEvento != null && m.idEvento != idEvento) {
-        continue;
+    if ((caixa?.legadoNaoConciliado ?? 0) > 0) {
+      completo = false;
+      alertas.add(const AlertaFinanceiro(
+          tipo: TipoAlertaFinanceiro.consultaIncompleta,
+          mensagem:
+              'Registros legados de caixa sem origem conciliada foram preservados, sem somar uma entrada incerta.'));
+    }
+    var entradas = 0.0, saidas = 0.0, naoAlocado = 0.0;
+    if (caixa != null) {
+      recebido += recebimentos!
+          .where((r) =>
+              !r.repasseLegado && (idEvento == null || r.idEvento == idEvento))
+          .fold<double>(
+              0, (s, r) => s + (r.estorno ? -1 : 1) * r.valorCentavos / 100);
+      entradas = caixa.entradas / 100 +
+          vendas
+              .where((v) => idEvento == null || v.idEvento == idEvento)
+              .fold<double>(0, (s, v) => s + v.repasseConfirmado);
+      saidas = caixa.saidas / 100;
+      naoAlocado = caixa.naoAlocado / 100;
+      adiantamentos = caixa.adiantamentos / 100;
+    } else {
+      final filtrados = movimentos
+          .where((m) => idEvento == null || m.idEvento == idEvento)
+          .toList();
+      for (final m in filtrados) {
+        if (!_fin(m.valor)) {
+          completo = false;
+          continue;
+        }
+        if (m.entrada) {
+          entradas += m.valor;
+        } else {
+          saidas += m.valor;
+        }
       }
-      if (!_fin(m.valor)) {
+      if (filtrados.any((m) => m.entrada) && recebido > 0) {
         completo = false;
-        continue;
-      }
-      if (m.entrada) {
-        entradas += m.valor;
+        alertas.add(const AlertaFinanceiro(
+            tipo: TipoAlertaFinanceiro.consultaIncompleta,
+            mensagem:
+                'Caixa legado sem identidade de origem: entradas não são somadas novamente aos recebimentos agregados.'));
       } else {
-        saidas += m.valor;
+        entradas += recebido;
       }
     }
-    // Adiantamentos e recebimentos confirmados entram no caixa.
-    entradas += recebido;
     // Desembolsos de custo (não consumo de estoque prévio).
     for (final c in custos) {
       if (idEvento != null && c.idEvento != idEvento) continue;
@@ -295,6 +385,8 @@ class ResumoFinanceiroFornecedorService {
       idFornecedor: idFornecedor,
       idEvento: idEvento,
       contratado: contratado,
+      recebimentoNaoAlocado: naoAlocado,
+      creditoExcedente: creditoExcedente,
       recebido: recebido,
       aReceber: aReceber,
       custoRealizado: custoRealizado,

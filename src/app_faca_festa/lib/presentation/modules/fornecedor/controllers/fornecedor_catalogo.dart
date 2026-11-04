@@ -44,6 +44,11 @@ class FornecedorCatalogo {
   final GerenciarServicosProduto Function() _servicosProduto;
   final GerenciarServicoFotos Function() _fotos;
   final Future<void> Function() _recarregarAi;
+  final detalhesCarregados = false.obs;
+  final carregandoDetalhes = false.obs;
+  final erroDetalhes = ''.obs;
+  int _cargaDetalhes = 0;
+  int _geracaoEscuta = 0;
 
   StreamSubscription<List<FornecedorProdutoServico>>? _servicosSub;
   String? _servicosEscutandoId;
@@ -75,16 +80,19 @@ class FornecedorCatalogo {
 
   Future<void> escutar(String idFornecedor) async {
     if (idFornecedor.trim().isEmpty) return;
-    if (_servicosEscutandoId == idFornecedor && _servicosSub != null) {
-      return;
-    }
-
-    await _servicosSub?.cancel();
+    if (_servicosEscutandoId == idFornecedor) return;
+    final versao = ++_geracaoEscuta;
     _servicosEscutandoId = idFornecedor;
+    detalhesCarregados.value = false;
+    carregandoDetalhes.value = true;
+    erroDetalhes.value = '';
+    await _servicosSub?.cancel();
+    if (versao != _geracaoEscuta) return;
 
     _servicosSub = _fornecedores()
         .observarServicosFornecedor(idFornecedor)
         .listen((lista) async {
+      if (versao != _geracaoEscuta) return;
       servicosFornecedor.assignAll(lista);
 
       final ids = lista
@@ -93,9 +101,18 @@ class FornecedorCatalogo {
           .toSet()
           .toList();
 
+      if (_servicosEscutandoId != idFornecedor) return;
+      await listarComDetalhes(idFornecedor);
+      if (_servicosEscutandoId != idFornecedor) return;
       await carregarCatalogo();
       await carregarFotos(ids, idFornecedor);
     }, onError: (e, s) {
+      if (_servicosEscutandoId != idFornecedor) return;
+      ++_cargaDetalhes;
+      detalhesCarregados.value = false;
+      carregandoDetalhes.value = false;
+      erroDetalhes.value =
+          'Não foi possível consultar o catálogo. Tente atualizar os dados.';
       _erro.value = 'Erro ao escutar serviços do fornecedor';
       debugPrint('❌ Erro ao escutar serviços do fornecedor: $e\n$s');
     });
@@ -105,21 +122,24 @@ class FornecedorCatalogo {
     String idFornecedor, {
     bool atualizarIa = true,
   }) async {
+    final versao = ++_cargaDetalhes;
+    carregandoDetalhes.value = true;
+    detalhesCarregados.value = false;
+    erroDetalhes.value = '';
     try {
-      _carregando.value = true;
-      _erro.value = '';
-      servicosDetalhado.clear();
-
-      final lista = await _servicosProduto().listarServicosComDetalhes(
-        idFornecedor: idFornecedor,
-      );
+      final lista = await _servicosProduto()
+          .listarServicosComDetalhes(idFornecedor: idFornecedor);
+      if (versao != _cargaDetalhes) return;
       servicosDetalhado.assignAll(lista);
+      detalhesCarregados.value = true;
       if (atualizarIa) await _recarregarAi();
     } catch (e, s) {
+      if (versao != _cargaDetalhes) return;
+      erroDetalhes.value = 'Não foi possível avaliar os detalhes do catálogo.';
       _erro.value = 'Erro ao carregar serviços: $e';
       debugPrint('❌ Erro ao listar serviços: $e\n$s');
     } finally {
-      _carregando.value = false;
+      if (versao == _cargaDetalhes) carregandoDetalhes.value = false;
     }
   }
 
@@ -177,6 +197,11 @@ class FornecedorCatalogo {
   }
 
   Future<void> cancelarEscuta() async {
+    ++_geracaoEscuta;
+    ++_cargaDetalhes;
+    detalhesCarregados.value = false;
+    carregandoDetalhes.value = false;
+    erroDetalhes.value = '';
     await _servicosSub?.cancel();
     _servicosSub = null;
     _servicosEscutandoId = null;

@@ -1,0 +1,40 @@
+i  emulators: Starting emulators: firestore
+i  emulators: Detected demo project ID "demo-operacao-fornecedor", emulated services will use a demo configuration and attempts to access non-emulated services for this project will fail.
+i  firestore: Firestore Emulator logging to firestore-debug.log
++  firestore: Firestore Emulator UI websocket is running on 9150.
+i  Running script: node functions/scripts/testOperacaoFornecedorIntegrada.js
+EVIDENCIAS docs\evidencias_validacao\operacao-fornecedor\10-logs\run-2026-10-27T14-54-09-218Z
+INÍCIO atendimentos demo-chat-privado
+PASS atendimentos exit 0
+INÍCIO contratos demo-financeiro-contratos
+PASS contratos exit 0
+INÍCIO recebimentos demo-caixa-fornecedor
+PASS recebimentos exit 0
+INÍCIO repasses demo-repasse-operacional
+PASS repasses exit 0
+INÍCIO jornada demo-jornada-atendimentos
+PASS jornada exit 0
+INÍCIO agenda demo-agenda-fornecedor
+PASS agenda exit 0
+INÍCIO agenda-regras demo-agenda-fornecedor
+PASS agenda-regras exit 0
+INÍCIO avaliacoes demo-avaliacoes-verificadas
+FAIL avaliacoes exit 1
+INÍCIO reputacao demo-gestao-reputacao
+PASS reputacao exit 0
+INÍCIO planejamento demo-planejamento-fornecedor
+PASS planejamento exit 0
+INÍCIO painel demo-painel-fornecedor
+PASS painel exit 0
+INÍCIO financeiro-regras demo-faca-festa-fin-forn
+PASS financeiro-regras exit 0
+INÍCIO comissao-regras demo-faca-festa-comissao
+PASS comissao-regras exit 0
+!  Script exited unsuccessfully (code 1)
+i  emulators: Shutting down emulators.
+i  firestore: Stopping Firestore Emulator
+!  Firestore Emulator has exited upon receiving signal: SIGINT
+i  hub: Stopping emulator hub
+i  logging: Stopping Logging Emulator
+
+Error: Script "node functions/scripts/testOperacaoFornecedorIntegrada.js" exited with code 1

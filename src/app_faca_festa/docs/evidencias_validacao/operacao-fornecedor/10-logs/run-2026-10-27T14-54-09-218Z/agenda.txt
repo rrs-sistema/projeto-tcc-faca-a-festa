@@ -1,0 +1,9 @@
+PASS agenda: capacidade 1/2, limite semiaberto, concorrência, virada/fuso, horário pendente, reagendamento, cancelamento, estoque real/devolução e regras privadas.
+[2026-10-27T14:56:23.881Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x65482572 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'update' @ L536, false for 'update' @ L551
+[2026-10-27T14:56:23.895Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x65482573 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+evaluation error at L721:24 for 'update' @ L721, false for 'update' @ L721
+[2026-10-27T14:56:23.915Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x65482574 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'create' @ L536, false for 'create' @ L543, false for 'create' @ L551, false for 'update' @ L536, false for 'update' @ L543, false for 'update' @ L551
+[2026-10-27T14:56:23.929Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x65482575 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'update' @ L536, false for 'update' @ L540, false for 'update' @ L551

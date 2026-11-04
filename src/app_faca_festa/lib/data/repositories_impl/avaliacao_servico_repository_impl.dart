@@ -8,6 +8,13 @@ class AvaliacaoServicoRepositoryImpl implements AvaliacaoServicoRepository {
   AvaliacaoServicoRepositoryImpl(this.remote);
 
   final AvaliacaoServicoRemoteDatasource remote;
+  @override
+  Future<List<Map<String, dynamic>>> contratosAvaliaveis(
+          {required String idFornecedor,
+          required String idEvento,
+          String? idServico}) =>
+      remote.contratosAvaliaveis(
+          idFornecedor: idFornecedor, idEvento: idEvento, idServico: idServico);
 
   @override
   Stream<List<AvaliacaoServico>> observarAvaliacoesServico({
@@ -43,6 +50,7 @@ class AvaliacaoServicoRepositoryImpl implements AvaliacaoServicoRepository {
     required String comentario,
     String? idEvento,
     String? nomeEvento,
+    String? idOrcamento,
   }) {
     return UpdateOperations.run(() async {
       return remote.adicionarAvaliacaoServico(
@@ -54,6 +62,7 @@ class AvaliacaoServicoRepositoryImpl implements AvaliacaoServicoRepository {
         comentario: comentario,
         idEvento: idEvento,
         nomeEvento: nomeEvento,
+        idOrcamento: idOrcamento,
       );
     });
   }
@@ -74,6 +83,7 @@ class AvaliacaoServicoRepositoryImpl implements AvaliacaoServicoRepository {
     required String comentario,
     String? idEvento,
     String? nomeEvento,
+    String? idOrcamento,
   }) {
     return UpdateOperations.run(() async {
       return remote.adicionarAvaliacaoFornecedor(
@@ -84,6 +94,7 @@ class AvaliacaoServicoRepositoryImpl implements AvaliacaoServicoRepository {
         comentario: comentario,
         idEvento: idEvento,
         nomeEvento: nomeEvento,
+        idOrcamento: idOrcamento,
       );
     });
   }

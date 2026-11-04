@@ -31,8 +31,6 @@ class FornecedorProdutoServicoModel extends FornecedorProdutoServico {
       'preco_promocao': precoPromocao,
       'ativo': ativo,
       'data_cadastro': Timestamp.fromDate(dataCadastro),
-      'media_servico': mediaServico,
-      'total_avaliacoes_servico': totalAvaliacoesServico,
     };
   }
 
@@ -51,8 +49,14 @@ class FornecedorProdutoServicoModel extends FornecedorProdutoServico {
       precoPromocao: (map['preco_promocao'] as num?)?.toDouble(),
       ativo: map['ativo'] ?? true,
       dataCadastro: _toDateTime(map['data_cadastro']),
-      mediaServico: (map['media_servico'] as num?)?.toDouble(),
-      totalAvaliacoesServico: map['total_avaliacoes_servico'],
+      mediaServico: map['reputacao_verificada'] is Map &&
+              map['reputacao_verificada']['schema'] == 2
+          ? (map['reputacao_verificada']['media'] as num).toDouble()
+          : 0,
+      totalAvaliacoesServico: map['reputacao_verificada'] is Map &&
+              map['reputacao_verificada']['schema'] == 2
+          ? (map['reputacao_verificada']['quantidade'] as num).toInt()
+          : 0,
     );
   }
 

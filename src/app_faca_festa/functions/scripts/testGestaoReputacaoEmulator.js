@@ -1,0 +1,76 @@
+require("./exigirEmuladorDemo").exigirEmuladorDemo("demo-gestao-reputacao");
+const assert=require('node:assert/strict'),fs=require('fs');
+if(!process.env.FIRESTORE_EMULATOR_HOST)throw Error('Somente emulador.');process.env.GCLOUD_PROJECT='demo-gestao-reputacao';
+const {admin}=require('../lib/shared/firebaseAdmin');const db=admin.firestore();
+const S=require('../lib/services/avaliacoes/gestaoReputacaoService');
+const {registrarAvaliacaoVerificada:reg}=require('../lib/services/avaliacoes/avaliacaoVerificadaService');
+const {initializeTestEnvironment,assertFails,assertSucceeds}=require('../../node_modules/@firebase/rules-unit-testing');
+const call=(nome,uid,data,mod=false)=>S[nome].run({auth:uid?{uid,token:{moderar_avaliacoes:mod}}:undefined,data});
+const gestao=data=>call('consultarGestaoReputacaoFn','f',{idFornecedor:'f',...data});
+let env;
+(async()=>{
+ for(const [u,tipo]of[['a','O'],['f','F'],['f2','F'],['admin','A'],['mod','A'],['mod2','A']])await db.doc('usuarios/'+u).set({tipo,ativo:true,nome:'NOME PRIVADO '+u});
+ await db.doc('fornecedor/f').set({nome:'Fornecedor sintético'});await db.doc('evento/e').set({id_usuario:'a',nome:'EVENTO PRIVADO',status:'planejamento'});
+ await db.doc('fornecedor_servico/f_s').set({id_fornecedor:'f',id_produto_servico:'s'});await db.doc('servico_produto/s').set({nome:'Buffet sintético público'});
+ const ids=[];
+ for(const [i,nota]of[1,2,4,5,3].entries()){
+ const c='c'+i;await db.doc('orcamento/'+c).set({id_evento:'e',id_solicitante:'a',id_fornecedor:'f',id_produto_servico:'s',orcamento_fechado:true,status:'fechado',contrato_financeiro:{id_contrato:c,estado_comercial:'contratado',estado_execucao:'aceito'}});
+ await db.doc('orcamento/'+c+'/execucao_historico/aceite').set({acao:'aceitar',estado_novo:'aceito',autor_id:'a',papel:'cliente'});
+ const r=await reg.run({auth:{uid:'a'},data:{idFornecedor:'f',idOrcamento:c,nota,comentario:'Crítica sintética '+nota,...(i===4?{idServico:'s'}:{})}});ids.push(r.id);
+ await db.doc('fornecedor/f/avaliacoes/'+r.id).update({data:admin.firestore.Timestamp.fromDate(new Date(i<2?'2026-09-10T12:00:00Z':'2026-10-10T12:00:00Z'))});
+ }
+ await db.doc('fornecedor/f/avaliacoes/zz-legado').set({nota:1,comentario:'Legado sem vínculo'});
+ let g=await gestao({limite:2});assert.equal(g.resumo.quantidade,4);assert.equal(g.resumo.media,3);assert.deepEqual(g.resumo.distribuicao.map(d=>d.quantidade),[1,1,0,1,1]);
+ assert.deepEqual(g.resumo.periodos,[{periodo:'2026-09',quantidade:2,media:1.5},{periodo:'2026-10',quantidade:2,media:4.5}]);
+ const vistos=new Set();let cursor=null,paginas=0;do{const p=await gestao({limite:2,...(cursor?{cursor}:{})});for(const a of p.itens){assert(!vistos.has(a.id));vistos.add(a.id);}cursor=p.cursor;assert(++paginas<10);}while(cursor);assert.equal(vistos.size,5);
+ await assert.rejects(()=>gestao({nota:5,cursor:g.cursor}),e=>e.code==='invalid-argument');
+ assert.equal((await gestao({nota:2})).itens[0].nota,2);
+ assert.equal((await gestao({de:'2026-10-01T00:00:00Z',ate:'2026-11-01T00:00:00Z'})).resumo.quantidade,2);
+ const serv=await gestao({tipo:'servico'});assert.equal(serv.resumo.media,3);assert.equal(serv.itens[0].servico,'Buffet sintético público');
+ assert(!JSON.stringify(g).includes('EVENTO PRIVADO'));assert(!JSON.stringify(g).includes('NOME PRIVADO'));
+ assert.equal((await gestao({nota:3})).resumo.media,null);
+ for(const uid of ['f2','a','admin',null])await assert.rejects(()=>call('consultarGestaoReputacaoFn',uid,{idFornecedor:'f'}));
+ const a=ids[0],review=db.doc('fornecedor/f/avaliacoes/'+a),original=(await review.get()).data(),agg=(await db.doc('fornecedor/f').get()).data().reputacao_verificada;
+ const resposta={idFornecedor:'f',idAvaliacao:a,texto:'Resposta pública original',versaoEsperada:0,chave:'resposta-1'};
+ for(const uid of ['f2','a','admin'])await assert.rejects(()=>call('responderReputacaoFn',uid,resposta),e=>e.code==='permission-denied');
+ const res=await Promise.all(Array.from({length:8},()=>call('responderReputacaoFn','f',resposta)));assert.equal(res.filter(x=>!x.idempotente).length,1);
+ await assert.rejects(()=>call('responderReputacaoFn','f',{...resposta,texto:'Outra intenção'}),e=>e.code==='already-exists');
+ const race=await Promise.allSettled([1,2].map(i=>call('responderReputacaoFn','f',{...resposta,versaoEsperada:1,chave:'edicao-'+i,texto:'Edição concorrente '+i})));
+ assert.equal(race.filter(x=>x.status==='fulfilled').length,1);assert.equal(race.find(x=>x.status==='rejected').reason.code,'aborted');
+ await call('responderReputacaoFn','f',resposta);assert.equal((await review.collection('respostas_publicas').doc('atual').get()).data().versao,2);
+ const hist=await call('historicoRespostaReputacaoFn','f',{idFornecedor:'f',idAvaliacao:a});assert.equal(hist.itens.length,2);assert.equal(hist.itens[0].texto,resposta.texto);assert(hist.itens.every(h=>h.autorId==='f'&&h.data));
+ const resp=await gestao({resposta:'respondida'});assert.equal(resp.resumo.quantidade,1);assert.equal(resp.itens[0].resposta.versao,2);assert.equal((await gestao({resposta:'pendente'})).resumo.quantidade,3);
+ assert.equal((await review.get()).data().nota,original.nota);assert.equal((await review.get()).data().comentario,original.comentario);assert.deepEqual((await db.doc('fornecedor/f').get()).data().reputacao_verificada,agg);
+ const denuncia={idFornecedor:'f',idAvaliacao:a,motivo:'ofensa',descricao:'Descrição sintética com fundamentação',chave:'denuncia-1'};
+ const den=await Promise.all(Array.from({length:8},()=>call('denunciarReputacaoFn','f',denuncia)));assert.equal(den.filter(x=>!x.idempotente).length,1);const caso=den[0].id;
+ await assert.rejects(()=>call('denunciarReputacaoFn','f',{...denuncia,motivo:'outro'}),e=>e.code==='already-exists');
+ await assert.rejects(()=>call('denunciarReputacaoFn','f',{...denuncia,chave:'outra-denuncia'}),e=>e.code==='already-exists');assert.equal((await db.collection('denuncias_avaliacoes').get()).size,1);
+ assert.equal((await review.get()).data().moderacao,'publicada');
+ await assert.rejects(()=>call('denunciarReputacaoFn','f2',denuncia),e=>e.code==='permission-denied');
+ await assert.rejects(()=>call('denunciarReputacaoFn','f',{...denuncia,chave:'anexo',anexos:['arquivo']}),e=>e.code==='invalid-argument');
+ await assert.rejects(()=>call('listarFilaReputacaoFn','admin',{}),e=>e.code==='permission-denied');
+ assert.equal((await call('listarFilaReputacaoFn','f',{},true)).itens.length,0);assert.equal((await call('listarFilaReputacaoFn','a',{},true)).itens.length,0);
+ const comando={idCaso:caso,acao:'analisar',fundamentacao:'Análise em andamento compartilhável.',notaInterna:'INTERNO_SUPER_SECRETO',versaoEsperada:1,chave:'analise-1'};
+ for(const uid of ['f','a'])await assert.rejects(()=>call('decidirDenunciaReputacaoFn',uid,comando,true),e=>e.code==='permission-denied');
+ await call('decidirDenunciaReputacaoFn','mod',comando,true);await call('decidirDenunciaReputacaoFn','mod',comando,true);
+ const view=await gestao({});assert(!JSON.stringify(view).includes('INTERNO_SUPER_SECRETO'));assert(view.itens.find(x=>x.id===a).denuncia.fundamentacao.includes('compartilhável'));
+ const fechamento={...comando,acao:'encerrar',decisao:'ocultar',versaoEsperada:2,chave:'fechar',fundamentacao:'Decisão sintética compartilhável e fundamentada.'};
+ const decisoes=await Promise.allSettled(['mod','mod2'].map(uid=>call('decidirDenunciaReputacaoFn',uid,fechamento,true)));assert.equal(decisoes.filter(x=>x.status==='fulfilled').length,1);assert.equal(decisoes.find(x=>x.status==='rejected').reason.code,'aborted');
+ const autor=decisoes[0].status==='fulfilled'?'mod':'mod2';await call('decidirDenunciaReputacaoFn',autor,fechamento,true);
+ assert.equal((await review.get()).data().nota,1);assert.equal((await review.get()).data().moderacao,'oculta');assert.equal((await db.doc('fornecedor/f').get()).data().reputacao_verificada.quantidade,3);assert.equal((await gestao({})).resumo.quantidade,3);
+ assert.equal((await db.doc('denuncias_avaliacoes/'+caso).collection('historico').get()).size,3);
+ assert.equal((await call('listarFilaReputacaoFn','mod',{situacao:'encerrada',limite:1},true)).itens.length,1);
+ await assert.rejects(()=>call('decidirDenunciaReputacaoFn','mod',{...fechamento,chave:'reabrir',versaoEsperada:3},true),e=>e.code==='failed-precondition');
+ env=await initializeTestEnvironment({projectId:'demo-gestao-reputacao',firestore:{host:process.env.FIRESTORE_EMULATOR_HOST.split(':')[0],port:Number(process.env.FIRESTORE_EMULATOR_HOST.split(':')[1]),rules:fs.readFileSync('firestore.rules','utf8')}});
+ for(const [uid,mod]of[['f',false],['f2',false],['a',false],['admin',false],['mod',true],['f',true],['a',true]]){
+ const cli=env.authenticatedContext(uid,mod?{moderar_avaliacoes:true}:{}).firestore();
+ await assertSucceeds(cli.doc('fornecedor/f/avaliacoes/'+a+'/respostas_publicas/atual').get());
+ await (uid==='mod'?assertSucceeds:assertFails)(cli.doc('denuncias_avaliacoes/'+caso).get());
+ await (uid==='mod'?assertSucceeds:assertFails)(cli.doc('denuncias_avaliacoes/'+caso+'/historico/2').get());
+ await (uid==='f'?assertSucceeds:assertFails)(cli.doc('fornecedor/f/avaliacoes/'+a+'/denuncia_compartilhada/atual').get());
+ await (uid==='f'||uid==='mod'?assertSucceeds:assertFails)(cli.doc('fornecedor/f/avaliacoes/'+a+'/respostas_historico/1').get());
+ for(const path of ['fornecedor/f/avaliacoes/'+a,'fornecedor/f/avaliacoes/'+a+'/respostas_publicas/atual','fornecedor/f/avaliacoes/'+a+'/respostas_historico/1','fornecedor/f/avaliacoes/'+a+'/denuncia_compartilhada/atual','denuncias_avaliacoes/'+caso,'denuncias_avaliacoes/'+caso+'/historico/1']){await assertFails(cli.doc(path).update({texto:'fraude'}));await assertFails(cli.doc(path).delete());}
+ }
+ await assertFails(env.unauthenticatedContext().firestore().doc('fornecedor/f/avaliacoes/'+a+'/respostas_publicas/atual').get());
+ console.log('PASS gestão reputação: paginação, filtros, amostra 1/2/4/5, respostas idempotentes/CAS/histórico, denúncias/decisões concorrentes, privacidade e regras.');
+})().catch(e=>{console.error(e);process.exitCode=1}).finally(async()=>{if(env)await env.cleanup();await db.terminate();});

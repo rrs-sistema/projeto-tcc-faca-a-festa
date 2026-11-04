@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/presentation/modules/financeiro/widgets/financeiro_contexto.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -32,7 +33,14 @@ class _CentralMediacaoDetalhePageState
     extends State<CentralMediacaoDetalhePage> {
   final _motivoCtrl = TextEditingController();
   final _registroCtrl = TextEditingController();
+  final _registroFocus = FocusNode();
+  final _conclusaoFocus = FocusNode();
   final _conclusaoCtrl = TextEditingController();
+  final _resolucaoCtrl = TextEditingController();
+  String _tipoDecisao = 'manter';
+  String _estadoResolucao = 'em_execucao';
+  bool _retirarBloqueio = false;
+  String _secao = 'Resumo';
 
   CentralMediacaoController get c => widget.controller;
 
@@ -48,7 +56,10 @@ class _CentralMediacaoDetalhePageState
   void dispose() {
     _motivoCtrl.dispose();
     _registroCtrl.dispose();
+    _registroFocus.dispose();
+    _conclusaoFocus.dispose();
     _conclusaoCtrl.dispose();
+    _resolucaoCtrl.dispose();
     super.dispose();
   }
 
@@ -83,6 +94,18 @@ class _CentralMediacaoDetalhePageState
 
   String _rotuloExecucao(String raw) {
     switch (raw.toLowerCase().trim()) {
+      case 'entrega_informada':
+        return 'Entrega informada';
+      case 'aceito':
+        return 'Aceito';
+      case 'contestado':
+        return 'Contestado';
+      case 'agendado':
+        return 'Agendado';
+      case 'em_execucao':
+        return 'Em execução';
+      case 'cancelado_execucao':
+        return 'Cancelado';
       case 'nao_iniciado':
       case 'nao-iniciado':
         return 'Não iniciado';
@@ -167,7 +190,7 @@ class _CentralMediacaoDetalhePageState
                 builder: (context, constraints) {
                   final w = constraints.maxWidth;
                   final pad = w >= 1100 ? 28.0 : (w >= 720 ? 22.0 : 16.0);
-                  final maxW = w >= 1280 ? 960.0 : w;
+                  final maxW = w >= 1280 ? 1320.0 : w;
                   return Align(
                     alignment: Alignment.topCenter,
                     child: ConstrainedBox(
@@ -190,13 +213,44 @@ class _CentralMediacaoDetalhePageState
                             const SizedBox(height: 14),
                             _kpisFinanceiros(resumo, d, w),
                             const SizedBox(height: 14),
-                            _secaoPartes(d),
-                            const SizedBox(height: 14),
-                            _secaoContrato(d, resumo),
-                            const SizedBox(height: 14),
-                            _secaoFinanceiro(d),
-                            const SizedBox(height: 14),
-                            _secaoMediacao(d, resumo),
+                            const FinanceiroAjuda(
+                                itens: {...ajudaFinanceira, ...ajudaMediacao}),
+                            const SizedBox(height: 16),
+                            Wrap(spacing: 8, runSpacing: 8, children: [
+                              for (final secao in [
+                                'Resumo',
+                                'Financeiro',
+                                'Mediação e histórico'
+                              ])
+                                ChoiceChip(
+                                    label: Text(secao),
+                                    selected: _secao == secao,
+                                    onSelected: (_) =>
+                                        setState(() => _secao = secao)),
+                            ]),
+                            const SizedBox(height: 16),
+                            if (_secao == 'Resumo') ...[
+                              if (w >= 1200 &&
+                                  MediaQuery.textScalerOf(context).scale(1) <=
+                                      1.3)
+                                Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Expanded(
+                                          child: _secaoContrato(d, resumo)),
+                                      const SizedBox(width: 16),
+                                      Expanded(child: _secaoPartes(d)),
+                                    ])
+                              else ...[
+                                _secaoContrato(d, resumo),
+                                const SizedBox(height: 14),
+                                _secaoPartes(d),
+                              ],
+                            ],
+                            if (_secao == 'Financeiro') _secaoFinanceiro(d),
+                            if (_secao == 'Mediação e histórico')
+                              Obx(() => _secaoMediacao(d, resumo)),
                           ] else if (err.isEmpty)
                             const AdminEmptyState(
                               icon: Icons.description_outlined,
@@ -253,7 +307,9 @@ class _CentralMediacaoDetalhePageState
             r['estado_comercial'] ??
             r['estadoComercial'] ??
             '')
-        .toString();
+        .toString()
+        .trim()
+        .toLowerCase();
     final exec = (cs['estado_execucao'] ??
             r['estado_execucao'] ??
             r['estadoExecucao'] ??
@@ -274,7 +330,9 @@ class _CentralMediacaoDetalhePageState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Contratação',
+            comercial == 'contratado'
+                ? 'Contratação confirmada'
+                : 'Oportunidade',
             style: GoogleFonts.poppins(
               fontSize: 12,
               fontWeight: FontWeight.w600,
@@ -350,7 +408,7 @@ class _CentralMediacaoDetalhePageState
             ),
           ),
           Text(
-            'Valor contratado / orçado',
+            comercial == 'contratado' ? 'Valor contratado' : 'Valor estimado',
             style: GoogleFonts.poppins(
               fontSize: 12.5,
               color: AdminPalette.muted,
@@ -366,6 +424,23 @@ class _CentralMediacaoDetalhePageState
     Map<String, dynamic> d,
     double w,
   ) {
+    final cs = d['contratacao_servico'] is Map
+        ? d['contratacao_servico'] as Map
+        : const {};
+    final comercial = (cs['estado_comercial'] ??
+            r['estado_comercial'] ??
+            r['estadoComercial'] ??
+            '')
+        .toString()
+        .trim()
+        .toLowerCase();
+    if (comercial != 'contratado') {
+      return const FinanceiroProximoPasso(
+        titulo: 'Próximo passo: confirmar a contratação',
+        mensagem:
+            'Este serviço ainda é uma oportunidade. O valor é uma estimativa; comissão e repasse serão definidos após a contratação.',
+      );
+    }
     final tiles = [
       (
         'A receber do cliente',
@@ -390,20 +465,34 @@ class _CentralMediacaoDetalhePageState
         'Ao fornecedor',
       ),
       (
-        'Pendente repasse',
+        'Saldo do fornecedor',
         _reais(
           r['pendente_repasse_centavos'] ?? r['pendenteRepasseCentavos'],
         ),
         Icons.hourglass_empty_rounded,
-        'Ainda não confirmado',
+        'Sujeito às condições de liberação',
       ),
     ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        FinanceiroProximoPasso(
+          titulo: 'Próximo passo: conferir as condições do repasse',
+          mensagem: d['financeiro'] is Map &&
+                  ((d['financeiro'] as Map)['motivo_bloqueio'] ?? '')
+                      .toString()
+                      .isNotEmpty
+              ? (d['financeiro'] as Map)['motivo_bloqueio'].toString()
+              : 'Abra Financeiro para conferir os valores. O saldo pendente só pode ser pago após a validação das condições de liberação.',
+          bloqueado: d['financeiro'] is Map &&
+              ((d['financeiro'] as Map)['motivo_bloqueio'] ?? '')
+                  .toString()
+                  .isNotEmpty,
+        ),
+        const SizedBox(height: 16),
         Text(
-          'Dinheiro em jogo',
+          'Resumo financeiro',
           style: GoogleFonts.poppins(
             fontWeight: FontWeight.w700,
             fontSize: 14,
@@ -412,13 +501,14 @@ class _CentralMediacaoDetalhePageState
         ),
         const SizedBox(height: 4),
         Text(
-          'Cliente e fornecedor são dimensões separadas — não some os valores.',
+          'Entradas do cliente e pagamentos ao fornecedor. Saldo pendente não significa repasse liberado.',
           style: GoogleFonts.poppins(fontSize: 12.5, color: AdminPalette.muted),
         ),
         const SizedBox(height: 10),
         LayoutBuilder(
           builder: (context, box) {
-            final cols = box.maxWidth >= 720 ? 4 : (box.maxWidth >= 480 ? 2 : 1);
+            final cols =
+                box.maxWidth >= 720 ? 4 : (box.maxWidth >= 480 ? 2 : 1);
             const gap = 10.0;
             final tileW = cols == 1
                 ? box.maxWidth
@@ -440,8 +530,6 @@ class _CentralMediacaoDetalhePageState
                             const SizedBox(height: 8),
                             Text(
                               t.$2,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                               style: GoogleFonts.poppins(
                                 fontWeight: FontWeight.w800,
                                 fontSize: 18,
@@ -666,7 +754,8 @@ class _CentralMediacaoDetalhePageState
         ? Map<String, dynamic>.from(d['contratacao_servico'] as Map)
         : <String, dynamic>{};
     final ref = _nome(cs, ['id_orcamento', 'id_contrato']);
-    final comercial = (cs['estado_comercial'] ?? '').toString();
+    final comercial =
+        (cs['estado_comercial'] ?? '').toString().trim().toLowerCase();
     final exec = (cs['estado_execucao'] ?? '').toString();
     final aviso = (cs['aviso_execucao'] ?? '').toString().trim();
 
@@ -714,6 +803,23 @@ class _CentralMediacaoDetalhePageState
   }
 
   Widget _secaoFinanceiro(Map<String, dynamic> d) {
+    final cs = d['contratacao_servico'] is Map
+        ? d['contratacao_servico'] as Map
+        : const {};
+    final resumo = d['resumo'] is Map ? d['resumo'] as Map : const {};
+    if ((cs['estado_comercial'] ??
+                resumo['estado_comercial'] ??
+                resumo['estadoComercial'] ??
+                '')
+            .toString()
+            .trim()
+            .toLowerCase() !=
+        'contratado') {
+      return const FinanceiroProximoPasso(
+          titulo: 'Aguardando contratação',
+          mensagem:
+              'Nenhum repasse pode ser preparado nesta etapa. Confirme a contratação e o fornecedor antes de conferir os valores financeiros.');
+    }
     final f = d['financeiro'] is Map
         ? Map<String, dynamic>.from(d['financeiro'] as Map)
         : <String, dynamic>{};
@@ -723,15 +829,39 @@ class _CentralMediacaoDetalhePageState
 
     return _cardSecao(
       titulo: 'Operações financeiras',
-      subtitulo: 'Movimento na plataforma (intermediação).',
+      subtitulo:
+          'Confira as entradas, a comissão e os pagamentos ao fornecedor.',
       icon: Icons.account_balance_outlined,
       children: [
+        FinanceiroProximoPasso(
+          titulo: 'Condição do repasse',
+          mensagem: (f['motivo_bloqueio'] ?? '').toString().isNotEmpty
+              ? f['motivo_bloqueio'].toString()
+              : 'Confira o saldo disponível em Recebimentos e repasses antes de preparar o pagamento.',
+          bloqueado: (f['motivo_bloqueio'] ?? '').toString().isNotEmpty,
+        ),
+        const SizedBox(height: 16),
         _linha(
           'Contratado',
           _reais(
             f['valorContratadoCentavos'] ?? f['valor_contratado_centavos'],
           ),
         ),
+        _linha(
+            'Comissão da plataforma',
+            f['comissao_centavos'] == null
+                ? 'A conferir'
+                : _reais(f['comissao_centavos'])),
+        _linha(
+            'Valor previsto ao fornecedor',
+            f['direito_fornecedor_centavos'] == null
+                ? 'A conferir'
+                : _reais(f['direito_fornecedor_centavos'])),
+        _linha('Saldo do fornecedor a repassar',
+            _reais(f['pendenteRepasseCentavos'])),
+        if ((f['comissao_recebida_separadamente_centavos'] as num? ?? 0) > 0)
+          _linha('Comissão já recebida separadamente',
+              _reais(f['comissao_recebida_separadamente_centavos'])),
         _linha(
           'Alocado na plataforma',
           _reais(
@@ -764,10 +894,21 @@ class _CentralMediacaoDetalhePageState
         ],
         const SizedBox(height: 12),
         FilledButton.icon(
-          onPressed: () => Get.toNamed('/admin/intermediacao'),
+          onPressed: () {
+            final resumo =
+                d['resumo'] is Map ? d['resumo'] as Map : <String, dynamic>{};
+            final contrato = d['contratacao_servico'] is Map
+                ? d['contratacao_servico'] as Map
+                : <String, dynamic>{};
+            Get.toNamed('/admin/intermediacao', arguments: {
+              'idEvento': resumo['idEvento'] ?? resumo['id_evento'],
+              'idOrcamento': widget.idOrcamento,
+              'idContrato': contrato['id_contrato'] ?? widget.idOrcamento,
+            });
+          },
           icon: const Icon(Icons.swap_horiz_rounded, size: 18),
           label: Text(
-            'Abrir intermediação',
+            'Recebimentos e repasses',
             style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
           ),
           style: FilledButton.styleFrom(
@@ -783,12 +924,15 @@ class _CentralMediacaoDetalhePageState
     final caso = c.casoDetalhe.value;
     final regs = c.registrosCaso.toList();
     final enviando = c.enviando.value;
+    final encerrado = ['fechado', 'cancelado_caso'].contains(caso?['estado']);
 
     return _cardSecao(
       titulo: 'Mediação',
       subtitulo: caso == null
           ? 'Nenhum caso aberto — abrir não bloqueia outros fornecedores.'
-          : 'Caso em andamento neste contrato.',
+          : encerrado
+              ? 'Caso encerrado — histórico preservado.'
+              : 'Caso em andamento neste contrato.',
       icon: Icons.gavel_outlined,
       children: [
         if (caso == null) ...[
@@ -809,7 +953,7 @@ class _CentralMediacaoDetalhePageState
           ),
           const SizedBox(height: 12),
           FilledButton.icon(
-            onPressed: enviando
+            onPressed: (enviando || encerrado)
                 ? null
                 : () async {
                     final ok = await c.abrirCaso(
@@ -823,7 +967,8 @@ class _CentralMediacaoDetalhePageState
                       motivo: _motivoCtrl.text.trim(),
                       idFornecedor: (d['partes'] is Map)
                           ? ((d['partes'] as Map)['fornecedor'] is Map
-                              ? ((d['partes'] as Map)['fornecedor'] as Map)['id']
+                              ? ((d['partes'] as Map)['fornecedor']
+                                      as Map)['id']
                                   ?.toString()
                               : null)
                           : null,
@@ -867,8 +1012,7 @@ class _CentralMediacaoDetalhePageState
           _linha('Motivo', (caso['motivo'] ?? '—').toString()),
           _linha(
             'Responsável',
-            (caso['idResponsavel'] ?? caso['id_responsavel'] ?? '—')
-                .toString(),
+            (caso['idResponsavel'] ?? caso['id_responsavel'] ?? '—').toString(),
           ),
           if (caso['recomendacaoBloqueioAtiva'] == true ||
               caso['recomendacao_bloqueio_ativa'] == true)
@@ -925,8 +1069,17 @@ class _CentralMediacaoDetalhePageState
           const SizedBox(height: 8),
           TextField(
             controller: _registroCtrl,
+            focusNode: _registroFocus,
+            enabled: !enviando && !encerrado,
+            onChanged: (_) => c.erroRegistro.value = '',
             decoration: InputDecoration(
               labelText: 'Novo registro',
+              helperText:
+                  'Escreva o texto antes de escolher a ação abaixo. Decisões exigem de 10 a 2000 caracteres.',
+              helperMaxLines: 3,
+              errorText:
+                  c.erroRegistro.value.isEmpty ? null : c.erroRegistro.value,
+              errorMaxLines: 4,
               filled: true,
               fillColor: AdminPalette.surface,
               border: OutlineInputBorder(
@@ -938,58 +1091,97 @@ class _CentralMediacaoDetalhePageState
             style: GoogleFonts.poppins(fontSize: 14),
           ),
           const SizedBox(height: 10),
+          if (!encerrado)
+            DropdownButtonFormField<String>(
+                isExpanded: true,
+                value: _tipoDecisao,
+                decoration: const InputDecoration(labelText: 'Tipo de decisão'),
+                items: const [
+                  DropdownMenuItem(
+                      value: 'manter', child: Text('Manter contratação')),
+                  DropdownMenuItem(
+                      value: 'recomendar_repasse',
+                      child: Text('Recomendar repasse após conferência')),
+                  DropdownMenuItem(
+                      value: 'recomendar_cancelamento',
+                      child: Text('Recomendar cancelamento')),
+                  DropdownMenuItem(
+                      value: 'recomendar_reembolso',
+                      child: Text('Recomendar reembolso')),
+                  DropdownMenuItem(
+                      value: 'encaminhar',
+                      child: Text('Encaminhar para análise')),
+                  DropdownMenuItem(value: 'arquivar', child: Text('Arquivar')),
+                ],
+                onChanged: enviando
+                    ? null
+                    : (v) {
+                        if (v != null) setState(() => _tipoDecisao = v);
+                      }),
+          const SizedBox(height: 10),
           Wrap(
             spacing: 8,
             runSpacing: 8,
             children: [
               OutlinedButton(
-                onPressed: enviando
+                onPressed: (enviando || encerrado)
                     ? null
                     : () async {
                         if (await c.registrarAnalise(_registroCtrl.text,
                             interna: true)) {
                           _registroCtrl.clear();
+                        } else if (mounted && c.erroRegistro.value.isNotEmpty) {
+                          _registroFocus.requestFocus();
                         }
                       },
                 child: const Text('Nota interna'),
               ),
               OutlinedButton(
-                onPressed: enviando
+                onPressed: (enviando || encerrado)
                     ? null
                     : () async {
                         if (await c.registrarAnalise(_registroCtrl.text,
                             interna: false)) {
                           _registroCtrl.clear();
+                        } else if (mounted && c.erroRegistro.value.isNotEmpty) {
+                          _registroFocus.requestFocus();
                         }
                       },
                 child: const Text('Info compartilhável'),
               ),
               OutlinedButton(
-                onPressed: enviando
+                onPressed: (enviando || encerrado)
                     ? null
                     : () async {
                         if (await c.solicitarInfo(_registroCtrl.text)) {
                           _registroCtrl.clear();
+                        } else if (mounted && c.erroRegistro.value.isNotEmpty) {
+                          _registroFocus.requestFocus();
                         }
                       },
                 child: const Text('Solicitar info'),
               ),
               OutlinedButton(
-                onPressed: enviando
+                onPressed: (enviando || encerrado)
                     ? null
                     : () async {
-                        if (await c.registrarDecisao(_registroCtrl.text)) {
+                        if (await c.registrarDecisao(_registroCtrl.text,
+                            tipo: _tipoDecisao)) {
                           _registroCtrl.clear();
+                        } else if (mounted && c.erroRegistro.value.isNotEmpty) {
+                          _registroFocus.requestFocus();
                         }
                       },
                 child: const Text('Registrar decisão'),
               ),
               OutlinedButton(
-                onPressed: enviando
+                onPressed: (enviando || encerrado)
                     ? null
                     : () async {
                         if (await c.recomendarBloqueio(_registroCtrl.text)) {
                           _registroCtrl.clear();
+                        } else if (mounted && c.erroRegistro.value.isNotEmpty) {
+                          _registroFocus.requestFocus();
                         }
                       },
                 child: const Text('Recomendar revisão'),
@@ -997,39 +1189,165 @@ class _CentralMediacaoDetalhePageState
             ],
           ),
           const SizedBox(height: 14),
-          TextField(
-            controller: _conclusaoCtrl,
-            decoration: InputDecoration(
-              labelText: 'Conclusão para fechar',
-              filled: true,
-              fillColor: AdminPalette.surface,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+          if (!encerrado) ...[
+            TextField(
+              controller: _conclusaoCtrl,
+              focusNode: _conclusaoFocus,
+              enabled: !enviando,
+              onChanged: (_) => c.erroConclusao.value = '',
+              decoration: InputDecoration(
+                labelText: 'Conclusão (mínimo de 10 caracteres)',
+                errorText: c.erroConclusao.value.isEmpty
+                    ? null
+                    : c.erroConclusao.value,
+                errorMaxLines: 3,
+                filled: true,
+                fillColor: AdminPalette.surface,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                isDense: true,
               ),
-              isDense: true,
+              style: GoogleFonts.poppins(fontSize: 14),
             ),
-            style: GoogleFonts.poppins(fontSize: 14),
-          ),
-          const SizedBox(height: 10),
-          FilledButton(
-            onPressed: enviando
-                ? null
-                : () async {
-                    final ok = await c.fecharCaso(_conclusaoCtrl.text.trim());
-                    if (ok) _conclusaoCtrl.clear();
-                  },
-            style: FilledButton.styleFrom(
-              backgroundColor: AdminPalette.primary,
-              minimumSize: const Size(48, 46),
+            const SizedBox(height: 10),
+            FilledButton(
+              onPressed: (enviando || encerrado)
+                  ? null
+                  : () async {
+                      final ok = await c.fecharCaso(_conclusaoCtrl.text.trim());
+                      if (ok) {
+                        _conclusaoCtrl.clear();
+                      } else if (mounted && c.erroConclusao.value.isNotEmpty) {
+                        _conclusaoFocus.requestFocus();
+                      }
+                    },
+              style: FilledButton.styleFrom(
+                backgroundColor: AdminPalette.primary,
+                minimumSize: const Size(48, 46),
+              ),
+              child: Text(
+                'Fechar caso (sem movimento financeiro)',
+                style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+              ),
             ),
-            child: Text(
-              'Fechar caso (sem movimento financeiro)',
-              style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
-            ),
-          ),
+          ] else ...[
+            _resolucaoMediacao(d, resumo, caso),
+          ],
         ],
       ],
     );
+  }
+
+  Widget _resolucaoMediacao(Map<String, dynamic> detalhe,
+      Map<String, dynamic> resumo, Map<String, dynamic> caso) {
+    final contrato = detalhe['contratacao_servico'] is Map
+        ? detalhe['contratacao_servico'] as Map
+        : <String, dynamic>{};
+    final contestado = contrato['estado_execucao'] == 'contestado';
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      if (contestado) ...[
+        const Text('Regularizar execução após a mediação',
+            style: TextStyle(fontWeight: FontWeight.bold)),
+        const SizedBox(height: 8),
+        const Text(
+            'A resolução deve corresponder à última decisão registrada. Ela cancela reservas pendentes e exige nova autorização do organizador para antecipar pagamento.'),
+        const SizedBox(height: 12),
+        DropdownButtonFormField<String>(
+            isExpanded: true,
+            value: _estadoResolucao,
+            decoration:
+                const InputDecoration(labelText: 'Resultado da análise'),
+            items: const [
+              DropdownMenuItem(
+                  value: 'em_execucao',
+                  child: Text('Retomar execução do serviço')),
+              DropdownMenuItem(
+                  value: 'aceito',
+                  child: Text('Serviço regularizado pela administração')),
+              DropdownMenuItem(
+                  value: 'cancelado_execucao',
+                  child: Text('Execução cancelada — repasse bloqueado')),
+            ],
+            onChanged: c.enviando.value
+                ? null
+                : (v) {
+                    if (v != null) setState(() => _estadoResolucao = v);
+                  }),
+        TextField(
+            controller: _resolucaoCtrl,
+            maxLength: 1000,
+            maxLines: 3,
+            decoration: const InputDecoration(
+                labelText: 'Justificativa (mínimo 10 caracteres)')),
+        CheckboxListTile(
+            contentPadding: EdgeInsets.zero,
+            value: _retirarBloqueio,
+            title: const Text(
+                'Retirar o bloqueio desta mediação conforme a decisão'),
+            onChanged: c.enviando.value
+                ? null
+                : (v) => setState(() => _retirarBloqueio = v ?? false)),
+        FilledButton(
+            onPressed: c.enviando.value
+                ? null
+                : () async {
+                    if (_resolucaoCtrl.text.trim().length < 10) {
+                      Get.snackbar('Justificativa necessária',
+                          'Informe ao menos 10 caracteres para regularizar a execução.');
+                      return;
+                    }
+                    final confirmar = await showDialog<bool>(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                              title: const Text(
+                                  'Confirmar resolução administrativa'),
+                              content: const Text(
+                                  'A execução será atualizada e as reservas pendentes serão canceladas para nova conferência. Nenhum pagamento ou reembolso será executado.'),
+                              actions: [
+                                TextButton(
+                                    onPressed: () => Navigator.pop(ctx, false),
+                                    child: const Text('Voltar')),
+                                TextButton(
+                                    onPressed: () => Navigator.pop(ctx, true),
+                                    child: const Text('Confirmar resolução'))
+                              ],
+                            ));
+                    if (confirmar == true &&
+                        await c.resolverExecucao(
+                            estado: _estadoResolucao,
+                            motivo: _resolucaoCtrl.text.trim(),
+                            retirarBloqueio: _retirarBloqueio)) {
+                      _resolucaoCtrl.clear();
+                    }
+                  },
+            child: const Text('Aplicar resolução da execução')),
+        const SizedBox(height: 16),
+      ],
+      TextField(
+          controller: _motivoCtrl,
+          maxLines: 2,
+          decoration:
+              const InputDecoration(labelText: 'Motivo de uma nova mediação')),
+      const SizedBox(height: 8),
+      OutlinedButton(
+          onPressed: c.enviando.value
+              ? null
+              : () async {
+                  if (await c.abrirCaso(
+                      idEvento:
+                          (resumo['idEvento'] ?? resumo['id_evento'] ?? '')
+                              .toString(),
+                      idContrato:
+                          (contrato['id_contrato'] ?? widget.idOrcamento)
+                              .toString(),
+                      idOrcamento: widget.idOrcamento,
+                      motivo: _motivoCtrl.text.trim())) {
+                    _motivoCtrl.clear();
+                  }
+                },
+          child: const Text('Abrir nova mediação')),
+    ]);
   }
 
   String _rotuloEstadoCaso(String raw) {

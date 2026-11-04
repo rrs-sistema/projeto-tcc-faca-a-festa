@@ -56,6 +56,32 @@ void main() {
     expect(controller.mediaFornecedor.value, 4.0);
   });
 
+  test(
+      'histórico permanece na lista e não reaparece na média após última avaliação sair',
+      () async {
+    await controller.carregarAvaliacoesFornecedor('fornecedor-1');
+    final antigo = Avaliacao(
+        id: 'legado',
+        idCliente: 'c',
+        nomeCliente: 'Cliente',
+        idFornecedor: 'fornecedor-1',
+        evento: 'e',
+        nota: 1,
+        comentario: 'Preservado',
+        data: DateTime(2020));
+    repository
+        .emitirAvaliacoesFornecedor([antigo, _avaliacaoFornecedor(nota: 5)]);
+    await pumpEventQueue();
+    expect(controller.avaliacoesFornecedor.length, 2);
+    expect(controller.quantidadeFornecedorVerificada, 1);
+    expect(controller.mediaFornecedor.value, 5);
+    repository.emitirAvaliacoesFornecedor([antigo]);
+    await pumpEventQueue();
+    expect(controller.fornecedorCarregado.value, true);
+    expect(controller.quantidadeFornecedorVerificada, 0);
+    expect(controller.mediaFornecedor.value, 0);
+  });
+
   test('delegates service average lookup', () async {
     repository.mediaServico = 4.25;
 
@@ -116,6 +142,13 @@ void main() {
 }
 
 class _AvaliacaoServicoRepositoryFake implements AvaliacaoServicoRepository {
+  @override
+  Future<List<Map<String, dynamic>>> contratosAvaliaveis(
+          {required String idFornecedor,
+          required String idEvento,
+          String? idServico}) async =>
+      [];
+
   final _servicoController = StreamController<List<AvaliacaoServico>>();
   final _fornecedorController = StreamController<List<Avaliacao>>();
   final mediaServicoConsultas = <_MediaServicoConsulta>[];
@@ -171,6 +204,7 @@ class _AvaliacaoServicoRepositoryFake implements AvaliacaoServicoRepository {
     required String comentario,
     String? idEvento,
     String? nomeEvento,
+    String? idOrcamento,
   }) async {
     avaliacoesServicoCriadas.add({
       'id_fornecedor': idFornecedor,
@@ -200,6 +234,7 @@ class _AvaliacaoServicoRepositoryFake implements AvaliacaoServicoRepository {
     required String comentario,
     String? idEvento,
     String? nomeEvento,
+    String? idOrcamento,
   }) async {
     avaliacoesFornecedorCriadas.add({
       'id_fornecedor': idFornecedor,
@@ -243,6 +278,7 @@ class _MediaServicoConsulta {
 
 AvaliacaoServico _avaliacaoServico({required int nota}) {
   return AvaliacaoServico(
+    verificada: true,
     id: 'avaliacao-$nota',
     idFornecedorServico: 'fornecedor-1_servico-1',
     idCliente: 'cliente-1',
@@ -255,6 +291,7 @@ AvaliacaoServico _avaliacaoServico({required int nota}) {
 
 Avaliacao _avaliacaoFornecedor({required int nota}) {
   return Avaliacao(
+    verificada: true,
     id: 'avaliacao-$nota',
     idCliente: 'cliente-1',
     nomeCliente: 'Ana',

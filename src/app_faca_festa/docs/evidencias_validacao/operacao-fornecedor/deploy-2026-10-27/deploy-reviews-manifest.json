@@ -1,0 +1,72 @@
+[
+  {
+    "id": "obterEstatisticasPublicas",
+    "reason": "implementacao/dependencia alterada",
+    "module": "functions\\lib\\functions\\publico\\obterEstatisticasPublicas.js"
+  },
+  {
+    "id": "novaAvaliacaoProcessar",
+    "reason": "implementacao/dependencia alterada",
+    "module": "functions\\lib\\functions\\fornecedores\\novaAvaliacaoProcessar.js"
+  },
+  {
+    "id": "recomendarFornecedoresParaEvento",
+    "reason": "implementacao/dependencia alterada",
+    "module": "functions\\lib\\functions\\fornecedores\\recomendacao\\index.js"
+  },
+  {
+    "id": "registrarInteracaoFornecedor",
+    "reason": "implementacao/dependencia alterada",
+    "module": "functions\\lib\\functions\\fornecedores\\recomendacao\\index.js"
+  },
+  {
+    "id": "registrarAvaliacaoVerificada",
+    "reason": "ausente",
+    "module": "functions\\lib\\services\\avaliacoes\\avaliacaoVerificadaService.js"
+  },
+  {
+    "id": "consultarContratosAvaliaveis",
+    "reason": "ausente",
+    "module": "functions\\lib\\services\\avaliacoes\\avaliacaoVerificadaService.js"
+  },
+  {
+    "id": "moderarAvaliacaoVerificada",
+    "reason": "ausente",
+    "module": "functions\\lib\\services\\avaliacoes\\avaliacaoVerificadaService.js"
+  },
+  {
+    "id": "consultarGestaoReputacaoFn",
+    "reason": "ausente",
+    "module": "functions\\lib\\services\\avaliacoes\\gestaoReputacaoService.js"
+  },
+  {
+    "id": "responderReputacaoFn",
+    "reason": "ausente",
+    "module": "functions\\lib\\services\\avaliacoes\\gestaoReputacaoService.js"
+  },
+  {
+    "id": "denunciarReputacaoFn",
+    "reason": "ausente",
+    "module": "functions\\lib\\services\\avaliacoes\\gestaoReputacaoService.js"
+  },
+  {
+    "id": "listarFilaReputacaoFn",
+    "reason": "ausente",
+    "module": "functions\\lib\\services\\avaliacoes\\gestaoReputacaoService.js"
+  },
+  {
+    "id": "decidirDenunciaReputacaoFn",
+    "reason": "ausente",
+    "module": "functions\\lib\\services\\avaliacoes\\gestaoReputacaoService.js"
+  },
+  {
+    "id": "consultarPermissaoReputacaoFn",
+    "reason": "ausente",
+    "module": "functions\\lib\\services\\avaliacoes\\gestaoReputacaoService.js"
+  },
+  {
+    "id": "historicoRespostaReputacaoFn",
+    "reason": "ausente",
+    "module": "functions\\lib\\services\\avaliacoes\\gestaoReputacaoService.js"
+  }
+]

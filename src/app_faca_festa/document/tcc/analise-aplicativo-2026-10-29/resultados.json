@@ -1,0 +1,47 @@
+{
+  "data": "2026-10-29",
+  "ambiente": {
+    "flutter": "3.27.2",
+    "dart": "3.6.1",
+    "node_local": "24.12.0",
+    "node_backend_declarado": "22"
+  },
+  "flutter": {
+    "aprovados": 996,
+    "falhas": 11,
+    "exit": 1
+  },
+  "repeticao_cinco_arquivos": {
+    "aprovados": 41,
+    "falhas": 11,
+    "exit": 1
+  },
+  "dart_analyze": {
+    "errors": 0,
+    "warnings": 1,
+    "infos": 4,
+    "exit": 2
+  },
+  "build_backend": 0,
+  "check_calculadora": 0,
+  "check_financeiro": 0,
+  "documento_paginas": 33,
+  "inspecao_visual_todas_paginas": true,
+  "nao_executado": [
+    "deploy",
+    "migracao",
+    "comando de negocio em producao",
+    "jornada autenticada completa",
+    "emuladores nesta rodada",
+    "integration_test em aparelho"
+  ],
+  "logs_sha256": {
+    "arquivos-com-falha.txt": "11f7581c777e7f1e4f3a81c9518e08062c7c6db2e4fc2a7b89f03cad3ed4b7af",
+    "backend-build.txt": "834f45192b7faf2849557f554aa076b84cf043e2cc6d0a1c3fc731227eb7c082",
+    "backend-calculadora.txt": "94e50c77543a01e41b3909e65ac6104303eb84ae3e2a556ddbf50ca9d7d186d0",
+    "backend-financeiro.txt": "a2e15cccb7cb82ea0e5dc3ab64c44edfd3f49ff667bbbd25904b561bb6fe2c9d",
+    "dart-analyze.txt": "ed00100ea13d7534f8d2ff86cd743d05dc5df4c2721927a381364e29e1823982",
+    "flutter-repeticao-falhas.txt": "ee26f16c6eb2d4fe108cadf8d8508dd5fd3004437e5aa3a27a30e2b9477e588a",
+    "flutter-test.txt": "b4caea6cfb3f700c901579bcb066fdba299f59b489e045c72d2dd0588ca2a9b8"
+  }
+}

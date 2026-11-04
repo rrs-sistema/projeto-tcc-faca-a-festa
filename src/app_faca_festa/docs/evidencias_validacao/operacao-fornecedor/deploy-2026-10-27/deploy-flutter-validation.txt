@@ -1,0 +1,32 @@
+00:00 +0: loading D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/financeiro/financeiro_contratos_unificado_test.dart
+00:00 +0: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/financeiro/financeiro_contratos_unificado_test.dart: resposta da versão publicada antiga recebe diagnóstico e mantém valores ausentes
+00:00 +1: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/financeiro/financeiro_contratos_unificado_test.dart: diagnóstico diferencia política, serviço, timeout e versão
+00:00 +2: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/financeiro/financeiro_contratos_unificado_test.dart: saldo líquido da entidade usa a projeção, mantendo o bruto
+00:00 +3: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/financeiro/financeiro_contratos_unificado_test.dart: comissão separa retenção e pagamento sem duplicar saldo
+00:00 +4: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/financeiro/financeiro_contratos_unificado_test.dart: resumo e lista mostram líquido e acompanham repasse em 360.0
+00:00 +5: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/financeiro/financeiro_contratos_unificado_test.dart: resumo e lista mostram líquido e acompanham repasse em 360.0
+00:00 +6: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/financeiro/financeiro_contratos_unificado_test.dart: resumo e lista mostram líquido e acompanham repasse em 360.0
+00:00 +7: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/financeiro/financeiro_contratos_unificado_test.dart: resumo e lista mostram líquido e acompanham repasse em 360.0
+00:00 +8: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/financeiro/financeiro_contratos_unificado_test.dart: resumo e lista mostram líquido e acompanham repasse em 360.0
+🎯 [ThemeController] Instância única ativa.
+00:01 +9: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: proposta exige revisão humana, versão, preço, desconto e validade
+00:01 +9: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/financeiro/financeiro_contratos_unificado_test.dart: resumo e lista mostram líquido e acompanham repasse em 1200.0
+🎯 [ThemeController] Instância única ativa.
+00:01 +10: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: proposta exige revisão humana, versão, preço, desconto e validade
+00:01 +10: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/financeiro/financeiro_contratos_unificado_test.dart: indisponibilidade apaga valores e não exibe zero
+🎯 [ThemeController] Instância única ativa.
+00:01 +11: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: proposta exige revisão humana, versão, preço, desconto e validade
+00:02 +12: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/financeiro/financeiro_contratos_unificado_test.dart: formulário exige distribuição válida, envia centavos sem presumir execução
+00:03 +13: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/financeiro/financeiro_contratos_unificado_test.dart: formulário exige distribuição válida, envia centavos sem presumir execução
+00:03 +14: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/financeiro/financeiro_contratos_unificado_test.dart: formulário exige distribuição válida, envia centavos sem presumir execução
+00:03 +15: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/financeiro/financeiro_contratos_unificado_test.dart: formulário exige distribuição válida, envia centavos sem presumir execução
+🎯 [ThemeController] Instância única ativa.
+00:03 +16: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: pós-aceite abre mediação existente sem editar preço contratado
+00:04 +17: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/financeiro/financeiro_contratos_unificado_test.dart: crédito excedente permanece visível no resumo e contrato
+🎯 [ThemeController] Instância única ativa.
+00:04 +18: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: troca de sessão descarta formulário e bloqueia comando antigo
+00:04 +19: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/financeiro/financeiro_contratos_unificado_test.dart: estorno parcial reverte explicitamente a alocação original
+00:04 +20: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/financeiro/financeiro_contratos_unificado_test.dart: estorno parcial reverte explicitamente a alocação original
+00:04 +21: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/financeiro/financeiro_contratos_unificado_test.dart: estorno parcial reverte explicitamente a alocação original
+🎯 [ThemeController] Instância única ativa.
+00:04 +22: All tests passed!

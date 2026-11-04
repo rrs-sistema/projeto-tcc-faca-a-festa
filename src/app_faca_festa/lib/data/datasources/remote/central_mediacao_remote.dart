@@ -47,7 +47,8 @@ class CentralMediacaoRemote {
         'eixoTemporal': eixoTemporal,
         if (periodoInicio != null && periodoInicio.isNotEmpty)
           'periodoInicio': periodoInicio,
-        if (periodoFim != null && periodoFim.isNotEmpty) 'periodoFim': periodoFim,
+        if (periodoFim != null && periodoFim.isNotEmpty)
+          'periodoFim': periodoFim,
         'agruparPorEvento': agruparPorEvento,
         'offset': offset,
         'limite': limite,
@@ -73,7 +74,7 @@ class CentralMediacaoRemote {
         ...local,
         'aviso':
             'Consulta local — a function consultarCentralContratacoes ainda não está publicada neste ambiente. '
-            'Os totais de intermediação podem ficar incompletos.',
+                'Os totais de intermediação podem ficar incompletos.',
         'origem': 'fallback_local',
       };
     } catch (e) {
@@ -90,7 +91,7 @@ class CentralMediacaoRemote {
         },
         'aviso':
             'Não foi possível consultar contratações (function ausente e fallback local falhou: $e). '
-            'Publique consultarCentralContratacoes em southamerica-east1.',
+                'Publique consultarCentralContratacoes em southamerica-east1.',
         'origem': 'fallback_local_vazio',
         'erro_function': falha.toString(),
       };
@@ -119,14 +120,14 @@ class CentralMediacaoRemote {
         ...local,
         'aviso':
             'Detalhe local — function consultarDetalheContratacao ainda não publicada. '
-            'Mediação e comandos exigem deploy.',
+                'Mediação e comandos exigem deploy.',
         'origem': 'fallback_local',
       };
     } catch (e) {
       throw FinanceiroCallableException(
         'unavailable',
         'Detalhe indisponível (function ausente e fallback local falhou: $e). '
-        'Causa da function: ${falha.message ?? falha.code}',
+            'Causa da function: ${falha.message ?? falha.code}',
       );
     }
   }
@@ -219,6 +220,18 @@ class CentralMediacaoRemote {
     });
   }
 
+  Future<Map<String, dynamic>> resolverExecucao(
+          {required String idCaso,
+          required String estado,
+          required String motivo,
+          required bool retirarBloqueio}) =>
+      _gateway.call('resolverExecucaoMediacao', {
+        'idCaso': idCaso,
+        'estadoExecucao': estado,
+        'motivo': motivo,
+        'retirarBloqueio': retirarBloqueio
+      });
+
   Future<Map<String, dynamic>> recomendarBloqueio({
     required String idCaso,
     required String motivo,
@@ -284,8 +297,8 @@ class CentralMediacaoRemote {
           .limit(100)
           .get();
       for (final d in casos.docs) {
-        final id =
-            (d.data()['id_contrato'] ?? d.data()['id_orcamento'] ?? '').toString();
+        final id = (d.data()['id_contrato'] ?? d.data()['id_orcamento'] ?? '')
+            .toString();
         if (id.isNotEmpty) casosAbertos.add(id);
       }
     } catch (_) {
@@ -410,9 +423,8 @@ class CentralMediacaoRemote {
         'estado_execucao': exec,
         'caso_aberto': temCaso,
         'pendencias': pendencias,
-        'identidade_incompleta': pendencias
-            .where((p) => p != 'caso_mediacao_aberto')
-            .isNotEmpty,
+        'identidade_incompleta':
+            pendencias.where((p) => p != 'caso_mediacao_aberto').isNotEmpty,
       });
     }
 
@@ -434,7 +446,8 @@ class CentralMediacaoRemote {
     };
   }
 
-  Future<Map<String, dynamic>> _consultarDetalheLocal(String idOrcamento) async {
+  Future<Map<String, dynamic>> _consultarDetalheLocal(
+      String idOrcamento) async {
     final db = _db!;
     final snap = await db.collection('orcamento').doc(idOrcamento).get();
     if (!snap.exists) {

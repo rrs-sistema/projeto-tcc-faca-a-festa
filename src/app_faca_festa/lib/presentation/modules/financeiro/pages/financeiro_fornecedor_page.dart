@@ -26,7 +26,6 @@ class FinanceiroFornecedorPage extends StatefulWidget {
 }
 
 class _FinanceiroFornecedorPageState extends State<FinanceiroFornecedorPage> {
-  final _filtroEventoCtrl = TextEditingController();
   bool _filtrosAbertos = false;
   bool _pendenciasAbertas = false;
   bool _comoCalculadoAberto = false;
@@ -35,19 +34,11 @@ class _FinanceiroFornecedorPageState extends State<FinanceiroFornecedorPage> {
   @override
   void initState() {
     super.initState();
-    final id = widget.controller.filtroEventoId.value;
-    if (id.isNotEmpty) _filtroEventoCtrl.text = id;
     // Garante skeleton já na 1ª frame (antes do post-frame iniciar).
     widget.controller.carregando.value = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       widget.controller.iniciar();
     });
-  }
-
-  @override
-  void dispose() {
-    _filtroEventoCtrl.dispose();
-    super.dispose();
   }
 
   String _reais(double? v) {
@@ -60,6 +51,10 @@ class _FinanceiroFornecedorPageState extends State<FinanceiroFornecedorPage> {
     final c = widget.controller;
     return Obx(() {
       final r = c.resumo.value;
+      final loading = c.valoresEmCarga;
+      final erro = c.erro.value;
+      final temPendente = c.recebimentoPendente.value != null;
+      final temRecebimentos = c.recebimentos.isNotEmpty;
       return Scaffold(
         backgroundColor: FornecedorPremiumPalette.background,
         appBar: FestaAppBar(
@@ -78,13 +73,11 @@ class _FinanceiroFornecedorPageState extends State<FinanceiroFornecedorPage> {
             final w = constraints.maxWidth;
             final pad = FornecedorBreakpoints.padding(w).clamp(12.0, 20.0);
             final maxW = w >= 1280 ? 1100.0 : w;
-            final loading = c.valoresEmCarga;
             // Enquanto carrega, sempre monta o shell com skeleton — nunca o empty.
-            final display = r ??
-                ResumoFinanceiroFornecedor(idFornecedor: c.idFornecedor);
-            final mostrarEmpty = !loading &&
-                r == null &&
-                c.primeiraCargaConcluida.value;
+            final display =
+                r ?? ResumoFinanceiroFornecedor(idFornecedor: c.idFornecedor);
+            final mostrarEmpty =
+                !loading && r == null && c.primeiraCargaConcluida.value;
             return Align(
               alignment: Alignment.topCenter,
               child: ConstrainedBox(
@@ -93,18 +86,65 @@ class _FinanceiroFornecedorPageState extends State<FinanceiroFornecedorPage> {
                   padding: EdgeInsets.fromLTRB(pad, 12, pad, 24),
                   children: [
                     _cabecalho(c, w),
-                    if (c.erro.value.isNotEmpty) ...[
+                    if (c.custoPendente.value != null)
+                      ListTile(
+                          title: const Text('Custo com envio pendente'),
+                          trailing: TextButton(
+                              onPressed: c.enviando.value
+                                  ? null
+                                  : c.retomarCustoPendente,
+                              child: const Text('Retomar custo original'))),
+                    Align(
+                        alignment: Alignment.centerLeft,
+                        child: OutlinedButton.icon(
+                            onPressed: () =>
+                                Get.toNamed('/fornecedor/planejamento'),
+                            icon: const Icon(Icons.insights),
+                            label: const Text(
+                                'Planejar recebimentos e despesas'))),
+                    if (temPendente) ...[
                       const SizedBox(height: 8),
-                      _bannerErro(c.erro.value),
+                      Card(
+                          child: Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                        'Recebimento com resultado desconhecido. A mesma operação será conciliada antes de qualquer novo lançamento.'),
+                                    TextButton(
+                                        onPressed: c.enviando.value
+                                            ? null
+                                            : c.retomarRecebimentoPendente,
+                                        child: const Text(
+                                            'Retomar recebimento pendente')),
+                                  ]))),
+                    ],
+                    if (erro.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      _bannerErro(erro),
+                      if (c.diagnosticoConsulta.value != null)
+                        ExpansionTile(
+                          title: const Text('Detalhes da consulta'),
+                          children: [
+                            ListTile(
+                                title: Text(
+                                    'Código: ${c.diagnosticoConsulta.value!.codigo}'),
+                                subtitle:
+                                    Text(c.diagnosticoConsulta.value!.detalhe))
+                          ],
+                        ),
                     ],
                     const SizedBox(height: 8),
                     _barraContextual(c, w),
                     if (mostrarEmpty)
                       PremiumEmptyState(
                         icon: Icons.account_balance_wallet_outlined,
-                        title: 'Sem resumo ainda',
+                        title: c.erro.value.isNotEmpty
+                            ? 'Consulta indisponível'
+                            : 'Sem resumo ainda',
                         message: c.autorizado
-                            ? 'Quando houver contrato fechado ou lançamento, o resumo aparece aqui.'
+                            ? 'Atualize para consultar os valores. Dados indisponíveis não são apresentados como zero.'
                             : 'Sem autorização para o financeiro privado.',
                       )
                     else ...[
@@ -116,6 +156,7 @@ class _FinanceiroFornecedorPageState extends State<FinanceiroFornecedorPage> {
                       _situacaoAgora(c, display, loading: loading),
                       const SizedBox(height: 10),
                       _listaContratos(c, loading: loading),
+                      if (!loading && temRecebimentos) _recebimentosProprios(c),
                       const SizedBox(height: 10),
                       _painelResumo(display, w, loading: loading),
                       const SizedBox(height: 10),
@@ -125,8 +166,7 @@ class _FinanceiroFornecedorPageState extends State<FinanceiroFornecedorPage> {
                         _alertas(c),
                       ],
                       if (!loading &&
-                          (c.custos.isNotEmpty ||
-                              c.movimentos.isNotEmpty)) ...[
+                          (c.custos.isNotEmpty || c.movimentos.isNotEmpty)) ...[
                         const SizedBox(height: 10),
                         _lancamentos(c, w),
                       ],
@@ -141,14 +181,8 @@ class _FinanceiroFornecedorPageState extends State<FinanceiroFornecedorPage> {
     });
   }
 
-  String _rotuloEventoCurto(String id) {
-    if (id.isEmpty) return '—';
-    if (id.length <= 12) return id;
-    if (id.contains('-') && id.length >= 20) {
-      return '${id.substring(0, 8)}…${id.substring(id.length - 4)}';
-    }
-    return '${id.substring(0, 10)}…';
-  }
+  String _rotuloEventoCurto(String id) =>
+      id.isEmpty ? '—' : widget.controller.nomeEvento(id);
 
   Widget _cabecalho(FinanceiroFornecedorController c, double w) {
     final compact = FornecedorBreakpoints.phone(w);
@@ -156,7 +190,7 @@ class _FinanceiroFornecedorPageState extends State<FinanceiroFornecedorPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Seu financeiro privado · BRL',
+          'Seu dinheiro · valores em reais',
           style: GoogleFonts.poppins(
             fontSize: 12.5,
             color: FornecedorPremiumPalette.muted,
@@ -164,7 +198,7 @@ class _FinanceiroFornecedorPageState extends State<FinanceiroFornecedorPage> {
           ),
         ),
         Text(
-          'Repasse da plataforma e seus lançamentos manuais.',
+          'Acompanhe contratos, recebimentos e despesas do seu negócio.',
           style: GoogleFonts.poppins(
             fontSize: 12,
             color: FornecedorPremiumPalette.softMuted,
@@ -175,7 +209,7 @@ class _FinanceiroFornecedorPageState extends State<FinanceiroFornecedorPage> {
     );
     final acoes = PopupMenuButton<String>(
       enabled: !c.enviando.value,
-      tooltip: 'Lançar',
+      tooltip: 'Registrar despesa ou recebimento',
       onSelected: (v) {
         if (v == 'custo') _abrirFormulario(custo: true);
         if (v == 'recebimento') _abrirFormulario(custo: false);
@@ -193,7 +227,7 @@ class _FinanceiroFornecedorPageState extends State<FinanceiroFornecedorPage> {
         ),
         PopupMenuItem(
           value: 'comissao',
-          child: Text('Informar comissão/taxas',
+          child: Text('Configurar componentes privados',
               style: GoogleFonts.poppins(fontSize: 13)),
         ),
       ],
@@ -209,7 +243,7 @@ class _FinanceiroFornecedorPageState extends State<FinanceiroFornecedorPage> {
             const Icon(Icons.add_rounded, size: 18, color: Colors.white),
             const SizedBox(width: 6),
             Text(
-              'Lançar',
+              'Registrar',
               style: GoogleFonts.poppins(
                 fontSize: 12.5,
                 fontWeight: FontWeight.w700,
@@ -254,11 +288,17 @@ class _FinanceiroFornecedorPageState extends State<FinanceiroFornecedorPage> {
       corpo = 'Buscando contratos e repasses da plataforma.';
       cor = FornecedorPremiumPalette.primary;
       icone = Icons.hourglass_top_rounded;
+    } else if (r.creditoExcedente > 0) {
+      titulo = 'Crédito excedente: ${_reais(r.creditoExcedente)}';
+      corpo =
+          'Concilie a destinação do excedente; não é receita de uma nova contratação.';
+      cor = FornecedorPremiumPalette.indigo;
+      icone = Icons.info_outline;
     } else if (aReceber > 0.009) {
       titulo = 'Você tem ${_reais(aReceber)} a receber';
       corpo = r.recebido <= 0
-          ? 'Contrato fechado — ainda sem repasse confirmado da plataforma.'
-          : 'Parte já recebida. O restante aguarda repasse.';
+          ? 'Saldo contratual após os registros disponíveis.'
+          : 'Saldo contratual após recebimentos próprios e repasses registrados.';
       cor = FornecedorPremiumPalette.amber;
       icone = Icons.schedule_rounded;
     } else if (r.contratado > 0) {
@@ -380,6 +420,154 @@ class _FinanceiroFornecedorPageState extends State<FinanceiroFornecedorPage> {
     );
   }
 
+  Future<Map<String, dynamic>?> _pedirEstorno(
+      RecebimentoCaixaFato r, FinanceiroFornecedorController c) async {
+    final estornos =
+        c.recebimentos.where((e) => e.estorno && e.referencia == r.id).toList();
+    final somados = estornos.fold<int>(0, (s, e) => s + e.valorCentavos);
+    final restante = r.valorCentavos -
+        (r.estornadoCentavos > somados ? r.estornadoCentavos : somados);
+    final valor =
+        TextEditingController(text: NumericInput.dinheiro(restante / 100));
+    final restantes = {
+      for (final a in r.alocacoes.entries)
+        a.key: a.value -
+            estornos.fold<int>(0, (s, e) => s + (e.alocacoes[a.key] ?? 0))
+    };
+    final livres = restante - restantes.values.fold<int>(0, (s, v) => s + v);
+    final campos = {
+      for (final a in restantes.entries.where((a) => a.value > 0))
+        a.key: TextEditingController(text: NumericInput.dinheiro(a.value / 100))
+    };
+    String? erro;
+    int centavos(String texto) =>
+        ((NumericInput.parseMoeda(texto) ?? 0) * 100).round();
+    final rota = DialogRoute<Map<String, dynamic>>(
+        context: context,
+        builder: (ctx) => StatefulBuilder(
+            builder: (ctx, atualizar) => AlertDialog(
+                  title: const Text('Registrar estorno'),
+                  content: SingleChildScrollView(
+                      child: Column(mainAxisSize: MainAxisSize.min, children: [
+                    const Text(
+                        'Saída declarada vinculada ao original. Não executa transferência bancária. Para estorno parcial, informe as alocações que serão revertidas.'),
+                    const SizedBox(height: 12),
+                    TextField(
+                        controller: valor,
+                        inputFormatters: [NumericInput.moeda()],
+                        keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true),
+                        decoration: const InputDecoration(
+                            labelText: 'Valor do estorno')),
+                    for (final a in campos.entries)
+                      TextField(
+                          controller: a.value,
+                          inputFormatters: [NumericInput.moeda()],
+                          keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true),
+                          decoration: InputDecoration(
+                              labelText:
+                                  'Reverter ${c.contratosListados.where((v) => v.id == a.key).map((v) => v.nomeServico ?? 'contratação').firstOrNull ?? 'contratação'}')),
+                    if (livres > 0)
+                      Text(
+                          'Parcela não alocada disponível: ${_reais(livres / 100)}'),
+                    if (erro != null)
+                      Text(erro!, style: const TextStyle(color: Colors.red)),
+                  ])),
+                  actions: [
+                    TextButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        child: const Text('Voltar')),
+                    TextButton(
+                        onPressed: () {
+                          final total = centavos(valor.text);
+                          final alocacoes = campos.entries
+                              .map((a) => <String, dynamic>{
+                                    'idContrato': a.key,
+                                    'valorCentavos': centavos(a.value.text)
+                                  })
+                              .where((a) => (a['valorCentavos'] as int) > 0)
+                              .toList();
+                          final soma = alocacoes.fold<int>(
+                              0, (s, a) => s + (a['valorCentavos'] as int));
+                          if (total <= 0 ||
+                              total > restante ||
+                              soma > total ||
+                              total - soma > livres ||
+                              alocacoes.any((a) =>
+                                  (a['valorCentavos'] as int) >
+                                  (restantes[a['idContrato']] ?? 0))) {
+                            atualizar(() => erro =
+                                'Confira o valor e as alocações ainda disponíveis no original.');
+                            return;
+                          }
+                          Navigator.pop(ctx,
+                              {'valorCentavos': total, 'alocacoes': alocacoes});
+                        },
+                        child: const Text('Confirmar estorno'))
+                  ],
+                )));
+    try {
+      return await Navigator.of(context).push(rota);
+    } finally {
+      // O resultado chega antes do fim da animação de saída do diálogo.
+      await rota.completed;
+      valor.dispose();
+      for (final campo in campos.values) {
+        campo.dispose();
+      }
+    }
+  }
+
+  Widget _recebimentosProprios(FinanceiroFornecedorController c) {
+    final fatos = c.recebimentos
+        .where((r) =>
+            c.filtroEventoId.value.isEmpty ||
+            r.idEvento == c.filtroEventoId.value)
+        .toList();
+    return PremiumSectionShell(
+        title: 'Recebimentos próprios',
+        subtitle: 'Registros declarados; não são confirmação bancária',
+        icon: Icons.receipt_long_outlined,
+        color: FornecedorPremiumPalette.indigo,
+        child: Column(
+            children: fatos
+                .map((r) => ListTile(
+                      title: Text(r.repasseLegado
+                          ? 'Repasse legado: aguarda conciliação'
+                          : r.estorno
+                              ? 'Estorno registrado'
+                              : r.adiantamento
+                                  ? 'Adiantamento sem entrega presumida'
+                                  : 'Recebimento externo declarado'),
+                      subtitle: Text(
+                          '${_reais(r.valorCentavos / 100)} · ${r.alocacoes.isEmpty ? 'Não alocado' : 'Alocação por contratação'}'),
+                      trailing: !r.repasseLegado &&
+                              !r.estorno &&
+                              r.estornadoCentavos < r.valorCentavos
+                          ? TextButton(
+                              onPressed: c.enviando.value
+                                  ? null
+                                  : () async {
+                                      final pedido = await _pedirEstorno(r, c);
+                                      if (pedido != null) {
+                                        await c.registrarRecebimento(
+                                            idEvento: r.idEvento,
+                                            valorCentavos:
+                                                pedido['valorCentavos'] as int,
+                                            tipo: 'estorno',
+                                            referenciaRecebimento: r.id,
+                                            alocacoes: (pedido['alocacoes']
+                                                    as List)
+                                                .cast<Map<String, dynamic>>());
+                                      }
+                                    },
+                              child: const Text('Estornar'))
+                          : null,
+                    ))
+                .toList()));
+  }
+
   Widget _listaContratos(
     FinanceiroFornecedorController c, {
     bool loading = false,
@@ -479,27 +667,50 @@ class _FinanceiroFornecedorPageState extends State<FinanceiroFornecedorPage> {
                         ],
                       ),
                     ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          _reais(lista[i].valorContratado),
-                          style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w800,
-                            color: FornecedorPremiumPalette.text,
-                          ),
-                        ),
-                        if (lista[i].aReceber > 0.009)
+                    Flexible(
+                      flex: 2,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
                           Text(
-                            'A receber ${_reais(lista[i].aReceber)}',
+                            'Líquido ${_reais(lista[i].liquidoPrevisto)}',
                             style: GoogleFonts.poppins(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: FornecedorPremiumPalette.amber,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                              color: FornecedorPremiumPalette.text,
                             ),
                           ),
-                      ],
+                          Text('Bruto ${_reais(lista[i].valorContratado)}',
+                              style: const TextStyle(fontSize: 11)),
+                          Text('Comissão ${_reais(lista[i].comissao)}',
+                              style: const TextStyle(fontSize: 11)),
+                          const Text('Outras deduções registradas: nenhuma',
+                              style: TextStyle(fontSize: 10)),
+                          Text(
+                              'Autorizado ${_reais(lista[i].repasseAutorizado)}',
+                              style: const TextStyle(fontSize: 11)),
+                          Text(
+                              'Repasse confirmado ${_reais(lista[i].repasseConfirmado)}',
+                              style: const TextStyle(fontSize: 11)),
+                          if (lista[i].recebimentoProprioDeclarado > 0)
+                            Text(
+                                'Próprio declarado ${_reais(lista[i].recebimentoProprioDeclarado)}',
+                                style: const TextStyle(fontSize: 11)),
+                          if (lista[i].aReceber < -0.009)
+                            Text(
+                                'Crédito excedente ${_reais(-lista[i].aReceber)}',
+                                style: const TextStyle(fontSize: 11)),
+                          if (lista[i].aReceber > 0.009)
+                            Text(
+                              'A receber ${_reais(lista[i].aReceber)}',
+                              style: GoogleFonts.poppins(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: FornecedorPremiumPalette.amber,
+                              ),
+                            ),
+                        ],
+                      ),
                     ),
                     const SizedBox(width: 4),
                     const Icon(Icons.chevron_right_rounded,
@@ -518,6 +729,8 @@ class _FinanceiroFornecedorPageState extends State<FinanceiroFornecedorPage> {
 
   String _rotuloSituacaoContrato(VendaFornecedorFato v) {
     final s = (v.situacao ?? '').toLowerCase();
+    if (s == 'cancelado') return 'Cancelado — histórico preservado';
+    if (v.aReceber < -0.009) return 'Crédito excedente — conciliar destinação';
     if (s == 'recebido' || v.aReceber <= 0.009) return 'Repasse quitado';
     if (s == 'parcial' || v.recebidoConfirmado > 0) {
       return 'Repasse parcial';
@@ -567,110 +780,53 @@ class _FinanceiroFornecedorPageState extends State<FinanceiroFornecedorPage> {
             ],
           ),
           if (_filtrosAbertos) ...[
-            if (ids.isNotEmpty) ...[
-              const SizedBox(height: 4),
-              SizedBox(
-                height: 34,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(right: 6),
-                      child: FilterChip(
-                        visualDensity: VisualDensity.compact,
-                        label: Text('Todos',
-                            style: GoogleFonts.poppins(fontSize: 11.5)),
-                        selected: selecionado.isEmpty,
-                        onSelected: (_) {
-                          c.limparFiltroEvento();
-                          _filtroEventoCtrl.clear();
-                          c.iniciar();
-                        },
-                        selectedColor: FornecedorPremiumPalette.primary
-                            .withValues(alpha: 0.12),
-                        checkmarkColor: FornecedorPremiumPalette.primary,
-                      ),
-                    ),
-                    ...ids.map(
-                      (id) => Padding(
-                        padding: const EdgeInsets.only(right: 6),
-                        child: FilterChip(
-                          visualDensity: VisualDensity.compact,
-                          label: Text(
-                            _rotuloEventoCurto(id),
-                            style: GoogleFonts.poppins(fontSize: 11.5),
-                          ),
-                          selected: selecionado == id,
-                          onSelected: (_) {
-                            c.aplicarFiltroEvento(id);
-                            _filtroEventoCtrl.text = id;
-                            c.iniciar();
-                          },
-                          selectedColor: FornecedorPremiumPalette.primary
-                              .withValues(alpha: 0.12),
-                          checkmarkColor: FornecedorPremiumPalette.primary,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String>(
+              key: const ValueKey('filtro-evento-financeiro'),
+              value: selecionado,
+              isExpanded: true,
+              menuMaxHeight: 360,
+              decoration: InputDecoration(
+                labelText: 'Evento',
+                prefixIcon: const Icon(Icons.event_outlined),
+                filled: true,
+                fillColor: FornecedorPremiumPalette.surfaceAlt,
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
               ),
-              const SizedBox(height: 8),
-            ],
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _filtroEventoCtrl,
-                    decoration: InputDecoration(
-                      hintText: 'ID do evento',
-                      isDense: true,
-                      filled: true,
-                      fillColor: FornecedorPremiumPalette.surfaceAlt,
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 10),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(
-                            color: FornecedorPremiumPalette.border),
-                      ),
-                    ),
-                    style: GoogleFonts.poppins(fontSize: 13),
-                    onSubmitted: (v) {
-                      c.aplicarFiltroEvento(v);
+              items: [
+                const DropdownMenuItem(
+                    value: '', child: Text('Todos os eventos')),
+                for (final id in ids)
+                  DropdownMenuItem(
+                      value: id,
+                      child: Text(c.nomeEvento(id),
+                          maxLines: 2, overflow: TextOverflow.ellipsis)),
+              ],
+              onChanged: c.valoresEmCarga
+                  ? null
+                  : (id) {
+                      c.aplicarFiltroEvento(id);
                       c.iniciar();
                     },
-                  ),
-                ),
-                const SizedBox(width: 6),
-                FilledButton(
-                  onPressed: () {
-                    c.aplicarFiltroEvento(_filtroEventoCtrl.text);
-                    c.iniciar();
-                  },
-                  style: FilledButton.styleFrom(
-                    backgroundColor: FornecedorPremiumPalette.primary,
-                    minimumSize: const Size(40, 40),
-                    visualDensity: VisualDensity.compact,
-                  ),
-                  child: Text(
-                    'OK',
-                    style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
-                  ),
-                ),
-                IconButton(
-                  tooltip: 'Limpar',
-                  visualDensity: VisualDensity.compact,
-                  onPressed: () {
-                    _filtroEventoCtrl.clear();
-                    c.limparFiltroEvento();
-                    c.iniciar();
-                  },
-                  icon: const Icon(Icons.clear_rounded, size: 20),
-                ),
-              ],
             ),
+            const SizedBox(height: 8),
+            Text('Selecione um evento para atualizar os valores.',
+                style: GoogleFonts.poppins(
+                    fontSize: 12, color: FornecedorPremiumPalette.muted)),
+            if (selecionado.isNotEmpty)
+              TextButton.icon(
+                onPressed: c.valoresEmCarga
+                    ? null
+                    : () {
+                        c.limparFiltroEvento();
+                        c.iniciar();
+                      },
+                icon: const Icon(Icons.clear_rounded, size: 18),
+                label: const Text('Limpar filtro'),
+              ),
           ],
         ],
       ),
@@ -684,11 +840,15 @@ class _FinanceiroFornecedorPageState extends State<FinanceiroFornecedorPage> {
     bool loading = false,
   }) {
     final vencido = !loading && r.contasVencidas > 0;
-    final largo = w >= 720;
     final metricas = [
-      ('Fechado', _reais(r.contratado)),
+      ('Total contratado', _reais(r.contratado)),
+      ('Comissão contratada', _reais(r.comissaoContratada)),
+      ('Valor após descontos', _reais(r.liquidoPrevisto)),
+      ('Repasse liberado', _reais(r.repasseAutorizado)),
       ('Já recebido', _reais(r.recebido)),
       ('Seus custos', _reais(r.custoDiretoPrevisto)),
+      ('Recebido acima do previsto', _reais(r.creditoExcedente)),
+      ('Recebido sem contrato definido', _reais(r.recebimentoNaoAlocado)),
     ];
 
     return Container(
@@ -704,32 +864,20 @@ class _FinanceiroFornecedorPageState extends State<FinanceiroFornecedorPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (largo)
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: _blocoAReceber(r, vencido, loading: loading),
-                ),
-                const SizedBox(width: 12),
-                ...metricas.map(
-                  (m) => Expanded(
-                    child: _miniMetrica(m.$1, m.$2, loading: loading),
-                  ),
-                ),
-              ],
-            )
-          else ...[
-            _blocoAReceber(r, vencido, loading: loading),
-            const SizedBox(height: 10),
-            Row(
-              children: metricas
-                  .map((m) =>
-                      Expanded(child: _miniMetrica(m.$1, m.$2, loading: loading)))
-                  .toList(),
-            ),
-          ],
+          _blocoAReceber(r, vencido, loading: loading),
+          const SizedBox(height: 12),
+          LayoutBuilder(builder: (context, box) {
+            final colunas = box.maxWidth >= 720 ? 3 : 2;
+            final largura = (box.maxWidth - 12 * (colunas - 1)) / colunas;
+            return Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: metricas
+                    .map((m) => SizedBox(
+                        width: largura,
+                        child: _miniMetrica(m.$1, m.$2, loading: loading)))
+                    .toList());
+          }),
           if (!loading)
             Align(
               alignment: Alignment.centerLeft,
@@ -933,7 +1081,7 @@ class _FinanceiroFornecedorPageState extends State<FinanceiroFornecedorPage> {
                   TextButton(
                     onPressed: () => _informarComissao(),
                     child: Text(
-                      'Informar comissão',
+                      'Configurar componentes privados',
                       style: GoogleFonts.poppins(
                         fontWeight: FontWeight.w700,
                         fontSize: 12.5,
@@ -1001,8 +1149,7 @@ class _FinanceiroFornecedorPageState extends State<FinanceiroFornecedorPage> {
     );
 
     final temSaldoInicial = !loading && r.saldoInicialInformado != null;
-    final caixaVazio =
-        !loading && r.entradasCaixa <= 0 && r.saidasCaixa <= 0;
+    final caixaVazio = !loading && r.entradasCaixa <= 0 && r.saidasCaixa <= 0;
     final caixa = PremiumSectionShell(
       title: 'Movimentações que você registrou',
       subtitle: loading
@@ -1184,7 +1331,7 @@ class _FinanceiroFornecedorPageState extends State<FinanceiroFornecedorPage> {
               FilledButton.tonal(
                 onPressed: c.enviando.value ? null : _informarComissao,
                 child: Text(
-                  'Informar comissão',
+                  'Configurar componentes privados',
                   style: GoogleFonts.poppins(
                     fontWeight: FontWeight.w700,
                     fontSize: 12.5,
@@ -1192,8 +1339,9 @@ class _FinanceiroFornecedorPageState extends State<FinanceiroFornecedorPage> {
                 ),
               ),
               OutlinedButton(
-                onPressed:
-                    c.enviando.value ? null : () => _abrirFormulario(custo: true),
+                onPressed: c.enviando.value
+                    ? null
+                    : () => _abrirFormulario(custo: true),
                 child: Text(
                   'Lançar custo',
                   style: GoogleFonts.poppins(
@@ -1221,86 +1369,7 @@ class _FinanceiroFornecedorPageState extends State<FinanceiroFornecedorPage> {
   }
 
   Future<void> _informarComissao() async {
-    final c = widget.controller;
-    final ctrl = TextEditingController(
-      text: c.comissaoInformada.value == null
-          ? ''
-          : NumericInput.dinheiro(c.comissaoInformada.value!),
-    );
-    final ok = await showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) {
-        final inset = MediaQuery.viewInsetsOf(ctx).bottom;
-        return Padding(
-          padding: EdgeInsets.fromLTRB(20, 16, 20, 20 + inset),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'Informar comissão / taxas',
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Valor estimado que você desconta do resultado '
-                '(não cria lançamento de caixa).',
-                style: GoogleFonts.poppins(
-                  fontSize: 12.5,
-                  color: FornecedorPremiumPalette.muted,
-                ),
-              ),
-              const SizedBox(height: 14),
-              TextField(
-                controller: ctrl,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                inputFormatters: [NumericInput.moeda()],
-                decoration: InputDecoration(
-                  labelText: 'Valor (R\$)',
-                  filled: true,
-                  fillColor: const Color(0xFFF8FAFC),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 14),
-              FilledButton(
-                onPressed: () => Navigator.pop(ctx, true),
-                style: FilledButton.styleFrom(
-                  backgroundColor: FornecedorPremiumPalette.primary,
-                  minimumSize: const Size(48, 46),
-                ),
-                child: Text(
-                  'Aplicar no resultado',
-                  style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
-                ),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(ctx, false),
-                child: const Text('Cancelar'),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-    final texto = ctrl.text;
-    ctrl.dispose();
-    if (ok != true) return;
-    final v = NumericInput.parseMoeda(texto);
-    if (v == null || v < 0) return;
-    await c.informarDeducoes(comissao: v);
+    await Get.toNamed('/fornecedor/planejamento');
   }
 
   Widget _lancamentos(FinanceiroFornecedorController c, double w) {
@@ -1625,6 +1694,10 @@ class _FormularioLancamentoState extends State<_FormularioLancamento> {
   late final TextEditingController _eventoCtrl;
   late final TextEditingController _valorCtrl;
   String? _erroEvento;
+  String? _contrato;
+  bool _dividir = false;
+  String? _erroAlocacao;
+  final _alocacoes = <String, TextEditingController>{};
   String? _erroValor;
   final _valorFocus = FocusNode();
 
@@ -1639,6 +1712,9 @@ class _FormularioLancamentoState extends State<_FormularioLancamento> {
   void dispose() {
     _eventoCtrl.dispose();
     _valorCtrl.dispose();
+    for (final c in _alocacoes.values) {
+      c.dispose();
+    }
     _valorFocus.dispose();
     super.dispose();
   }
@@ -1651,11 +1727,38 @@ class _FormularioLancamentoState extends State<_FormularioLancamento> {
 
   bool _validar() {
     setState(() {
-      _erroEvento = _eventoCtrl.text.trim().isEmpty ? 'Informe o evento' : null;
+      _erroEvento = _eventoCtrl.text.trim().isEmpty
+          ? 'Informe o evento'
+          : (!widget.custo && !_dividir && _contrato == null
+              ? 'Selecione a contratação'
+              : null);
       _erroValor =
           _centavosDeReais() == null ? 'Informe um valor válido' : null;
     });
-    return _erroEvento == null && _erroValor == null;
+    final alocadas = _alocacoesParaEnvio();
+    final soma =
+        alocadas.fold<int>(0, (s, a) => s + (a['valorCentavos'] as int));
+    setState(() => _erroAlocacao =
+        !widget.custo && _dividir && soma > (_centavosDeReais() ?? 0)
+            ? 'As alocações excedem o recebimento.'
+            : null);
+    return _erroEvento == null && _erroValor == null && _erroAlocacao == null;
+  }
+
+  List<Map<String, dynamic>> _alocacoesParaEnvio() {
+    final contratos = widget.controller.contratosListados.where((v) =>
+        v.idEvento == _eventoCtrl.text.trim() && v.situacao != 'cancelado');
+    return contratos
+        .map((v) => {
+              'idContrato': v.id,
+              'valorCentavos':
+                  ((NumericInput.parseMoeda(_alocacoes[v.id]?.text ?? '') ??
+                              0) *
+                          100)
+                      .round()
+            })
+        .where((a) => (a['valorCentavos'] as int) > 0)
+        .toList();
   }
 
   Future<void> _enviar({
@@ -1676,9 +1779,11 @@ class _FormularioLancamentoState extends State<_FormularioLancamento> {
           )
         : await widget.controller.registrarRecebimento(
             idEvento: ev,
+            idOrcamento: _dividir ? null : _contrato,
+            alocacoes: _dividir ? _alocacoesParaEnvio() : null,
             valorCentavos: centavos,
             tipo: adiantamento ? 'adiantamento' : 'recebimento',
-            execucaoConfirmada: !adiantamento,
+            execucaoConfirmada: false,
           );
     if (!mounted) return;
     if (ok) {
@@ -1690,8 +1795,8 @@ class _FormularioLancamentoState extends State<_FormularioLancamento> {
                 ? 'Consumo de estoque registrado (sem nova saída de caixa).'
                 : 'Custo com desembolso registrado.')
             : (adiantamento
-                ? 'Adiantamento registrado (só caixa).'
-                : 'Recebimento com execução registrado.'),
+                ? 'Adiantamento próprio declarado.'
+                : 'Recebimento externo declarado. A entrega não é presumida.'),
         snackPosition: SnackPosition.BOTTOM,
       );
     }
@@ -1729,7 +1834,7 @@ class _FormularioLancamentoState extends State<_FormularioLancamento> {
             Text(
               widget.custo
                   ? 'Custo interno privado. Consumo de estoque não gera nova saída de caixa.'
-                  : 'Confirmação própria do fornecedor — não copia pagamento do cliente.',
+                  : 'Declaração própria — não confirma banco nem execução do serviço.',
               style: GoogleFonts.poppins(
                 fontSize: 12.5,
                 color: FornecedorPremiumPalette.muted,
@@ -1737,8 +1842,43 @@ class _FormularioLancamentoState extends State<_FormularioLancamento> {
               ),
             ),
             const SizedBox(height: 14),
+            if (!widget.custo) ...[
+              CheckboxListTile(
+                  value: _dividir,
+                  onChanged: busy
+                      ? null
+                      : (v) => setState(() => _dividir = v ?? false),
+                  title: const Text('Distribuir entre contratos'),
+                  subtitle: const Text(
+                      'O valor não distribuído permanece não alocado.')),
+              if (!_dividir)
+                DropdownButtonFormField<String>(
+                  value: _contrato,
+                  isExpanded: true,
+                  decoration: const InputDecoration(
+                      labelText: 'Contratação do recebimento'),
+                  items: c.contratosListados
+                      .where((v) => v.situacao != 'cancelado')
+                      .map((v) => DropdownMenuItem(
+                          value: v.id,
+                          child: Text(v.nomeServico ?? 'Serviço contratado')))
+                      .toList(),
+                  onChanged: busy
+                      ? null
+                      : (id) => setState(() {
+                            _contrato = id;
+                            _eventoCtrl.text = c.contratosListados
+                                .firstWhere((v) => v.id == id)
+                                .idEvento;
+                          }),
+                ),
+              const SizedBox(height: 12),
+              const Text(
+                  'Declaração própria, separada dos repasses confirmados pela plataforma.'),
+            ],
             TextField(
               controller: _eventoCtrl,
+              onChanged: (_) => setState(() {}),
               enabled: !busy,
               textInputAction: TextInputAction.next,
               onSubmitted: (_) => _valorFocus.requestFocus(),
@@ -1753,6 +1893,24 @@ class _FormularioLancamentoState extends State<_FormularioLancamento> {
               style: GoogleFonts.poppins(fontSize: 14),
             ),
             const SizedBox(height: 12),
+            if (!widget.custo && _dividir) ...[
+              for (final v in c.contratosListados.where((v) =>
+                  v.idEvento == _eventoCtrl.text.trim() &&
+                  v.situacao != 'cancelado'))
+                Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: TextField(
+                        controller: _alocacoes.putIfAbsent(
+                            v.id, () => TextEditingController()),
+                        keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true),
+                        inputFormatters: [NumericInput.moeda()],
+                        decoration: InputDecoration(
+                            labelText: v.nomeServico ?? 'Serviço contratado',
+                            prefixText: 'R\$ '))),
+              if (_erroAlocacao != null)
+                Text(_erroAlocacao!, style: const TextStyle(color: Colors.red)),
+            ],
             TextField(
               controller: _valorCtrl,
               focusNode: _valorFocus,
@@ -1821,7 +1979,7 @@ class _FormularioLancamentoState extends State<_FormularioLancamento> {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : Text(
-                        'Recebimento com execução',
+                        'Registrar recebimento externo',
                         style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
                       ),
               ),

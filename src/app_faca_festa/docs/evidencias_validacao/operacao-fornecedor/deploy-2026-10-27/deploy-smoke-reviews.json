@@ -1,0 +1,17 @@
+[
+  {
+    "id": "consultarGestaoReputacaoFn",
+    "http": 401,
+    "error": "UNAUTHENTICATED"
+  },
+  {
+    "id": "consultarContratosAvaliaveis",
+    "http": 401,
+    "error": "UNAUTHENTICATED"
+  },
+  {
+    "id": "consultarPermissaoReputacaoFn",
+    "http": 401,
+    "error": "UNAUTHENTICATED"
+  }
+]

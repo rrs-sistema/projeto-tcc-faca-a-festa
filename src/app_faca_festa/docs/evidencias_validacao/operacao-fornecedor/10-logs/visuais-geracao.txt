@@ -1,0 +1,16 @@
+00:00 +0: loading D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/painel_operacional_test.dart
+00:00 +0: (setUpAll)
+00:00 +0: última leitura fica desatualizada após cinco minutos e falha não inventa total
+00:00 +1: resultado de sessão anterior é descartado
+00:00 +2: fachada antiga não sobrescreve estatística da nova sessão
+00:00 +3: média com amostra convive com espera de 64h e clique/teclado abre registro certo
+00:01 +4: falha financeira real da fixture não vira saldo zero
+00:01 +5: todos os alertas abrem seus registros canônicos
+00:01 +6: primeira consulta sem rede tem retry e não mostra valores seed
+00:01 +7: sem amostra não usa seed nem média zero
+00:01 +8: fonte ampliada e rodapé sem esconder conteúdo em 360.0
+00:01 +9: fonte ampliada e rodapé sem esconder conteúdo em 1280.0
+00:01 +10: evidência visual Size(360.0, 1100.0)
+00:01 +11: evidência visual Size(1600.0, 1600.0)
+00:02 +12: (tearDownAll)
+00:02 +12: All tests passed!

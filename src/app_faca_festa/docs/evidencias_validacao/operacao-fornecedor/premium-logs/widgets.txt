@@ -1,0 +1,54 @@
+00:00 +0: loading D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/painel_operacional_test.dart
+00:00 +0: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/painel_operacional_test.dart: (setUpAll)
+00:00 +0: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/painel_operacional_test.dart: última leitura fica desatualizada após cinco minutos e falha não inventa total
+00:00 +1: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/painel_operacional_test.dart: resultado de sessão anterior é descartado
+00:00 +2: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/painel_operacional_test.dart: fachada antiga não sobrescreve estatística da nova sessão
+00:00 +3: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/painel_operacional_test.dart: média com amostra convive com espera de 64h e clique/teclado abre registro certo
+00:03 +4: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/painel_operacional_test.dart: média com amostra convive com espera de 64h e clique/teclado abre registro certo
+00:03 +5: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/painel_operacional_test.dart: média com amostra convive com espera de 64h e clique/teclado abre registro certo
+00:03 +6: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/painel_operacional_test.dart: média com amostra convive com espera de 64h e clique/teclado abre registro certo
+00:03 +7: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/painel_operacional_test.dart: média com amostra convive com espera de 64h e clique/teclado abre registro certo
+00:03 +8: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/painel_operacional_test.dart: média com amostra convive com espera de 64h e clique/teclado abre registro certo
+00:04 +9: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/painel_operacional_test.dart: média com amostra convive com espera de 64h e clique/teclado abre registro certo
+00:04 +10: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/painel_operacional_test.dart: média com amostra convive com espera de 64h e clique/teclado abre registro certo
+00:04 +11: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/painel_operacional_test.dart: média com amostra convive com espera de 64h e clique/teclado abre registro certo
+00:04 +12: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/painel_operacional_test.dart: média com amostra convive com espera de 64h e clique/teclado abre registro certo
+00:08 +13: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/avaliacoes/gestao_reputacao_test.dart: erro com retry, comentário, distribuição e resposta persistida após reabrir
+00:09 +14: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/avaliacoes/gestao_reputacao_test.dart: erro com retry, comentário, distribuição e resposta persistida após reabrir
+00:11 +15: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/avaliacoes/gestao_reputacao_test.dart: erro com retry, comentário, distribuição e resposta persistida após reabrir
+00:11 +16: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/painel_operacional_test.dart: todos os alertas abrem seus registros canônicos
+00:11 +17: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/painel_operacional_test.dart: todos os alertas abrem seus registros canônicos
+00:11 +18: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/painel_operacional_test.dart: todos os alertas abrem seus registros canônicos
+00:11 +19: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/painel_operacional_test.dart: todos os alertas abrem seus registros canônicos
+00:11 +20: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/avaliacoes/gestao_reputacao_test.dart: denúncia não apaga a crítica nem expõe notas internas
+00:13 +21: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/avaliacoes/gestao_reputacao_test.dart: denúncia não apaga a crítica nem expõe notas internas
+00:13 +22: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/avaliacoes/gestao_reputacao_test.dart: denúncia não apaga a crítica nem expõe notas internas
+00:13 +22: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/solicitacoes_controller_test.dart: delegates quote cancellation with current user name
+Encerramento comercial registrado para cotacao-1.
+00:13 +23: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/avaliacoes/gestao_reputacao_test.dart: denúncia não apaga a crítica nem expõe notas internas
+00:13 +24: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/avaliacoes/gestao_reputacao_test.dart: denúncia não apaga a crítica nem expõe notas internas
+00:13 +25: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: proposta exige revisão humana, versão, preço, desconto e validade
+00:13 +26: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: proposta exige revisão humana, versão, preço, desconto e validade
+00:14 +27: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: proposta exige revisão humana, versão, preço, desconto e validade
+00:14 +28: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: proposta exige revisão humana, versão, preço, desconto e validade
+00:14 +29: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: proposta exige revisão humana, versão, preço, desconto e validade
+00:14 +30: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: proposta exige revisão humana, versão, preço, desconto e validade
+00:14 +31: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: proposta exige revisão humana, versão, preço, desconto e validade
+00:15 +32: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: proposta exige revisão humana, versão, preço, desconto e validade
+00:15 +33: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: proposta exige revisão humana, versão, preço, desconto e validade
+00:15 +34: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: proposta exige revisão humana, versão, preço, desconto e validade
+00:16 +35: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: proposta exige revisão humana, versão, preço, desconto e validade
+00:16 +36: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: proposta exige revisão humana, versão, preço, desconto e validade
+00:17 +37: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/avaliacoes/gestao_reputacao_test.dart: vazio e envio desconhecido têm estados explícitos com retomada
+00:17 +38: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: compromisso navega preparação, execução, entrega e aceite com mesma identidade
+00:17 +39: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: compromisso navega preparação, execução, entrega e aceite com mesma identidade
+00:17 +40: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: compromisso navega preparação, execução, entrega e aceite com mesma identidade
+00:18 +41: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: compromisso navega preparação, execução, entrega e aceite com mesma identidade
+00:18 +42: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/avaliacoes/gestao_reputacao_test.dart: evidência visual responsiva em 1200.0
+00:18 +43: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: cliente aceita exatamente a versão revisada no diálogo; revisão concorrente é rejeitada
+00:18 +44: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: cliente aceita exatamente a versão revisada no diálogo; revisão concorrente é rejeitada
+00:18 +45: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: proposta expirada não oferece aceite e perda não mostra compromisso
+00:19 +46: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: pós-aceite abre mediação existente sem editar preço contratado
+00:19 +47: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: troca de sessão descarta formulário e bloqueia comando antigo
+00:19 +48: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/cotacoes/jornada_atendimento_test.dart: falha de consulta tem retry sem fabricar compromisso
+00:19 +49: All tests passed!

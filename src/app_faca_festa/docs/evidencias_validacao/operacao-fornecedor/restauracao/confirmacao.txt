@@ -1,0 +1,11 @@
+00:00 +0: loading D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/visao_restaurada_test.dart
+00:00 +0: (setUpAll)
+00:00 +0: resposta medida exclui sistema, cliente, reenvio e futuro
+00:00 +1: contratações usam identidade, cancelamentos não inflam o total
+00:00 +2: reputação histórica não ganha verificação nem é somada à verificada
+00:00 +3: pendência respeita cancelamento e não inventa data ausente
+00:00 +4: fonte direta antiga é descartada ao trocar de sessão
+00:00 +5: visão rica resiste à falha consolidada em 360.0
+00:01 +6: visão rica resiste à falha consolidada em 1280.0
+00:02 +7: (tearDownAll)
+00:02 +7: All tests passed!

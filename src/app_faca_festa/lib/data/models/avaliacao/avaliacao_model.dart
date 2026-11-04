@@ -4,6 +4,10 @@ import 'package:app_faca_festa/domain/entities/avaliacao.dart';
 
 class AvaliacaoModel extends Avaliacao {
   const AvaliacaoModel({
+    super.respostaFornecedor,
+    super.respostaData,
+    super.verificada,
+    super.idContrato,
     required super.id,
     required super.idCliente,
     required super.nomeCliente,
@@ -33,17 +37,32 @@ class AvaliacaoModel extends Avaliacao {
   /// 🔹 Cria o modelo a partir de um Map (para leitura de documentos)
   factory AvaliacaoModel.fromMap(Map<String, dynamic> map) {
     return AvaliacaoModel(
+      respostaFornecedor: map['_resposta_publica'] is Map
+          ? map['_resposta_publica']['texto'] as String?
+          : null,
+      respostaData: map['_resposta_publica'] is Map &&
+              map['_resposta_publica']['atualizado_em'] is Timestamp
+          ? (map['_resposta_publica']['atualizado_em'] as Timestamp).toDate()
+          : null,
+      verificada: map['_integridade_confirmada'] == true &&
+          map['schema'] == 2 &&
+          map['verificada'] == true &&
+          map['moderacao'] != 'oculta',
+      idContrato: map['id_contrato']?.toString(),
       id: map['id'] ?? '',
       idCliente: map['id_cliente'] ?? '',
       nomeCliente: map['nome_cliente'] ?? '',
       idFornecedor: map['id_fornecedor'] ?? '',
       nomeFornecedor: map['nome_fornecedor'],
       evento: (map['evento'] ?? map['nome_evento'] ?? '').toString(),
-      nota: (map['nota'] ?? 0).toInt(),
+      nota: map['nota'] is num && (map['nota'] as num).isFinite
+          ? (map['nota'] as num).round()
+          : 0,
       comentario: map['comentario'] ?? '',
       data: (map['data'] is Timestamp)
           ? (map['data'] as Timestamp).toDate()
-          : DateTime.tryParse(map['data']?.toString() ?? '') ?? DateTime.now(),
+          : DateTime.tryParse(map['data']?.toString() ?? '') ??
+              DateTime.fromMillisecondsSinceEpoch(0),
     );
   }
 
@@ -67,6 +86,10 @@ class AvaliacaoModel extends Avaliacao {
     DateTime? data,
   }) {
     return AvaliacaoModel(
+      respostaFornecedor: respostaFornecedor,
+      respostaData: respostaData,
+      verificada: verificada,
+      idContrato: idContrato,
       id: id ?? this.id,
       idCliente: idCliente ?? this.idCliente,
       nomeCliente: nomeCliente ?? this.nomeCliente,

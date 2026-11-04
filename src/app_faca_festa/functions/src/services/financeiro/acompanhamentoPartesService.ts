@@ -65,6 +65,9 @@ export type VisaoContratoOrganizador = {
 };
 
 export type VisaoContratoFornecedor = {
+  recebimentoProprioCentavos?:number;
+  saldoContratoCentavos?:number;
+  revisao?: string;
   idContrato: string;
   idOrcamento: string;
   idEvento: string;
@@ -106,6 +109,7 @@ export function podeInformarEntrega(
   atual: EstadoExecucaoParte,
 ): { ok: true } | { ok: false; motivo: string } {
   if (
+    atual === "contestado" ||
     atual === "aceito" ||
     atual === "cancelado_execucao" ||
     atual === "entrega_informada"
@@ -141,6 +145,8 @@ export function podeRegistrarAceiteOuContestacao(
 export function transicionarExecucao(params: {
   atual: EstadoExecucaoParte;
   acao:
+    | "agendar"
+    | "iniciar"
     | "informar_entrega"
     | "aceitar"
     | "contestar"
@@ -150,6 +156,14 @@ export function transicionarExecucao(params: {
   novo: EstadoExecucaoParte;
   preservaHistorico: true;
 } {
+  if (params.acao === "agendar") {
+    if (params.atual !== "nao_iniciado") throw new Error("Agendamento exige compromisso contratado ainda não iniciado.");
+    return {novo:"agendado",preservaHistorico:true};
+  }
+  if (params.acao === "iniciar") {
+    if (params.atual !== "agendado") throw new Error("Início exige preparação/agendamento registrado.");
+    return {novo:"em_execucao",preservaHistorico:true};
+  }
   if (params.acao === "informar_entrega") {
     const c = podeInformarEntrega(params.atual);
     if (!c.ok) throw new Error(c.motivo);
@@ -244,6 +258,9 @@ export function montarVisaoOrganizador(params: {
 }
 
 export function montarVisaoFornecedor(params: {
+  divisaoAplicada?: {comissaoPrevistaCentavos:number; direitoFornecedorPrevistoCentavos:number};
+  revisao?: string;
+  comissaoDescontadaNoRepasse?: boolean;
   idContrato: string;
   idOrcamento: string;
   idEvento: string;
@@ -261,7 +278,7 @@ export function montarVisaoFornecedor(params: {
   politicaLiberacaoAtiva: boolean;
   estadoExecucao: EstadoExecucaoParte;
 }): VisaoContratoFornecedor {
-  const direitos = calcularDireitosContrato({
+  const direitos = params.divisaoAplicada ?? calcularDireitosContrato({
     valorContratadoCentavos: params.valorContratadoCentavos,
     percentualBps: params.percentualBps,
     modoComissao: params.modoComissao,
@@ -295,6 +312,7 @@ export function montarVisaoFornecedor(params: {
   }
 
   return {
+    revisao: params.revisao,
     idContrato: params.idContrato,
     idOrcamento: params.idOrcamento,
     idEvento: params.idEvento,
@@ -325,7 +343,7 @@ export function montarVisaoFornecedor(params: {
       estadoExecucao: params.estadoExecucao,
     }),
     comissaoJaDescontadaDoRepasse:
-      params.modoComissao === "descontada_fornecedor",
+      params.comissaoDescontadaNoRepasse ?? (params.modoComissao === "descontada_fornecedor"),
   };
 }
 

@@ -1,3 +1,9 @@
+import 'package:app_faca_festa/presentation/widgets/festa_app_bar.dart';
+import 'package:app_faca_festa/presentation/widgets/operacao/operacao_scaffold.dart';
+import 'package:app_faca_festa/presentation/modules/financeiro/pages/planejamento_financeiro_page.dart';
+import 'package:app_faca_festa/presentation/modules/fornecedor/pages/agenda/agenda_fornecedor_page.dart';
+import 'package:app_faca_festa/presentation/modules/cotacao/pages/jornada_atendimento_page.dart';
+import 'package:app_faca_festa/presentation/modules/avaliacao/widgets/gestao_reputacao_painel.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -132,6 +138,32 @@ class AppRoutes {
       );
 
   static List<GetPage<dynamic>> get pages => [
+        GetPage(
+          name: '/fornecedor/reputacao',
+          page: () {
+            final a = Get.arguments as Map? ?? {};
+            return OperacaoScaffold(
+              title: 'Reputação e respostas',
+              appBar: FestaAppBar(
+                titulo: 'Reputação e respostas',
+                themeController: Get.find<EventThemeController>(),
+              ),
+              body: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: GestaoReputacaoPainel(
+                  idFornecedor: a['idFornecedor']?.toString() ??
+                      Get.find<FirebaseAuth>().currentUser?.uid,
+                  idAvaliacao: a['idAvaliacao']?.toString(),
+                ),
+              ),
+            );
+          },
+        ),
+
+GetPage(name:'/fornecedor/planejamento',page:()=>PlanejamentoFinanceiroPage(idObrigacao:(Get.arguments as Map?)?['idObrigacao']?.toString())),
+                GetPage(name:'/fornecedor/agenda',page:()=>AgendaFornecedorPage(idOrcamento:(Get.arguments as Map?)?['idOrcamento']?.toString())),
+        GetPage(name:'/jornada-atendimento',page:(){final a=Get.arguments as Map? ?? {};return JornadaAtendimentoPage(idCotacao:a['idCotacao']?.toString()??'',idFornecedor:a['idFornecedor']?.toString()??'');}),
+        GetPage(name:'/moderacao-avaliacoes',page:()=>const ModeracaoReputacaoPage()),
         GetPage(
           name: '/HomeEventScreen',
           page: () => HomeEventScreen(
@@ -505,6 +537,7 @@ class AppRoutes {
               nome = args['nomeEvento']?.toString() ?? args['nome_evento']?.toString();
             }
             return AcompanhamentoOrganizadorPage(
+              idOrcamento:args is Map?args['idOrcamento']?.toString():null,
               controller: Get.find<AcompanhamentoPartesController>(tag: tag),
               themeController: Get.find<EventThemeController>(),
               idEvento: idEvento,
@@ -541,6 +574,7 @@ class AppRoutes {
                   Get.find<AppController>().usuarioLogado.value?.idUsuario ?? '';
             }
             return AcompanhamentoFornecedorPage(
+              idOrcamento:args is Map?args['idOrcamento']?.toString():null,
               controller: Get.find<AcompanhamentoPartesController>(tag: tag),
               themeController: Get.find<EventThemeController>(),
               idFornecedor: idForn,
@@ -620,7 +654,7 @@ class AppRoutes {
         GetPage(
           name: '/fornecedor/financeiro',
           page: () {
-            final idArg = (Get.arguments as String?)?.trim() ?? '';
+            final idArg = FornecedorRouteArgs.idFornecedorOf(Get.arguments) ?? '';
             final id = idArg.isNotEmpty
                 ? idArg
                 : (Get.find<FornecedorController>()
@@ -658,7 +692,7 @@ class AppRoutes {
         GetPage(
           name: '/fornecedor/estoque',
           page: () {
-            final idArg = (Get.arguments as String?)?.trim() ?? '';
+            final idArg = FornecedorRouteArgs.idFornecedorOf(Get.arguments) ?? '';
             final id = idArg.isNotEmpty
                 ? idArg
                 : (Get.find<FornecedorController>()

@@ -1,0 +1,20 @@
+i  emulators: Starting emulators: firestore
+i  emulators: Detected demo project ID "demo-planejamento-fornecedor", emulated services will use a demo configuration and attempts to access non-emulated services for this project will fail.
+i  firestore: Firestore Emulator logging to firestore-debug.log
++  firestore: Firestore Emulator UI websocket is running on 9150.
+i  Running script: node functions/scripts/testPlanejamentoFornecedorEmulator.js
+[2026-10-27T15:23:00.609Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x872ffd55 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'update' @ L536, false for 'update' @ L551
+[2026-10-27T15:23:00.643Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x872ffd56 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'update' @ L517, false for 'update' @ L536, false for 'update' @ L551
+[2026-10-27T15:23:00.672Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x872ffd57 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'delete' @ L510, false for 'delete' @ L536, false for 'delete' @ L551
+[2026-10-27T15:23:00.696Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x872ffd58 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'create' @ L518, false for 'update' @ L518
+PASS planejamento: R$1.992,50 direto, R$600 caixa, baixas concorrentes/idempotência, estorno, estoque sem desembolso, saldo inicial, deduções, filtros, legado, CSV/paridade/fórmulas e regras privadas.
++  Script exited successfully (code 0)
+i  emulators: Shutting down emulators.
+i  firestore: Stopping Firestore Emulator
+!  Firestore Emulator has exited upon receiving signal: SIGINT
+i  hub: Stopping emulator hub
+i  logging: Stopping Logging Emulator

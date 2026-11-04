@@ -49,6 +49,17 @@ class AcompanhamentoPartesRemote {
     });
   }
 
+  Future<Map<String, dynamic>> autorizarRepasse({
+    required String idOrcamento,
+    required String motivo,
+    required bool autorizar,
+  }) =>
+      _gateway.call('autorizarRepasseOrganizador', {
+        'idOrcamento': idOrcamento,
+        'motivo': motivo,
+        'autorizar': autorizar,
+      });
+
   Future<Map<String, dynamic>> informarEntrega({
     required String idOrcamento,
     required String chaveIdempotencia,

@@ -17,6 +17,9 @@ class CotacaoModel extends Cotacao {
     required super.fornecedores,
     required super.servicos,
     super.valorEstimadoTotal,
+    super.estadoComercial,
+    super.estadoExecucao,
+    super.idOrcamento,
   });
 
   @override
@@ -25,6 +28,9 @@ class CotacaoModel extends Cotacao {
     StatusCotacao? status,
   }) {
     return CotacaoModel(
+      estadoComercial: estadoComercial,
+      estadoExecucao: estadoExecucao,
+      idOrcamento: idOrcamento,
       id: id,
       idEvento: idEvento,
       idUsuarioSolicitante: idUsuarioSolicitante,

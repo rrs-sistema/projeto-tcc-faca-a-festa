@@ -122,8 +122,12 @@ class Cotacao {
     required this.fornecedores,
     required this.servicos,
     this.valorEstimadoTotal,
+    this.estadoComercial,
+    this.estadoExecucao,
+    this.idOrcamento,
   });
 
+  final String? estadoComercial, estadoExecucao, idOrcamento;
   final String id;
   final String idEvento;
   final String idUsuarioSolicitante;
@@ -142,6 +146,9 @@ class Cotacao {
     StatusCotacao? status,
   }) {
     return Cotacao(
+      estadoComercial: estadoComercial,
+      estadoExecucao: estadoExecucao,
+      idOrcamento: idOrcamento,
       id: id,
       idEvento: idEvento,
       idUsuarioSolicitante: idUsuarioSolicitante,

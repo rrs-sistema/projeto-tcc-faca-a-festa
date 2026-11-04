@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:app_faca_festa/domain/entities/admin_dashboard_stats.dart';
@@ -10,27 +11,29 @@ class AdminDashboardRemoteDatasource {
   final FirebaseFirestore _db;
 
   Future<AdminDashboardStats> carregarIndicadores() async {
-    final results = await Future.wait([
-      _db.collection('categoria_servico').get(),
-      _db.collection('subcategoria_servico').get(),
-      _db.collection('servico_produto').get(),
-      _db.collection('fornecedor').get(),
-      _db.collection('usuarios').get(),
-      _db.collection('evento').get(),
-      _db.collection(TemaFestaModel.colecao).get(),
-      _db.collection('orcamento').get(),
-      _db.collection('territorio').get(),
-    ]);
+    // Estes indicadores só precisam de totais, sem baixar os documentos.
+    final (totais, results) = await (
+      Future.wait([
+        _db.collection('subcategoria_servico').count().get(),
+        _db.collection(TemaFestaModel.colecao).count().get(),
+        _db.collection('territorio').count().get(),
+      ]),
+      Future.wait([
+        _db.collection('categoria_servico').get(),
+        _db.collection('servico_produto').get(),
+        _db.collection('fornecedor').get(),
+        _db.collection('usuarios').get(),
+        _db.collection('evento').get(),
+        _db.collection('orcamento').get(),
+      ])
+    ).wait;
 
     final categorias = results[0].docs;
-    final subcategorias = results[1].docs;
-    final servicos = results[2].docs;
-    final fornecedores = results[3].docs;
-    final usuarios = results[4].docs;
-    final eventos = results[5].docs;
-    final temas = results[6].docs;
-    final orcamentos = results[7].docs;
-    final territorios = results[8].docs;
+    final servicos = results[1].docs;
+    final fornecedores = results[2].docs;
+    final usuarios = results[3].docs;
+    final eventos = results[4].docs;
+    final orcamentos = results[5].docs;
 
     const statusEventoAtivo = {
       'rascunho',
@@ -51,7 +54,7 @@ class AdminDashboardRemoteDatasource {
       categorias: categorias.length,
       categoriasAtivas:
           categorias.where((d) => d.data()['ativo'] != false).length,
-      subcategorias: subcategorias.length,
+      subcategorias: totais[0].count!,
       servicos: servicos.where((d) => d.data()['ativo'] != false).length,
       fornecedores: fornecedores.length,
       fornecedoresAptos: fornecedores.where((d) {
@@ -75,13 +78,13 @@ class AdminDashboardRemoteDatasource {
         if (status.isNotEmpty) return statusEventoAtivo.contains(status);
         return data['ativo'] != false;
       }).length,
-      temas: temas.length,
+      temas: totais[1].count!,
       orcamentos: orcamentos.length,
       orcamentosAbertos: orcamentos.where((d) {
         final status = (d.data()['status'] ?? 'pendente').toString();
         return statusOrcamentoAberto.contains(status);
       }).length,
-      territorios: territorios.length,
+      territorios: totais[2].count!,
     );
   }
 }

@@ -71,22 +71,13 @@ class FornecedorLocalizacaoRemoteDatasource {
   }
 
   Stream<Map<String, double>> observarMediasAvaliacoes() {
-    return _db.collection('avaliacoes').snapshots().map((snapshot) {
-      final notasPorFornecedor = <String, List<int>>{};
-      for (final doc in snapshot.docs) {
-        final data = doc.data();
-        final idFornecedor = (data['id_fornecedor'] ?? '').toString();
-        if (idFornecedor.isEmpty) continue;
-        notasPorFornecedor
-            .putIfAbsent(idFornecedor, () => <int>[])
-            .add((data['nota'] ?? 0).toInt());
-      }
-
-      return notasPorFornecedor.map((id, notas) {
-        final media = notas.reduce((a, b) => a + b) / notas.length;
-        return MapEntry(id, double.parse(media.toStringAsFixed(2)));
-      });
-    });
+    return _db.collection('fornecedor').snapshots().map((s) => {
+          for (final d in s.docs)
+            d.id: d.data()['reputacao_verificada'] is Map &&
+                    d.data()['reputacao_verificada']['schema'] == 2
+                ? (d.data()['reputacao_verificada']['media'] as num).toDouble()
+                : 0.0
+        });
   }
 
   Stream<List<FornecedorServicoDetalhadoDto>> observarServicosFornecedor(

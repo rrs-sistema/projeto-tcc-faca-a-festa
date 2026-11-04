@@ -1,0 +1,17 @@
+[
+  {
+    "Algorithm": "SHA256",
+    "Hash": "06D8F4841810749CAA1BC5A0A9FFF45BDFD8AD502F7C0B27BC315086F1E68C72",
+    "Path": "D:\\repository\\unicesumar\\tcc\\app\\src\\app_faca_festa\\functions\\src\\services\\avaliacoes\\avaliacaoVerificadaService.ts"
+  },
+  {
+    "Algorithm": "SHA256",
+    "Hash": "D98FF50BB0DDAE3152E2EB53FC830B9E506DFA5CE3B5F4883CD98C1ED984BD57",
+    "Path": "D:\\repository\\unicesumar\\tcc\\app\\src\\app_faca_festa\\functions\\src\\services\\avaliacoes\\gestaoReputacaoService.ts"
+  },
+  {
+    "Algorithm": "SHA256",
+    "Hash": "CB94816E568B10501B9B87047C0993C4B5648900AE42C84CC5D04AAC6DA267D7",
+    "Path": "D:\\repository\\unicesumar\\tcc\\app\\src\\app_faca_festa\\firestore.rules"
+  }
+]

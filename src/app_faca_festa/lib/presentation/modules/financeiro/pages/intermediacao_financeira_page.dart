@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/presentation/modules/financeiro/widgets/financeiro_contexto.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -46,7 +47,8 @@ class _IntermediacaoFinanceiraPageState
     super.initState();
     final args = Get.arguments;
     if (args is Map) {
-      final ev = (args['idEvento'] ?? args['id_evento'] ?? '').toString().trim();
+      final ev =
+          (args['idEvento'] ?? args['id_evento'] ?? '').toString().trim();
       final orc =
           (args['idOrcamento'] ?? args['id_orcamento'] ?? '').toString().trim();
       final contrato =
@@ -80,6 +82,46 @@ class _IntermediacaoFinanceiraPageState
     super.dispose();
   }
 
+  Future<void> _confirmarRepasse(String id) async {
+    final referencia = TextEditingController();
+    final ok = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+              title: const Text('Confirmar pagamento ao fornecedor'),
+              content: SizedBox(
+                  width: 440,
+                  child: Column(mainAxisSize: MainAxisSize.min, children: [
+                    const Text(
+                        'Confirme somente após realizar a transferência. Informe o comprovante ou a referência que permite conferir o pagamento.'),
+                    const SizedBox(height: 16),
+                    TextField(
+                        controller: referencia,
+                        maxLength: 1000,
+                        maxLines: 3,
+                        decoration: const InputDecoration(
+                            labelText:
+                                'Comprovante ou referência (mínimo 5 caracteres)')),
+                  ])),
+              actions: [
+                TextButton(
+                    onPressed: () => Navigator.pop(ctx, false),
+                    child: const Text('Voltar')),
+                TextButton(
+                    onPressed: () {
+                      if (referencia.text.trim().length >= 5) {
+                        Navigator.pop(ctx, true);
+                      }
+                    },
+                    child: const Text('Confirmar pagamento realizado'))
+              ],
+            ));
+    final texto = referencia.text.trim();
+    WidgetsBinding.instance.addPostFrameCallback((_) => referencia.dispose());
+    if (ok == true) {
+      await c.confirmarRepasse(id, evidencias: texto);
+    }
+  }
+
   String _reais(dynamic centavos) {
     final n = (centavos is num) ? centavos.toInt() : 0;
     return NumericInput.dinheiro(n / 100.0);
@@ -106,9 +148,8 @@ class _IntermediacaoFinanceiraPageState
     final alocado = (m['alocado_centavos'] is num)
         ? (m['alocado_centavos'] as num).toInt()
         : 0;
-    final valor = (m['valor_centavos'] is num)
-        ? (m['valor_centavos'] as num).toInt()
-        : 0;
+    final valor =
+        (m['valor_centavos'] is num) ? (m['valor_centavos'] as num).toInt() : 0;
     final restante = (valor - alocado).clamp(0, valor);
     setState(() {
       _recIdCtrl.text = id;
@@ -146,7 +187,7 @@ class _IntermediacaoFinanceiraPageState
       return Scaffold(
         backgroundColor: AdminPalette.surface,
         appBar: FestaAppBar(
-          titulo: 'Intermediação',
+          titulo: 'Recebimentos e repasses',
           themeController: widget.themeController,
           acoes: [
             IconButton(
@@ -194,6 +235,16 @@ class _IntermediacaoFinanceiraPageState
                         height: 1.35,
                       ),
                     ),
+                    const SizedBox(height: 12),
+                    const FinanceiroAjuda(itens: {
+                      ...ajudaFinanceira,
+                      'Conferir o recebimento':
+                          'Registre o valor efetivamente recebido e a referência para conferência. Declarações de pagamento não financiam repasses.',
+                      'Vincular aos contratos':
+                          'Distribua o recebimento entre as contratações do evento. O mesmo dinheiro não pode ser usado duas vezes.',
+                      'Preparar e confirmar o repasse':
+                          'Prepare o valor elegível, realize a transferência bancária e só então confirme o pagamento com uma referência ou comprovante.',
+                    }),
                     const SizedBox(height: 12),
                     _passosVisuais(),
                     const SizedBox(height: 16),
@@ -249,9 +300,9 @@ class _IntermediacaoFinanceiraPageState
   Widget _passosVisuais() {
     const passos = [
       ('1', 'Consultar'),
-      ('2', 'Receber'),
-      ('3', 'Alocar'),
-      ('4', 'Repassar'),
+      ('2', 'Conferir recebimento'),
+      ('3', 'Vincular ao contrato'),
+      ('4', 'Conferir repasse'),
     ];
     return Wrap(
       spacing: 8,
@@ -484,10 +535,22 @@ class _IntermediacaoFinanceiraPageState
     final s = ext['sintese'];
     if (s is! Map) return const SizedBox.shrink();
     final itens = [
-      ('Recebido', _reais(s['recebido_plataforma_centavos']), Icons.payments_outlined),
+      (
+        'Recebido',
+        _reais(s['recebido_plataforma_centavos']),
+        Icons.payments_outlined
+      ),
       ('Alocado', _reais(s['alocado_centavos']), Icons.link_rounded),
-      ('Sem alocação', _reais(s['sem_alocacao_centavos']), Icons.hourglass_empty_rounded),
-      ('Repassado', _reais(s['repassado_confirmado_centavos']), Icons.south_west_rounded),
+      (
+        'Sem alocação',
+        _reais(s['sem_alocacao_centavos']),
+        Icons.hourglass_empty_rounded
+      ),
+      (
+        'Repassado',
+        _reais(s['repassado_confirmado_centavos']),
+        Icons.south_west_rounded
+      ),
     ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -503,7 +566,8 @@ class _IntermediacaoFinanceiraPageState
         const SizedBox(height: 10),
         LayoutBuilder(
           builder: (context, box) {
-            final cols = box.maxWidth >= 720 ? 4 : (box.maxWidth >= 480 ? 2 : 1);
+            final cols =
+                box.maxWidth >= 720 ? 4 : (box.maxWidth >= 480 ? 2 : 1);
             const gap = 10.0;
             final tileW = cols == 1
                 ? box.maxWidth
@@ -652,9 +716,8 @@ class _IntermediacaoFinanceiraPageState
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton(
-                        onPressed: restante <= 0
-                            ? null
-                            : () => _usarRecebimento(m),
+                        onPressed:
+                            restante <= 0 ? null : () => _usarRecebimento(m),
                         child: Text(
                           selecionado ? 'Selecionado' : 'Usar na alocação',
                           style: GoogleFonts.poppins(
@@ -776,7 +839,7 @@ class _IntermediacaoFinanceiraPageState
                   title: Text('Política ativa',
                       style: GoogleFonts.poppins(fontSize: 14)),
                   subtitle: Text(
-                    'Sem política ativa, nenhum repasse é autorizado.',
+                    'A política ativa não antecipa pagamentos: o evento deve estar finalizado ou ter autorização explícita do organizador. Mediações bloqueiam o repasse.',
                     style: GoogleFonts.poppins(fontSize: 12),
                   ),
                 ),
@@ -847,14 +910,25 @@ class _IntermediacaoFinanceiraPageState
         : 0;
     final motivo = (m['motivo_bloqueio'] ?? '').toString();
     final semFornecedor = (m['id_fornecedor'] ?? '').toString().isEmpty;
-    final podeAutorizar =
-        elegivel > 0 && !semFornecedor && !c.enviando.value;
+    final podeAutorizar = elegivel > 0 && !semFornecedor && !c.enviando.value;
     final declarado = (m['pagamento_declarado_centavos'] is num)
         ? (m['pagamento_declarado_centavos'] as num).toInt()
         : 0;
     final linhas = [
       ('Contratado', _reais(m['valor_contratado_centavos'])),
-      ('Direito do fornecedor', _reais(m['direito_fornecedor_centavos'])),
+      (
+        'Comissão da plataforma',
+        m['comissao_centavos'] == null
+            ? 'A conferir'
+            : _reais(m['comissao_centavos'])
+      ),
+      (
+        'Direito de repasse',
+        m['direito_fornecedor_centavos'] == null
+            ? 'A conferir'
+            : _reais(m['direito_fornecedor_centavos'])
+      ),
+      ('Disponível para liberar', _reais(m['elegivel_centavos'])),
       ('Alocado', _reais(m['alocado_centavos'])),
       ('Autorizado', _reais(m['repasse_autorizado_centavos'])),
       ('Repassado', _reais(m['repasse_confirmado_centavos'])),
@@ -887,8 +961,8 @@ class _IntermediacaoFinanceiraPageState
                   setState(() {
                     _orcCtrl.text = (m['id_orcamento'] ?? '').toString();
                     final idContrato = (m['id_contrato'] ?? '').toString();
-                    _contratoDistinto = idContrato.isNotEmpty &&
-                        idContrato != _orcCtrl.text;
+                    _contratoDistinto =
+                        idContrato.isNotEmpty && idContrato != _orcCtrl.text;
                     _contratoCtrl.text = _contratoDistinto ? idContrato : '';
                   });
                   Get.snackbar(
@@ -908,6 +982,14 @@ class _IntermediacaoFinanceiraPageState
               ),
             ],
           ),
+          if ((m['comissao_recebida_separadamente_centavos'] as num? ?? 0) > 0)
+            Text(
+                'Comissão já recebida separadamente: ${_reais(m['comissao_recebida_separadamente_centavos'])}. Esse valor não será descontado novamente.',
+                style: GoogleFonts.poppins(
+                    fontSize: 12, color: AdminPalette.primary)),
+          Text((m['criterio_liberacao'] ?? '').toString(),
+              style:
+                  GoogleFonts.poppins(fontSize: 12, color: AdminPalette.muted)),
           if (declarado > 0)
             Text(
               'Organizador declarou ${_reais(declarado)} pago',
@@ -1007,7 +1089,8 @@ class _IntermediacaoFinanceiraPageState
           _secaoTitulo(
             '4',
             'Repasses',
-            nota: 'Autorizado ainda não é transferido. Confirmar = conferência.',
+            nota:
+                'Autorizado ainda não é transferido. Confirmar = conferência.',
           ),
           const SizedBox(height: 12),
           Text(
@@ -1098,19 +1181,17 @@ class _IntermediacaoFinanceiraPageState
                       ),
                     ),
                     if (podeConfirmar)
+                      IconButton(
+                          tooltip: 'Cancelar reserva de repasse',
+                          icon: const Icon(Icons.cancel_outlined),
+                          onPressed: c.enviando.value
+                              ? null
+                              : () => c.cancelarRepasse(id)),
+                    if (podeConfirmar)
                       FilledButton(
                         onPressed: c.enviando.value
                             ? null
-                            : () async {
-                                final ok = await c.confirmarRepasse(id);
-                                if (ok && mounted) {
-                                  Get.snackbar(
-                                    'Repasse',
-                                    'Confirmado por conferência manual.',
-                                    snackPosition: SnackPosition.BOTTOM,
-                                  );
-                                }
-                              },
+                            : () => _confirmarRepasse(id),
                         style: FilledButton.styleFrom(
                           backgroundColor: AdminPalette.primary,
                           minimumSize: const Size(48, 40),
@@ -1142,7 +1223,8 @@ class _IntermediacaoFinanceiraPageState
           _secaoTitulo(
             '2',
             'Registrar recebimento',
-            nota: 'Conferência de valor na plataforma — ainda não destina ao fornecedor.',
+            nota:
+                'Conferência de valor na plataforma — ainda não destina ao fornecedor.',
           ),
           const SizedBox(height: 12),
           TextField(
@@ -1169,7 +1251,8 @@ class _IntermediacaoFinanceiraPageState
                       return;
                     }
                     if (_eventoCtrl.text.trim().isEmpty) {
-                      Get.snackbar('Recebimento', 'Consulte o evento no passo 1.');
+                      Get.snackbar(
+                          'Recebimento', 'Consulte o evento no passo 1.');
                       return;
                     }
                     c.idEvento.value = _eventoCtrl.text.trim();
@@ -1219,7 +1302,8 @@ class _IntermediacaoFinanceiraPageState
           _secaoTitulo(
             '3',
             'Alocar a um contrato',
-            nota: 'Sem rateio automático. Escolha o recebimento na lista acima.',
+            nota:
+                'Sem rateio automático. Escolha o recebimento na lista acima.',
           ),
           const SizedBox(height: 12),
           TextField(
@@ -1243,8 +1327,7 @@ class _IntermediacaoFinanceiraPageState
           ),
           const SizedBox(height: 4),
           InkWell(
-            onTap: () =>
-                setState(() => _contratoDistinto = !_contratoDistinto),
+            onTap: () => setState(() => _contratoDistinto = !_contratoDistinto),
             borderRadius: BorderRadius.circular(8),
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),

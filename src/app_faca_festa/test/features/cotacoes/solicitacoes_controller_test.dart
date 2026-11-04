@@ -47,7 +47,9 @@ void main() {
     repository.emitirErro(StateError('failure'));
     await pumpEventQueue();
 
-    expect(controller.erro.value, startsWith('Erro no stream:'));
+    expect(
+        controller.erro.value, 'Não foi possível consultar os atendimentos.');
+    expect(controller.solicitacoes, isEmpty);
     expect(controller.carregando.value, isFalse);
   });
 

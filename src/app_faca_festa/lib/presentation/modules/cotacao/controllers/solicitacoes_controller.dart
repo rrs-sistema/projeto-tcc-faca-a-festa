@@ -21,23 +21,38 @@ class SolicitacoesController extends GetxController {
   final carregando = false.obs;
   final erro = ''.obs;
 
-  bool _streamAtiva = false;
+  String? _fornecedor;
+  int _geracao = 0;
   StreamSubscription<List<Cotacao>>? _solicitacoesSub;
 
   void inicializar(String idFornecedor) {
-    if (_streamAtiva) return; // evita múltiplas ligações
-    _streamAtiva = true;
+    if (_fornecedor == idFornecedor && _solicitacoesSub != null) return;
+    _fornecedor = idFornecedor;
+    final g = ++_geracao;
+    solicitacoes.clear();
+    erro.value = '';
 
     carregando.value = true;
     _solicitacoesSub?.cancel();
     _solicitacoesSub = _solicitacoesFornecedor
         .observarSolicitacoesFornecedor(idFornecedor)
         .listen((lista) {
+      if (g != _geracao) return;
+      erro.value = '';
       solicitacoes.assignAll(lista);
       carregando.value = false;
     }, onError: (e) {
-      erro.value = 'Erro no stream: $e';
+      if (g != _geracao) return;
+      solicitacoes.clear();
+      erro.value = 'Não foi possível consultar os atendimentos.';
       carregando.value = false;
+    }, onDone: () {
+      if (g == _geracao) {
+        _fornecedor = null;
+        _solicitacoesSub = null;
+        solicitacoes.clear();
+        carregando.value = false;
+      }
     });
   }
 
@@ -50,11 +65,11 @@ class SolicitacoesController extends GetxController {
         canceladoPor: canceladoPor,
       );
 
-      debugPrint('🟥 Cotação $idCotacao cancelada completamente.');
+      debugPrint('Encerramento comercial registrado para $idCotacao.');
 
       _mostrarSnackbar(
         'Cotação cancelada',
-        'A cotação e todos os fornecedores vinculados foram cancelados.',
+        'Seu encerramento comercial foi registrado. Isso não confirma entrega nem cancela contrato aceito.',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red.shade700,
         colorText: Colors.white,
@@ -103,6 +118,7 @@ class SolicitacoesController extends GetxController {
 
   @override
   void onClose() {
+    ++_geracao;
     _solicitacoesSub?.cancel();
     super.onClose();
   }

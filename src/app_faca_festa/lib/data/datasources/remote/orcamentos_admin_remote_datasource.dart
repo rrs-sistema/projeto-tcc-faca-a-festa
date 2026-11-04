@@ -12,20 +12,24 @@ class OrcamentosAdminRemoteDatasource {
 
   Future<List<OrcamentoAdminModel>> listarOrcamentosComEventoDetalhes() async {
     final snap = await _db.collection('orcamento').get();
-    final futures = snap.docs.map(_montarOrcamentoAdmin);
+    final eventos = <String, Future<_EventoDetalhes>>{};
+    final futures = snap.docs.map((doc) => _montarOrcamentoAdmin(doc, eventos));
 
     return Future.wait(futures);
   }
 
   Future<OrcamentoAdminModel> _montarOrcamentoAdmin(
     QueryDocumentSnapshot<Map<String, dynamic>> doc,
+    Map<String, Future<_EventoDetalhes>> eventos,
   ) async {
-    final orcamento = OrcamentoModel.fromMap(doc.data());
-    final eventoDetalhes = await _buscarEventoDetalhes(orcamento.idEvento);
+    final orcamento = OrcamentoModel.fromMap(doc.data(), docId: doc.id);
+    final eventoDetalhes = await eventos.putIfAbsent(
+        orcamento.idEvento, () => _buscarEventoDetalhes(orcamento.idEvento));
     final categoriaDetalhes = await _buscarCategoriaDetalhes(orcamento);
 
     return OrcamentoAdminModel(
       id: orcamento.idOrcamento,
+      idEvento: orcamento.idEvento,
       eventoNome: eventoDetalhes.nome,
       tipoEvento: eventoDetalhes.tipo,
       cidade: eventoDetalhes.cidade,
@@ -48,12 +52,23 @@ class OrcamentosAdminRemoteDatasource {
     final idTipoEvento = eventoData?['id_tipo_evento'];
 
     return _EventoDetalhes(
-      nome: (eventoData?['nome'] ?? 'Evento não identificado').toString(),
+      nome: _textoDisponivel(
+          eventoData, ['nome_evento', 'nome'], 'Evento não identificado'),
       tipo: await _buscarTipoEvento(idTipoEvento),
-      cidade: (eventoData?['cidade'] ?? '-').toString(),
+      cidade: _textoDisponivel(
+          eventoData, ['nome_cidade', 'cidade'], 'Local não informado'),
       data: _toDateTime(eventoData?['data']),
       custoTotal: _toDouble(eventoData?['custo_estimado']),
     );
+  }
+
+  String _textoDisponivel(
+      Map<String, dynamic>? dados, List<String> campos, String fallback) {
+    for (final campo in campos) {
+      final texto = dados?[campo]?.toString().trim() ?? '';
+      if (texto.isNotEmpty) return texto;
+    }
+    return fallback;
   }
 
   Future<String> _buscarTipoEvento(dynamic idTipoEvento) async {

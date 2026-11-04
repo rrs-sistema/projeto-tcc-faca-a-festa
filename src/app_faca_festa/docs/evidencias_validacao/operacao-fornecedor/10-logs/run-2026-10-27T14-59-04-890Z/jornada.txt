@@ -1,0 +1,41 @@
+PASS transversal: mesma identidade na jornada, agenda, avaliação, resposta e painel; nota preservada.
+PASS jornada: versões/CAS/validade, contratação única, estados comerciais separados, preparação/início/entrega/aceite/contestação, chat contratado, vínculo legado, mediação e regras.
+[2026-10-27T15:00:35.796Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x4f7bab38 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'update' @ L684
+[2026-10-27T15:00:35.808Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x4f7bab39 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'create' @ L682, false for 'update' @ L684
+[2026-10-27T15:00:35.816Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x4f7bab3a error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'update' @ L684
+[2026-10-27T15:00:35.836Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x4f7bab3b error. Code: 7 Message: 7 PERMISSION_DENIED: 
+evaluation error at L721:24 for 'update' @ L721, false for 'update' @ L721
+[2026-10-27T15:00:35.853Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x4f7bab3c error. Code: 7 Message: 7 PERMISSION_DENIED: 
+evaluation error at L721:24 for 'update' @ L721, false for 'update' @ L721
+[2026-10-27T15:00:35.879Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x4f7bab3d error. Code: 7 Message: 7 PERMISSION_DENIED: 
+evaluation error at L739:24 for 'delete' @ L739, false for 'delete' @ L739
+[2026-10-27T15:00:35.890Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x4f7bab3e error. Code: 7 Message: 7 PERMISSION_DENIED: No matching allow statements
+[2026-10-27T15:00:35.896Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x4f7bab36 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'update' @ L684
+[2026-10-27T15:00:35.905Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x4f7bab3f error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'create' @ L682, false for 'update' @ L684
+[2026-10-27T15:00:35.922Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x4f7bab40 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'update' @ L684
+[2026-10-27T15:00:35.944Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x4f7bab41 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+evaluation error at L721:24 for 'update' @ L721, false for 'update' @ L721
+[2026-10-27T15:00:35.961Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x4f7bab42 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+evaluation error at L721:24 for 'update' @ L721, false for 'update' @ L721
+[2026-10-27T15:00:35.984Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x4f7bab43 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+evaluation error at L739:24 for 'delete' @ L739, false for 'delete' @ L739
+[2026-10-27T15:00:35.991Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x4f7bab44 error. Code: 7 Message: 7 PERMISSION_DENIED: No matching allow statements
+[2026-10-27T15:00:36.032Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x4f7bab45 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'update' @ L684
+[2026-10-27T15:00:36.045Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x4f7bab46 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'create' @ L682, false for 'update' @ L684
+[2026-10-27T15:00:36.051Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x4f7bab47 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'update' @ L684
+[2026-10-27T15:00:36.062Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x4f7bab48 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+evaluation error at L721:24 for 'update' @ L721, false for 'update' @ L721
+[2026-10-27T15:00:36.073Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x4f7bab49 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+evaluation error at L721:24 for 'update' @ L721, false for 'update' @ L721
+[2026-10-27T15:00:36.082Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x4f7bab4a error. Code: 7 Message: 7 PERMISSION_DENIED: 
+evaluation error at L739:24 for 'delete' @ L739, false for 'delete' @ L739
+[2026-10-27T15:00:36.092Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x4f7bab4b error. Code: 7 Message: 7 PERMISSION_DENIED: No matching allow statements

@@ -1,3 +1,5 @@
+import 'package:app_faca_festa/domain/repositories/fornecedor_repository.dart';
+import 'package:app_faca_festa/presentation/modules/financeiro/widgets/financeiro_contexto.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -33,6 +35,8 @@ class _DashboardFinanceiroAdminPageState
   final _periodoInicioCtrl = TextEditingController();
   final _periodoFimCtrl = TextEditingController();
   bool _maisFiltros = false;
+  final _nomesFornecedores = <String, String>{};
+  bool _filtrosAbertos = false;
 
   DashboardFinanceiroAdminController get c => widget.controller;
 
@@ -40,7 +44,7 @@ class _DashboardFinanceiroAdminPageState
   void initState() {
     super.initState();
     if (c.filtroFornecedor.value.isNotEmpty) {
-      _fornecedorCtrl.text = c.filtroFornecedor.value;
+      _fornecedorCtrl.text = 'Fornecedor selecionado';
     }
     _periodoInicioCtrl.text = c.periodoInicio.value;
     _periodoFimCtrl.text = c.periodoFim.value;
@@ -76,7 +80,8 @@ class _DashboardFinanceiroAdminPageState
     return null;
   }
 
-  int _comissaoCampo(Map<String, dynamic> r, List<String> flat, List<String> nested) {
+  int _comissaoCampo(
+      Map<String, dynamic> r, List<String> flat, List<String> nested) {
     for (final k in flat) {
       final v = r[k];
       if (v is num) return v.toInt();
@@ -174,7 +179,8 @@ class _DashboardFinanceiroAdminPageState
                     child: ConstrainedBox(
                       constraints: BoxConstraints(maxWidth: maxW),
                       child: ListView(
-                        padding: EdgeInsets.fromLTRB(pad, FestaPageInsets.belowAppBar, pad, 32),
+                        padding: EdgeInsets.fromLTRB(
+                            pad, FestaPageInsets.belowAppBar, pad, 32),
                         children: [
                           _cabecalho(
                             busy: busy,
@@ -190,7 +196,7 @@ class _DashboardFinanceiroAdminPageState
                             _bannerAviso(aviso),
                           ],
                           const SizedBox(height: 14),
-                          _barraFiltros(w, pendentes: pendentes, busy: busy),
+                          const FinanceiroAjuda(itens: ajudaFinanceira),
                           if (r != null) ...[
                             const SizedBox(height: 16),
                             _heroReceita(r),
@@ -198,6 +204,8 @@ class _DashboardFinanceiroAdminPageState
                             _kpisExecutivos(r, w),
                             const SizedBox(height: 12),
                             _contagemRecorte(r),
+                            const SizedBox(height: 16),
+                            _painelFiltros(w, pendentes: pendentes, busy: busy),
                             if (c.consultaTruncada ||
                                 c.qtdIdentidadeIncompleta > 0) ...[
                               const SizedBox(height: 12),
@@ -208,7 +216,10 @@ class _DashboardFinanceiroAdminPageState
                             _secaoEventos(r, w, erro: err),
                             const SizedBox(height: 16),
                             _secaoContratacoes(w),
-                          ] else if (err.isEmpty && !busy)
+                          ] else ...[
+                            _painelFiltros(w, pendentes: pendentes, busy: busy),
+                          ],
+                          if (r == null && err.isEmpty && !busy)
                             Padding(
                               padding: const EdgeInsets.only(top: 24),
                               child: AdminEmptyState(
@@ -255,7 +266,7 @@ class _DashboardFinanceiroAdminPageState
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Movimento de contratos e receita própria da plataforma (comissões).',
+          'Acompanhe a receita da plataforma e a situação financeira dos contratos.',
           style: GoogleFonts.poppins(
             fontSize: 14,
             fontWeight: FontWeight.w500,
@@ -330,6 +341,45 @@ class _DashboardFinanceiroAdminPageState
     );
   }
 
+  Widget _painelFiltros(double w,
+          {required bool pendentes, required bool busy}) =>
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                OutlinedButton.icon(
+                    onPressed: () =>
+                        setState(() => _filtrosAbertos = !_filtrosAbertos),
+                    icon: const Icon(Icons.tune_rounded),
+                    label: Text(_filtrosAbertos
+                        ? 'Ocultar filtros'
+                        : 'Filtrar consulta')),
+                Text(
+                    c.periodoInicioAplicado.isEmpty &&
+                            c.periodoFimAplicado.isEmpty
+                        ? 'Período: todas as datas'
+                        : 'Período: ${c.periodoInicioAplicado.isEmpty ? 'início' : c.periodoInicioAplicado} até ${c.periodoFimAplicado.isEmpty ? 'sem limite final' : c.periodoFimAplicado}',
+                    style: const TextStyle(
+                        color: AdminPalette.muted, fontSize: 13)),
+                if (c.fornecedorAplicado.isNotEmpty)
+                  Text(
+                      'Fornecedor: ${_nomesFornecedores[c.fornecedorAplicado] ?? 'selecionado'}'),
+                if (pendentes)
+                  const Text(
+                      'Filtros alterados: aplique para atualizar os valores.',
+                      style: TextStyle(color: AdminPalette.warning)),
+              ]),
+          if (_filtrosAbertos || pendentes) ...[
+            const SizedBox(height: 12),
+            _barraFiltros(w, pendentes: pendentes, busy: busy),
+          ],
+        ],
+      );
+
   Widget _barraFiltros(
     double w, {
     required bool pendentes,
@@ -346,7 +396,7 @@ class _DashboardFinanceiroAdminPageState
             children: [
               Expanded(
                 child: Text(
-                  'Recorte da consulta',
+                  'Filtros da consulta',
                   style: GoogleFonts.poppins(
                     fontWeight: FontWeight.w700,
                     fontSize: 14,
@@ -414,7 +464,7 @@ class _DashboardFinanceiroAdminPageState
           if (_maisFiltros) ...[
             if (compact) ...[
               _campoPeriodo(
-                label: 'Início (AAAA-MM-DD)',
+                label: 'Início do período',
                 controller: _periodoInicioCtrl,
                 onChanged: (v) {
                   c.periodoInicio.value = v.trim();
@@ -423,7 +473,7 @@ class _DashboardFinanceiroAdminPageState
               ),
               const SizedBox(height: 10),
               _campoPeriodo(
-                label: 'Fim (AAAA-MM-DD)',
+                label: 'Fim do período',
                 controller: _periodoFimCtrl,
                 onChanged: (v) {
                   c.periodoFim.value = v.trim();
@@ -435,7 +485,7 @@ class _DashboardFinanceiroAdminPageState
                 children: [
                   Expanded(
                     child: _campoPeriodo(
-                      label: 'Início (AAAA-MM-DD)',
+                      label: 'Início do período',
                       controller: _periodoInicioCtrl,
                       onChanged: (v) {
                         c.periodoInicio.value = v.trim();
@@ -446,7 +496,7 @@ class _DashboardFinanceiroAdminPageState
                   const SizedBox(width: 10),
                   Expanded(
                     child: _campoPeriodo(
-                      label: 'Fim (AAAA-MM-DD)',
+                      label: 'Fim do período',
                       controller: _periodoFimCtrl,
                       onChanged: (v) {
                         c.periodoFim.value = v.trim();
@@ -506,7 +556,7 @@ class _DashboardFinanceiroAdminPageState
       value: c.eixoTemporal.value,
       isExpanded: true,
       decoration: InputDecoration(
-        labelText: 'Olhar por',
+        labelText: 'Filtrar pela data de',
         helperText: _rotuloEixo(c.eixoTemporal.value),
         filled: true,
         fillColor: AdminPalette.surface,
@@ -531,22 +581,110 @@ class _DashboardFinanceiroAdminPageState
     );
   }
 
-  Widget _campoFornecedor() {
-    return TextField(
-      controller: _fornecedorCtrl,
-      decoration: InputDecoration(
-        labelText: 'ID do fornecedor',
-        hintText: 'Opcional',
-        filled: true,
-        fillColor: AdminPalette.surface,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-        isDense: true,
-      ),
-      onChanged: (v) {
-        c.filtroFornecedor.value = v.trim();
-        c.marcarFiltroAlterado();
-      },
-    );
+  Widget _campoFornecedor() => TextFormField(
+        controller: _fornecedorCtrl,
+        readOnly: true,
+        onTap: _selecionarFornecedor,
+        decoration: InputDecoration(
+          labelText: 'Fornecedor',
+          hintText: 'Buscar pelo nome',
+          prefixIcon: const Icon(Icons.search_rounded),
+          suffixIcon: c.filtroFornecedor.value.isEmpty
+              ? null
+              : IconButton(
+                  tooltip: 'Remover fornecedor',
+                  icon: const Icon(Icons.close_rounded),
+                  onPressed: () {
+                    _fornecedorCtrl.clear();
+
+                    c.filtroFornecedor.value = '';
+                    c.marcarFiltroAlterado();
+                  }),
+          filled: true,
+          fillColor: AdminPalette.surface,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          isDense: true,
+        ),
+      );
+
+  Future<void> _selecionarFornecedor() async {
+    if (!Get.isRegistered<FornecedorRepository>()) {
+      Get.snackbar('Fornecedores indisponíveis',
+          'Não foi possível acessar o cadastro. Tente novamente após abrir a gestão de fornecedores.');
+      return;
+    }
+    final carregar = Get.find<FornecedorRepository>()
+        .carregarSnapshotAdmin(incluirEnderecos: false);
+    String busca = '';
+    final selecionado = await showDialog<MapEntry<String, String>>(
+        context: context,
+        builder: (ctx) => StatefulBuilder(
+            builder: (ctx, atualizar) => AlertDialog(
+                  title: const Text('Selecionar fornecedor'),
+                  content: SizedBox(
+                      width: 520,
+                      height: 380,
+                      child: Column(children: [
+                        TextField(
+                            autofocus: true,
+                            decoration: const InputDecoration(
+                                labelText: 'Buscar fornecedor',
+                                prefixIcon: Icon(Icons.search_rounded)),
+                            onChanged: (v) => atualizar(
+                                () => busca = v.trim().toLowerCase())),
+                        const SizedBox(height: 12),
+                        Expanded(
+                            child: FutureBuilder(
+                                future: carregar,
+                                builder: (ctx, snapshot) {
+                                  if (snapshot.hasError) {
+                                    return const Center(
+                                        child: Text(
+                                            'Não foi possível carregar os fornecedores. Feche e tente novamente.'));
+                                  }
+                                  if (!snapshot.hasData) {
+                                    return const Center(
+                                        child: CircularProgressIndicator());
+                                  }
+                                  final lista = snapshot.data!.fornecedores
+                                      .where((f) => f.razaoSocial
+                                          .toLowerCase()
+                                          .contains(busca))
+                                      .toList()
+                                    ..sort((a, b) =>
+                                        a.razaoSocial.compareTo(b.razaoSocial));
+                                  if (lista.isEmpty) {
+                                    return const Center(
+                                        child: Text(
+                                            'Nenhum fornecedor encontrado.'));
+                                  }
+                                  return ListView.builder(
+                                      itemCount: lista.length,
+                                      itemBuilder: (ctx, i) {
+                                        final f = lista[i];
+                                        return ListTile(
+                                            title: Text(f.razaoSocial),
+                                            subtitle: Text(f.ativo
+                                                ? 'Cadastro ativo'
+                                                : 'Cadastro inativo'),
+                                            onTap: () => Navigator.pop(
+                                                ctx,
+                                                MapEntry(f.idFornecedor,
+                                                    f.razaoSocial)));
+                                      });
+                                })),
+                      ])),
+                  actions: [
+                    TextButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        child: const Text('Cancelar'))
+                  ],
+                )));
+    if (selecionado == null || !mounted) return;
+    _nomesFornecedores[selecionado.key] = selecionado.value;
+    _fornecedorCtrl.text = selecionado.value;
+    c.filtroFornecedor.value = selecionado.key;
+    c.marcarFiltroAlterado();
   }
 
   Widget _dropdownEstado() {
@@ -579,7 +717,20 @@ class _DashboardFinanceiroAdminPageState
   }) {
     return TextField(
       controller: controller,
+      readOnly: true,
+      onTap: () async {
+        final data = await showDatePicker(
+            context: context,
+            initialDate: DateTime.tryParse(controller.text) ?? DateTime.now(),
+            firstDate: DateTime(1900),
+            lastDate: DateTime(2200));
+        if (data == null || !mounted) return;
+        controller.text =
+            '${data.year.toString().padLeft(4, '0')}-${data.month.toString().padLeft(2, '0')}-${data.day.toString().padLeft(2, '0')}';
+        onChanged(controller.text);
+      },
       decoration: InputDecoration(
+        suffixIcon: const Icon(Icons.calendar_today_outlined),
         labelText: label,
         filled: true,
         fillColor: AdminPalette.surface,
@@ -707,7 +858,7 @@ class _DashboardFinanceiroAdminPageState
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Leitura do recorte',
+          'Indicadores do período',
           style: GoogleFonts.poppins(
             fontWeight: FontWeight.w700,
             fontSize: 14,
@@ -724,9 +875,8 @@ class _DashboardFinanceiroAdminPageState
             return Wrap(
               spacing: gap,
               runSpacing: gap,
-              children: tiles
-                  .map((t) => SizedBox(width: tileW, child: t))
-                  .toList(),
+              children:
+                  tiles.map((t) => SizedBox(width: tileW, child: t)).toList(),
             );
           },
         ),
@@ -798,7 +948,10 @@ class _DashboardFinanceiroAdminPageState
       '${_n(r, ['qtdEventos', 'qtd_eventos'])} eventos',
       '${_n(r, ['qtdContratos', 'qtd_contratos'])} contratos',
       '${_n(r, ['qtdServicosDistintos', 'qtd_servicos_distintos'])} serviços',
-      '${_n(r, ['qtdFornecedoresDistintos', 'qtd_fornecedores_distintos'])} fornecedores',
+      '${_n(r, [
+            'qtdFornecedoresDistintos',
+            'qtd_fornecedores_distintos'
+          ])} fornecedores',
       '${_n(r, ['qtdOportunidades', 'qtd_oportunidades'])} oportunidades',
     ];
     return Text(
@@ -825,12 +978,15 @@ class _DashboardFinanceiroAdminPageState
   Color _corStatusEvento(String status) {
     final s = status.toLowerCase();
     if (s.contains('contrat')) return AdminPalette.success;
-    if (s.contains('oportun') || s.contains('pend')) return AdminPalette.warning;
+    if (s.contains('oportun') || s.contains('pend')) {
+      return AdminPalette.warning;
+    }
     if (s.contains('cancel') || s.contains('recus')) return AdminPalette.danger;
     return AdminPalette.muted;
   }
 
-  Widget _secaoEventos(Map<String, dynamic> r, double w, {required String erro}) {
+  Widget _secaoEventos(Map<String, dynamic> r, double w,
+      {required String erro}) {
     final raw = r['linhasEvento'] ?? r['linhas_evento'];
     final linhas = raw is List
         ? raw.map((e) => Map<String, dynamic>.from(e as Map)).toList()
@@ -977,7 +1133,8 @@ class _DashboardFinanceiroAdminPageState
                             height: 1.25,
                           ),
                         ),
-                        if (subtitulo != null && subtitulo.trim().isNotEmpty) ...[
+                        if (subtitulo != null &&
+                            subtitulo.trim().isNotEmpty) ...[
                           const SizedBox(height: 4),
                           Text(
                             subtitulo,
@@ -1090,11 +1247,11 @@ class _DashboardFinanceiroAdminPageState
           _cabecalhoTabela(
             const [
               'Evento',
-              'Situação',
+              'Situação do evento',
               'Contratos',
               'Contratado',
-              'Pago',
-              'Saldo',
+              'Pagamentos registrados',
+              'Saldo do contrato',
               'Comissão',
               '',
             ],
@@ -1110,8 +1267,7 @@ class _DashboardFinanceiroAdminPageState
             final titulo = (nome != null && nome.trim().isNotEmpty)
                 ? nome.trim()
                 : _rotuloEventoCurto(id);
-            final saldo =
-                _n(l, const ['saldo_centavos', 'saldoCentavos']);
+            final saldo = _n(l, const ['saldo_centavos', 'saldoCentavos']);
             return _linhaTabela(
               zebra: i.isOdd,
               onDetalhes: () => _abrirPainelDetalhe(
@@ -1187,9 +1343,8 @@ class _DashboardFinanceiroAdminPageState
                       style: GoogleFonts.poppins(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
-                        color: saldo > 0
-                            ? AdminPalette.warning
-                            : AdminPalette.ink,
+                        color:
+                            saldo > 0 ? AdminPalette.warning : AdminPalette.ink,
                       ),
                     ),
                   ),
@@ -1339,7 +1494,7 @@ class _DashboardFinanceiroAdminPageState
             title: 'Nenhuma contratação no recorte',
             message: 'Ajuste filtros ou aguarde novos aceites.',
           )
-        else if (w >= 900)
+        else if (w >= 1100 && MediaQuery.textScalerOf(context).scale(1) <= 1.3)
           _tabelaContratacoes(linhas)
         else
           ...linhas.map(_cardContratacao),
@@ -1460,9 +1615,7 @@ class _DashboardFinanceiroAdminPageState
                     flex: _flexContratacoes[3],
                     align: TextAlign.end,
                     child: Text(
-                      l.contratado
-                          ? _reais(l.valorContratadoCentavos)
-                          : '—',
+                      l.contratado ? _reais(l.valorContratadoCentavos) : '—',
                       textAlign: TextAlign.end,
                       style: GoogleFonts.poppins(
                         fontSize: 13,
@@ -1501,9 +1654,11 @@ class _DashboardFinanceiroAdminPageState
   }) {
     return Expanded(
       flex: flex,
-      child: align == TextAlign.end
-          ? Align(alignment: Alignment.centerRight, child: child)
-          : child,
+      child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: align == TextAlign.end
+              ? Align(alignment: Alignment.centerRight, child: child)
+              : child),
     );
   }
 
@@ -1543,17 +1698,19 @@ class _DashboardFinanceiroAdminPageState
             else
               Expanded(
                 flex: flexes[i],
-                child: Text(
-                  titulos[i],
-                  textAlign: aligns != null && i < aligns.length
-                      ? aligns[i]
-                      : TextAlign.start,
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 12,
-                    color: AdminPalette.muted,
-                  ),
-                ),
+                child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Text(
+                      titulos[i],
+                      textAlign: aligns != null && i < aligns.length
+                          ? aligns[i]
+                          : TextAlign.start,
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
+                        color: AdminPalette.muted,
+                      ),
+                    )),
               ),
         ],
       ),
@@ -1661,8 +1818,7 @@ class _DashboardFinanceiroAdminPageState
 
   Widget _detalheContratacao(LinhaContratacaoAdmin l) {
     final oportunidade = !l.contratado;
-    final corValor =
-        oportunidade ? AdminPalette.warning : AdminPalette.primary;
+    final corValor = oportunidade ? AdminPalette.warning : AdminPalette.primary;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -1691,7 +1847,7 @@ class _DashboardFinanceiroAdminPageState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  oportunidade ? 'Ainda sem contrato' : 'Contratado',
+                  oportunidade ? 'Valor estimado' : 'Valor contratado',
                   style: GoogleFonts.poppins(
                     fontSize: 11.5,
                     fontWeight: FontWeight.w600,
@@ -1721,7 +1877,7 @@ class _DashboardFinanceiroAdminPageState
                 else if (l.pagoCentavos > 0) ...[
                   const SizedBox(height: 6),
                   Text(
-                    'Pago ${_reais(l.pagoCentavos)}',
+                    'Pagamento registrado: ${_reais(l.pagoCentavos)}',
                     style: GoogleFonts.poppins(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -1804,7 +1960,7 @@ class _DashboardFinanceiroAdminPageState
             ),
             icon: const Icon(Icons.gavel_outlined, size: 18),
             label: Text(
-              'Abrir mediação e contratos',
+              'Ver contratação e mediação',
               style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
             ),
           ),
@@ -1827,8 +1983,7 @@ class _DashboardFinanceiroAdminPageState
       if (idCt.isNotEmpty && linha.idContrato == idCt) return linha;
     }
     if (serv.isNotEmpty) {
-      final idEvt =
-          (ct['id_evento'] ?? ct['idEvento'] ?? '').toString().trim();
+      final idEvt = (ct['id_evento'] ?? ct['idEvento'] ?? '').toString().trim();
       for (final linha in c.linhasContratacao) {
         final mesmoEvento = idEvt.isEmpty || linha.idEvento == idEvt;
         if (mesmoEvento &&
@@ -1864,16 +2019,15 @@ class _DashboardFinanceiroAdminPageState
   Widget _detalheEvento(Map<String, dynamic> l) {
     final id = (l['id_evento'] ?? l['idEvento'] ?? '').toString();
     final nomeOrg = (l['nome_organizador'] ?? l['nomeOrganizador'])?.toString();
-    final incompleto = l['pagamento_incompleto'] == true ||
-        l['pagamentoIncompleto'] == true;
+    final incompleto =
+        l['pagamento_incompleto'] == true || l['pagamentoIncompleto'] == true;
     final status = (l['status'] ?? '—').toString();
     final contratado =
         _n(l, const ['contratado_centavos', 'contratadoCentavos']);
     final pago = _n(l, const ['pago_centavos', 'pagoCentavos']);
     final saldo = _n(l, const ['saldo_centavos', 'saldoCentavos']);
     final comissao = _n(l, const ['comissao_centavos', 'comissaoCentavos']);
-    final pctPago =
-        contratado > 0 ? (pago / contratado).clamp(0.0, 1.0) : 0.0;
+    final pctPago = contratado > 0 ? (pago / contratado).clamp(0.0, 1.0) : 0.0;
     final rawContratos = l['contratacoes'] ?? l['contratos'];
     final contratos = rawContratos is List
         ? rawContratos
@@ -1935,7 +2089,7 @@ class _DashboardFinanceiroAdminPageState
                   const SizedBox(width: 8),
                   Expanded(
                     child: _kpiMini(
-                      'Pago',
+                      'Pagamentos registrados',
                       _reais(pago),
                       AdminPalette.success,
                     ),
@@ -1947,7 +2101,7 @@ class _DashboardFinanceiroAdminPageState
                 children: [
                   Expanded(
                     child: _kpiMini(
-                      'Saldo a receber',
+                      'Saldo do contrato',
                       _reais(saldo),
                       saldo > 0 ? AdminPalette.warning : AdminPalette.muted,
                     ),
@@ -2184,12 +2338,12 @@ class _DashboardFinanceiroAdminPageState
     final serv = (ct['nome_servico'] ?? ct['nomeServico'] ?? '—').toString();
     final est =
         (ct['estado_comercial'] ?? ct['estadoComercial'] ?? '—').toString();
-    final execRaw =
-        (ct['estado_execucao_rotulo'] ?? ct['estadoExecucaoRotulo'] ??
-                ct['estado_execucao'] ??
-                ct['estadoExecucao'] ??
-                '—')
-            .toString();
+    final execRaw = (ct['estado_execucao_rotulo'] ??
+            ct['estadoExecucaoRotulo'] ??
+            ct['estado_execucao'] ??
+            ct['estadoExecucao'] ??
+            '—')
+        .toString();
     final exec = execRaw.contains('_')
         ? EstadoExecucaoContrato.fromString(execRaw).rotulo
         : execRaw;
@@ -2201,8 +2355,8 @@ class _DashboardFinanceiroAdminPageState
       'contratado_centavos',
       'contratadoCentavos',
     ]);
-    final contratado = ct['contratado'] == true ||
-        est.toLowerCase().contains('contrat');
+    final contratado =
+        ct['contratado'] == true || est.toLowerCase().contains('contrat');
     final payload = {
       ...ct,
       if (idEvento.isNotEmpty) 'id_evento': idEvento,

@@ -4,6 +4,10 @@ import 'package:app_faca_festa/domain/entities/avaliacao_servico.dart';
 
 class AvaliacaoServicoModel extends AvaliacaoServico {
   AvaliacaoServicoModel({
+    super.respostaFornecedor,
+    super.respostaData,
+    super.verificada,
+    super.idContrato,
     required super.id,
     required super.idFornecedorServico,
     required super.idCliente,
@@ -41,6 +45,18 @@ class AvaliacaoServicoModel extends AvaliacaoServico {
         : '';
 
     return AvaliacaoServicoModel(
+      respostaFornecedor: map['_resposta_publica'] is Map
+          ? map['_resposta_publica']['texto'] as String?
+          : null,
+      respostaData: map['_resposta_publica'] is Map &&
+              map['_resposta_publica']['atualizado_em'] is Timestamp
+          ? (map['_resposta_publica']['atualizado_em'] as Timestamp).toDate()
+          : null,
+      verificada: map['_integridade_confirmada'] == true &&
+          map['schema'] == 2 &&
+          map['verificada'] == true &&
+          map['moderacao'] != 'oculta',
+      idContrato: map['id_contrato']?.toString(),
       id: (map['id'] ?? documentId ?? '').toString(),
       idFornecedorServico:
           (idFornecedorServico ?? map['id_fornecedor_servico'] ?? composto)
@@ -57,13 +73,14 @@ class AvaliacaoServicoModel extends AvaliacaoServico {
 
   static int _nota(dynamic value) {
     if (value is int) return value;
-    if (value is num) return value.round();
+    if (value is num && value.isFinite) return value.round();
     return int.tryParse(value?.toString() ?? '') ?? 0;
   }
 
   static DateTime _data(dynamic value) {
     if (value is Timestamp) return value.toDate();
     if (value is DateTime) return value;
-    return DateTime.tryParse(value?.toString() ?? '') ?? DateTime.now();
+    return DateTime.tryParse(value?.toString() ?? '') ??
+        DateTime.fromMillisecondsSinceEpoch(0);
   }
 }

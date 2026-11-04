@@ -1,0 +1,12 @@
+
+> check:calculadora
+> tsc --noEmit && node scripts/testCalculadoraPlanejamento.js && node scripts/testPlanejadorHibrido.js
+
+Calculadora planejamento/IA: OK
+Calculadora: política privada de público e zero confirmado OK
+Calculadora: configuração uniforme, nulos, zero e limites OK
+Calculadora: agenda civil, fuso, intervalo e identidade OK
+Calculadora: catálogo contextual, estados, faixas e schema OK
+Calculadora: limite compartilhado e renovação OK
+Calculadora callable: autorização, perfil e fallback OK
+Planejador: IDs, limites, contexto, evidência privada e recálculo da mediana OK

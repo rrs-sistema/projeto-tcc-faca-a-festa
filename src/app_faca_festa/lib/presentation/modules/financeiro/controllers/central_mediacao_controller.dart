@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/data/services/functions/financeiro_callable_gateway.dart';
 import 'package:get/get.dart';
 
 import 'package:app_faca_festa/data/datasources/remote/central_mediacao_remote.dart';
@@ -16,6 +17,8 @@ class CentralMediacaoController extends GetxController {
   final carregando = false.obs;
   final enviando = false.obs;
   final erro = ''.obs;
+  final erroRegistro = ''.obs;
+  final erroConclusao = ''.obs;
   final aviso = ''.obs;
   final linhas = <LinhaCentralContratacao>[].obs;
   final detalhe = Rxn<Map<String, dynamic>>();
@@ -114,8 +117,7 @@ class CentralMediacaoController extends GetxController {
 
       // Offset além do total (ex.: Próxima com só 8 itens) → volta à última página.
       if (lista.isEmpty && total > 0 && offset.value > 0) {
-        final ultimo =
-            ((total - 1) ~/ limite.value) * limite.value;
+        final ultimo = ((total - 1) ~/ limite.value) * limite.value;
         offset.value = ultimo;
         carregando.value = false;
         await carregarLista();
@@ -139,6 +141,8 @@ class CentralMediacaoController extends GetxController {
   }
 
   Future<void> abrirDetalhe(String idOrcamento) async {
+    erroRegistro.value = '';
+    erroConclusao.value = '';
     idOrcamentoSelecionado.value = idOrcamento;
     carregando.value = true;
     erro.value = '';
@@ -147,8 +151,10 @@ class CentralMediacaoController extends GetxController {
       final av = (detalhe.value?['aviso'] ?? '').toString().trim();
       if (av.isNotEmpty) aviso.value = av;
       final hist = detalhe.value?['historico_mediacao'];
-      if (hist is Map && hist['caso_aberto'] is Map) {
-        final caso = Map<String, dynamic>.from(hist['caso_aberto'] as Map);
+      if (hist is Map &&
+          (hist['caso_aberto'] ?? hist['ultimo_caso_encerrado']) is Map) {
+        final caso = Map<String, dynamic>.from(
+            (hist['caso_aberto'] ?? hist['ultimo_caso_encerrado']) as Map);
         final idCaso = (caso['id'] ?? '').toString();
         if (idCaso.isNotEmpty) {
           await carregarCaso(idCaso);
@@ -225,14 +231,35 @@ class CentralMediacaoController extends GetxController {
     }
   }
 
+  bool _validarRegistro(String texto, {bool decisao = false}) {
+    erro.value = '';
+    erroRegistro.value = '';
+    if (texto.trim().isEmpty) {
+      erroRegistro.value =
+          'Escreva o texto no campo Novo registro antes de continuar.';
+    } else if (decisao && (texto.trim().length < 10 || texto.length > 2000)) {
+      erroRegistro.value = 'A decisão deve ter de 10 a 2000 caracteres.';
+    }
+    return erroRegistro.value.isEmpty;
+  }
+
+  String _mensagemErro(Object e) {
+    if (e is FinanceiroCallableException &&
+        e.message?.trim().isNotEmpty == true) {
+      return e.message!.trim();
+    }
+    return 'Não foi possível concluir a operação. Tente novamente.';
+  }
+
   Future<bool> registrarAnalise(String texto, {bool interna = true}) async {
     final idCaso = (casoDetalhe.value?['id'] ?? '').toString();
     if (idCaso.isEmpty || enviando.value) return false;
+    if (!_validarRegistro(texto)) return false;
     enviando.value = true;
     try {
       await remote.registrarRegistro(
         idCaso: idCaso,
-        texto: texto,
+        texto: texto.trim(),
         tipo: interna ? 'nota_interna' : 'info_compartilhavel',
         visibilidade: interna ? 'interna' : 'compartilhavel',
         novoEstado: 'em_analise',
@@ -240,7 +267,7 @@ class CentralMediacaoController extends GetxController {
       await carregarCaso(idCaso);
       return true;
     } catch (e) {
-      erro.value = e.toString();
+      erroRegistro.value = _mensagemErro(e);
       return false;
     } finally {
       enviando.value = false;
@@ -250,14 +277,16 @@ class CentralMediacaoController extends GetxController {
   Future<bool> solicitarInfo(String texto) async {
     final idCaso = (casoDetalhe.value?['id'] ?? '').toString();
     if (idCaso.isEmpty || enviando.value) return false;
+    if (!_validarRegistro(texto)) return false;
     enviando.value = true;
     try {
-      final r = await remote.solicitarInformacao(idCaso: idCaso, texto: texto);
+      final r =
+          await remote.solicitarInformacao(idCaso: idCaso, texto: texto.trim());
       aviso.value = (r['aviso'] ?? '').toString();
       await carregarCaso(idCaso);
       return true;
     } catch (e) {
-      erro.value = e.toString();
+      erroRegistro.value = _mensagemErro(e);
       return false;
     } finally {
       enviando.value = false;
@@ -267,18 +296,19 @@ class CentralMediacaoController extends GetxController {
   Future<bool> registrarDecisao(String texto, {String tipo = 'manter'}) async {
     final idCaso = (casoDetalhe.value?['id'] ?? '').toString();
     if (idCaso.isEmpty || enviando.value) return false;
+    if (!_validarRegistro(texto, decisao: true)) return false;
     enviando.value = true;
     try {
       final r = await remote.registrarDecisao(
         idCaso: idCaso,
-        texto: texto,
+        texto: texto.trim(),
         tipoDecisao: tipo,
       );
       aviso.value = (r['aviso'] ?? '').toString();
       await carregarCaso(idCaso);
       return true;
     } catch (e) {
-      erro.value = e.toString();
+      erroRegistro.value = _mensagemErro(e);
       return false;
     } finally {
       enviando.value = false;
@@ -288,15 +318,48 @@ class CentralMediacaoController extends GetxController {
   Future<bool> fecharCaso(String conclusao) async {
     final idCaso = (casoDetalhe.value?['id'] ?? '').toString();
     if (idCaso.isEmpty || enviando.value) return false;
+    erro.value = '';
+    erroConclusao.value = '';
+    if (conclusao.trim().length < 10 || conclusao.length > 2000) {
+      erroConclusao.value = 'Escreva uma conclusão de 10 a 2000 caracteres.';
+      return false;
+    }
     enviando.value = true;
     try {
-      final r = await remote.fecharCaso(idCaso: idCaso, conclusao: conclusao);
+      final r =
+          await remote.fecharCaso(idCaso: idCaso, conclusao: conclusao.trim());
       aviso.value = (r['aviso'] ?? '').toString();
       // Domínio: fechar ≠ efeito financeiro.
       assert(dominio.efeitosFinanceirosAoFechar().isEmpty);
       if (idOrcamentoSelecionado.value.isNotEmpty) {
         await abrirDetalhe(idOrcamentoSelecionado.value);
       }
+      return true;
+    } catch (e) {
+      erroConclusao.value = _mensagemErro(e);
+      return false;
+    } finally {
+      enviando.value = false;
+    }
+  }
+
+  Future<bool> resolverExecucao(
+      {required String estado,
+      required String motivo,
+      required bool retirarBloqueio}) async {
+    final id = (casoDetalhe.value?['id'] ?? '').toString();
+    if (id.isEmpty || enviando.value) return false;
+    enviando.value = true;
+    erro.value = '';
+    try {
+      await remote.resolverExecucao(
+          idCaso: id,
+          estado: estado,
+          motivo: motivo,
+          retirarBloqueio: retirarBloqueio);
+      await abrirDetalhe(idOrcamentoSelecionado.value);
+      aviso.value =
+          'Execução regularizada e reservas pendentes canceladas. O repasse continua sujeito ao saldo e à finalização do evento ou nova autorização do organizador.';
       return true;
     } catch (e) {
       erro.value = e.toString();
@@ -309,15 +372,16 @@ class CentralMediacaoController extends GetxController {
   Future<bool> recomendarBloqueio(String motivo) async {
     final idCaso = (casoDetalhe.value?['id'] ?? '').toString();
     if (idCaso.isEmpty || enviando.value) return false;
+    if (!_validarRegistro(motivo)) return false;
     enviando.value = true;
     try {
-      final r =
-          await remote.recomendarBloqueio(idCaso: idCaso, motivo: motivo);
+      final r = await remote.recomendarBloqueio(
+          idCaso: idCaso, motivo: motivo.trim());
       aviso.value = (r['aviso'] ?? '').toString();
       await carregarCaso(idCaso);
       return true;
     } catch (e) {
-      erro.value = e.toString();
+      erroRegistro.value = _mensagemErro(e);
       return false;
     } finally {
       enviando.value = false;
@@ -325,6 +389,8 @@ class CentralMediacaoController extends GetxController {
   }
 
   void limparDetalheMantendoFiltros() {
+    erroRegistro.value = '';
+    erroConclusao.value = '';
     detalhe.value = null;
     casoDetalhe.value = null;
     registrosCaso.clear();

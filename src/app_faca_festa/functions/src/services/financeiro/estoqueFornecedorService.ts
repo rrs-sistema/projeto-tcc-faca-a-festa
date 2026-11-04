@@ -97,7 +97,7 @@ export function capacidadeNoIntervalo(
   for (const r of reservas) {
     if (r.idItem !== item.idItem) continue;
     if (r.status !== "ativa" && r.status !== "retirada") continue;
-    if (overlaps(r.intervaloEfetivo, intervalo)) {
+    if ((r.status === "retirada" && intervalo.fim > r.intervaloEfetivo.inicio) || overlaps(r.intervaloEfetivo, intervalo)) {
       comprometido += r.quantidade;
     }
   }

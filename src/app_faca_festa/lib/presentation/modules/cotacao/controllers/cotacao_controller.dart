@@ -152,15 +152,17 @@ class CotacaoController extends GetxController {
         .firstWhere((f) => f.idFornecedor == idFornecedor);
 
     try {
-      EasyLoading.show(status: 'Fechando negócio... 🔒');
-
-      final resultado = await _gerenciarCotacoes.confirmarFornecedorEscolhido(
-        idCotacao: idCotacao,
-        idFornecedor: idFornecedor,
-        nomeFornecedor: fornecedor.razaoSocial,
-        idSolicitante: appController.usuarioLogado.value?.idUsuario ?? '',
-        nomeSolicitante: appController.usuarioLogado.value?.nome ?? '',
-      );
+      final resultado = await Get.toNamed<Map<String, dynamic>>(
+              '/jornada-atendimento',
+              arguments: {
+                'idCotacao': idCotacao,
+                'idFornecedor': idFornecedor,
+                'nomeFornecedor': fornecedor.razaoSocial,
+                'nomeSolicitante':
+                    appController.usuarioLogado.value?.nome ?? '',
+              }) ??
+          <String, dynamic>{};
+      if (resultado['idOrcamento'] == null) return;
       final idEvento = (resultado['idEvento'] ?? '').toString();
 
       EasyLoading.dismiss();

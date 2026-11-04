@@ -1,3 +1,4 @@
+require("../../functions/scripts/exigirEmuladorDemo").exigirEmuladorDemo("demo-faca-festa-fin-forn");
 /**
  * Regras: custos privados só pelo dono do fornecedor.
  * Requer JDK 21+: npm run test:rules:financeiro:fornecedor

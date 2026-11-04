@@ -1,3 +1,4 @@
+import { divisaoContrato, carregarContextoRepasse } from "../../services/financeiro/liberacaoRepasseService";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { admin } from "../../shared/firebaseAdmin";
 import { exigirUsuarioAutenticado, exigirTipo } from "../../shared/auth";
@@ -172,8 +173,8 @@ export const consultarCentralContratacoes = onCall(
     for (let i = 0; i < idsOrc.length; i += 10) {
       const fatia = idsOrc.slice(i, i + 10);
       const [alocSnap, repSnap] = await Promise.all([
-        db.collection(COL_ALOCACOES).where("id_orcamento", "in", fatia).limit(100).get().catch(() => null),
-        db.collection(COL_REPASSES).where("id_orcamento", "in", fatia).limit(100).get().catch(() => null),
+        db.collection(COL_ALOCACOES).where("id_orcamento", "in", fatia).get().catch(() => null),
+        db.collection(COL_REPASSES).where("id_orcamento", "in", fatia).get().catch(() => null),
       ]);
       if (alocSnap) {
         for (const d of alocSnap.docs) {
@@ -192,6 +193,8 @@ export const consultarCentralContratacoes = onCall(
       }
     }
 
+    const comissoes = await carregarMapaDocs(db, "plataforma_comissao_obrigacoes",
+      new Set(itens.map(it => `comissao-${(it.data.contrato_financeiro as any)?.id_contrato || it.id}`)));
     let linhas = [];
     for (const it of itens) {
       const d = it.data;
@@ -203,7 +206,7 @@ export const consultarCentralContratacoes = onCall(
       const idContrato =
         (d.contrato_financeiro &&
           typeof d.contrato_financeiro === "object" &&
-          (d.contrato_financeiro as { id?: string }).id) ||
+          (d.contrato_financeiro as { id_contrato?: string }).id_contrato) ||
         it.id;
 
       const linhaId = resolverLinhaContratacao({
@@ -248,12 +251,17 @@ export const consultarCentralContratacoes = onCall(
       if (casoAbertoFiltro === false && caso) continue;
       if (idResponsavel && (!caso || caso.idResponsavel !== idResponsavel)) continue;
 
+      const obrigacao = comissoes.get(`comissao-${idContrato}`);
+      const divisao = divisaoContrato(d, obrigacao ? [obrigacao] : []);
       const fin = calcularDimensoesFinanceiras({
         valorContratadoCentavos: it.vals.contratado,
         recebidoAlocadoCentavos: alocadoPorOrc.get(it.id) ?? 0,
         repassadoConfirmadoCentavos: repassadoPorOrc.get(it.id) ?? 0,
       });
 
+      fin.aReceberClienteCentavos = Math.max(0, (divisao?.precoClienteCentavos ?? it.vals.contratado) - fin.recebidoClienteAlocadoCentavos - (divisao?.comissaoExternaOrganizadorCentavos ?? 0));
+      fin.remuneracaoAppPrevistaCentavos = divisao?.comissaoCentavos ?? 0;
+      fin.pendenteRepasseCentavos = divisao ? Math.max(0, divisao.direitoFornecedorCentavos - fin.repassadoConfirmadoCentavos) : 0;
       const linha = montarLinhaCentral({
         idContrato: String(idContrato),
         idOrcamento: it.id,
@@ -273,6 +281,12 @@ export const consultarCentralContratacoes = onCall(
       });
       linhas.push({
         ...linha,
+        comissao_centavos: divisao?.comissaoCentavos ?? null,
+        liquido_fornecedor_centavos: divisao?.direitoFornecedorCentavos ?? null,
+        regra_repasse: !it.contratado ? "Aguardando contratação" :
+          caso ? "Mediação em aberto: pagamento bloqueado" :
+          evento?.status === "finalizado" ? "Evento finalizado: conferir saldo para repasse" :
+          "Pagamento após o evento ou com autorização explícita do organizador",
         id_organizador: linhaId.id_organizador,
         nome_organizador: linhaId.nome_organizador,
         id_pagador: linhaId.id_pagador,
@@ -409,12 +423,12 @@ export const consultarDetalheContratacao = onCall(
     const idContrato =
       (d.contrato_financeiro &&
         typeof d.contrato_financeiro === "object" &&
-        (d.contrato_financeiro as { id?: string }).id) ||
+        (d.contrato_financeiro as { id_contrato?: string }).id_contrato) ||
       idOrcamento;
 
     const [alocSnap, repSnap, casosMap] = await Promise.all([
-      db.collection(COL_ALOCACOES).where("id_orcamento", "==", idOrcamento).limit(50).get().catch(() => null),
-      db.collection(COL_REPASSES).where("id_orcamento", "==", idOrcamento).limit(50).get().catch(() => null),
+      db.collection(COL_ALOCACOES).where("id_orcamento", "==", idOrcamento).get().catch(() => null),
+      db.collection(COL_REPASSES).where("id_orcamento", "==", idOrcamento).get().catch(() => null),
       listarCasosPorContratos(db, [String(idContrato), idOrcamento]),
     ]);
 
@@ -445,6 +459,13 @@ export const consultarDetalheContratacao = onCall(
       repassadoConfirmadoCentavos: repassado,
     });
 
+    const contexto = await db.runTransaction(tx => carregarContextoRepasse(db, tx, idOrcamento));
+    const divisao = contexto.divisao;
+    fin.aReceberClienteCentavos = Math.max(0, (divisao?.precoClienteCentavos ?? vals.contratado) - alocado - (divisao?.comissaoExternaOrganizadorCentavos ?? 0));
+    fin.remuneracaoAppPrevistaCentavos = divisao?.comissaoCentavos ?? 0;
+    fin.pendenteRepasseCentavos = divisao ? Math.max(0, divisao.direitoFornecedorCentavos - repassado) : 0;
+    const encerrados = contexto.casos.filter(c => (c as any).estado === "fechado")
+      .sort((a, b) => String((b as any).fechado_em ?? "").localeCompare(String((a as any).fechado_em ?? "")));
     const caso =
       casosMap.get(String(idContrato)) ?? casosMap.get(idOrcamento) ?? null;
 
@@ -527,6 +548,10 @@ export const consultarDetalheContratacao = onCall(
       financeiro: {
         ...fin,
         legado_pago_centavos: vals.pago,
+        comissao_centavos: divisao?.comissaoCentavos ?? null,
+        direito_fornecedor_centavos: divisao?.direitoFornecedorCentavos ?? null,
+        comissao_recebida_separadamente_centavos: divisao?.comissaoRecebidaSeparadamenteCentavos ?? 0,
+        motivo_bloqueio: contexto.motivo,
         aviso:
           "pago legado ≠ recebido plataforma; dimensões não são somáveis entre si.",
         alocacoes,
@@ -534,6 +559,7 @@ export const consultarDetalheContratacao = onCall(
       },
       historico_mediacao: {
         caso_aberto: caso,
+        ultimo_caso_encerrado: encerrados[0] ?? null,
       },
       capacidades: capacidadesParaTipoUsuario(perfil.tipo),
     };

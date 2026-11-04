@@ -1,0 +1,15 @@
+00:00 +0: loading D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/planejamento/planejamento_financeiro_test.dart
+00:00 +0: (setUpAll)
+00:00 +0: custo legado reabre e retoma a mesma chave após timeout
+00:00 +1: timeout e reabertura mantêm identidade/payload
+00:00 +2: consulta antiga não sobrevive troca de sessão
+00:00 +3: resultado previsto e caixa separados; desconhecido não vira zero
+00:01 +4: exportação usa exatamente o CSV da consulta autorizada
+00:01 +5: filtros enviados com datas explícitas sem cálculo local
+00:02 +6: falha apaga resumo e permite retry
+00:02 +7: formulário antigo invalidado ao trocar sessão
+00:02 +8: responsivo em 360 pixels sem overflow
+00:02 +9: clareza e responsividade em Size(390.0, 844.0)
+00:03 +10: clareza e responsividade em Size(1280.0, 1200.0)
+00:03 +11: (tearDownAll)
+00:03 +11: All tests passed!

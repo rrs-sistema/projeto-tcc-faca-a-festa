@@ -99,11 +99,15 @@ enum EstadoRepasse {
 
 enum ModoComissaoIntermediacao {
   descontadaFornecedor,
-  adicionadaCliente;
+  adicionadaCliente,
+  absorvidaPlataforma;
 
-  String get firestoreValue => this == ModoComissaoIntermediacao.adicionadaCliente
-      ? 'adicionada_cliente'
-      : 'descontada_fornecedor';
+  String get firestoreValue =>
+      this == ModoComissaoIntermediacao.absorvidaPlataforma
+          ? 'absorvida_plataforma'
+          : this == ModoComissaoIntermediacao.adicionadaCliente
+              ? 'adicionada_cliente'
+              : 'descontada_fornecedor';
 }
 
 /// Direitos calculados — modo desconto não cria cobrança duplicada.

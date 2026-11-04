@@ -1,0 +1,53 @@
+require("./exigirEmuladorDemo").exigirEmuladorDemo("demo-agenda-fornecedor");
+const assert=require('node:assert/strict'),fs=require('fs');if(!process.env.FIRESTORE_EMULATOR_HOST)throw Error('Somente emulador');process.env.GCLOUD_PROJECT='demo-agenda-fornecedor';
+const {admin}=require('../lib/shared/firebaseAdmin'),db=admin.firestore();
+const {consultarAgendaFornecedor:ler,configurarCapacidade:cfg,confirmarAgendaContrato:confirmar,consultarDisponibilidade:publico,validarJanelas,picoSimultaneo}=require('../lib/services/agenda/agendaFornecedorService');
+const {cancelarContrato}=require('../lib/services/financeiro/contratoFinanceiroService');
+const {devolverEstoqueFornecedor:devolver,retirarEstoqueFornecedor:retirar}=require('../lib/functions/financeiro/comandosEstoqueFornecedor');
+const {responderCotacao:R}=require('../lib/functions/cotacao/responderCotacao'),{fecharCotacao:F}=require('../lib/functions/cotacao/fecharCotacao');
+const {initializeTestEnvironment,assertFails,assertSucceeds}=require('../../node_modules/@firebase/rules-unit-testing');let env;
+const agenda=(ini='2030-01-02T10:00:00-03:00',fim='2030-01-02T12:00:00-03:00',fuso='America/Sao_Paulo')=>({fuso,janelas:[{tipo:'execucao',inicio:ini,fim}]});
+const neg=fn=>assert.rejects(fn,e=>['failed-precondition','permission-denied','invalid-argument'].includes(e.code));
+const op=(id,extra={})=>({idOrcamento:id,agenda:agenda(),unidades:1,revisao:0,chave:'confirmar-'+id,motivo:'Confirmação sintética de equipe',recursos:[],justificativaPendencias:'Cliente ainda definirá os outros horários; revisão humana registrada',...extra});
+async function contrato(id,f='f'){await db.doc('orcamento/'+id).set({id_fornecedor:f,id_evento:'e',id_solicitante:'c',nome:'Serviço '+id,status:'fechado',contrato_financeiro:{id_contrato:id,estado_comercial:'contratado',estado_execucao:'nao_iniciado',valor:{centavos:10000,moeda:'BRL'}}});}
+(async()=>{
+ for(const [u,t]of[['f','F'],['g','F'],['c','O'],['x','O'],['a','A']])await db.doc('usuarios/'+u).set({tipo:t,ativo:true});await db.doc('evento/e').set({id_usuario:'c',data:admin.firestore.Timestamp.fromDate(new Date('2030-01-02T03:00:00Z')),local_evento:'Local compartilhável',orcamento_global:999999});
+ await db.doc('fornecedor/f').set({nome:'Empresa sintética'});
+ for(const x of ['um','dois','tres','limite','virada','material'])await contrato(x);
+ await neg(()=>ler(db,'c'));await neg(()=>ler(db,'a'));await neg(()=>confirmar(db,'g',op('um')));
+ let l=await ler(db,'f');assert.equal(l.capacidade,null);assert.equal(l.compromissos[0].agenda,null);assert(!JSON.stringify(l).includes('999999'));
+ await neg(()=>confirmar(db,'f',op('um')));await cfg(db,'f',{capacidade:1,revisao:0,chave:'cfg1'});
+ await confirmar(db,'f',op('um'));await neg(()=>confirmar(db,'f',op('dois')));await neg(()=>confirmar(db,'f',op('um',{agenda:agenda('2030-01-02T16:00:00Z','2030-01-02T18:00:00Z')})));
+ // Mesmo instante com offset diferente; identidade canônica/repetição preservada.
+ assert.equal((await confirmar(db,'f',op('um'))).idempotente,true);
+ let c=(await ler(db,'f'));await cfg(db,'f',{capacidade:2,revisao:c.revisaoConfig,chave:'cfg2'});
+ const corrida=await Promise.allSettled(['dois','tres'].map(id=>confirmar(db,'f',op(id))));assert.equal(corrida.filter(x=>x.status==='fulfilled').length,1);const vencedor=['dois','tres'][corrida.findIndex(x=>x.status==='fulfilled')],perdedor=vencedor==='dois'?'tres':'dois';await neg(()=>confirmar(db,'f',op(perdedor)));c=await ler(db,'f');await neg(()=>cfg(db,'f',{capacidade:1,revisao:c.revisaoConfig,chave:'reduzir'}));
+ await confirmar(db,'f',op('limite',{agenda:agenda('2030-01-02T12:00:00-03:00','2030-01-02T14:00:00-03:00')}));
+ await confirmar(db,'f',op('virada',{agenda:agenda('2030-01-03T23:30:00-03:00','2030-01-04T01:00:00-03:00')}));
+ assert.equal(picoSimultaneo([{agenda:agenda('2020-01-01T10:00:00Z','2020-01-01T11:00:00Z'),unidades:5}],Date.now()),0);
+ const z=validarJanelas(agenda('2030-01-02T10:00:00-03:00','2030-01-02T12:00:00-03:00'));assert.equal(z.janelas[0].inicio,'2030-01-02T13:00:00.000Z');assert.equal(picoSimultaneo([{agenda:z,unidades:1},{agenda:validarJanelas(agenda('2030-01-02T15:00:00Z','2030-01-02T16:00:00Z')),unidades:1}]),1);
+ for(const a of [agenda('2030-01-02T10:00:00','2030-01-02T12:00:00'),agenda('2030-01-02T13:00:00Z','2030-01-02T12:00:00Z'),agenda(undefined,undefined,'Fuso/Invalido'),{fuso:'UTC',janelas:[]}])assert.throws(()=>validarJanelas(a));
+ await confirmar(db,'f',op('um',{revisao:1,chave:'reagendar-um',agenda:agenda('2030-01-05T10:00:00Z','2030-01-05T11:00:00Z')}));await confirmar(db,'f',op(perdedor));
+ await cancelarContrato(db,{idEvento:'e',idOrcamento:vencedor,autorId:'c',motivo:'Cancelamento explícito sintético'});assert.equal((await db.doc('fornecedor/f/agenda_compromissos/'+vencedor).get()).data().confirmada,false);
+ const item={id_fornecedor:'f',nome:'Cadeiras internas',natureza:'reutilizavel',status:'disponivel',quantidade_total:10,quantidade_reservada:0,quantidade_em_uso:0,custo_medio_unitario:{centavos:1000,moeda:'BRL'}};await db.doc('fornecedor/f/estoque_itens/i').set(item);
+ const ag=agenda('2030-02-01T10:00:00Z','2030-02-01T12:00:00Z');await confirmar(db,'f',op('material',{agenda:ag,recursos:[{idItem:'i',quantidade:8}]}));await contrato('material2');await neg(()=>confirmar(db,'f',op('material2',{agenda:ag,recursos:[{idItem:'i',quantidade:3}]})));
+ await confirmar(db,'f',op('material',{agenda:agenda('2030-02-01T14:00:00Z','2030-02-01T16:00:00Z'),revisao:1,chave:'reagenda-recurso',recursos:[{idItem:'i',quantidade:8}]}));let rs=await db.collection('fornecedor/f/estoque_reservas').where('id_orcamento','==','material').get();assert.equal(rs.size,2);assert.equal(rs.docs.filter(r=>r.data().status==='cancelada').length,1);const rid=rs.docs.find(r=>r.data().status==='ativa').id;
+ await retirar.run({auth:{uid:'f'},data:{idFornecedor:'f',idReserva:rid}});await neg(()=>confirmar(db,'f',op('material',{agenda:ag,revisao:2,chave:'reagenda-retirado',recursos:[{idItem:'i',quantidade:8}]})));
+ await cancelarContrato(db,{idEvento:'e',idOrcamento:'material',autorId:'c',motivo:'Cancelado com devolução pendente'});assert.equal((await db.doc('fornecedor/f/estoque_reservas/'+rid).get()).data().status,'retirada');
+ await devolver.run({auth:{uid:'f'},data:{idFornecedor:'f',idReserva:rid}});assert.equal((await db.doc('fornecedor/f/estoque_itens/i').get()).data().quantidade_total,10);assert.equal((await db.doc('fornecedor/f/estoque_itens/i').get()).data().quantidade_em_uso,0);
+ await confirmar(db,'f',op('material2',{agenda:ag,recursos:[{idItem:'i',quantidade:10}]}));await cancelarContrato(db,{idEvento:'e',idOrcamento:'material2',autorId:'c',motivo:'Liberação de reserva ativa'});assert.equal((await db.collection('fornecedor/f/estoque_reservas').where('id_orcamento','==','material2').get()).docs[0].data().status,'cancelada');
+ const {atualizarExecucaoContrato:exec}=require('../lib/services/financeiro/acompanhamentoPersistenciaService');await contrato('sem-agenda');await exec(db,{idOrcamento:'sem-agenda',acao:'agendar',autorId:'f',papel:'fornecedor',chaveIdempotencia:'preparar-sem',dataAgendada:'2030-01-02T10:00:00Z'});await neg(()=>exec(db,{idOrcamento:'sem-agenda',acao:'iniciar',autorId:'f',papel:'fornecedor',chaveIdempotencia:'iniciar-sem'}));await exec(db,{idOrcamento:'um',acao:'agendar',autorId:'f',papel:'fornecedor',chaveIdempotencia:'preparar-um',dataAgendada:'2030-01-05T09:00:00Z'});await exec(db,{idOrcamento:'um',acao:'iniciar',autorId:'f',papel:'fornecedor',chaveIdempotencia:'iniciar-um'});
+ // Consulta comercial não ocupa; duas aceitações com intervalos competem pelo lock real.
+ c=await ler(db,'f');await cfg(db,'f',{capacidade:1,revisao:c.revisaoConfig,chave:'config-final'});
+ const reservasAntes=(await db.collection('fornecedor/f/agenda_compromissos').get()).size;
+ for(const q of ['q1','q2']){await db.doc('cotacao/'+q).set({id_evento:'e',id_usuario_solicitante:'c',status:'pendente'});await db.doc(`cotacao/${q}/fornecedores/f`).set({id_fornecedor:'f',status:'pendente'});await db.doc(`cotacao/${q}/fornecedores/f/servicos/s`).set({quantidade:1,nome_produto_servico:'Buffet'});await R.run({auth:{uid:'f'},data:{idCotacao:q,aceitou:true,valorBrutoCentavos:10000,validade:'2031-01-01T00:00:00Z',escopo:'Serviço sintético',condicaoPagamento:'Pagamento contratado',chave:'p'+q,agendaOperacional:agenda('2030-03-01T10:00:00Z','2030-03-01T12:00:00Z')}});}
+ assert.equal((await db.collection('fornecedor/f/agenda_compromissos').get()).size,reservasAntes);
+ const aceita=await Promise.allSettled(['q1','q2'].map(async q=>{const p=(await db.doc(`cotacao/${q}/fornecedores/f`).get()).data().proposta_atual;return F.run({auth:{uid:'c'},data:{idCotacao:q,idFornecedor:'f',versaoProposta:p.versao,assinaturaProposta:p.assinatura}});}));assert.equal(aceita.filter(a=>a.status==='fulfilled').length,1);assert.equal((await db.collection('orcamento').where('id_cotacao','in',['q1','q2']).get()).size,1);
+ await db.doc('orcamento/0espelho').set({...((await db.doc('orcamento/um').get()).data()),id_orcamento:'0espelho'});assert.equal((await ler(db,'f')).compromissos.find(c=>c.idContrato==='um').idOrcamento,'um');
+ const pub=await publico(db,'c',{idOrcamento:'um'});assert(pub.agenda);assert(!('recursos'in pub));await neg(()=>publico(db,'x',{idOrcamento:'um'}));
+ env=await initializeTestEnvironment({projectId:'demo-agenda-fornecedor',firestore:{rules:fs.readFileSync('firestore.rules','utf8'),host:'127.0.0.1',port:8080}});
+ const dono=env.authenticatedContext('f').firestore();for(const u of ['c','g','a','x']){const cli=env.authenticatedContext(u).firestore();for(const sub of ['agenda_config','agenda_compromissos','agenda_historico'])await assertFails(cli.collection('fornecedor/f/'+sub).get());await assertFails(cli.collectionGroup('agenda_compromissos').get());}
+ await assertSucceeds(dono.doc('fornecedor/f/agenda_config/principal').get());await assertFails(dono.doc('fornecedor/f/agenda_config/principal').update({capacidade:999}));await assertFails(dono.doc('orcamento/um').update({agenda_operacional:{}}));await assertFails(dono.doc('fornecedor/f/estoque_reservas/falso').set({status:'ativa'}));await assertFails(dono.doc('fornecedor/f/estoque_itens/i').update({quantidade_total:999}));
+ const hist=await db.collection('fornecedor/f/agenda_historico').get();assert(hist.size>5);
+ console.log('PASS agenda: capacidade 1/2, limite semiaberto, concorrência, virada/fuso, horário pendente, reagendamento, cancelamento, estoque real/devolução e regras privadas.');
+})().catch(e=>{console.error(e);process.exitCode=1;}).finally(async()=>{if(env)await env.cleanup();await db.terminate();});

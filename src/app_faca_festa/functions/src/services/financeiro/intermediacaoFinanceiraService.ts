@@ -21,7 +21,7 @@ export type EstadoRepasse =
   | "falhou"
   | "cancelado";
 
-export type ModoComissao = "descontada_fornecedor" | "adicionada_cliente";
+export type ModoComissao = "descontada_fornecedor" | "adicionada_cliente" | "absorvida_plataforma";
 
 export type CriterioAlocacao = "manual_explicito";
 
@@ -126,7 +126,7 @@ export function calcularDireitosContrato(params: {
   return {
     comissaoPrevistaCentavos: comissao,
     direitoFornecedorPrevistoCentavos: params.valorContratadoCentavos,
-    precoClienteCentavos: params.valorContratadoCentavos + comissao,
+    precoClienteCentavos: params.valorContratadoCentavos + (params.modoComissao === "absorvida_plataforma" ? 0 : comissao),
   };
 }
 

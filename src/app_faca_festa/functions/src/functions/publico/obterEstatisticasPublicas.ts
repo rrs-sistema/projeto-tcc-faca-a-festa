@@ -15,8 +15,8 @@ export function resumirAvaliacoes(
   let soma = 0;
   let totalAvaliacoes = 0;
   for (const data of fornecedores) {
-    const media = Number(data.media_avaliacoes ?? data.mediaAvaliacoes);
-    const total = Number(data.total_avaliacoes ?? data.totalAvaliacoes);
+    const media = Number(data.reputacao_verificada?.schema === 2 ? data.reputacao_verificada.media : 0);
+    const total = Number(data.reputacao_verificada?.schema === 2 ? data.reputacao_verificada.quantidade : 0);
     if (!Number.isFinite(media) || media < 1 || media > 5 ||
         !Number.isSafeInteger(total) || total <= 0) continue;
     soma += media * total;
@@ -39,7 +39,7 @@ export const obterEstatisticasPublicas = onCall(
     const [eventos, fornecedores] = await Promise.all([
       db.collection("evento").count().get(),
       db.collection("fornecedor")
-        .select("media_avaliacoes", "mediaAvaliacoes", "total_avaliacoes", "totalAvaliacoes")
+        .select("reputacao_verificada")
         .get(),
     ]);
 

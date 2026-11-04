@@ -1,0 +1,1 @@
+PASS painel: média 1h/amostra 1 + pendência 64h, limites [de,até), mensagens excluídas/reenvios, contrato único, avaliações canônicas/foco, navegação, autorização e falha financeira real sem zero.

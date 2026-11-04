@@ -14,12 +14,14 @@ class OrcamentoAdminModel extends OrcamentoAdmin {
     required super.pago,
     required super.status,
     super.custoTotalEvento = 0.0,
+    super.idEvento = '',
   });
 
   /// 🔹 Criação a partir de Map genérico (por exemplo, Firestore)
   factory OrcamentoAdminModel.fromMap(Map<String, dynamic> map, String id) {
     return OrcamentoAdminModel(
       id: id,
+      idEvento: (map['id_evento'] ?? '').toString(),
       eventoNome: map['evento_nome'] ?? 'Evento não identificado',
       tipoEvento: map['tipo_evento'] ?? 'Tipo não informado',
       cidade: map['cidade'] ?? '-',
@@ -28,6 +30,7 @@ class OrcamentoAdminModel extends OrcamentoAdmin {
       custoEstimado: (map['custo_estimado'] ?? 0).toDouble(),
       pago: (map['pago'] ?? 0).toDouble(),
       status: map['status'] ?? 'Pendente',
+      custoTotalEvento: (map['custo_total_evento'] as num?)?.toDouble() ?? 0,
     );
   }
 
@@ -35,6 +38,8 @@ class OrcamentoAdminModel extends OrcamentoAdmin {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
+      'id_evento': idEvento,
+      'custo_total_evento': custoTotalEvento,
       'evento_nome': eventoNome,
       'tipo_evento': tipoEvento,
       'cidade': cidade,

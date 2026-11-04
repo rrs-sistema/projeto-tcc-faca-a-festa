@@ -17,22 +17,19 @@ class RankingRemoteDatasource {
     final ranking = <RankingServico>[];
 
     for (final doc in query.docs) {
-      final avaliacoesSnap = await doc.reference.collection('avaliacoes').get();
-      if (avaliacoesSnap.docs.isEmpty) continue;
-
-      final notas = avaliacoesSnap.docs
-          .map((avaliacao) => (avaliacao.data()['nota'] as num).toDouble())
-          .toList();
-      final media = notas.reduce((a, b) => a + b) / notas.length;
       final data = doc.data();
-
+      final r = data['reputacao_verificada'];
+      if (r is! Map || r['schema'] != 2 || (r['quantidade'] as num) <= 0) {
+        continue;
+      }
+      final media = (r['media'] as num).toDouble();
       ranking.add(
         RankingServico(
           id: doc.id,
           idFornecedor: (data['id_fornecedor'] ?? '').toString(),
           idProdutoServico: (data['id_produto_servico'] ?? '').toString(),
           media: media,
-          totalAvaliacoes: notas.length,
+          totalAvaliacoes: (r['quantidade'] as num).toInt(),
         ),
       );
     }

@@ -1,0 +1,108 @@
+require("./exigirEmuladorDemo").exigirEmuladorDemo("demo-avaliacoes-verificadas");
+'use strict';
+const assert=require('node:assert/strict'),fs=require('fs');
+if(!process.env.FIRESTORE_EMULATOR_HOST)throw Error('Somente emulador');
+process.env.GCLOUD_PROJECT='demo-avaliacoes-verificadas';
+const {admin}=require('../lib/shared/firebaseAdmin');const db=admin.firestore();
+const {registrarAvaliacaoVerificada:reg,consultarContratosAvaliaveis:list,moderarAvaliacaoVerificada:mod,resumoVerificado,identidadeAvaliacao}=require('../lib/services/avaliacoes/avaliacaoVerificadaService');
+const {informarEntregaFornecedorFn:entregar,registrarAceiteClienteFn:aceitar}=require('../lib/functions/financeiro/comandosAcompanhamentoPartes');
+const {novaAvaliacaoProcessar:trigger}=require('../lib/functions/fornecedores/novaAvaliacaoProcessar');
+const {buscarResumoAvaliacoesFornecedores}=require('../lib/services/fornecedores/fornecedorRecomendacaoService');
+const {resumirAvaliacoes}=require('../lib/functions/publico/obterEstatisticasPublicas');
+const {initializeTestEnvironment,assertFails,assertSucceeds}=require('../../node_modules/@firebase/rules-unit-testing');
+const call=(uid,data)=>reg.run({auth:uid?{uid,token:{}}:undefined,data});
+const base={idFornecedor:'f',idOrcamento:'c',nota:4,comentario:'Entrega aceita, comentário sintético.'};
+(async()=>{
+ for(const [u,tipo] of [['a','O'],['b','O'],['f','F'],['f2','F'],['x','O'],['admin','A'],['moderador','A'],['sol','O']])await db.doc('usuarios/'+u).set({tipo,ativo:true,nome:'Perfil '+u});
+ await db.doc('fornecedor/f').set({nome:'Fornecedor sintético',mediaAvaliacoes:5,totalAvaliacoes:99});
+ await db.doc('fornecedor/f2').set({nome:'Outro fornecedor'});
+ await db.doc('fornecedor_servico/f_s').set({id_fornecedor:'f',id_produto_servico:'s',id_subcategoria:'sub'});
+ await db.doc('evento/e').set({id_usuario:'a',status:'planejamento',nome:'Evento sintético'});
+ const contrato={id_evento:'e',id_solicitante:'a',id_fornecedor:'f',id_produto_servico:'s',orcamento_fechado:true,status:'fechado',contrato_financeiro:{id_contrato:'contrato',estado_comercial:'contratado',estado_execucao:'aceito'}};
+ await db.doc('orcamento/c').set({...contrato,contrato_financeiro:{...contrato.contrato_financeiro,estado_execucao:'em_execucao'}});
+ await entregar.run({auth:{uid:'f'},data:{idOrcamento:'c',chaveIdempotencia:'entrega-sintetica'}});
+ await assert.rejects(()=>call('a',base),e=>e.code==='failed-precondition');
+ await aceitar.run({auth:{uid:'a'},data:{idOrcamento:'c',chaveIdempotencia:'aceite-sintetico'}});
+ await db.doc('fornecedor/f/avaliacoes/legado').set({nota:5,comentario:'Legado preservado',data:admin.firestore.Timestamp.now()});
+ const falso=identidadeAvaliacao('a','contrato-forjado','fornecedor');
+ await db.doc('fornecedor/f/avaliacoes/'+falso).set({schema:2,verificada:true,tipo:'fornecedor',id:falso,id_cliente:'a',id_fornecedor:'f',id_contrato:'contrato-forjado',nota:5,comentario:'Flags sem origem comprovada'});
+ await db.doc('avaliacao_fornecedor/legado').set({id_fornecedor:'f',nota:5});
+ const query={idFornecedor:'f',idEvento:'e'};
+ assert.equal((await list.run({auth:{uid:'a'},data:query})).contratos.length,1);
+ assert.equal((await list.run({auth:{uid:'b'},data:query})).contratos.length,0);
+ await assert.rejects(()=>call(null,base),e=>e.code==='unauthenticated');
+ for(const uid of ['b','f','f2','x','admin'])await assert.rejects(()=>call(uid,base),e=>e.code==='permission-denied');
+ for(const nota of [0,6,-1,NaN,Infinity,4.5,'5'])await assert.rejects(()=>call('a',{...base,nota}),e=>e.code==='invalid-argument');
+ for(const extra of [{id_cliente:'b'},{nome_cliente:'Falso'},{data:'2026'},{verificada:true},{comentario:'x'.repeat(501)}])await assert.rejects(()=>call('a',{...base,...extra}),e=>e.code==='invalid-argument');
+ const results=await Promise.all(Array.from({length:8},()=>call('a',base)));
+ assert.equal(results.filter(x=>!x.idempotente).length,1);
+ const key=identidadeAvaliacao('a','contrato','fornecedor'),ref=db.doc('fornecedor/f/avaliacoes/'+key);
+ let r=(await db.doc('fornecedor/f').get()).data().reputacao_verificada;
+ assert.deepEqual(r,{schema:2,quantidade:1,soma:4,media:4});
+ assert.equal((await ref.collection('historico').get()).size,1);
+ const a=(await ref.get()).data();assert.equal(a.id_cliente,'a');assert.equal(a.nome_cliente,'Perfil a');assert(a.data instanceof admin.firestore.Timestamp);
+ await assert.rejects(()=>call('a',{...base,comentario:'Substituição indevida'}),e=>e.code==='already-exists');
+ // Mesmo contrato em alias não permite segunda avaliação.
+ await db.doc('orcamento/alias').set(contrato);await db.doc('orcamento/alias/execucao_historico/aceite').set({acao:'aceitar',estado_novo:'aceito',autor_id:'a',papel:'cliente'});
+ assert.equal((await call('a',{...base,idOrcamento:'alias'})).idempotente,true);
+ assert.equal((await list.run({auth:{uid:'a'},data:query})).contratos.length,0);
+ await call('a',{...base,idServico:'s',nota:2});
+ assert.equal((await db.doc('fornecedor/f').get()).data().reputacao_verificada.quantidade,1);
+ assert.equal((await db.doc('fornecedor_servico/f_s').get()).data().reputacao_verificada.media,2);
+ await assert.rejects(()=>call('a',{...base,idServico:'outro'}),e=>e.code==='failed-precondition');
+ for(const estado of ['nao_iniciado','em_execucao','entrega_informada','contestado','cancelado_execucao']){
+ await db.doc('orcamento/incompleto').set({...contrato,contrato_financeiro:{id_contrato:'incompleto',estado_comercial:'contratado',estado_execucao:estado}});
+ await assert.rejects(()=>call('a',{...base,idOrcamento:'incompleto'}),e=>e.code==='failed-precondition');
+ }
+ await db.doc('evento/e').update({status:'cancelado'});
+ await assert.rejects(()=>call('a',{...base,idOrcamento:'alias'}),e=>e.code==='failed-precondition');
+ await db.doc('evento/e').update({status:'planejamento'});
+ await db.doc('orcamento/sem-prova').set({...contrato,contrato_financeiro:{...contrato.contrato_financeiro,id_contrato:'sem-prova'}});
+ await assert.rejects(()=>call('a',{...base,idOrcamento:'sem-prova'}),e=>e.code==='failed-precondition');
+ await db.doc('orcamento/segundo').set({...contrato,contrato_financeiro:{...contrato.contrato_financeiro,id_contrato:'segundo'}});
+ await db.doc('orcamento/segundo/execucao_historico/aceite').set({acao:'aceitar',estado_novo:'aceito',autor_id:'a',papel:'cliente'});
+ const race=await Promise.allSettled([1,5].map(nota=>call('a',{...base,idOrcamento:'segundo',nota})));
+ assert.equal(race.filter(x=>x.status==='fulfilled').length,1);
+ const rejeitada=race.find(x=>x.status==='rejected').reason;
+ assert.equal(rejeitada.code,'already-exists',rejeitada.stack || String(rejeitada));
+ r=(await db.doc('fornecedor/f').get()).data().reputacao_verificada;assert.equal(r.quantidade,2);
+ assert.deepEqual(resumirAvaliacoes([(await db.doc('fornecedor/f').get()).data(),{mediaAvaliacoes:5,totalAvaliacoes:100}]),{totalAvaliacoes:2,mediaFornecedores:r.media});
+ const recomendacao=await buscarResumoAvaliacoesFornecedores(['f','f2']);assert.equal(recomendacao.get('f').totalAvaliacoes,2);assert.equal(recomendacao.get('f').mediaAvaliacoes,r.media);assert.equal(recomendacao.get('f2').totalAvaliacoes,0);
+ // Trigger atrasado/repetido nunca sobrescreve agregados transacionais.
+ await trigger.run({params:{idFornecedor:'f',idAvaliacao:key}});await trigger.run({params:{idFornecedor:'f',idAvaliacao:'legado'}});
+ assert.deepEqual((await db.doc('fornecedor/f').get()).data().reputacao_verificada,r);
+ const moderation={idFornecedor:'f',idAvaliacao:key,ocultar:true,motivo:'Moderação sintética com histórico.'};
+ await assert.rejects(()=>mod.run({auth:{uid:'admin',token:{}},data:moderation}),e=>e.code==='permission-denied');
+ for(const uid of ['f','a'])await assert.rejects(()=>mod.run({auth:{uid,token:{moderar_avaliacoes:true}},data:moderation}),e=>e.code==='permission-denied');
+ await mod.run({auth:{uid:'moderador',token:{moderar_avaliacoes:true}},data:moderation});
+ assert.equal((await db.doc('fornecedor/f').get()).data().reputacao_verificada.quantidade,1);
+ assert.equal((await ref.get()).data().comentario,base.comentario);assert.equal((await ref.collection('historico').get()).size,2);
+ await mod.run({auth:{uid:'moderador',token:{moderar_avaliacoes:true}},data:{...moderation,ocultar:false}});
+ assert.equal((await db.doc('fornecedor/f').get()).data().reputacao_verificada.quantidade,2);
+ const env=await initializeTestEnvironment({projectId:'demo-avaliacoes-verificadas',firestore:{host:process.env.FIRESTORE_EMULATOR_HOST.split(':')[0],port:Number(process.env.FIRESTORE_EMULATOR_HOST.split(':')[1]),rules:fs.readFileSync('firestore.rules','utf8')}});
+ for(const uid of ['a','b','f','f2','x','admin']){
+ const client=env.authenticatedContext(uid).firestore();
+ for(const path of ['fornecedor/f/avaliacoes/'+key,'fornecedor_servico/f_s/avaliacoes/novo','avaliacao_fornecedor/legado','avaliacoes/novo','fornecedor_avaliacoes/novo']){
+ await assertSucceeds(client.doc(path).get());await assertFails(client.doc(path).set({nota:5}));await assertFails(client.doc(path).update({comentario:'apagado'}));await assertFails(client.doc(path).delete());
+ }
+ for(const field of ['reputacao_verificada','mediaAvaliacoes','totalAvaliacoes','media_avaliacoes','total_avaliacoes','selos','is_top_categoria'])await assertFails(client.doc('fornecedor/f').update({[field]:field==='selos'?['Premium']:5}));
+ await assertFails(client.doc('fornecedor_servico/f_s').update({reputacao_verificada:{schema:2,media:5,quantidade:99}}));
+ await assertFails(client.doc('fornecedor_servico/f_s').update({media_servico:5,total_avaliacoes_servico:99}));
+ await assertFails(client.doc('fornecedor_servico/f_s').delete());
+ await assertFails(client.collectionGroup('avaliacoes').get());
+ await assertFails(client.doc('fornecedor/f/avaliacoes/'+key+'/historico/fraude').set({acao:'aceitar'}));
+ await assertFails(client.doc('orcamento/c').update({id_fornecedor:'f2'}));
+ }
+ await assertSucceeds(env.authenticatedContext('a').firestore().doc('orcamento/rascunho').set({id_evento:'e',id_fornecedor:'f',id_solicitante:'a',status:'aberto'}));
+ await assertSucceeds(env.authenticatedContext('f').firestore().doc('fornecedor/f').update({nome:'Perfil atualizado'}));
+ await assertFails(env.authenticatedContext('x').firestore().doc('fornecedor/x').set({media_avaliacoes:5,total_avaliacoes:100}));
+ await assertSucceeds(env.authenticatedContext('x').firestore().doc('fornecedor/x').set({nome:'Cadastro sem reputação'}));
+ await assertFails(env.unauthenticatedContext().firestore().doc('fornecedor/f/avaliacoes/'+key).get());
+ assert.equal((await db.doc('fornecedor/f/avaliacoes/legado').get()).data().verificada,undefined);
+ await db.doc('orcamento/delegado').set({...contrato,id_solicitante:'sol',contrato_financeiro:{...contrato.contrato_financeiro,id_contrato:'delegado'}});
+ await db.doc('orcamento/delegado/execucao_historico/aceite').set({acao:'aceitar',estado_novo:'aceito',autor_id:'a',papel:'cliente'});
+ assert((await list.run({auth:{uid:'sol'},data:query})).contratos.some(c=>c.idContrato==='delegado'));
+ await call('sol',{...base,idOrcamento:'delegado'});
+ assert.equal(resumoVerificado([{nota:5},{schema:2,verificada:true,tipo:'fornecedor',nota:NaN}]).quantidade,0);
+ await env.cleanup();console.log('PASS avaliações: autorização, aceite comprovado, 8 concorrentes, payload divergente, aliases, tipos separados, agregados, trigger repetido, moderação com histórico e regras sobrepostas.');
+})().catch(e=>{console.error(e);process.exitCode=1}).finally(()=>db.terminate());

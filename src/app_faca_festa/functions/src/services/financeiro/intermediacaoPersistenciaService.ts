@@ -1,3 +1,5 @@
+import { createHash } from "crypto";
+import { carregarContextoRepasse, COL_AUTORIZACOES, contratado, divisaoContrato, assinaturaContrato, impedimentoRepasse } from "./liberacaoRepasseService";
 import { FieldValue, Firestore } from "firebase-admin/firestore";
 import { HttpsError } from "firebase-functions/v2/https";
 import { dinheiro } from "./dinheiro";
@@ -8,7 +10,6 @@ import {
   NivelConfirmacaoRecebimento,
   PoliticaLiberacaoRepasse,
   avaliarElegibilidadeRepasse,
-  calcularDireitosContrato,
   disponivelParaAlocar,
   transicionarRepasse,
   validarAlocacoesRecebimento,
@@ -63,44 +64,55 @@ export async function registrarRecebimentoPlataforma(
   }
   dinheiro(entrada.valorCentavos);
 
-  const idemRef = db
-    .collection(COL_RECEBIMENTOS)
-    .doc(`idem_${chave}`);
-  // Usamos doc dedicado de idempotência no mesmo path lógico via campo.
+  // Compatibilidade com recebimentos anteriores à identidade determinística.
   const existente = await db
     .collection(COL_RECEBIMENTOS)
     .where("chave_idempotencia", "==", chave)
     .limit(1)
     .get();
   if (!existente.empty) {
+    const anterior = existente.docs[0].data();
+    if (anterior.id_evento !== idEvento || anterior.valor_centavos !== entrada.valorCentavos || anterior.operador_id !== entrada.autorId) {
+      throw new HttpsError("already-exists", "Chave já utilizada para outro recebimento.");
+    }
     return { id: existente.docs[0].id, idempotente: true };
   }
 
-  const ref = db.collection(COL_RECEBIMENTOS).doc();
-  await ref.set({
-    schema: 1,
-    id_recebimento: ref.id,
-    id_evento: idEvento,
-    id_pagador: texto(entrada.idPagador) || null,
-    valor: dinheiro(entrada.valorCentavos),
-    valor_centavos: entrada.valorCentavos,
-    nivel_confirmacao: entrada.nivelConfirmacao ?? "conferencia",
-    referencia: texto(entrada.referencia) || null,
-    origem: texto(entrada.origem) || "registro_manual",
-    origem_legado_pago: false,
-    alocado_centavos: 0,
-    chave_idempotencia: chave,
-    operador_id: entrada.autorId,
-    criado_em: FieldValue.serverTimestamp(),
+  const ref = db.collection(COL_RECEBIMENTOS).doc(createHash("sha256").update(`${entrada.autorId}:${chave}`).digest("hex"));
+  return db.runTransaction(async tx => {
+    const previa = await tx.get(ref);
+    if (previa.exists) {
+      if (previa.data()?.id_evento !== idEvento || previa.data()?.valor_centavos !== entrada.valorCentavos) {
+        throw new HttpsError("already-exists", "Chave já utilizada para outro recebimento.");
+      }
+      return { id: ref.id, idempotente: true };
+    }
+    const evento = await tx.get(db.collection("evento").doc(idEvento));
+    if (!evento.exists) throw new HttpsError("not-found", "Evento não encontrado.");
+    if (entrada.valorCentavos <= 0 || !["declaracao", "conferencia", "fonte_externa"].includes(entrada.nivelConfirmacao ?? "conferencia")) {
+      throw new HttpsError("invalid-argument", "Valor ou nível de confirmação inválido.");
+    }
+    tx.set(ref, {
+      schema: 1,
+      id_recebimento: ref.id,
+      id_evento: idEvento,
+      id_pagador: texto(entrada.idPagador) || null,
+      valor: dinheiro(entrada.valorCentavos),
+      valor_centavos: entrada.valorCentavos,
+      nivel_confirmacao: entrada.nivelConfirmacao ?? "conferencia",
+      referencia: texto(entrada.referencia) || null,
+      origem: texto(entrada.origem) || "registro_manual",
+      origem_legado_pago: false,
+      alocado_centavos: 0,
+      chave_idempotencia: chave,
+      operador_id: entrada.autorId,
+      criado_em: FieldValue.serverTimestamp(),
+    });
+    tx.set(db.collection(COL_AUDITORIA).doc(), { acao: "registrar_recebimento", autor_id: entrada.autorId,
+      id_recebimento: ref.id, id_evento: idEvento, valor_centavos: entrada.valorCentavos,
+      criado_em: FieldValue.serverTimestamp() });
+    return { id: ref.id, idempotente: false };
   });
-  // evita lint unused
-  void idemRef;
-  await auditar(db, entrada.autorId, "registrar_recebimento", {
-    id_recebimento: ref.id,
-    id_evento: idEvento,
-    valor_centavos: entrada.valorCentavos,
-  });
-  return { id: ref.id, idempotente: false };
 }
 
 export async function alocarRecebimentoAContratos(
@@ -132,12 +144,17 @@ export async function alocarRecebimentoAContratos(
   }
 
   return db.runTransaction(async (tx) => {
+    const repetida = await tx.get(db.collection(COL_ALOCACOES).where("chave_idempotencia", "==", chave));
+    if (!repetida.empty) return { ids: repetida.docs.map(d => d.id), idempotente: true };
     const recRef = db.collection(COL_RECEBIMENTOS).doc(entrada.idRecebimento);
     const recSnap = await tx.get(recRef);
     if (!recSnap.exists) {
       throw new HttpsError("not-found", "Recebimento não encontrado.");
     }
     const rec = recSnap.data() ?? {};
+    if (!["conferencia", "fonte_externa"].includes(rec.nivel_confirmacao)) {
+      throw new HttpsError("failed-precondition", "Declaração de pagamento não pode financiar um repasse. Confira o recebimento primeiro.");
+    }
     const valor = Number(rec.valor_centavos ?? 0);
     const alocado = Number(rec.alocado_centavos ?? 0);
     const recebimento = {
@@ -172,6 +189,11 @@ export async function alocarRecebimentoAContratos(
         throw new HttpsError("not-found", `Orçamento ${a.idOrcamento} ausente.`);
       }
       const orc = orcSnap.data() ?? {};
+      const contratoReal = orc.contrato_financeiro?.id_contrato || a.idOrcamento;
+      if (!contratado(orc) || a.idContrato !== contratoReal ||
+          (a.idFornecedor && a.idFornecedor !== orc.id_fornecedor)) {
+        throw new HttpsError("failed-precondition", "Alocação exige contratação confirmada com contrato e fornecedor correspondentes.");
+      }
       if (String(orc.id_evento ?? "") !== recebimento.idEvento) {
         throw new HttpsError(
           "failed-precondition",
@@ -266,160 +288,161 @@ export async function prepararOuAutorizarRepasse(
   idempotente: boolean;
 }> {
   const chave = texto(entrada.chaveIdempotencia);
-  const prev = await db
-    .collection(COL_REPASSES)
-    .where("chave_idempotencia", "==", chave)
-    .limit(1)
-    .get();
-  if (!prev.empty) {
-    const d = prev.docs[0].data();
-    return {
-      id: prev.docs[0].id,
-      estado: d.estado as EstadoRepasse,
-      elegivelCentavos: Number(d.valor_centavos ?? 0),
-      motivo: null,
-      idempotente: true,
-    };
+  if (!chave || chave.length > 128 || !entrada.idOrcamento) {
+    throw new HttpsError("invalid-argument", "Contrato e chave de idempotência são obrigatórios.");
   }
-
-  const orcSnap = await db.collection("orcamento").doc(entrada.idOrcamento).get();
-  if (!orcSnap.exists) {
-    throw new HttpsError("not-found", "Orçamento não encontrado.");
-  }
-  const orc = orcSnap.data() ?? {};
-  const idEvento = String(orc.id_evento ?? "");
-
-  const alocSnap = await db
-    .collection(COL_ALOCACOES)
-    .where("id_orcamento", "==", entrada.idOrcamento)
-    .limit(100)
-    .get();
-  let alocado = 0;
-  const idsAloc: string[] = [];
-  for (const doc of alocSnap.docs) {
-    alocado += Number(doc.data().valor_centavos ?? 0);
-    idsAloc.push(doc.id);
-  }
-
-  const repSnap = await db
-    .collection(COL_REPASSES)
-    .where("id_orcamento", "==", entrada.idOrcamento)
-    .limit(100)
-    .get();
-  let jaRepassado = 0;
-  let jaAuth = 0;
-  for (const doc of repSnap.docs) {
-    const st = String(doc.data().estado ?? "");
-    const v = Number(doc.data().valor_centavos ?? 0);
-    if (st === "confirmado") jaRepassado += v;
-    if (st === "autorizado" || st === "em_processamento") jaAuth += v;
-  }
-
-  const politica = await carregarPoliticaAtiva(db);
-  const direitos = calcularDireitosContrato({
-    valorContratadoCentavos: entrada.valorContratadoCentavos,
-    percentualBps: entrada.percentualBps,
-    modoComissao: entrada.modoComissao ?? "descontada_fornecedor",
+  dinheiro(entrada.valorCentavos);
+  if (entrada.valorCentavos <= 0) throw new HttpsError("invalid-argument", "Informe um valor positivo.");
+  const ref = db.collection(COL_REPASSES).doc(createHash("sha256").update(`${entrada.autorId}:${chave}`).digest("hex"));
+  return db.runTransaction(async tx => {
+    const anterior = await tx.get(ref);
+    if (anterior.exists) {
+      const d = anterior.data()!;
+      if (d.id_orcamento !== entrada.idOrcamento || d.valor_centavos !== entrada.valorCentavos || d.id_fornecedor !== entrada.idFornecedor) {
+        throw new HttpsError("already-exists", "Chave já utilizada para outro repasse.");
+      }
+      return { id: ref.id, estado: d.estado as EstadoRepasse, elegivelCentavos: 0, motivo: d.motivo_bloqueio || null, idempotente: true };
+    }
+    const ctx = await carregarContextoRepasse(db, tx, entrada.idOrcamento);
+    if (ctx.idContrato !== entrada.idContrato || ctx.orcamento.id_fornecedor !== entrada.idFornecedor) {
+      throw new HttpsError("failed-precondition", "Contrato ou fornecedor não corresponde à contratação.");
+    }
+    const alocSnap = await tx.get(db.collection(COL_ALOCACOES).where("id_orcamento", "==", entrada.idOrcamento));
+    const repSnap = await tx.get(db.collection(COL_REPASSES).where("id_orcamento", "==", entrada.idOrcamento));
+    const polSnap = await tx.get(db.collection(COL_LIBERACAO).where("ativa", "==", true));
+    const p = polSnap.size === 1 ? polSnap.docs[0] : null;
+    const politica = p ? { id: p.id, versao: Number(p.data().versao ?? 1), ativa: true,
+      permiteRepasseParcial: p.data().permite_repasse_parcial === true,
+      tetoParcialCentavos: p.data().teto_parcial_centavos ?? null } : null;
+    let alocado = 0, confirmado = 0, reservado = 0;
+    for (const a of alocSnap.docs) alocado += Number(a.data().valor_centavos ?? 0);
+    for (const r of repSnap.docs) {
+      if (r.data().estado === "confirmado") confirmado += Number(r.data().valor_centavos ?? 0);
+      if (["autorizado", "em_processamento"].includes(r.data().estado)) reservado += Number(r.data().valor_centavos ?? 0);
+    }
+    const eleg = avaliarElegibilidadeRepasse({
+      direitoFornecedorPrevistoCentavos: ctx.divisao?.direitoFornecedorCentavos ?? 0,
+      alocadoAoContratoCentavos: Math.max(0, alocado - (ctx.divisao?.comissaoReservadaNoContratoCentavos ?? 0)), jaRepassadoCentavos: confirmado,
+      jaAutorizadoOuProcessandoCentavos: reservado, politica,
+    });
+    const motivo = ctx.motivo || eleg.motivo;
+    // Tentativas bloqueadas não reservam dinheiro nem criam pagamentos pendentes.
+    if (motivo || entrada.valorCentavos > eleg.elegivelCentavos) {
+      throw new HttpsError("failed-precondition", motivo || "Valor excede o saldo elegível para repasse.");
+    }
+    const estado: EstadoRepasse = "autorizado";
+    tx.set(ref, {
+      schema: 2, id_repasse: ref.id, id_contrato: ctx.idContrato,
+      id_orcamento: entrada.idOrcamento, id_evento: ctx.orcamento.id_evento,
+      id_fornecedor: ctx.orcamento.id_fornecedor, id_beneficiario: ctx.orcamento.id_fornecedor,
+      valor: dinheiro(entrada.valorCentavos), valor_centavos: entrada.valorCentavos, estado,
+      divisao_contrato: ctx.divisao, assinatura_contrato: ctx.assinatura,
+      criterio_liberacao: ctx.evento.status === "finalizado" ? "evento_finalizado" : "autorizacao_organizador",
+      ids_alocacao_origem: alocSnap.docs.map(d => d.id), confirmacao_manual: false,
+      motivo_bloqueio: null, politica_liberacao_id: politica?.id,
+      chave_idempotencia: chave, operador_id: entrada.autorId, transferencia_bancaria: false,
+      criado_em: FieldValue.serverTimestamp(),
+    });
+    // Serializa reservas concorrentes do mesmo contrato e abertura de mediação.
+    tx.update(ctx.ref, { repasse_revisao: FieldValue.increment(1) });
+    tx.set(db.collection(COL_AUDITORIA).doc(), { acao: "autorizar_repasse", autor_id: entrada.autorId,
+      id_repasse: ref.id, divisao_contrato: ctx.divisao, criado_em: FieldValue.serverTimestamp() });
+    return { id: ref.id, estado, elegivelCentavos: eleg.elegivelCentavos, motivo: null, idempotente: false };
   });
-  const eleg = avaliarElegibilidadeRepasse({
-    direitoFornecedorPrevistoCentavos: direitos.direitoFornecedorPrevistoCentavos,
-    alocadoAoContratoCentavos: alocado,
-    jaRepassadoCentavos: jaRepassado,
-    jaAutorizadoOuProcessandoCentavos: jaAuth,
-    politica,
-  });
+}
 
-  const pedido = entrada.valorCentavos;
-  dinheiro(pedido);
-  if (pedido > eleg.elegivelCentavos && eleg.elegivelCentavos > 0) {
-    throw new HttpsError(
-      "failed-precondition",
-      `Valor solicitado (${pedido}) excede elegível (${eleg.elegivelCentavos}).`,
-    );
+export async function autorizarRepasseOrganizador(db: Firestore, entrada: {
+  idOrcamento: string; autorId: string; motivo: string; autorizar: boolean;
+}): Promise<{ ok: true }> {
+  if (texto(entrada.motivo).length < 10 || entrada.motivo.length > 500) {
+    throw new HttpsError("invalid-argument", "Descreva a autorização em 10 a 500 caracteres.");
   }
-
-  let estado: EstadoRepasse = eleg.estadoSugerido;
-  let motivo = eleg.motivo;
-  const valorFinal =
-    eleg.elegivelCentavos > 0 ? Math.min(pedido, eleg.elegivelCentavos) : pedido;
-
-  if (
-    entrada.forcarAutorizacaoSeElegivel &&
-    eleg.elegivelCentavos > 0 &&
-    estado === "autorizado"
-  ) {
-    // permanece autorizado
-  } else if (eleg.elegivelCentavos <= 0) {
-    estado = "elegivel_pendente";
-  }
-
-  const ref = db.collection(COL_REPASSES).doc();
-  await ref.set({
-    schema: 1,
-    id_repasse: ref.id,
-    id_contrato: texto(entrada.idContrato),
-    id_orcamento: texto(entrada.idOrcamento),
-    id_evento: idEvento,
-    id_fornecedor: texto(entrada.idFornecedor),
-    id_beneficiario: texto(entrada.idFornecedor),
-    valor: dinheiro(valorFinal),
-    valor_centavos: valorFinal,
-    estado,
-    ids_alocacao_origem: idsAloc,
-    confirmacao_manual: false,
-    motivo_bloqueio: motivo,
-    politica_liberacao_id: politica?.id ?? null,
-    chave_idempotencia: chave,
-    operador_id: entrada.autorId,
-    // Sem banco integrado.
-    transferencia_bancaria: false,
-    criado_em: FieldValue.serverTimestamp(),
+  return db.runTransaction(async tx => {
+    const ctx = await carregarContextoRepasse(db, tx, entrada.idOrcamento);
+    if ((ctx.evento.id_usuario || ctx.evento.idUsuario) !== entrada.autorId) {
+      throw new HttpsError("permission-denied", "Somente o organizador do evento pode autorizar o pagamento antecipado.");
+    }
+    if (entrada.autorizar && (!contratado(ctx.orcamento) || !ctx.divisao)) {
+      throw new HttpsError("failed-precondition", "Confirme a contratação e confira a comissão antes de autorizar.");
+    }
+    const dados = { id_orcamento: entrada.idOrcamento, id_evento: ctx.orcamento.id_evento,
+      autor_id: entrada.autorId, ativa: entrada.autorizar, motivo: texto(entrada.motivo),
+      assinatura_contrato: ctx.assinatura, atualizado_em: FieldValue.serverTimestamp() };
+    tx.set(db.collection(COL_AUTORIZACOES).doc(entrada.idOrcamento), dados);
+    tx.update(ctx.ref, { repasse_revisao: FieldValue.increment(1) });
+    tx.set(db.collection(COL_AUDITORIA).doc(), { ...dados, acao: entrada.autorizar ? "organizador_autorizou_repasse" : "organizador_revogou_autorizacao" });
+    return { ok: true as const };
   });
-  await auditar(db, entrada.autorId, "preparar_repasse", {
-    id_repasse: ref.id,
-    estado,
-    valor_centavos: valorFinal,
-  });
-  return {
-    id: ref.id,
-    estado,
-    elegivelCentavos: eleg.elegivelCentavos,
-    motivo,
-    idempotente: false,
-  };
 }
 
 export async function confirmarRepasseManual(
   db: Firestore,
-  entrada: {
-    idRepasse: string;
-    autorId: string;
-    evidencias?: string | null;
-  },
+  entrada: { idRepasse: string; autorId: string; evidencias?: string | null },
 ): Promise<{ estado: EstadoRepasse }> {
-  const ref = db.collection(COL_REPASSES).doc(entrada.idRepasse);
-  const snap = await ref.get();
-  if (!snap.exists) {
-    throw new HttpsError("not-found", "Repasse não encontrado.");
+  const evidencia = texto(entrada.evidencias);
+  if (evidencia.length < 5 || evidencia.length > 1000) {
+    throw new HttpsError("invalid-argument", "Informe a referência ou comprovante da transferência (5 a 1000 caracteres).");
   }
-  const atual = String(snap.data()?.estado ?? "previsto") as EstadoRepasse;
-  const next = transicionarRepasse({
-    estadoAtual: atual,
-    acao: "confirmar_manual",
-    confirmacaoManual: true,
+  const ref = db.collection(COL_REPASSES).doc(entrada.idRepasse);
+  return db.runTransaction(async tx => {
+    const snap = await tx.get(ref);
+    if (!snap.exists) throw new HttpsError("not-found", "Repasse não encontrado.");
+    const d = snap.data()!;
+    if (d.estado === "confirmado") return { estado: "confirmado" as EstadoRepasse };
+    const ctx = await carregarContextoRepasse(db, tx, d.id_orcamento);
+    if (ctx.motivo) throw new HttpsError("failed-precondition", ctx.motivo);
+    if (d.assinatura_contrato !== ctx.assinatura || d.id_fornecedor !== ctx.orcamento.id_fornecedor) {
+      throw new HttpsError("failed-precondition", "Condições do contrato alteradas: revise a autorização do repasse.");
+    }
+    const next = transicionarRepasse({ estadoAtual: d.estado, acao: "confirmar_manual", confirmacaoManual: true });
+    const politica = await tx.get(db.collection(COL_LIBERACAO).doc(d.politica_liberacao_id));
+    if (politica.data()?.ativa !== true) {
+      throw new HttpsError("failed-precondition", "Política de repasse desativada: revise a autorização antes de confirmar.");
+    }
+    const obrRef = db.collection("plataforma_comissao_obrigacoes").doc(ctx.divisao!.idObrigacao);
+    const obrigacao = await tx.get(obrRef);
+    const liquidado = Number(obrigacao.data()?.valor_liquidado?.centavos ?? 0);
+    // Retenção proporcional cumulativa; último repasse absorve o resíduo do arredondamento.
+    const anteriores = await tx.get(db.collection(COL_REPASSES).where("id_orcamento", "==", d.id_orcamento));
+    const confirmadoAntes = anteriores.docs.filter(r => r.data().estado === "confirmado")
+      .reduce((s,r) => s + Number(r.data().valor_centavos),0);
+    const retidaAntes = Number(obrigacao.data()?.liquidado_por_retencao_repasse_centavos ?? 0);
+    const baseRetencao = ctx.divisao!.comissaoCentavos - ctx.divisao!.comissaoRecebidaSeparadamenteCentavos;
+    const proporcao = Math.min(1, (confirmadoAntes + Number(d.valor_centavos)) / ctx.divisao!.direitoFornecedorCentavos);
+    const reter = ctx.divisao!.pagadorComissao !== "plataforma_absorve"
+      ? Math.min(Math.max(0, ctx.divisao!.comissaoCentavos - liquidado), Math.max(0, Math.round(baseRetencao * proporcao) - retidaAntes)) : 0;
+    if (reter > 0) {
+      tx.update(obrRef, { valor_liquidado: dinheiro(liquidado + reter), saldo_centavos: ctx.divisao!.comissaoCentavos - liquidado - reter, status: liquidado + reter >= ctx.divisao!.comissaoCentavos ? "recebida" : "a_vencer",
+        liquidado_por_retencao_repasse_centavos: Number(obrigacao.data()?.liquidado_por_retencao_repasse_centavos ?? 0) + reter, atualizado_em: FieldValue.serverTimestamp() });
+      tx.set(db.collection("plataforma_comissao_liquidacoes").doc(`retencao-${ctx.divisao!.idObrigacao}-${ref.id}`), {
+        schema: 1, id_obrigacao: ctx.divisao!.idObrigacao, id_repasse: ref.id,
+        tipo: "retencao_repasse", valor: dinheiro(reter), autor_id: entrada.autorId,
+        registro_manual: true, confirmacao_bancaria: false, perspectiva: "plataforma_comissao",
+        criado_em: FieldValue.serverTimestamp(),
+      });
+    }
+    tx.update(ref, { estado: next.estado, confirmacao_manual: true, evidencias: evidencia,
+      confirmado_em: FieldValue.serverTimestamp(), confirmado_por: entrada.autorId });
+    tx.update(ctx.ref, { repasse_revisao: FieldValue.increment(1) });
+    tx.set(db.collection(COL_AUDITORIA).doc(), { acao: "confirmar_repasse_manual", autor_id: entrada.autorId,
+      id_repasse: ref.id, evidencias: evidencia, criado_em: FieldValue.serverTimestamp() });
+    return { estado: next.estado };
   });
-  await ref.update({
-    estado: next.estado,
-    confirmacao_manual: true,
-    evidencias: texto(entrada.evidencias) || null,
-    confirmado_em: FieldValue.serverTimestamp(),
-    confirmado_por: entrada.autorId,
+}
+
+export async function cancelarRepassePendente(db: Firestore, id: string, autorId: string) {
+  return db.runTransaction(async tx => {
+    const ref = db.collection(COL_REPASSES).doc(id);
+    const snap = await tx.get(ref);
+    if (!snap.exists) throw new HttpsError("not-found", "Repasse não encontrado.");
+    const d = snap.data()!;
+    const estado = transicionarRepasse({ estadoAtual: d.estado, acao: "cancelar" }).estado;
+    tx.update(ref, { estado, cancelado_por: autorId, cancelado_em: FieldValue.serverTimestamp() });
+    tx.update(db.collection("orcamento").doc(d.id_orcamento), { repasse_revisao: FieldValue.increment(1) });
+    tx.set(db.collection(COL_AUDITORIA).doc(), { acao: "cancelar_repasse", id_repasse: id,
+      autor_id: autorId, criado_em: FieldValue.serverTimestamp() });
+    return { ok: true, estado };
   });
-  await auditar(db, entrada.autorId, "confirmar_repasse_manual", {
-    id_repasse: entrada.idRepasse,
-    estado_anterior: atual,
-  });
-  return { estado: next.estado };
 }
 
 export async function registrarAjustePosRepasse(
@@ -475,12 +498,16 @@ export async function consultarExtratoIntermediacao(
   idEvento: string,
 ): Promise<Record<string, unknown>> {
   const ev = texto(idEvento);
-  const [rec, aloc, rep, pol, orcs] = await Promise.all([
-    db.collection(COL_RECEBIMENTOS).where("id_evento", "==", ev).limit(100).get(),
-    db.collection(COL_ALOCACOES).where("id_evento", "==", ev).limit(200).get(),
-    db.collection(COL_REPASSES).where("id_evento", "==", ev).limit(100).get(),
+  const [rec, aloc, rep, pol, orcs, evento, comissoes, casos, autorizacoes] = await Promise.all([
+    db.collection(COL_RECEBIMENTOS).where("id_evento", "==", ev).get(),
+    db.collection(COL_ALOCACOES).where("id_evento", "==", ev).get(),
+    db.collection(COL_REPASSES).where("id_evento", "==", ev).get(),
     carregarPoliticaAtiva(db),
-    db.collection("orcamento").where("id_evento", "==", ev).limit(50).get(),
+    db.collection("orcamento").where("id_evento", "==", ev).get(),
+    db.collection("evento").doc(ev).get(),
+    db.collection("plataforma_comissao_obrigacoes").where("id_evento", "==", ev).get(),
+    db.collection("plataforma_mediacao_casos").where("id_evento", "==", ev).get(),
+    db.collection(COL_AUTORIZACOES).where("id_evento", "==", ev).get(),
   ]);
 
   const recebimentos = rec.docs.map((d) => ({ id: d.id, ...d.data() }));
@@ -492,6 +519,10 @@ export async function consultarExtratoIntermediacao(
     alocacoes: aloc.docs.map((d) => d.data()),
     repasses: rep.docs.map((d) => d.data()),
     politica: pol,
+    evento: evento.data(),
+    comissoes: comissoes.docs.map(d => ({ id_obrigacao: d.id, ...d.data() })),
+    casos: casos.docs.map(d => d.data()),
+    autorizacoes: autorizacoes.docs.map(d => d.data()),
   });
 
   let recebido = 0;
@@ -544,16 +575,27 @@ export function montarContratosDoEvento(params: {
   alocacoes: Array<Record<string, unknown>>;
   repasses: Array<Record<string, unknown>>;
   politica: PoliticaLiberacaoRepasse | null;
+  evento?: Record<string, any>;
+  comissoes?: Record<string, any>[];
+  casos?: Record<string, any>[];
+  autorizacoes?: Record<string, any>[];
 }): Array<Record<string, unknown>> {
+  // Um orçamento legado pode ser espelho da mesma contratação.
+  const unicos = new Map<string, typeof params.orcamentos[number]>();
+  for (const o of params.orcamentos) {
+    const id = (o.data.contrato_financeiro as any)?.id_contrato || o.id;
+    if (!unicos.has(id) || o.id === id) unicos.set(id, o);
+  }
+  const alias = new Map(params.orcamentos.map(o => [o.id, unicos.get((o.data.contrato_financeiro as any)?.id_contrato || o.id)!.id]));
   const alocPorOrc = new Map<string, number>();
   for (const a of params.alocacoes) {
-    const id = texto(a.id_orcamento);
+    const id = alias.get(texto(a.id_orcamento)) || texto(a.id_orcamento);
     alocPorOrc.set(id, (alocPorOrc.get(id) ?? 0) + Number(a.valor_centavos ?? 0));
   }
   const confPorOrc = new Map<string, number>();
   const authPorOrc = new Map<string, number>();
   for (const r of params.repasses) {
-    const id = texto(r.id_orcamento);
+    const id = alias.get(texto(r.id_orcamento)) || texto(r.id_orcamento);
     const v = Number(r.valor_centavos ?? 0);
     const st = String(r.estado ?? "");
     if (st === "confirmado") confPorOrc.set(id, (confPorOrc.get(id) ?? 0) + v);
@@ -563,24 +605,27 @@ export function montarContratosDoEvento(params: {
   }
 
   const out: Array<Record<string, unknown>> = [];
-  for (const { id, data: d } of params.orcamentos) {
+  for (const { id, data: d } of unicos.values()) {
     const status = texto(d.status).toLowerCase();
     const fechado =
       d.orcamento_fechado === true || status === "fechado" || status === "contratado";
     const alocado = alocPorOrc.get(id) ?? 0;
     if (!fechado && alocado <= 0) continue;
 
+    const idContratoReal = (d.contrato_financeiro as any)?.id_contrato || id;
+    const divisao = divisaoContrato(d, (params.comissoes ?? []).filter(o => o.id_contrato === idContratoReal));
     const valorContratado = centavosDeOrcamento(d).contratado;
-    const direitos = calcularDireitosContrato({
-      valorContratadoCentavos: valorContratado,
-      percentualBps: PERCENTUAL_BPS_PADRAO,
-      modoComissao: "descontada_fornecedor",
-    });
+    const assinatura = assinaturaContrato(id, d, divisao);
+    const impedimento = !divisao ? "Comissão ausente ou inconsistente: confira a obrigação do contrato."
+        : impedimentoRepasse({ orcamento: d, evento: params.evento ?? {},
+        casos: (params.casos ?? []).filter(c => c.id_orcamento === id),
+        autorizacao: (params.autorizacoes ?? []).find(a => a.id_orcamento === id), assinatura });
+    const reservaComissao = divisao?.comissaoReservadaNoContratoCentavos ?? 0;
     const confirmado = confPorOrc.get(id) ?? 0;
     const autorizado = authPorOrc.get(id) ?? 0;
     const eleg = avaliarElegibilidadeRepasse({
-      direitoFornecedorPrevistoCentavos: direitos.direitoFornecedorPrevistoCentavos,
-      alocadoAoContratoCentavos: alocado,
+      direitoFornecedorPrevistoCentavos: divisao?.direitoFornecedorCentavos ?? 0,
+      alocadoAoContratoCentavos: Math.max(0, alocado - reservaComissao),
       jaRepassadoCentavos: confirmado,
       jaAutorizadoOuProcessandoCentavos: autorizado,
       politica: params.politica,
@@ -588,7 +633,7 @@ export function montarContratosDoEvento(params: {
     const idContrato =
       (d.contrato_financeiro &&
         typeof d.contrato_financeiro === "object" &&
-        texto((d.contrato_financeiro as { id?: unknown }).id)) ||
+        texto((d.contrato_financeiro as { id_contrato?: unknown }).id_contrato)) ||
       id;
 
     out.push({
@@ -602,15 +647,20 @@ export function montarContratosDoEvento(params: {
         "Serviço contratado",
       fechado,
       valor_contratado_centavos: valorContratado,
-      percentual_bps: PERCENTUAL_BPS_PADRAO,
-      direito_fornecedor_centavos: direitos.direitoFornecedorPrevistoCentavos,
-      comissao_centavos: direitos.comissaoPrevistaCentavos,
+      percentual_bps: divisao?.percentualBps ?? null,
+      pagador_comissao: divisao?.pagadorComissao ?? null,
+      preco_cliente_centavos: divisao?.precoClienteCentavos ?? null,
+      direito_fornecedor_centavos: divisao?.direitoFornecedorCentavos ?? null,
+      comissao_centavos: divisao?.comissaoCentavos ?? null,
+      comissao_recebida_separadamente_centavos: divisao?.comissaoRecebidaSeparadamenteCentavos ?? 0,
+      criterio_liberacao: params.evento?.status === "finalizado" ? "Evento finalizado" :
+        !impedimento ? "Autorização do organizador registrada" : "Autorização do organizador necessária",
       pagamento_declarado_centavos: Number(d.pagamento_declarado_centavos ?? 0),
       alocado_centavos: alocado,
       repasse_autorizado_centavos: autorizado,
       repasse_confirmado_centavos: confirmado,
-      elegivel_centavos: eleg.elegivelCentavos,
-      motivo_bloqueio: eleg.motivo,
+      elegivel_centavos: impedimento ? 0 : eleg.elegivelCentavos,
+      motivo_bloqueio: impedimento || eleg.motivo,
     });
   }
   return out;

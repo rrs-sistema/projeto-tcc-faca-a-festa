@@ -5,6 +5,10 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function moderadorAvaliacoes() {
+      return isAtivo() && request.auth.token.get('moderar_avaliacoes', false) == true;
+    }
+
     function uid() {
       return request.auth.uid;
     }
@@ -131,6 +135,18 @@ service cloud.firestore {
         allow read, write: if isAdmin() || (signedIn() && uid() == userId);
       }
 
+      // Tokens privados por dispositivo, inclusive para organizadores.
+      match /dispositivos_push/{dispositivoId} {
+        allow read, delete: if signedIn() && uid() == userId;
+        allow create, update: if signedIn() && uid() == userId
+          && request.resource.data.keys().hasOnly(['token', 'plataforma', 'atualizado_em'])
+          && request.resource.data.token is string
+          && request.resource.data.token.size() > 0
+          && request.resource.data.token.size() <= 4096
+          && request.resource.data.plataforma in ['WEB', 'ANDROID', 'IOS']
+          && request.resource.data.atualizado_em == request.time;
+      }
+
       match /solicitacoes_lgpd/{solicitacaoId} {
         allow read: if isAdmin() || (signedIn() && uid() == userId);
         allow create: if signedIn()
@@ -166,12 +182,10 @@ service cloud.firestore {
     }
 
     match /{path=**}/fornecedores/{docId} {
-      allow read: if signedIn();
+      allow read: if signedIn() && resource.data.id_fornecedor == uid();
     }
 
-    match /{path=**}/mensagens/{docId} {
-      allow read: if signedIn();
-    }
+    // Consultas globais de mensagens não são autorizadas. Use o caminho da conversa.
 
     match /tipo_evento/{id} {
       allow read: if true;
@@ -442,10 +456,36 @@ service cloud.firestore {
       }
     }
 
+    match /denuncias_avaliacoes/{caso} {
+      function independente(data) { return uid() != data.id_fornecedor && uid() != data.get('id_cliente_avaliacao', null); }
+      allow read: if moderadorAvaliacoes() && independente(resource.data);
+      allow write: if false;
+      match /historico/{versao} {
+        allow read: if moderadorAvaliacoes() && independente(get(/databases/$(database)/documents/denuncias_avaliacoes/$(caso)).data);
+        allow write: if false;
+      }
+    }
+    match /reputacao_operacoes/{autor}/operacoes/{operacao} {
+      allow read: if signedIn() && uid() == autor;
+      allow write: if false;
+    }
+    function camposReputacao() {
+      return ['media_servico', 'total_avaliacoes_servico', 'reputacao_verificada', 'mediaAvaliacoes', 'media_avaliacoes', 'totalAvaliacoes', 'total_avaliacoes', 'selos', 'is_top_categoria', 'isTopCategoria', 'avaliacoesAtualizadasEm'];
+    }
+    function reputacaoInicialSegura() {
+      return !request.resource.data.keys().hasAny(['reputacao_verificada', 'selos', 'avaliacoesAtualizadasEm', 'media_servico', 'total_avaliacoes_servico'])
+        && request.resource.data.get('mediaAvaliacoes', 0) == 0
+        && request.resource.data.get('media_avaliacoes', 0) == 0
+        && request.resource.data.get('totalAvaliacoes', 0) == 0
+        && request.resource.data.get('total_avaliacoes', 0) == 0
+        && request.resource.data.get('is_top_categoria', false) == false
+        && request.resource.data.get('isTopCategoria', false) == false;
+    }
     match /fornecedor/{fornecedorId} {
       allow read: if signedIn();
-      allow create: if isAdmin() || (signedIn() && uid() == fornecedorId);
-      allow update: if isAdmin() || (signedIn() && uid() == fornecedorId);
+      allow create: if (isAdmin() || (signedIn() && uid() == fornecedorId)) && reputacaoInicialSegura();
+      allow update: if (isAdmin() || (signedIn() && uid() == fornecedorId))
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(camposReputacao());
       allow delete: if isAdmin();
 
       // Financeiro privado: somente o proprietário. Admin/organizador/outro
@@ -455,45 +495,67 @@ service cloud.firestore {
       }
       function subcolecaoFinanceiroPrivada(nome) {
         return nome in [
+          'avaliacoes',
           'custos_internos',
           'contas_receber',
           'contas_pagar',
           'movimentos_caixa',
           'comprovantes_financeiros',
           'financeiro_resumo',
+          'financeiro_auditoria',
           'estoque_itens',
           'estoque_reservas',
+          'financeiro_planejamento', 'agenda_config', 'agenda_compromissos', 'agenda_historico',
           'estoque_movimentos'
         ];
       }
 
+      match /avaliacoes/{id} {
+        allow read: if signedIn();
+        allow write: if false;
+        match /historico/{versao} { allow read: if signedIn(); allow write: if false; }
+        match /respostas_publicas/{versao} { allow read: if signedIn(); allow write: if false; }
+        match /respostas_historico/{versao} { allow read: if donoFornecedor() || (moderadorAvaliacoes() && get(/databases/$(database)/documents/fornecedor/$(fornecedorId)/avaliacoes/$(id)).data.get('id_cliente', null) != uid()); allow write: if false; }
+        match /denuncia_compartilhada/{versao} { allow read: if donoFornecedor(); allow write: if false; }
+      }
       match /custos_internos/{id} {
-        allow read, write: if donoFornecedor();
+        allow read: if donoFornecedor(); allow write: if false;
       }
       match /contas_receber/{id} {
-        allow read, write: if donoFornecedor();
+        allow read: if donoFornecedor();
+        allow write: if false;
       }
       match /contas_pagar/{id} {
-        allow read, write: if donoFornecedor();
+        allow read: if donoFornecedor(); allow write: if false;
+        match /liquidacoes/{liquidacao} { allow read: if donoFornecedor(); allow write: if false; }
       }
       match /movimentos_caixa/{id} {
-        allow read, write: if donoFornecedor();
+        allow read: if donoFornecedor();
+        allow write: if false;
       }
       match /comprovantes_financeiros/{id} {
         allow read, write: if donoFornecedor();
       }
+      match /financeiro_auditoria/{id} {
+        allow read: if donoFornecedor();
+        allow write: if false;
+      }
       match /financeiro_resumo/{id} {
         allow read, write: if donoFornecedor();
       }
+      match /{agendaColecao}/{id} {
+        allow read: if agendaColecao in ['financeiro_planejamento','agenda_config','agenda_compromissos','agenda_historico'] && donoFornecedor();
+        allow write: if false;
+      }
       // Estoque empresarial privado (não confundir com lotes da calculadora).
       match /estoque_itens/{id} {
-        allow read, write: if donoFornecedor();
+        allow read: if donoFornecedor(); allow write: if false;
       }
       match /estoque_reservas/{id} {
-        allow read, write: if donoFornecedor();
+        allow read: if donoFornecedor(); allow write: if false;
       }
       match /estoque_movimentos/{id} {
-        allow read, write: if donoFornecedor();
+        allow read: if donoFornecedor(); allow write: if false;
       }
 
       match /{subcolecao}/{docId} {
@@ -511,15 +573,16 @@ service cloud.firestore {
 
     match /fornecedor_servico/{id} {
       allow read: if signedIn();
-      allow create: if isAdmin() || campoIdFornecedor(request.resource.data);
-      allow update: if isAdmin()
-        || campoIdFornecedor(resource.data)
-        || campoIdFornecedor(request.resource.data);
-      allow delete: if isAdmin() || campoIdFornecedor(resource.data);
-
+      allow create: if (isAdmin() || campoIdFornecedor(request.resource.data)) && reputacaoInicialSegura();
+      allow update: if (isAdmin() || campoIdFornecedor(resource.data))
+        && request.resource.data.get('id_fornecedor', null) == resource.data.get('id_fornecedor', null)
+        && (!resource.data.keys().hasAny(['reputacao_verificada']) || request.resource.data.get('id_produto_servico', null) == resource.data.get('id_produto_servico', null))
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(camposReputacao());
+      allow delete: if (isAdmin() || campoIdFornecedor(resource.data))
+        && !resource.data.keys().hasAny(['reputacao_verificada']);
       match /avaliacoes/{avaliacaoId} {
         allow read: if signedIn();
-        allow write: if signedIn();
+        allow write: if false;
       }
     }
 
@@ -554,13 +617,12 @@ service cloud.firestore {
       return exists(/databases/$(database)/documents/cotacao/$(cotacaoId)/fornecedores/$(fornecedorId));
     }
 
-    // Organizador da cotação ou o fornecedor da conversa (e admin).
+    // Participantes reais; não há atribuição de suporte ao chat no modelo atual.
     function participanteChatCotacao(cotacaoId, fornecedorId) {
       return signedIn()
         && fornecedorNaCotacao(cotacaoId, fornecedorId)
         && (
-          isAdmin()
-          || ehSolicitanteCotacao(cotacaoId)
+          ehSolicitanteCotacao(cotacaoId)
           || uid() == fornecedorId
         );
     }
@@ -588,7 +650,7 @@ service cloud.firestore {
         && request.resource.data.mensagem.size() > 0
         && request.resource.data.mensagem.size() <= 2000
         && request.resource.data.lido == false
-        && request.resource.data.enviado_em is timestamp;
+        && request.resource.data.enviado_em == request.time;
     }
 
     // Participante só pode marcar lido=true (não altera conteúdo).
@@ -607,16 +669,8 @@ service cloud.firestore {
 
       allow create: if false;
 
-      allow update: if isAdmin()
-        || (
-          signedIn()
-          && resource.data.id_usuario_solicitante == uid()
-          && request.resource.data.id_usuario_solicitante == resource.data.id_usuario_solicitante
-          && request.resource.data.id_evento == resource.data.id_evento
-        );
-
-      allow delete: if isAdmin()
-        || (signedIn() && resource.data.id_usuario_solicitante == uid());
+      // Estado e identidade são exclusivos das callables autorizadas.
+      allow update, delete: if false;
 
       match /fornecedores/{fornecedorId} {
         allow read: if isAdmin()
@@ -629,30 +683,24 @@ service cloud.firestore {
 
         allow create: if false;
 
-        allow update: if isAdmin()
-          || ehSolicitanteCotacao(cotacaoId)
-          || (
-            uid() == fornecedorId
-            && resource.data.id_fornecedor == uid()
-          );
-
-        allow delete: if isAdmin() || ehSolicitanteCotacao(cotacaoId);
+        allow update, delete: if false;
 
         match /{subcolecao}/{docId} {
-          allow read: if isAdmin()
+          allow read: if subcolecao != 'mensagens' && (isAdmin()
             || ehSolicitanteCotacao(cotacaoId)
-            || uid() == fornecedorId;
+            || uid() == fornecedorId);
 
           // servicos e demais subcoleções: só Cloud Functions (Admin SDK).
           allow create: if false;
 
-          allow update, delete: if isAdmin()
+          allow update, delete: if !(subcolecao in ['mensagens', 'propostas', 'historico_jornada', 'servicos']) && (isAdmin()
             || ehSolicitanteCotacao(cotacaoId)
-            || uid() == fornecedorId;
+            || uid() == fornecedorId);
         }
 
         // Chat é gravado pelo cliente (stream em tempo real).
         match /mensagens/{mensagemId} {
+          allow read: if participanteChatCotacao(cotacaoId, fornecedorId);
           allow create: if participanteChatCotacao(cotacaoId, fornecedorId)
             && chatCotacaoAberto(cotacaoId, fornecedorId)
             && mensagemChatValida();
@@ -676,16 +724,23 @@ service cloud.firestore {
           )
         );
 
-      allow create: if isAdmin()
-        || eventoDono(request.resource.data.id_evento)
-        || (isTipo('O') && orcamentoDoSolicitante(request.resource.data));
+      allow create: if !request.resource.data.keys()
+          .hasAny(['contrato_financeiro', 'valor_contratado_centavos', 'estado_execucao', 'repasse_revisao', 'execucao_revisao', 'proposta_aceita', 'agendamento_operacional', 'agenda_operacional'])
+        && (isAdmin()
+          || eventoDono(request.resource.data.id_evento)
+          || (isTipo('O') && orcamentoDoSolicitante(request.resource.data)));
 
       allow update: if (
           isAdmin()
           || eventoDono(resource.data.id_evento)
           || orcamentoDoSolicitante(resource.data)
           || (signedIn() && resource.data.id_fornecedor == uid())
-        ) && (
+        ) && !request.resource.data.diff(resource.data).affectedKeys()
+          .hasAny(['contrato_financeiro', 'valor_contratado_centavos', 'estado_execucao', 'repasse_revisao', 'execucao_revisao', 'proposta_aceita', 'agendamento_operacional', 'agenda_operacional'])
+        && (!resource.data.keys().hasAny(['agenda_operacional']) || !request.resource.data.diff(resource.data).affectedKeys().hasAny(['status', 'orcamento_fechado']))
+        && (!resource.data.keys().hasAny(['proposta_aceita']) || !request.resource.data.diff(resource.data).affectedKeys().hasAny(['valor_contratado', 'custo_estimado', 'escopo', 'condicao_pagamento', 'status', 'orcamento_fechado', 'id_cotacao']))
+        && (!(resource.data.keys().hasAny(['contrato_financeiro']) || resource.data.get('estado_execucao', '') == 'aceito') || !request.resource.data.diff(resource.data).affectedKeys().hasAny(['id_fornecedor', 'id_evento', 'id_solicitante', 'id_servico', 'id_produto_servico', 'id_fornecedor_servico']))
+        && (
           !request.resource.data.diff(resource.data).affectedKeys()
             .hasAny(['calculadora_conferencia_financeira', 'calculadora_cobre_itens', 'id_evento', 'id_solicitante'])
           || isAdmin()
@@ -693,7 +748,7 @@ service cloud.firestore {
           || orcamentoDoSolicitante(resource.data)
         );
 
-      allow delete: if isAdmin() || eventoDono(resource.data.id_evento);
+      allow delete: if !resource.data.keys().hasAny(['proposta_aceita', 'agenda_operacional']) && (isAdmin() || eventoDono(resource.data.id_evento));
 
       match /orcamento_gasto/{gastoId} {
         allow read: if isAdmin()
@@ -813,17 +868,17 @@ service cloud.firestore {
 
     match /avaliacao_fornecedor/{id} {
       allow read: if signedIn();
-      allow write: if signedIn();
+      allow write: if false;
     }
 
     match /avaliacoes/{id} {
       allow read: if signedIn();
-      allow write: if signedIn();
+      allow write: if false;
     }
 
     match /fornecedor_avaliacoes/{id} {
       allow read: if signedIn();
-      allow write: if signedIn();
+      allow write: if false;
     }
 
     match /posts/{id} {
@@ -891,6 +946,10 @@ service cloud.firestore {
     }
     match /plataforma_alocacoes/{id} {
       allow read: if isAdmin();
+      allow write: if false;
+    }
+    match /plataforma_autorizacoes_repasses/{id} {
+      allow read: if isAdmin() || (isAtivo() && resource.data.autor_id == uid());
       allow write: if false;
     }
     match /plataforma_repasses/{id} {

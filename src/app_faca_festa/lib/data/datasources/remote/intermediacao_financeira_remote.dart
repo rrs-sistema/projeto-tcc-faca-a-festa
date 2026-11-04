@@ -69,6 +69,9 @@ class IntermediacaoFinanceiraRemote {
     });
   }
 
+  Future<Map<String, dynamic>> cancelarRepasse(String id) =>
+      _gateway.call('cancelarRepassePendente', {'idRepasse': id});
+
   Future<Map<String, dynamic>> confirmarRepasseManual({
     required String idRepasse,
     String? evidencias,

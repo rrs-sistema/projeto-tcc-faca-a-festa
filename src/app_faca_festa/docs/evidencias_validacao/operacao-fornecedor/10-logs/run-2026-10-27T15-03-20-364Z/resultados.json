@@ -1,0 +1,20 @@
+[
+  {
+    "cenario": "atendimentos",
+    "projeto": "demo-chat-privado",
+    "script": "test/firestore/atendimentos.rules.test.js",
+    "inicio": "2026-10-27T15:03:20.369Z",
+    "fim": "2026-10-27T15:03:32.115Z",
+    "exitCode": 0,
+    "erro": null
+  },
+  {
+    "cenario": "contratos",
+    "projeto": "demo-financeiro-contratos",
+    "script": "functions/scripts/testVisaoContratoEmulator.js",
+    "inicio": "2026-10-27T15:03:32.117Z",
+    "fim": "2026-10-27T15:03:46.642Z",
+    "exitCode": 0,
+    "erro": null
+  }
+]

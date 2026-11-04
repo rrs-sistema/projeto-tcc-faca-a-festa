@@ -18,7 +18,6 @@ const COLLECTION_FORNECEDOR_CATEGORIA = "fornecedor_categoria";
 const COLLECTION_TERRITORIO = "territorio";
 const COLLECTION_INTERACOES = "fornecedor_interacoes";
 const COLLECTION_RECOMENDACOES = "fornecedor_recomendacoes";
-const COLLECTION_AVALIACOES_GERAL = "fornecedor_avaliacoes";
 
 export async function recomendarFornecedoresParaEventoService(params: {
   uid: string;
@@ -306,7 +305,7 @@ function aplicarResumoAvaliacoes(
   return fornecedores.map((fornecedor) => {
     const resumo = resumos.get(fornecedor.idFornecedor);
 
-    if (!resumo || resumo.totalAvaliacoes <= 0) {
+    if (!resumo) {
       return fornecedor;
     }
 
@@ -325,114 +324,15 @@ function aplicarResumoAvaliacoes(
   });
 }
 
-async function buscarResumoAvaliacoesFornecedores(
-  fornecedorIds: string[],
-): Promise<Map<string, ResumoAvaliacoesFornecedor>> {
-  const ids = removerDuplicados(
-    fornecedorIds
-      .map((id) => asString(id))
-      .filter((id) => id.length > 0),
-  );
-
-  const notasPorFornecedor = new Map<string, number[]>();
-
-  if (ids.length === 0) {
-    return new Map();
-  }
-
-  await Promise.all([
-    carregarAvaliacoesColecaoGeral(ids, notasPorFornecedor),
-    carregarAvaliacoesSubcolecoesFornecedores(ids, notasPorFornecedor),
-  ]);
-
+export async function buscarResumoAvaliacoesFornecedores(fornecedorIds: string[]): Promise<Map<string, ResumoAvaliacoesFornecedor>> {
   const resumos = new Map<string, ResumoAvaliacoesFornecedor>();
-
-  for (const [fornecedorId, notas] of notasPorFornecedor.entries()) {
-    const notasValidas = notas.filter(
-      (nota) => Number.isFinite(nota) && nota >= 0 && nota <= 5,
-    );
-
-    if (notasValidas.length === 0) {
-      continue;
-    }
-
-    const soma = notasValidas.reduce((total, nota) => total + nota, 0);
-    const media = Number((soma / notasValidas.length).toFixed(2));
-
-    resumos.set(fornecedorId, {
-      fornecedorId,
-      mediaAvaliacoes: media,
-      totalAvaliacoes: notasValidas.length,
-    });
+  for (const fornecedorId of removerDuplicados(fornecedorIds)) {
+    const doc = await buscarFornecedorDocumentoPorId(fornecedorId);
+    const r = doc?.data()?.reputacao_verificada;
+    resumos.set(fornecedorId, {fornecedorId,mediaAvaliacoes:r?.schema === 2 ? Number(r.media || 0) : 0,
+      totalAvaliacoes:r?.schema === 2 ? Number(r.quantidade || 0) : 0});
   }
-
   return resumos;
-}
-
-async function carregarAvaliacoesColecaoGeral(
-  fornecedorIds: string[],
-  notasPorFornecedor: Map<string, number[]>,
-): Promise<void> {
-  const db = admin.firestore();
-  const camposFornecedor = ["fornecedorId", "idFornecedor", "id_fornecedor"];
-
-  for (const campo of camposFornecedor) {
-    for (const bloco of dividirEmBlocos(fornecedorIds, 30)) {
-      try {
-        const snapshot = await db
-          .collection(COLLECTION_AVALIACOES_GERAL)
-          .where(campo, "in", bloco)
-          .get();
-
-        for (const doc of snapshot.docs) {
-          const raw = doc.data() ?? {};
-          const fornecedorId = asString(raw.fornecedorId ?? raw.idFornecedor ?? raw.id_fornecedor);
-          const nota = asNullableNumber(raw.nota ?? raw.rating ?? raw.avaliacao);
-
-          adicionarNotaFornecedor(notasPorFornecedor, fornecedorId, nota);
-        }
-      } catch (error) {
-        console.warn(
-          `[FornecedorRecomendacao] Falha ao consultar ${COLLECTION_AVALIACOES_GERAL} pelo campo ${campo}:`,
-          error,
-        );
-      }
-    }
-  }
-}
-
-async function carregarAvaliacoesSubcolecoesFornecedores(
-  fornecedorIds: string[],
-  notasPorFornecedor: Map<string, number[]>,
-): Promise<void> {
-
-  await Promise.all(
-    fornecedorIds.map(async (fornecedorId) => {
-      try {
-        const fornecedorDoc = await buscarFornecedorDocumentoPorId(fornecedorId);
-
-        if (!fornecedorDoc || !fornecedorDoc.exists) {
-          return;
-        }
-
-        const snapshot = await fornecedorDoc.ref.collection("avaliacoes").get();
-
-        for (const doc of snapshot.docs) {
-          const raw = doc.data() ?? {};
-          const idNoDocumento = asString(raw.fornecedorId ?? raw.idFornecedor ?? raw.id_fornecedor);
-          const idResolvido = idNoDocumento || fornecedorId;
-          const nota = asNullableNumber(raw.nota ?? raw.rating ?? raw.avaliacao);
-
-          adicionarNotaFornecedor(notasPorFornecedor, idResolvido, nota);
-        }
-      } catch (error) {
-        console.warn(
-          `[FornecedorRecomendacao] Falha ao consultar subcoleção avaliacoes do fornecedor ${fornecedorId}:`,
-          error,
-        );
-      }
-    }),
-  );
 }
 
 async function buscarFornecedorDocumentoPorId(
@@ -469,29 +369,6 @@ async function buscarFornecedorDocumentoPorId(
   return null;
 }
 
-function adicionarNotaFornecedor(
-  notasPorFornecedor: Map<string, number[]>,
-  fornecedorId: string,
-  nota: number | null,
-): void {
-  if (!fornecedorId || nota === null || !Number.isFinite(nota)) {
-    return;
-  }
-
-  const notas = notasPorFornecedor.get(fornecedorId) ?? [];
-  notas.push(nota);
-  notasPorFornecedor.set(fornecedorId, notas);
-}
-
-function dividirEmBlocos<T>(items: T[], tamanho: number): T[][] {
-  const blocos: T[][] = [];
-
-  for (let i = 0; i < items.length; i += tamanho) {
-    blocos.push(items.slice(i, i + tamanho));
-  }
-
-  return blocos;
-}
 
 async function buscarVinculosCategorias(): Promise<FornecedorCategoriaVinculo[]> {
   const db = admin.firestore();
@@ -630,6 +507,7 @@ async function salvarCacheRecomendacoes(recomendacoes: FornecedorRecomendacaoRes
         createdAt: serverTimestamp,
         updatedAt: serverTimestamp,
 
+        reputacao_schema: 2,
         created_at: serverTimestamp,
         updated_at: serverTimestamp,
       },

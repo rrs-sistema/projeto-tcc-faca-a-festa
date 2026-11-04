@@ -1,3 +1,4 @@
+import { mapItem, mapReserva, persistItem } from "../../services/financeiro/estoqueFornecedorMapper";
 import { FieldValue } from "firebase-admin/firestore";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { randomUUID } from "crypto";
@@ -6,8 +7,9 @@ import { exigirUsuarioAutenticado } from "../../shared/auth";
 import { exigirAcessoFinanceiroFornecedor } from "../../services/financeiro/autorizacaoFornecedorFinanceiro";
 import { dinheiro } from "../../services/financeiro/dinheiro";
 import {
-  ItemEstoque,
   ReservaEstoque,
+  ItemEstoque,
+  StatusFisico,
   cancelarReserva,
   capacidadeNoIntervalo,
   consumir,
@@ -18,7 +20,6 @@ import {
   ofereceDisponibilidade,
   reservar,
   retirarDeReserva,
-  StatusFisico,
 } from "../../services/financeiro/estoqueFornecedorService";
 
 const REGION = "southamerica-east1";
@@ -32,59 +33,6 @@ function inteiro(v: unknown, nome: string): number {
     throw new HttpsError("invalid-argument", `Informe ${nome} inteiro válido.`);
   }
   return v;
-}
-
-function mapItem(id: string, data: FirebaseFirestore.DocumentData): ItemEstoque {
-  const medio = data.custo_medio_unitario?.centavos ?? 0;
-  return {
-    idItem: id,
-    idFornecedor: String(data.id_fornecedor ?? ""),
-    nome: String(data.nome ?? ""),
-    natureza: (data.natureza as NaturezaItem) || "consumivel",
-    quantidadeTotal: Number(data.quantidade_total ?? 0),
-    quantidadeReservada: Number(data.quantidade_reservada ?? 0),
-    quantidadeEmUso: Number(data.quantidade_em_uso ?? 0),
-    status: (data.status as StatusFisico) || "disponivel",
-    custoMedioUnitarioCentavos: Number(medio),
-    custoUsoCentavos: Number(data.custo_uso?.centavos ?? 0),
-    custoLocacaoCentavos: Number(data.custo_locacao?.centavos ?? 0),
-    montagemMinutos: Number(data.montagem_minutos ?? 0),
-    transporteMinutos: Number(data.transporte_minutos ?? 0),
-    desmontagemMinutos: Number(data.desmontagem_minutos ?? 0),
-    custoAusente: data.custo_ausente === true,
-  };
-}
-
-function mapReserva(
-  id: string,
-  data: FirebaseFirestore.DocumentData,
-): ReservaEstoque {
-  return {
-    idReserva: id,
-    idItem: String(data.id_item ?? ""),
-    idFornecedor: String(data.id_fornecedor ?? ""),
-    idEvento: String(data.id_evento ?? ""),
-    quantidade: Number(data.quantidade ?? 0),
-    status: data.status,
-    intervaloEfetivo: {
-      inicio: new Date(String(data.intervalo_inicio)),
-      fim: new Date(String(data.intervalo_fim)),
-    },
-    chaveIdempotencia: data.chave_idempotencia
-      ? String(data.chave_idempotencia)
-      : undefined,
-  };
-}
-
-function persistItem(item: ItemEstoque): FirebaseFirestore.UpdateData<FirebaseFirestore.DocumentData> {
-  return {
-    quantidade_total: item.quantidadeTotal,
-    quantidade_reservada: item.quantidadeReservada,
-    quantidade_em_uso: item.quantidadeEmUso,
-    custo_medio_unitario: dinheiro(item.custoMedioUnitarioCentavos),
-    custo_ausente: item.custoAusente === true,
-    atualizado_em: FieldValue.serverTimestamp(),
-  };
 }
 
 function wrapErr(e: unknown): never {
@@ -639,6 +587,7 @@ export const cancelarReservaEstoqueFornecedor = onCall(
         if (!resSnap.exists) {
           throw new HttpsError("not-found", "Reserva não encontrada.");
         }
+        if(resSnap.data()?.origem==='agenda_contrato')throw new HttpsError('failed-precondition','Reagende o contrato para alterar recursos vinculados à agenda.');
         const reserva = mapReserva(resSnap.id, resSnap.data()!);
         const itemRef = db
           .collection("fornecedor")

@@ -1,0 +1,59 @@
+
+> check:financeiro
+> tsc --noEmit && node scripts/testFinanceiroFundacao.js && node scripts/testLiquidacaoConcorrencia.js && node scripts/testAutorizacaoFinanceiro.js && node scripts/testPrevisaoGerente.js && node scripts/testFinanceiroFornecedor.js && node scripts/testEstoqueFornecedor.js && node scripts/testComissaoPlataforma.js && node scripts/testDashboardAdmin.js && node scripts/testSimulacaoOrcamento.js && node scripts/testFinanceiroIntegrado.js
+
+✓ centavos e legado
+✓ contrato 10k / pago 3k / saldo 7k
+✓ alternativas comparáveis, não somadas
+✓ excesso exige crédito/adiantamento
+Fundação financeira: todos os asserts passaram.
+✓ repetição idempotente e concorrência sem excesso sem crédito
+✓ acesso a evento alheio rejeitado
+✓ previsão gerente 30k/18k/7k/8k
+✓ preço ausente → projeção parcial
+✓ 100-60 = 40 restantes
+✓ buffet não duplica compra
+Previsão gerente: ok
+✓ a receber 6k independente dos custos
+✓ custo direto previsto 5k
+✓ estoque: custo sem saída de caixa
+✓ adiantamento só caixa
+✓ organizador/outro/admin sem uid dono: negado
+Financeiro fornecedor: ok
+✓ reserva concorrente 50 rejeitada (100/60)
+✓ retirada não desconta novamente
+✓ 10 cadeiras: não sobrepostos ok; conflito rejeitado
+✓ consumo 20×R$5 = R$100 sem desembolso
+✓ idempotência consumo; cancel só reserva ativa
+✓ manutenção bloqueada; outra empresa negada
+Estoque fornecedor: ok
+✓ 5% de 10k = R$500 uma vez
+✓ taxa futura 6% preserva R$500
+✓ liquidação 200 → saldo 300
+✓ redução 2k → ajuste R$100 crédito explícito
+✓ ausente/inativa não gera dívida
+✓ alteração não autorizada rejeitada; zero ≠ ausente
+Comissão plataforma: ok
+✓ 2 eventos / 6 contratos
+✓ 100k movimentados ≠ receita própria 5k
+✓ repetir agregação não altera totais
+✓ sem política: não configurado; sem lucro líquido
+✓ acesso dashboard só admin
+Dashboard admin: ok
+✓ 20k−15k = 5k livres; simulação sem efeito financeiro
+✓ alternativas não somadas
+✓ 700 / (1−0,2−0,1) = 1000
+✓ histórico incompatível → parcial
+✓ teto: sem compartilhamento / sem acesso cruzado
+Simulação orçamento: ok
+✓ contrato 10k / pago 3k / saldo 7k
+✓ limite 30k / contratos 18k / restantes 8k → previsão 26k
+✓ comissão 5% de 10k = R$500 uma vez; versão preservada
+✓ estoque: concorrência sem excesso; cancelamento parcial ok
+✓ preço ausente não vira economia; taxa futura coberta na comissão
+✓ conciliação: pagamento evento ≠ recebimento fornecedor; volume ≠ receita plataforma
+✓ auth: evento alheio, outra empresa, admin sem uid dono, elevação, anônimo
+✓ repetição/idempotência de simulação e agregados
+✓ apresentação de datas no fuso America/Sao_Paulo: 21/10/2026, 15:00
+Validação financeira integrada: ok
+{"fixture_personas":["org-1","org-2","forn-1","forn-2","gerente-limitado=org-1","admin-1"],"timezone":"America/Sao_Paulo"}

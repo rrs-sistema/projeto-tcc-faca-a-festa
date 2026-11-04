@@ -1,0 +1,65 @@
+00:00 +0: loading D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/data/services/economia_consultas_test.dart
+00:00 +0: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/data/services/economia_consultas_test.dart: visão de cartões usa suas fontes sem calcular o painel consolidado
+00:00 +1: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/data/services/economia_consultas_test.dart: gravação invalida a leitura antiga sem perder a nova consulta em andamento
+00:00 +2: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/data/services/economia_consultas_test.dart: snapshots simultâneos compartilham o resumo sem cachear a resposta
+00:00 +3: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/data/services/economia_consultas_test.dart: filtro, fornecedor e deduções diferentes não compartilham resultado
+00:00 +4: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/data/services/economia_consultas_test.dart: falha compartilhada permite nova tentativa e comandos não são agrupados
+00:00 +5: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/data/services/economia_consultas_test.dart: painel agrupa abertura e refresh; timer só marca desatualização
+00:00 +6: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/data/services/economia_consultas_test.dart: nova sessão não compartilha a consulta antiga do painel
+00:00 +7: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/data/services/contagens_servidor_test.dart: indicadores admin mantêm regras legadas e só contam três cadastros
+00:00 +8: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/data/services/contagens_servidor_test.dart: painel conta estoque e só ofertas explicitamente ativas
+00:01 +9: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/painel_operacional_test.dart: (setUpAll)
+00:01 +9: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/painel_operacional_test.dart: última leitura fica desatualizada após cinco minutos e falha não inventa total
+00:01 +10: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/painel_operacional_test.dart: resultado de sessão anterior é descartado
+00:01 +11: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/painel_operacional_test.dart: fachada antiga não sobrescreve estatística da nova sessão
+00:01 +12: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/painel_operacional_test.dart: média com amostra convive com espera de 64h e clique/teclado abre registro certo
+00:02 +13: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/painel_operacional_test.dart: média com amostra convive com espera de 64h e clique/teclado abre registro certo
+00:02 +14: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/painel_operacional_test.dart: média com amostra convive com espera de 64h e clique/teclado abre registro certo
+00:02 +15: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/painel_operacional_test.dart: média com amostra convive com espera de 64h e clique/teclado abre registro certo
+00:02 +16: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/painel_operacional_test.dart: média com amostra convive com espera de 64h e clique/teclado abre registro certo
+00:02 +17: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/painel_operacional_test.dart: média com amostra convive com espera de 64h e clique/teclado abre registro certo
+00:03 +18: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/painel_operacional_test.dart: média com amostra convive com espera de 64h e clique/teclado abre registro certo
+00:04 +19: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/visao_restaurada_test.dart: visão rica resiste à falha consolidada em 360.0
+00:04 +20: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/visao_restaurada_test.dart: visão rica resiste à falha consolidada em 360.0
+00:04 +21: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/visao_restaurada_test.dart: visão rica resiste à falha consolidada em 360.0
+00:04 +22: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/visao_restaurada_test.dart: visão rica resiste à falha consolidada em 360.0
+00:04 +23: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/visao_restaurada_test.dart: visão rica resiste à falha consolidada em 360.0
+00:05 +24: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/visao_restaurada_test.dart: visão rica resiste à falha consolidada em 360.0
+00:06 +25: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/visao_restaurada_test.dart: visão rica resiste à falha consolidada em 360.0
+00:06 +26: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/atualizacao_indicadores_test.dart: status compacto e diagnóstico recolhido em 360.0
+00:06 +27: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/financeiro/financeiro_contratos_unificado_test.dart: resumo e lista mostram líquido e acompanham repasse em 360.0
+00:07 +28: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/financeiro/financeiro_contratos_unificado_test.dart: resumo e lista mostram líquido e acompanham repasse em 360.0
+00:07 +29: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/financeiro/financeiro_contratos_unificado_test.dart: resumo e lista mostram líquido e acompanham repasse em 360.0
+00:07 +30: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/financeiro/financeiro_contratos_unificado_test.dart: resumo e lista mostram líquido e acompanham repasse em 360.0
+00:07 +31: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/financeiro/financeiro_contratos_unificado_test.dart: resumo e lista mostram líquido e acompanham repasse em 360.0
+00:08 +32: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/financeiro/financeiro_contratos_unificado_test.dart: resumo e lista mostram líquido e acompanham repasse em 360.0
+🎯 [ThemeController] Instância única ativa.
+00:08 +33: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/painel_operacional_test.dart: fonte ampliada e rodapé sem esconder conteúdo em 360.0
+00:08 +34: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/financeiro/financeiro_contratos_unificado_test.dart: resumo e lista mostram líquido e acompanham repasse em 1200.0
+00:08 +35: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/financeiro/financeiro_contratos_unificado_test.dart: resumo e lista mostram líquido e acompanham repasse em 1200.0
+🎯 [ThemeController] Instância única ativa.
+00:08 +36: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/painel_operacional_test.dart: evidência visual Size(360.0, 1100.0)
+00:09 +36: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/financeiro/financeiro_contratos_unificado_test.dart: indisponibilidade apaga valores e não exibe zero
+🎯 [ThemeController] Instância única ativa.
+00:09 +37: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/painel/painel_operacional_test.dart: evidência visual Size(360.0, 1100.0)
+00:09 +37: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/financeiro/financeiro_contratos_unificado_test.dart: formulário exige distribuição válida, envia centavos sem presumir execução
+🎯 [ThemeController] Instância única ativa.
+00:09 +38: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/financeiro/financeiro_contratos_unificado_test.dart: formulário exige distribuição válida, envia centavos sem presumir execução
+00:09 +39: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/financeiro/financeiro_contratos_unificado_test.dart: formulário exige distribuição válida, envia centavos sem presumir execução
+00:09 +40: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/financeiro/financeiro_contratos_unificado_test.dart: formulário exige distribuição válida, envia centavos sem presumir execução
+00:09 +41: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/financeiro/financeiro_contratos_unificado_test.dart: formulário exige distribuição válida, envia centavos sem presumir execução
+00:09 +42: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/financeiro/financeiro_contratos_unificado_test.dart: formulário exige distribuição válida, envia centavos sem presumir execução
+00:09 +43: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/financeiro/financeiro_contratos_unificado_test.dart: formulário exige distribuição válida, envia centavos sem presumir execução
+00:09 +44: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/financeiro/financeiro_contratos_unificado_test.dart: formulário exige distribuição válida, envia centavos sem presumir execução
+00:09 +45: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/financeiro/financeiro_contratos_unificado_test.dart: formulário exige distribuição válida, envia centavos sem presumir execução
+00:09 +46: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/financeiro/financeiro_contratos_unificado_test.dart: formulário exige distribuição válida, envia centavos sem presumir execução
+00:09 +47: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/financeiro/financeiro_contratos_unificado_test.dart: formulário exige distribuição válida, envia centavos sem presumir execução
+00:09 +48: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/financeiro/financeiro_contratos_unificado_test.dart: formulário exige distribuição válida, envia centavos sem presumir execução
+00:10 +49: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/financeiro/financeiro_contratos_unificado_test.dart: formulário exige distribuição válida, envia centavos sem presumir execução
+00:10 +50: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/financeiro/financeiro_contratos_unificado_test.dart: formulário exige distribuição válida, envia centavos sem presumir execução
+00:10 +51: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/financeiro/financeiro_contratos_unificado_test.dart: formulário exige distribuição válida, envia centavos sem presumir execução
+00:11 +52: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/financeiro/financeiro_contratos_unificado_test.dart: crédito excedente permanece visível no resumo e contrato
+🎯 [ThemeController] Instância única ativa.
+00:11 +53: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/financeiro/financeiro_contratos_unificado_test.dart: estorno parcial reverte explicitamente a alocação original
+🎯 [ThemeController] Instância única ativa.
+00:12 +54: All tests passed!

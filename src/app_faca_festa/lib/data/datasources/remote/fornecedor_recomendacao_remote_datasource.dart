@@ -44,6 +44,7 @@ class FornecedorRecomendacaoRemoteDatasource {
     }
 
     final lista = snapshot.docs
+        .where((doc) => doc.data()['reputacao_schema'] == 2)
         .map(
           (doc) => FornecedorRecomendacaoModel.fromMap(
             doc.data(),

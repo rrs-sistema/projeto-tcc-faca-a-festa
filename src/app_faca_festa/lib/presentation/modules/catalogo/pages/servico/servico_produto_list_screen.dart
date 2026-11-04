@@ -1,5 +1,7 @@
 // ignore_for_file: avoid_print, use_build_context_synchronously
 
+import 'package:app_faca_festa/presentation/widgets/operacao/operacao_skeleton.dart';
+
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
@@ -80,6 +82,7 @@ class _ServicoProdutoListScreenState extends State<ServicoProdutoListScreen> {
 
     final fornecedorId = widget.fornecedorId;
     if (fornecedorId != null && fornecedorId.isNotEmpty) {
+      controller.carregando.value = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         controller.carregarServicosComDetalhesOtimizado(
@@ -202,7 +205,22 @@ class _ServicoProdutoListScreenState extends State<ServicoProdutoListScreen> {
             ),
       body: Obx(() {
         if (controller.carregando.value) {
-          return const Center(child: CircularProgressIndicator());
+          return Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1100),
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(
+                    16, FestaPageInsets.belowAppBar, 16, 32),
+                children: const [
+                  OperacaoSkeleton(
+                      titulo: 'Serviços e produtos',
+                      icon: Icons.storefront_outlined,
+                      linhas: 6),
+                ],
+              ),
+            ),
+          );
         }
 
         if (controller.servicosFornecedor.isEmpty) {

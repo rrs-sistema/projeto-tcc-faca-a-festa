@@ -9,6 +9,8 @@ import {
   registrarAjustePosRepasse,
   registrarRecebimentoPlataforma,
   COL_LIBERACAO,
+  autorizarRepasseOrganizador,
+  cancelarRepassePendente,
 } from "../../services/financeiro/intermediacaoPersistenciaService";
 import {
   calcularDireitosContrato,
@@ -18,6 +20,30 @@ import {
 import { FieldValue } from "firebase-admin/firestore";
 
 const REGION = "southamerica-east1";
+
+export const cancelarRepassePendenteFn = onCall(
+  { region: REGION, timeoutSeconds: 60, cors: true },
+  async request => {
+    const perfil = await exigirAdmin(request.auth?.uid);
+    const id = texto(request.data?.idRepasse);
+    if (!id) throw new HttpsError("invalid-argument", "Informe o repasse.");
+    return cancelarRepassePendente(admin.firestore(), id, perfil.uid);
+  },
+);
+
+export const autorizarRepasseOrganizadorFn = onCall(
+  { region: REGION, timeoutSeconds: 60, cors: true },
+  async request => {
+    const perfil = await exigirUsuarioAutenticado(request.auth?.uid);
+    exigirTipo(perfil, ["O"]);
+    const data = request.data ?? {};
+    if (typeof data.autorizar !== "boolean") throw new HttpsError("invalid-argument", "Confirme a autorização ou revogação.");
+    return autorizarRepasseOrganizador(admin.firestore(), {
+      idOrcamento: texto(data.idOrcamento), autorId: perfil.uid,
+      motivo: texto(data.motivo), autorizar: data.autorizar,
+    });
+  },
+);
 
 function texto(v: unknown): string {
   return typeof v === "string" ? v.trim() : "";

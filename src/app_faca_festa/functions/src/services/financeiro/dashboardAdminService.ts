@@ -268,6 +268,8 @@ export function centavosDeOrcamento(data: Record<string, unknown>): {
     const v = (data.contrato_financeiro as { valor?: { centavos?: number } }).valor
       ?.centavos;
     if (typeof v === "number") contratado = v;
+    else if (typeof data.valor_contratado === "number") contratado = Math.round(data.valor_contratado * 100);
+    else if (typeof data.custo_estimado === "number") contratado = Math.round(data.custo_estimado * 100);
   } else if (typeof data.valor_contratado === "number") {
     contratado = Math.round(data.valor_contratado * 100);
   } else if (typeof data.custo_estimado === "number") {

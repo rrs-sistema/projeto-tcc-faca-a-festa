@@ -1,0 +1,84 @@
+{
+  "coletadoEm": "2026-10-27",
+  "ambiente": "faca-a-festa / southamerica-east1",
+  "operacoes": "somente leitura de metadados, logs e fonte publicada; sem dados financeiros de usuários",
+  "ultimaAtualizacaoResumo": "2026-10-22T15:07:27.063988845Z",
+  "functionsPublicadas": {
+    "consultarResumoFinanceiroFornecedor": true,
+    "consultarPlanejamentoFornecedorFn": false,
+    "consultarPainelFornecedorFn": false,
+    "consultarAgendaFornecedorFn": false,
+    "consultarGestaoReputacaoFn": false
+  },
+  "requestsHTTP": [
+    {
+      "timestamp": "2026-10-27T13:49:52.986502Z",
+      "status": 200,
+      "latency": "2.697090210s"
+    },
+    {
+      "timestamp": "2026-10-27T13:49:52.982582Z",
+      "status": 200,
+      "latency": "3.424487836s"
+    },
+    {
+      "timestamp": "2026-10-27T13:49:51.087346Z",
+      "status": 204,
+      "latency": "0.059530495s"
+    },
+    {
+      "timestamp": "2026-10-27T13:49:51.082152Z",
+      "status": 204,
+      "latency": "1.651979584s"
+    },
+    {
+      "timestamp": "2026-10-27T13:22:27.489555Z",
+      "status": 200,
+      "latency": "2.141573200s"
+    },
+    {
+      "timestamp": "2026-10-27T13:22:27.488255Z",
+      "status": 200,
+      "latency": "2.046271639s"
+    },
+    {
+      "timestamp": "2026-10-27T13:22:22.658867Z",
+      "status": 204,
+      "latency": "0.015997637s"
+    },
+    {
+      "timestamp": "2026-10-27T13:22:22.658475Z",
+      "status": 204,
+      "latency": "0.008122229s"
+    },
+    {
+      "timestamp": "2026-10-27T13:22:06.917704Z",
+      "status": 200,
+      "latency": "3.057541745s"
+    },
+    {
+      "timestamp": "2026-10-27T13:22:06.568761Z",
+      "status": 200,
+      "latency": "3.173006458s"
+    },
+    {
+      "timestamp": "2026-10-27T13:22:01.958797Z",
+      "status": 204,
+      "latency": "2.967669358s"
+    },
+    {
+      "timestamp": "2026-10-27T13:22:01.958461Z",
+      "status": 204,
+      "latency": "0.112472395s"
+    },
+    {
+      "timestamp": "2026-10-23T15:22:59.355164Z",
+      "status": 200,
+      "latency": "2.981009591s"
+    }
+  ],
+  "protocoloApp": "origem=contratos_repasses",
+  "fontePublicadaContemProtocoloAtual": false,
+  "fontePublicadaSha256": "982c2c0376640ae5c6015635863eae7b53c7382fd6d82c7986f2975af997c435",
+  "resumoPublicadoSha256": "8aca03d8183dde5c01dab99b38e60b2b9cc3f62f87aed07fe3d77e68b57a3d0f"
+}

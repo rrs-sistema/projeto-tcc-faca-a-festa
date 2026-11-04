@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/presentation/modules/financeiro/widgets/financeiro_contexto.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -89,8 +90,7 @@ class _CentralMediacaoPageState extends State<CentralMediacaoPage> {
   }
 
   Future<void> _abrirDetalhe(LinhaCentralContratacao l) async {
-    c.scrollOffsetLista.value =
-        _scrollCtrl.hasClients ? _scrollCtrl.offset : 0;
+    c.scrollOffsetLista.value = _scrollCtrl.hasClients ? _scrollCtrl.offset : 0;
     await Get.toNamed(
       '/admin/contratacoes-mediacao/detalhe',
       arguments: {'idOrcamento': l.idOrcamento},
@@ -176,12 +176,15 @@ class _CentralMediacaoPageState extends State<CentralMediacaoPage> {
                       AdminEmptyState(
                         icon: Icons.handshake_outlined,
                         title: 'Nenhuma contratação no recorte',
-                        message: 'Ajuste busca e filtros, depois toque em Aplicar.',
+                        message:
+                            'Ajuste busca e filtros, depois toque em Aplicar.',
                       )
                     else ...[
                       _resumoLista(linhas),
                       const SizedBox(height: 12),
-                      ...linhas.map((l) => _linhaCard(l, compacto: w < 720)),
+                      ...linhas.map((l) => _linhaCard(l,
+                          compacto: w < 1080 ||
+                              MediaQuery.textScalerOf(context).scale(1) > 1.3)),
                       const SizedBox(height: 8),
                       _paginacao(busy),
                     ],
@@ -195,99 +198,63 @@ class _CentralMediacaoPageState extends State<CentralMediacaoPage> {
     });
   }
 
-  Widget _cabecalhoAcoes() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: adminCardDecoration(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _cabecalhoAcoes() => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            'Operação por contratação',
-            style: GoogleFonts.poppins(
-              fontWeight: FontWeight.w700,
-              fontSize: 15,
-              color: AdminPalette.ink,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Cada card é um vínculo evento × fornecedor × serviço. '
-            'Recebido (cliente→plataforma) e repassado são dimensões distintas.',
-            style: GoogleFonts.poppins(
-              fontSize: 13,
-              height: 1.4,
-              color: AdminPalette.muted,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _chipInfo(Icons.folder_open_outlined, 'Abrir dossiê — partes, financeiro e mediação'),
-              _chipInfo(Icons.swap_horiz_rounded, 'Intermediação — recebimento, alocação e repasse'),
-              _chipInfo(Icons.gavel_outlined, 'No dossiê: abrir caso, notas e decisão'),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _chipInfo(IconData icon, String texto) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-      decoration: BoxDecoration(
-        color: AdminPalette.primary.withValues(alpha: 0.07),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16, color: AdminPalette.primary),
-          const SizedBox(width: 6),
-          Flexible(
-            child: Text(
-              texto,
+          Text('Contratações',
               style: GoogleFonts.poppins(
-                fontSize: 11.5,
-                color: AdminPalette.ink,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
+                  fontSize: MediaQuery.sizeOf(context).width < 600 ? 22 : 26,
+                  fontWeight: FontWeight.w800,
+                  color: AdminPalette.ink)),
+          const SizedBox(height: 6),
+          const Text(
+              'Acompanhe cada serviço e identifique o próximo passo da operação.',
+              style: TextStyle(fontSize: 14, color: AdminPalette.muted)),
+          const SizedBox(height: 16),
+          const FinanceiroAjuda(itens: {...ajudaFinanceira, ...ajudaMediacao}),
+          const SizedBox(height: 12),
+          Wrap(spacing: 8, runSpacing: 8, children: [
+            for (final filtro in {
+              '': 'Todos',
+              'contratado': 'Contratos',
+              'oportunidade': 'Oportunidades'
+            }.entries)
+              ChoiceChip(
+                  label: Text(filtro.value),
+                  selected: c.estadoComercial.value == filtro.key,
+                  onSelected: c.carregando.value
+                      ? null
+                      : (_) {
+                          c.estadoComercial.value = filtro.key;
+                          _aplicarFiltros();
+                        }),
+          ]),
         ],
-      ),
-    );
-  }
+      );
 
   Widget _resumoLista(List<LinhaCentralContratacao> linhas) {
     final pendId = linhas.where((l) => l.identidadeIncompleta).length;
     final casos = linhas.where((l) => l.casoAberto).length;
-    final aReceber = linhas.where((l) => l.aReceberClienteCentavos > 0).length;
-    return Row(
+    final aReceber = linhas
+        .where((l) =>
+            l.estadoComercial.trim().toLowerCase() == 'contratado' &&
+            l.aReceberClienteCentavos > 0)
+        .length;
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        Expanded(
-          child: Text(
-            c.rotuloPaginacao,
-            style: GoogleFonts.poppins(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: AdminPalette.ink,
-            ),
-          ),
-        ),
+        Text(c.rotuloPaginacao,
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
         if (pendId > 0)
-          _badgeContagem('$pendId ID pendente', AdminPalette.warning),
-        if (casos > 0) ...[
-          const SizedBox(width: 6),
-          _badgeContagem('$casos caso(s)', AdminPalette.danger),
-        ],
-        if (aReceber > 0) ...[
-          const SizedBox(width: 6),
-          _badgeContagem('$aReceber a receber', AdminPalette.primary),
-        ],
+          _badgeContagem(
+              '$pendId identificação pendente', AdminPalette.warning),
+        if (casos > 0)
+          _badgeContagem('$casos com mediação', AdminPalette.danger),
+        if (aReceber > 0)
+          _badgeContagem('$aReceber contratos a receber nesta página',
+              AdminPalette.primary),
       ],
     );
   }
@@ -334,9 +301,11 @@ class _CentralMediacaoPageState extends State<CentralMediacaoPage> {
             textInputAction: TextInputAction.search,
             onSubmitted: (_) => _aplicarFiltros(),
             decoration: InputDecoration(
-              labelText: 'Buscar evento, cliente, fornecedor, serviço',
+              labelText: 'Buscar na lista',
+              hintText: 'Evento, cliente, fornecedor ou serviço',
               prefixIcon: const Icon(Icons.search),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              border:
+                  OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             ),
             style: GoogleFonts.poppins(fontSize: 15),
           ),
@@ -357,15 +326,14 @@ class _CentralMediacaoPageState extends State<CentralMediacaoPage> {
               ChoiceChip(
                 label: Text(
                   c.eixoTemporal.value == 'data_contratacao'
-                      ? 'Eixo: contratação'
-                      : 'Eixo: data do evento',
+                      ? 'Data da contratação'
+                      : 'Data do evento',
                 ),
                 selected: true,
                 onSelected: (_) {
-                  c.eixoTemporal.value =
-                      c.eixoTemporal.value == 'data_evento'
-                          ? 'data_contratacao'
-                          : 'data_evento';
+                  c.eixoTemporal.value = c.eixoTemporal.value == 'data_evento'
+                      ? 'data_contratacao'
+                      : 'data_evento';
                 },
               ),
               TextButton(
@@ -456,30 +424,25 @@ class _CentralMediacaoPageState extends State<CentralMediacaoPage> {
   }
 
   Widget _linhaCard(LinhaCentralContratacao l, {required bool compacto}) {
+    final contratado = l.estadoComercial.trim().toLowerCase() == 'contratado';
     final chips = <Widget>[
       _statusChip(_rotuloComercial(l.estadoComercial), AdminPalette.primary),
       _statusChip(_rotuloExecucao(l.estadoExecucao), AdminPalette.muted),
-      if (l.casoAberto)
-        _statusChip('Caso aberto', AdminPalette.danger),
+      if (l.casoAberto) _statusChip('Caso aberto', AdminPalette.danger),
       if (l.identidadeIncompleta)
         _statusChip('Identificação pendente', AdminPalette.warning),
-      if (l.aReceberClienteCentavos > 0)
+      if (contratado && l.aReceberClienteCentavos > 0)
         _statusChip('Cliente a pagar', AdminPalette.warning),
     ];
 
-    final valores = Row(
-      children: [
-        Expanded(
-          child: _valorBloco('Valor', _reais(l.valorContratadoCentavos)),
-        ),
-        Expanded(
-          child: _valorBloco('Recebido', _reais(l.recebidoClienteCentavos)),
-        ),
-        Expanded(
-          child: _valorBloco('Repassado', _reais(l.repassadoCentavos)),
-        ),
+    final valores = Wrap(spacing: 28, runSpacing: 12, children: [
+      _valorBloco(contratado ? 'Valor contratado' : 'Valor estimado',
+          _reais(l.valorContratadoCentavos)),
+      if (contratado) ...[
+        _valorBloco('Recebido do cliente', _reais(l.recebidoClienteCentavos)),
+        _valorBloco('Pago ao fornecedor', _reais(l.repassadoCentavos)),
       ],
-    );
+    ]);
 
     final acoes = compacto
         ? Column(
@@ -488,14 +451,16 @@ class _CentralMediacaoPageState extends State<CentralMediacaoPage> {
               FilledButton.icon(
                 onPressed: () => _abrirDetalhe(l),
                 icon: const Icon(Icons.folder_open_outlined, size: 18),
-                label: const Text('Abrir dossiê'),
+                label:
+                    Text(contratado ? 'Ver contratação' : 'Ver oportunidade'),
               ),
               const SizedBox(height: 6),
-              OutlinedButton.icon(
-                onPressed: () => _abrirIntermediacao(l),
-                icon: const Icon(Icons.swap_horiz, size: 18),
-                label: const Text('Intermediação'),
-              ),
+              if (contratado)
+                OutlinedButton.icon(
+                  onPressed: () => _abrirIntermediacao(l),
+                  icon: const Icon(Icons.swap_horiz, size: 18),
+                  label: const Text('Recebimentos e repasses'),
+                ),
             ],
           )
         : Row(
@@ -503,18 +468,21 @@ class _CentralMediacaoPageState extends State<CentralMediacaoPage> {
               FilledButton.icon(
                 onPressed: () => _abrirDetalhe(l),
                 icon: const Icon(Icons.folder_open_outlined, size: 18),
-                label: const Text('Abrir dossiê'),
+                label:
+                    Text(contratado ? 'Ver contratação' : 'Ver oportunidade'),
               ),
               const SizedBox(width: 8),
-              OutlinedButton.icon(
-                onPressed: () => _abrirIntermediacao(l),
-                icon: const Icon(Icons.swap_horiz, size: 18),
-                label: const Text('Intermediação'),
-              ),
+              if (contratado)
+                OutlinedButton.icon(
+                  onPressed: () => _abrirIntermediacao(l),
+                  icon: const Icon(Icons.swap_horiz, size: 18),
+                  label: const Text('Recebimentos e repasses'),
+                ),
             ],
           );
 
     return Padding(
+      key: ValueKey('contratacao-${l.idOrcamento}'),
       padding: const EdgeInsets.only(bottom: 12),
       child: Material(
         color: Colors.transparent,
@@ -575,6 +543,30 @@ class _CentralMediacaoPageState extends State<CentralMediacaoPage> {
                 const SizedBox(height: 12),
                 valores,
                 const SizedBox(height: 10),
+                if (contratado)
+                  Wrap(spacing: 24, runSpacing: 8, children: [
+                    _valorBloco(
+                        'Comissão da plataforma',
+                        l.comissaoCentavos == null
+                            ? 'A conferir'
+                            : _reais(l.comissaoCentavos!)),
+                    _valorBloco(
+                        'Valor previsto ao fornecedor',
+                        l.liquidoFornecedorCentavos == null
+                            ? 'A conferir'
+                            : _reais(l.liquidoFornecedorCentavos!)),
+                  ]),
+                const SizedBox(height: 8),
+                Text(
+                    !contratado
+                        ? 'Aguardando contratação. Comissão e repasse serão definidos após a confirmação.'
+                        : l.casoAberto
+                            ? 'Mediação em aberto: consulte a análise antes de pagar.'
+                            : l.regraRepasse ??
+                                'Confira o saldo e as condições em Recebimentos e repasses.',
+                    style: GoogleFonts.poppins(
+                        fontSize: 12, color: AdminPalette.muted)),
+                const SizedBox(height: 10),
                 Wrap(spacing: 6, runSpacing: 6, children: chips),
                 if (compacto) ...[
                   const SizedBox(height: 12),
@@ -595,7 +587,7 @@ class _CentralMediacaoPageState extends State<CentralMediacaoPage> {
         Text(
           rotulo,
           style: GoogleFonts.poppins(
-            fontSize: 11,
+            fontSize: 12,
             color: AdminPalette.muted,
             fontWeight: FontWeight.w500,
           ),
@@ -603,7 +595,7 @@ class _CentralMediacaoPageState extends State<CentralMediacaoPage> {
         Text(
           valor,
           style: GoogleFonts.poppins(
-            fontSize: 14,
+            fontSize: 16,
             fontWeight: FontWeight.w700,
             color: AdminPalette.ink,
           ),

@@ -144,9 +144,6 @@ class FornecedorModel extends Fornecedor {
       'tempo_medio_resposta_horas': tempoMedioRespostaHoras,
 
       // Avaliações.
-      'media_avaliacoes': mediaAvaliacoes,
-      'total_avaliacoes': totalAvaliacoes,
-      'is_top_categoria': isTopCategoria,
       'fcm_token': fcmToken,
     };
   }
@@ -197,18 +194,16 @@ class FornecedorModel extends Fornecedor {
       precoMinimo: _readNullableDouble(map, ['precoMinimo', 'preco_minimo']),
       precoMaximo: _readNullableDouble(map, ['precoMaximo', 'preco_maximo']),
       precoMedio: _readNullableDouble(map, ['precoMedio', 'preco_medio']),
-      mediaAvaliacoes: _readDouble(
-        map,
-        ['media_avaliacoes', 'mediaAvaliacoes'],
-      ),
-      totalAvaliacoes: _readInt(
-        map,
-        ['total_avaliacoes', 'totalAvaliacoes'],
-      ),
-      isTopCategoria: _readBool(
-        map,
-        ['is_top_categoria', 'isTopCategoria'],
-      ),
+      mediaAvaliacoes: map['reputacao_verificada'] is Map &&
+              map['reputacao_verificada']['schema'] == 2
+          ? (map['reputacao_verificada']['media'] as num).toDouble()
+          : 0,
+      totalAvaliacoes: map['reputacao_verificada'] is Map &&
+              map['reputacao_verificada']['schema'] == 2
+          ? (map['reputacao_verificada']['quantidade'] as num).toInt()
+          : 0,
+      isTopCategoria:
+          false, // Posição é calculada pelo ranking, não pelo cadastro.
       totalContratacoes: _readInt(
         map,
         ['totalContratacoes', 'total_contratacoes'],
@@ -383,14 +378,6 @@ class FornecedorModel extends Fornecedor {
     }
 
     return fallback;
-  }
-
-  static double _readDouble(
-    Map<String, dynamic> map,
-    List<String> keys, {
-    double fallback = 0.0,
-  }) {
-    return _readNullableDouble(map, keys) ?? fallback;
   }
 
   static double? _readNullableDouble(

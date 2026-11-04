@@ -4,6 +4,10 @@ enum TipoAvaliacao {
 }
 
 class Avaliacao {
+  final String? respostaFornecedor;
+  final DateTime? respostaData;
+  final bool verificada;
+  final String? idContrato;
   final String id;
   final String idCliente;
   final String nomeCliente;
@@ -15,6 +19,10 @@ class Avaliacao {
   final DateTime data;
 
   const Avaliacao({
+    this.respostaFornecedor,
+    this.respostaData,
+    this.verificada = false,
+    this.idContrato,
     required this.id,
     required this.idCliente,
     required this.nomeCliente,
@@ -38,6 +46,10 @@ class Avaliacao {
     DateTime? data,
   }) {
     return Avaliacao(
+      respostaFornecedor: respostaFornecedor,
+      respostaData: respostaData,
+      verificada: verificada,
+      idContrato: idContrato,
       id: id ?? this.id,
       idCliente: idCliente ?? this.idCliente,
       nomeCliente: nomeCliente ?? this.nomeCliente,

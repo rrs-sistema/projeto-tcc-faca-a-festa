@@ -35,7 +35,7 @@ class FinanceiroCallableGateway {
       // Web/mobile: httpsCallable; se o plugin devolver HTML/404 opaco,
       // tenta o mesmo endpoint HTTPS quando o cliente estiver registrado.
       if (CallableHttpsClient.necessarioNaPlataformaAtual) {
-        return _callHttps(nome, payload, timeout);
+        return await _callHttps(nome, payload, timeout);
       }
 
       try {
@@ -54,9 +54,11 @@ class FinanceiroCallableGateway {
         final code = e.code.toLowerCase();
         if (_https != null &&
             (code == 'not-found' ||
+                (code == 'internal' &&
+                    nome == 'consultarJornadaAtendimentoFn') ||
                 code == 'unavailable' ||
                 (e.message ?? '').toLowerCase().contains('html'))) {
-          return _callHttps(nome, payload, timeout);
+          return await _callHttps(nome, payload, timeout);
         }
         throw FinanceiroCallableException(
           e.code,

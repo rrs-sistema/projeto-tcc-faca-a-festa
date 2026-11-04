@@ -1,0 +1,554 @@
+{
+  "projeto": "faca-a-festa",
+  "inicioUTC": "2026-10-28T11:16:35Z",
+  "fimUTC": "2026-11-04T11:16:35Z",
+  "observacao": "Agregações de monitoramento; não constituem uma fatura. Requisições Cloud Run incluem OPTIONS. Ausência de pontos não é prova de custo zero.",
+  "metricas": [
+    {
+      "metrica": "firestore.googleapis.com/document/read_count",
+      "unidade": "operações",
+      "total": 6473.0,
+      "series": [
+        {
+          "recurso": {
+            "project_id": "faca-a-festa"
+          },
+          "total": 6473.0,
+          "intervalos": [
+            {
+              "fim": "2026-11-04T11:16:35Z",
+              "valor": 1358.0
+            },
+            {
+              "fim": "2026-11-03T11:16:35Z",
+              "valor": 2623.0
+            },
+            {
+              "fim": "2026-11-01T11:16:35Z",
+              "valor": 96.0
+            },
+            {
+              "fim": "2026-10-31T11:16:35Z",
+              "valor": 1160.0
+            },
+            {
+              "fim": "2026-10-30T11:16:35Z",
+              "valor": 1236.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "metrica": "firestore.googleapis.com/document/write_count",
+      "unidade": "operações",
+      "total": 36.0,
+      "series": [
+        {
+          "recurso": {
+            "project_id": "faca-a-festa"
+          },
+          "total": 36.0,
+          "intervalos": [
+            {
+              "fim": "2026-11-04T11:16:35Z",
+              "valor": 4.0
+            },
+            {
+              "fim": "2026-11-03T11:16:35Z",
+              "valor": 16.0
+            },
+            {
+              "fim": "2026-10-31T11:16:35Z",
+              "valor": 13.0
+            },
+            {
+              "fim": "2026-10-30T11:16:35Z",
+              "valor": 3.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "metrica": "firestore.googleapis.com/document/delete_count",
+      "unidade": "operações",
+      "total": 0,
+      "series": []
+    },
+    {
+      "metrica": "run.googleapis.com/request_count",
+      "unidade": "operações",
+      "total": 66.0,
+      "series": [
+        {
+          "recurso": {
+            "project_id": "faca-a-festa",
+            "service_name": "consultarpainelfornecedorfn"
+          },
+          "total": 19.0,
+          "intervalos": [
+            {
+              "fim": "2026-11-04T11:16:35Z",
+              "valor": 10.0
+            },
+            {
+              "fim": "2026-10-30T11:16:35Z",
+              "valor": 9.0
+            }
+          ]
+        },
+        {
+          "recurso": {
+            "project_id": "faca-a-festa",
+            "service_name": "consultarresumofinanceirofornecedor"
+          },
+          "total": 14.0,
+          "intervalos": [
+            {
+              "fim": "2026-11-04T11:16:35Z",
+              "valor": 6.0
+            },
+            {
+              "fim": "2026-10-30T11:16:35Z",
+              "valor": 8.0
+            }
+          ]
+        },
+        {
+          "recurso": {
+            "project_id": "faca-a-festa",
+            "service_name": "expurgarauditoriaantiga"
+          },
+          "total": 7.0,
+          "intervalos": [
+            {
+              "fim": "2026-11-04T11:16:35Z",
+              "valor": 1.0
+            },
+            {
+              "fim": "2026-11-03T11:16:35Z",
+              "valor": 1.0
+            },
+            {
+              "fim": "2026-11-02T11:16:35Z",
+              "valor": 1.0
+            },
+            {
+              "fim": "2026-11-01T11:16:35Z",
+              "valor": 1.0
+            },
+            {
+              "fim": "2026-10-31T11:16:35Z",
+              "valor": 1.0
+            },
+            {
+              "fim": "2026-10-30T11:16:35Z",
+              "valor": 1.0
+            },
+            {
+              "fim": "2026-10-29T11:16:35Z",
+              "valor": 1.0
+            }
+          ]
+        },
+        {
+          "recurso": {
+            "service_name": "consultargestaoreputacaofn",
+            "project_id": "faca-a-festa"
+          },
+          "total": 6.0,
+          "intervalos": [
+            {
+              "fim": "2026-11-04T11:16:35Z",
+              "valor": 2.0
+            },
+            {
+              "fim": "2026-10-30T11:16:35Z",
+              "valor": 4.0
+            }
+          ]
+        },
+        {
+          "recurso": {
+            "service_name": "registrarauditoria",
+            "project_id": "faca-a-festa"
+          },
+          "total": 4.0,
+          "intervalos": [
+            {
+              "fim": "2026-11-04T11:16:35Z",
+              "valor": 2.0
+            },
+            {
+              "fim": "2026-10-30T11:16:35Z",
+              "valor": 2.0
+            }
+          ]
+        },
+        {
+          "recurso": {
+            "project_id": "faca-a-festa",
+            "service_name": "verificartotpmfa"
+          },
+          "total": 4.0,
+          "intervalos": [
+            {
+              "fim": "2026-11-04T11:16:35Z",
+              "valor": 2.0
+            },
+            {
+              "fim": "2026-10-30T11:16:35Z",
+              "valor": 2.0
+            }
+          ]
+        },
+        {
+          "recurso": {
+            "service_name": "auditarfornecedores",
+            "project_id": "faca-a-festa"
+          },
+          "total": 2.0,
+          "intervalos": [
+            {
+              "fim": "2026-11-04T11:16:35Z",
+              "valor": 1.0
+            },
+            {
+              "fim": "2026-10-30T11:16:35Z",
+              "valor": 1.0
+            }
+          ]
+        },
+        {
+          "recurso": {
+            "project_id": "faca-a-festa",
+            "service_name": "consultaragendafornecedorfn"
+          },
+          "total": 2.0,
+          "intervalos": [
+            {
+              "fim": "2026-11-04T11:16:35Z",
+              "valor": 2.0
+            }
+          ]
+        },
+        {
+          "recurso": {
+            "project_id": "faca-a-festa",
+            "service_name": "consultarextratocomissao"
+          },
+          "total": 2.0,
+          "intervalos": [
+            {
+              "fim": "2026-11-04T11:16:35Z",
+              "valor": 2.0
+            }
+          ]
+        },
+        {
+          "recurso": {
+            "service_name": "consultarplanejamentofornecedorfn",
+            "project_id": "faca-a-festa"
+          },
+          "total": 2.0,
+          "intervalos": [
+            {
+              "fim": "2026-10-30T11:16:35Z",
+              "valor": 2.0
+            }
+          ]
+        },
+        {
+          "recurso": {
+            "project_id": "faca-a-festa",
+            "service_name": "auditareventos"
+          },
+          "total": 1.0,
+          "intervalos": [
+            {
+              "fim": "2026-10-31T11:16:35Z",
+              "valor": 1.0
+            }
+          ]
+        },
+        {
+          "recurso": {
+            "project_id": "faca-a-festa",
+            "service_name": "buscarcepgoogle"
+          },
+          "total": 1.0,
+          "intervalos": [
+            {
+              "fim": "2026-10-31T11:16:35Z",
+              "valor": 1.0
+            }
+          ]
+        },
+        {
+          "recurso": {
+            "service_name": "solicitarcodigoemailmfa",
+            "project_id": "faca-a-festa"
+          },
+          "total": 1.0,
+          "intervalos": [
+            {
+              "fim": "2026-11-03T11:16:35Z",
+              "valor": 1.0
+            }
+          ]
+        },
+        {
+          "recurso": {
+            "service_name": "verificaremailmfa",
+            "project_id": "faca-a-festa"
+          },
+          "total": 1.0,
+          "intervalos": [
+            {
+              "fim": "2026-11-03T11:16:35Z",
+              "valor": 1.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "metrica": "run.googleapis.com/container/billable_instance_time",
+      "unidade": "segundos de instância",
+      "total": 168.0234059197389,
+      "series": [
+        {
+          "recurso": {
+            "service_name": "consultarpainelfornecedorfn",
+            "project_id": "faca-a-festa"
+          },
+          "total": 44.5,
+          "intervalos": [
+            {
+              "fim": "2026-11-04T11:16:35Z",
+              "valor": 24.699999999999996
+            },
+            {
+              "fim": "2026-10-30T11:16:35Z",
+              "valor": 19.800000000000004
+            }
+          ]
+        },
+        {
+          "recurso": {
+            "project_id": "faca-a-festa",
+            "service_name": "expurgarauditoriaantiga"
+          },
+          "total": 39.6,
+          "intervalos": [
+            {
+              "fim": "2026-11-04T11:16:35Z",
+              "valor": 7.5
+            },
+            {
+              "fim": "2026-11-03T11:16:35Z",
+              "valor": 7.6
+            },
+            {
+              "fim": "2026-11-02T11:16:35Z",
+              "valor": 3.9
+            },
+            {
+              "fim": "2026-11-01T11:16:35Z",
+              "valor": 5.0
+            },
+            {
+              "fim": "2026-10-31T11:16:35Z",
+              "valor": 4.7
+            },
+            {
+              "fim": "2026-10-30T11:16:35Z",
+              "valor": 5.6
+            },
+            {
+              "fim": "2026-10-29T11:16:35Z",
+              "valor": 5.3
+            }
+          ]
+        },
+        {
+          "recurso": {
+            "project_id": "faca-a-festa",
+            "service_name": "consultarresumofinanceirofornecedor"
+          },
+          "total": 32.2,
+          "intervalos": [
+            {
+              "fim": "2026-11-04T11:16:35Z",
+              "valor": 22.8
+            },
+            {
+              "fim": "2026-10-30T11:16:35Z",
+              "valor": 9.4
+            }
+          ]
+        },
+        {
+          "recurso": {
+            "project_id": "faca-a-festa",
+            "service_name": "registrarauditoria"
+          },
+          "total": 9.192366411545926,
+          "intervalos": [
+            {
+              "fim": "2026-11-04T11:16:35Z",
+              "valor": 5.992366411545925
+            },
+            {
+              "fim": "2026-10-30T11:16:35Z",
+              "valor": 3.2
+            }
+          ]
+        },
+        {
+          "recurso": {
+            "project_id": "faca-a-festa",
+            "service_name": "verificartotpmfa"
+          },
+          "total": 7.6000000000000005,
+          "intervalos": [
+            {
+              "fim": "2026-11-04T11:16:35Z",
+              "valor": 7.5
+            },
+            {
+              "fim": "2026-10-30T11:16:35Z",
+              "valor": 0.10000000000000053
+            }
+          ]
+        },
+        {
+          "recurso": {
+            "service_name": "consultarplanejamentofornecedorfn",
+            "project_id": "faca-a-festa"
+          },
+          "total": 7.1877972833966535,
+          "intervalos": [
+            {
+              "fim": "2026-10-30T11:16:35Z",
+              "valor": 7.1877972833966535
+            }
+          ]
+        },
+        {
+          "recurso": {
+            "project_id": "faca-a-festa",
+            "service_name": "consultaragendafornecedorfn"
+          },
+          "total": 6.2,
+          "intervalos": [
+            {
+              "fim": "2026-11-04T11:16:35Z",
+              "valor": 6.2
+            }
+          ]
+        },
+        {
+          "recurso": {
+            "service_name": "auditareventos",
+            "project_id": "faca-a-festa"
+          },
+          "total": 5.3,
+          "intervalos": [
+            {
+              "fim": "2026-10-31T11:16:35Z",
+              "valor": 5.3
+            }
+          ]
+        },
+        {
+          "recurso": {
+            "project_id": "faca-a-festa",
+            "service_name": "solicitarcodigoemailmfa"
+          },
+          "total": 5.21229910418385,
+          "intervalos": [
+            {
+              "fim": "2026-11-03T11:16:35Z",
+              "valor": 5.21229910418385
+            }
+          ]
+        },
+        {
+          "recurso": {
+            "project_id": "faca-a-festa",
+            "service_name": "auditarfornecedores"
+          },
+          "total": 4.2,
+          "intervalos": [
+            {
+              "fim": "2026-11-04T11:16:35Z",
+              "valor": 0.7000000000000002
+            },
+            {
+              "fim": "2026-10-30T11:16:35Z",
+              "valor": 3.5
+            }
+          ]
+        },
+        {
+          "recurso": {
+            "project_id": "faca-a-festa",
+            "service_name": "consultargestaoreputacaofn"
+          },
+          "total": 3.461675294482754,
+          "intervalos": [
+            {
+              "fim": "2026-11-04T11:16:35Z",
+              "valor": 0.5999999999999996
+            },
+            {
+              "fim": "2026-10-30T11:16:35Z",
+              "valor": 2.861675294482754
+            }
+          ]
+        },
+        {
+          "recurso": {
+            "project_id": "faca-a-festa",
+            "service_name": "consultarextratocomissao"
+          },
+          "total": 2.9692682261291834,
+          "intervalos": [
+            {
+              "fim": "2026-11-04T11:16:35Z",
+              "valor": 2.9692682261291834
+            }
+          ]
+        },
+        {
+          "recurso": {
+            "project_id": "faca-a-festa",
+            "service_name": "verificaremailmfa"
+          },
+          "total": 0.20000000000000018,
+          "intervalos": [
+            {
+              "fim": "2026-11-03T11:16:35Z",
+              "valor": 0.20000000000000018
+            }
+          ]
+        },
+        {
+          "recurso": {
+            "service_name": "buscarcepgoogle",
+            "project_id": "faca-a-festa"
+          },
+          "total": 0.19999960000052042,
+          "intervalos": [
+            {
+              "fim": "2026-10-31T11:16:35Z",
+              "valor": 0.19999960000052042
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

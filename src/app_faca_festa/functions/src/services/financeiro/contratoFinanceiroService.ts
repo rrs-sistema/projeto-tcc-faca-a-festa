@@ -1,3 +1,4 @@
+import { prepararLiberacaoAgenda } from "../agenda/agendaFornecedorService";
 import { FieldValue, Firestore, Timestamp } from "firebase-admin/firestore";
 import { HttpsError } from "firebase-functions/v2/https";
 import { dinheiro, deMapa, deReaisLegado, Dinheiro, reaisParaCentavosArredondado } from "./dinheiro";
@@ -45,6 +46,14 @@ export async function registrarOuAtualizarContrato(
     }
 
     const anterior = (data.contrato_financeiro as Record<string, unknown>) ?? {};
+    // A proposta revisada/aceita não pode ser substituída pelo comando legado.
+    if (data.proposta_aceita) {
+      if (centavos !== data.proposta_aceita.liquidoCentavos) {
+        throw new HttpsError("failed-precondition", "Preço aceito é imutável. Solicite alteração explícita pela mediação existente.");
+      }
+      return { idContrato: String(anterior.id_contrato || snap.id), valor: dinheiro(centavos) };
+    }
+
     const historico = Array.isArray(anterior.historico)
       ? [...anterior.historico]
       : [];
@@ -156,6 +165,9 @@ export async function registrarOuAtualizarContrato(
       atualizado_em: FieldValue.serverTimestamp(),
     };
 
+    const obrigacaoRef = ref.collection("obrigacoes").doc("parcela-1");
+    const obrSnap = await tx.get(obrigacaoRef);
+
     tx.update(ref, {
       contrato_financeiro: contrato,
       valor_contratado: centavos / 100,
@@ -166,8 +178,6 @@ export async function registrarOuAtualizarContrato(
       estado_execucao: data.estado_execucao ?? "nao_iniciado",
     });
 
-    const obrigacaoRef = ref.collection("obrigacoes").doc("parcela-1");
-    const obrSnap = await tx.get(obrigacaoRef);
     if (!obrSnap.exists) {
       tx.set(obrigacaoRef, {
         schema: 1,
@@ -239,6 +249,8 @@ export async function cancelarContrato(
     const obrRef = ref.collection("obrigacoes").doc("parcela-1");
     const obr = await tx.get(obrRef);
     const pago = deMapa(obr.data()?.pago_liquido)?.centavos ?? 0;
+    const liberarAgenda = await prepararLiberacaoAgenda(db, tx, data, entrada.idOrcamento, entrada.autorId);
+    liberarAgenda();
     const saldo = valor.centavos - pago - reembolso + retencao;
 
     tx.update(ref, {

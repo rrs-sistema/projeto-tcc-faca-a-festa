@@ -1,3 +1,5 @@
+import { consultarPlanejamentoComFatos } from "../../services/financeiro/planejamentoFornecedorService";
+import { createHash } from "crypto";
 import { FieldValue } from "firebase-admin/firestore";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { randomUUID } from "crypto";
@@ -5,7 +7,8 @@ import { admin } from "../../shared/firebaseAdmin";
 import { exigirUsuarioAutenticado } from "../../shared/auth";
 import { exigirAcessoFinanceiroFornecedor } from "../../services/financeiro/autorizacaoFornecedorFinanceiro";
 import { dinheiro, reaisParaCentavosArredondado } from "../../services/financeiro/dinheiro";
-import { calcularResumoFornecedor } from "../../services/financeiro/resumoFornecedorService";
+import { registrarOperacaoRecebimento, normalizarRecebimento, assinaturaRecebimento, operacaoRecebimentoCompleta } from "../../services/financeiro/recebimentoFornecedorService";
+import { calcularResumoFornecedor, projetarCaixaRecebimentos } from "../../services/financeiro/resumoFornecedorService";
 
 const REGION = "southamerica-east1";
 
@@ -36,10 +39,6 @@ export const registrarCustoInternoFornecedor = onCall(
       .collection("custos_internos")
       .doc(chave);
 
-    const existente = await ref.get();
-    if (existente.exists) {
-      return { ok: true, idCusto: ref.id, idempotente: true };
-    }
 
     const desembolso =
       origem === "estoque_consumo"
@@ -51,7 +50,14 @@ export const registrarCustoInternoFornecedor = onCall(
         data.previstoRestanteCentavos ?? data.previsto_restante_centavos,
       ) ?? 0;
 
-    await ref.set({
+    const assinatura = createHash("sha256").update(JSON.stringify(data)).digest("hex");
+    return admin.firestore().runTransaction(async tx => {
+    const existente = await tx.get(ref);
+    if(existente.exists){if(existente.data()?.assinatura_operacao!==assinatura)throw new HttpsError("already-exists","Custo legado/divergente: confira o registro original.");return {ok:true,idCusto:ref.id,idempotente:true};}
+    const obrigacao = resolverCentavosOpcional(data.obrigacaoCentavos ?? data.obrigacao_centavos) ?? 0;
+    if(obrigacao>0 && desembolso>obrigacao)throw new HttpsError("invalid-argument","Desembolso excede obrigação.");
+    tx.create(ref,{
+      assinatura_operacao:assinatura,
       schema: 1,
       id_custo: ref.id,
       id_fornecedor: idFornecedor,
@@ -76,95 +82,43 @@ export const registrarCustoInternoFornecedor = onCall(
       criado_em: FieldValue.serverTimestamp(),
     });
 
+    if(obrigacao>0)tx.create(ref.parent.parent!.collection("contas_pagar").doc(ref.id),{schema:2,id_custo:ref.id,id_obrigacao:ref.id,id_fornecedor:idFornecedor,id_evento:idEvento,valor:dinheiro(obrigacao),pago_liquido:dinheiro(desembolso),vencimento:null,origem,descricao:texto(data.descricao)||null,status:desembolso===obrigacao?"paga":desembolso?"parcial":"aberta",autor_id:perfil.uid,criado_em:FieldValue.serverTimestamp()});
+    tx.create(ref.parent.parent!.collection("financeiro_auditoria").doc("custo_"+ref.id),{acao:"registrar_custo",id_custo:ref.id,assinatura_operacao:assinatura,autor_id:perfil.uid,criado_em:FieldValue.serverTimestamp()});
     return { ok: true, idCusto: ref.id, idempotente: false };
+    });
   },
 );
 
 export const registrarRecebimentoFornecedor = onCall(
-  { region: REGION, timeoutSeconds: 60, cors: true },
-  async (request) => {
+  {region:REGION,timeoutSeconds:60,cors:true}, async request => {
     const perfil = await exigirUsuarioAutenticado(request.auth?.uid);
     const data = (request.data ?? {}) as Record<string, unknown>;
     const idFornecedor = texto(data.idFornecedor ?? data.id_fornecedor);
-    const idEvento = texto(data.idEvento ?? data.id_evento);
-    await exigirAcessoFinanceiroFornecedor(
-      admin.firestore(),
-      perfil,
-      idFornecedor,
-    );
-    if (!idEvento) {
-      throw new HttpsError("invalid-argument", "Informe o evento.");
-    }
+    await exigirAcessoFinanceiroFornecedor(admin.firestore(),perfil,idFornecedor);
+    return registrarOperacaoRecebimento(admin.firestore(),data,perfil.uid);
+  });
 
-    const tipo = texto(data.tipo) || "recebimento";
-    // Pagamento declarado pelo cliente NÃO vira recebimento automático aqui.
-    if (data.copiarPagamentoCliente === true || data.copiar_pagamento_cliente === true) {
-      throw new HttpsError(
-        "failed-precondition",
-        "Recebimento do fornecedor exige confirmação própria; não copie o pagamento do cliente.",
-      );
-    }
-
-    const centavos = resolverCentavos(data);
-    const chave =
-      texto(data.chaveIdempotencia ?? data.chave_idempotencia) || randomUUID();
-    const ref = admin
-      .firestore()
-      .collection("fornecedor")
-      .doc(idFornecedor)
-      .collection("contas_receber")
-      .doc(chave);
-
-    const existente = await ref.get();
-    if (existente.exists) {
-      return { ok: true, idRecebimento: ref.id, idempotente: true };
-    }
-
-    const adiantamento = tipo === "adiantamento";
-    const execucao = data.execucaoConfirmada === true || data.execucao_confirmada === true;
-
-    await ref.set({
-      schema: 1,
-      id_recebimento: ref.id,
-      id_fornecedor: idFornecedor,
-      id_evento: idEvento,
-      id_orcamento: texto(data.idOrcamento ?? data.id_orcamento) || null,
-      valor: dinheiro(centavos),
-      tipo,
-      adiantamento,
-      // Adiantamento afeta caixa; receita realizada só com execução/entrega.
-      receita_realizada: execucao && !adiantamento,
-      execucao_confirmada: execucao,
-      confirmacao: "declarada_manual",
-      perspectiva: "fornecedor_recebedor",
-      autor_id: perfil.uid,
-      motivo: texto(data.motivo) || null,
-      chave_idempotencia: chave,
-      criado_em: FieldValue.serverTimestamp(),
-    });
-
-    // Espelho de caixa (entrada).
-    await admin
-      .firestore()
-      .collection("fornecedor")
-      .doc(idFornecedor)
-      .collection("movimentos_caixa")
-      .doc(chave)
-      .set({
-        schema: 1,
-        id_movimento: chave,
-        id_fornecedor: idFornecedor,
-        id_evento: idEvento,
-        valor: dinheiro(centavos),
-        entrada: true,
-        origem: tipo,
-        chave_idempotencia: chave,
-        criado_em: FieldValue.serverTimestamp(),
-      });
-
-    return { ok: true, idRecebimento: ref.id, idempotente: false };
-  },
-);
+export const consultarOperacaoRecebimentoFornecedor = onCall(
+  {region:REGION,timeoutSeconds:30,cors:true}, async request => {
+    const perfil = await exigirUsuarioAutenticado(request.auth?.uid);
+    const data = (request.data ?? {}) as Record<string, any>;
+    const idFornecedor = texto(data.idFornecedor);
+    await exigirAcessoFinanceiroFornecedor(admin.firestore(),perfil,idFornecedor);
+    const chave = texto(data.chaveIdempotencia);
+    if (!/^[a-zA-Z0-9_-]{1,128}$/.test(chave)) throw new HttpsError('invalid-argument','Chave inválida.');
+    const base=admin.firestore().collection('fornecedor').doc(idFornecedor);
+    return admin.firestore().runTransaction(async tx => {
+      const [d,m,a]=await Promise.all([tx.get(base.collection('contas_receber').doc(chave)),tx.get(base.collection('movimentos_caixa').doc(chave)),tx.get(base.collection('financeiro_auditoria').doc(chave))]);
+      if (!d.exists) {
+        if(m.exists || a.exists) throw new HttpsError('failed-precondition','Operação inconsistente: projeção sem fato.');
+        return {ok:true,encontrado:false};
+      }
+      const assinatura=d.data()?.assinatura_operacao;
+      if (!operacaoRecebimentoCompleta(d.data(),m.data(),a.data())) throw new HttpsError('failed-precondition','Operação legada ou incompleta: reconciliação manual necessária.');
+      if (data.pedido && assinaturaRecebimento(normalizarRecebimento({...data.pedido,idFornecedor,chaveIdempotencia:chave})) !== assinatura) throw new HttpsError('already-exists','Payload da operação pendente diverge.');
+      return {ok:true,encontrado:true,idRecebimento:d.id};
+    },{readOnly:true});
+  });
 
 export const consultarResumoFinanceiroFornecedor = onCall(
   { region: REGION, timeoutSeconds: 60, cors: true },
@@ -180,85 +134,39 @@ export const consultarResumoFinanceiroFornecedor = onCall(
     );
 
     const db = admin.firestore();
-    const base = db.collection("fornecedor").doc(idFornecedor);
-
-    // Vendas a partir de orçamentos do fornecedor (valor contratado — não margem).
-    let orcQuery = db
-      .collection("orcamento")
-      .where("id_fornecedor", "==", idFornecedor);
-    if (idEvento) {
-      orcQuery = orcQuery.where("id_evento", "==", idEvento);
+    const {planejamento,visoes,recebimentos,custos:custosSnap,movimentos:movimentosSnap} =
+      await consultarPlanejamentoComFatos(db,idFornecedor,{idEvento});
+    const selecionados = visoes.filter(v => !idEvento || v.idEvento === idEvento);
+    if (selecionados.some(v => v.ativo && !v.disponivel)) {
+      throw new HttpsError("failed-precondition", "Comissão contratada ausente ou inconsistente. Valores líquidos indisponíveis; confira a obrigação do contrato.");
     }
-    // Paralelo: cold start + 3 reads sequenciais era o principal atraso.
-    const [orcs, recebimentos, custosSnap] = await Promise.all([
-      orcQuery.get(),
-      base.collection("contas_receber").get(),
-      base.collection("custos_internos").get(),
-    ]);
-
-    const recebidoPorEvento = new Map<string, number>();
-    const adiantamentoPorEvento = new Map<string, number>();
-    const receitaPorEvento = new Map<string, number>();
-    for (const doc of recebimentos.docs) {
-      const d = doc.data();
-      const ev = String(d.id_evento ?? "");
-      if (idEvento && ev !== idEvento) continue;
-      const centavos = Number(d.valor?.centavos ?? 0);
-      const reais = centavos / 100;
-      recebidoPorEvento.set(ev, (recebidoPorEvento.get(ev) ?? 0) + reais);
-      if (d.adiantamento === true) {
-        adiantamentoPorEvento.set(
-          ev,
-          (adiantamentoPorEvento.get(ev) ?? 0) + reais,
-        );
-      }
-      if (d.receita_realizada === true || d.execucao_confirmada === true) {
-        receitaPorEvento.set(ev, (receitaPorEvento.get(ev) ?? 0) + reais);
-      }
-    }
-
-    const vendas = orcs.docs.map((doc) => {
-      const d = doc.data();
-      const ev = String(d.id_evento ?? "");
-      const status = String(d.status ?? "").toLowerCase();
-      const contratado =
-        d.orcamento_fechado === true ||
-        status === "fechado" ||
-        status === "contratado";
-      const valor = contratado
-        ? Number(d.valor_contratado ?? d.custo_estimado ?? 0)
-        : 0;
-      const nome =
-        String(
-          d.nome_servico ??
-            d.categoria_nome ??
-            d.titulo ??
-            d.descricao ??
-            "",
-        ).trim() || "Serviço contratado";
-      return {
-        id: doc.id,
-        id_evento: ev,
-        nome_servico: nome,
-        status,
-        valor_contratado: valor,
-        recebido_confirmado: recebidoPorEvento.get(ev) ?? 0,
-        adiantamento_caixa: adiantamentoPorEvento.get(ev) ?? 0,
-        receita_realizada: receitaPorEvento.get(ev) ?? 0,
-        execucao_confirmada: (receitaPorEvento.get(ev) ?? 0) > 0,
+    const aliases = new Map<string,string>();
+    for (const v of visoes) { aliases.set(v.idContrato,v.idContrato); for (const alias of v.aliases) aliases.set(alias,v.idContrato); }
+    const caixa = projetarCaixaRecebimentos(recebimentos.docs.map(d=>({id:d.id,data:d.data()})),movimentosSnap.docs.map(d=>({id:d.id,data:d.data()})),aliases,idEvento);
+    const contratos = selecionados.map(v => {
+      const declarado = caixa.porContrato.get(v.idContrato) || 0;
+      const saldo = v.liquidoCentavos == null ? null : v.liquidoCentavos - v.repasseConfirmadoCentavos - declarado;
+      return { id:v.idContrato, idContrato:v.idContrato, idOrcamento:v.idOrcamento,
+        idEvento:v.idEvento, nomeServico:v.nomeServico, revisao:v.revisao, revisaoComissao:v.revisaoComissao,
+        valorContratado:v.brutoCentavos/100, comissao:v.comissaoCentavos == null ? null : v.comissaoCentavos/100,
+        outrasDeducoes:0, liquidoPrevisto:v.liquidoCentavos == null ? null : v.liquidoCentavos/100,
+        repasseAutorizado:v.repasseAutorizadoCentavos/100, repasseConfirmado:v.repasseConfirmadoCentavos/100, recebido:(v.repasseConfirmadoCentavos+declarado)/100,
+        recebimentoProprioDeclarado:declarado/100,
+        aReceber:saldo == null ? null : saldo/100, saldoContrato:saldo == null ? null : saldo/100,
+        repassePendente:v.saldoCentavos == null ? null : v.saldoCentavos/100,
+        creditoExcedente:saldo != null && saldo < 0 ? -saldo/100 : 0,
+        comissaoRetida:v.comissaoRetidaCentavos == null ? null : v.comissaoRetidaCentavos/100,
+        comissaoSeparada:v.comissaoSeparadaCentavos == null ? null : v.comissaoSeparadaCentavos/100,
+        comissaoPrevistaRetencao:v.comissaoPrevistaRetencaoCentavos == null ? null : v.comissaoPrevistaRetencaoCentavos/100,
+        situacao:!v.ativo ? "cancelado" : saldo != null && saldo<0 ? "credito_excedente" : saldo === 0 ? "recebido" : v.repasseConfirmadoCentavos+declarado > 0 ? "parcial" : "aguardando_repasse",
       };
     });
-
-    // Evita somar o mesmo recebimento em cada orçamento do evento: normaliza por evento.
-    const vendasPorEvento = new Map<string, (typeof vendas)[0]>();
-    for (const v of vendas) {
-      const atual = vendasPorEvento.get(v.id_evento);
-      if (!atual) {
-        vendasPorEvento.set(v.id_evento, { ...v });
-      } else {
-        atual.valor_contratado += v.valor_contratado;
-      }
-    }
+    const ativos = selecionados.filter(v => v.ativo);
+    const vendas = ativos.map(v => ({ id:v.idContrato, id_evento:v.idEvento,
+      valor_contratado:v.brutoCentavos/100, recebido_confirmado:(v.repasseConfirmadoCentavos+(caixa.porContrato.get(v.idContrato)||0))/100,
+      liquido_previsto:v.liquidoCentavos!/100,
+      execucao_confirmada:v.documento.contrato_financeiro?.estado_execucao === "aceito",
+      receita_realizada:v.documento.contrato_financeiro?.estado_execucao === "aceito" ? (v.liquidoCentavos!-(v.divisao?.pagadorComissao==="fornecedor"?v.divisao.comissaoRecebidaSeparadamenteCentavos:0))/100 : 0 }));
 
     const custos = custosSnap.docs.map((doc) => {
       const d = doc.data();
@@ -274,42 +182,52 @@ export const consultarResumoFinanceiroFornecedor = onCall(
     });
 
     const resumo = calcularResumoFornecedor({
-      vendas: [...vendasPorEvento.values()],
+      vendas,
       custos,
+      receitaRealizadaLiquidaDeComissao:true,
       idEvento,
       saldoInicial:
         typeof data.saldoInicial === "number" ? data.saldoInicial : null,
-      comissao: typeof data.comissao === "number" ? data.comissao : null,
+      comissao: ativos.reduce((s,v) => s + (v.divisao?.pagadorComissao === "fornecedor" ? v.comissaoCentavos! : 0),0)/100,
       taxas: typeof data.taxas === "number" ? data.taxas : null,
       tributos: typeof data.tributos === "number" ? data.tributos : null,
     });
 
-    // Lista por contrato (UI do fornecedor) — só fechados com valor.
-    const contratos = vendas
-      .filter((v) => v.valor_contratado > 0)
-      .map((v) => {
-        const recebidoEv = v.recebido_confirmado;
-        const saldo = Math.max(0, v.valor_contratado - recebidoEv);
-        let situacao = "aguardando_repasse";
-        if (saldo <= 0.009) situacao = "recebido";
-        else if (recebidoEv > 0) situacao = "parcial";
-        return {
-          id: v.id,
-          idEvento: v.id_evento,
-          nomeServico: v.nome_servico,
-          valorContratado: v.valor_contratado,
-          recebido: recebidoEv,
-          aReceber: saldo,
-          situacao,
-        };
-      });
+    const entradas = selecionados.reduce((s,v)=>s+v.repasseConfirmadoCentavos,0) + caixa.entradasCentavos;
+    const saidas = Math.round(resumo.saidasCaixa*100) + caixa.saidasCentavos;
+    const saldos = contratos.filter(c=>c.situacao !== 'cancelado').map(c=>Math.round((c.saldoContrato || 0)*100));
+    const novosMovimentos=planejamento.movimentos as Array<{valorCentavos:number}>;
+    const caixaPlanejado={entradasCaixa:novosMovimentos.filter(m=>m.valorCentavos>0).reduce((s,m)=>s+m.valorCentavos,0)/100,saidasCaixa:-novosMovimentos.filter(m=>m.valorCentavos<0).reduce((s,m)=>s+m.valorCentavos,0)/100,movimentoLiquido:planejamento.movimentoLiquidoCentavos/100};
 
     return {
-      ok: true,
-      idFornecedor,
-      idEvento,
-      ...resumo,
+      ok:true,idFornecedor,idEvento,...resumo,
+      contratado:ativos.reduce((s,v)=>s+v.brutoCentavos,0)/100,
+      recebido:(selecionados.reduce((s,v)=>s+v.repasseConfirmadoCentavos,0)+caixa.proprioLiquidoCentavos)/100,
+      repasseConfirmado:selecionados.reduce((s,v)=>s+v.repasseConfirmadoCentavos,0)/100,
+      aReceber:saldos.filter(s=>s>0).reduce((s,v)=>s+v,0)/100,
+      creditoExcedente:-saldos.filter(s=>s<0).reduce((s,v)=>s+v,0)/100,
+      saldoContrato:saldos.reduce((s,v)=>s+v,0)/100,
+      saldoFinal:typeof data.saldoInicial === 'number' ? (Math.round(data.saldoInicial*100)+entradas-saidas)/100 : null,
+      adiantamentosCaixa:caixa.adiantamentosCentavos/100,
+      recebimentoNaoAlocado:caixa.naoAlocadoCentavos/100,
+      repasseLegadoNaoConciliado:caixa.repasseLegadoNaoConciliadoCentavos/100,
+      legadoCaixaNaoConciliado:caixa.movimentoLegadoNaoConciliadoCentavos/100,
+      completo:resumo.completo && caixa.repasseLegadoNaoConciliadoCentavos === 0 && caixa.movimentoLegadoNaoConciliadoCentavos === 0,
       contratos,
+      eventos:planejamento.resultados.map((r:{idEvento:string;nomeEvento:string|null})=>({idEvento:r.idEvento,nomeEvento:r.nomeEvento})),
+      liquidoPrevisto:ativos.reduce((s,v)=>s+v.liquidoCentavos!,0)/100,
+      comissaoDescontadaFornecedor:ativos.reduce((s,v)=>s+(v.divisao?.pagadorComissao === "fornecedor" ? v.comissaoCentavos! : 0),0)/100,
+      comissaoContratada:ativos.reduce((s,v)=>s+(v.comissaoCentavos || 0),0)/100,
+      repasseAutorizado:ativos.reduce((s,v)=>s+v.repasseAutorizadoCentavos,0)/100,
+      recebimentoProprioDeclarado:caixa.proprioLiquidoCentavos/100,
+      origem:"contratos_repasses",
+      ...caixaPlanejado,
+      resultadoDiretoPrevisto:planejamento.consolidado.resultadoDiretoPrevistoCentavos==null?resumo.resultadoDiretoPrevisto:planejamento.consolidado.resultadoDiretoPrevistoCentavos/100,
+      resultadoDiretoRealizado:planejamento.consolidado.resultadoDiretoRealizadoCentavos==null?resumo.resultadoDiretoRealizado:planejamento.consolidado.resultadoDiretoRealizadoCentavos/100,
+      ...('saldoInicial' in planejamento.config?{saldoFinal:planejamento.saldoAtualInformadoCentavos==null?null:planejamento.saldoAtualInformadoCentavos/100}:{}),
+      planejamentoRevisao:planejamento.revisao,
+      planejamentoCompleto:planejamento.completo,
+
     };
   },
 );

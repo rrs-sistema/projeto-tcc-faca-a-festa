@@ -13,7 +13,7 @@ Future<void> setupNotificationChannel() async {
   const AndroidNotificationChannel channel = AndroidNotificationChannel(
     'high_importance_channel',
     'Notificações Importantes',
-    description: 'Canal usado para notificações de avaliações',
+    description: 'Mensagens do chat e avaliações',
     importance: Importance.high,
   );
 
@@ -34,6 +34,11 @@ Future<void> initLocalNotifications() async {
 
   const settings = InitializationSettings(
     android: androidSettings,
+    iOS: DarwinInitializationSettings(
+      requestAlertPermission: false,
+      requestBadgePermission: false,
+      requestSoundPermission: false,
+    ),
     windows: windowsSettings,
   );
 

@@ -1,6 +1,6 @@
 # Instalação e atualização Windows — Faça a Festa
 
-Publicação atual em **14/10/2026: 1.0.9+11**, disponível em https://faca-a-festa.web.app/desktop/. Pacotes, assinaturas e downloads verificados; registro em [publicacao-1.0.9.md](publicacao-1.0.9.md).
+Publicação atual em **23/10/2026: 1.0.17+19**, disponível em https://faca-a-festa.web.app/desktop/. Web, Windows e APK publicados; versões, downloads, hashes e assinatura Ed25519 Windows verificados. Registro em [publicacao-1.0.17.md](publicacao-1.0.17.md).
 
 Pacote local validado em **11/10/2026: 1.0.7+9**. Setup: `release/windows-installer/2026-10-11/FacaFesta_Setup_v1.0.7.9.exe` (51.329.930 bytes). SHA-256: `26f6460b224999c75cc96300486bc2c9646a9113932f2169bc41fdaa0fe56b62`. Não houve instalação real, commit, push ou publicação externa.
 

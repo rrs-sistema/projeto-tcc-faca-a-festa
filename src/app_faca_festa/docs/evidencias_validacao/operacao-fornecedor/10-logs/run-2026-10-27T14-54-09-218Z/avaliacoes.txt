@@ -1,0 +1,15 @@
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ 3
+- 'already-exists'
+
+    at D:\repository\unicesumar\tcc\app\src\app_faca_festa\functions\scripts\testAvaliacoesVerificadasEmulator.js:66:9
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5) {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: 3,
+  expected: 'already-exists',
+  operator: 'strictEqual',
+  diff: 'simple'
+}

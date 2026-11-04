@@ -1,4 +1,5 @@
 export { buscarCepGoogle } from "./address/buscarCepGoogle";
+export { notificarMensagemChat } from "./functions/cotacao/notificarMensagemChat";
 export { obterEstatisticasPublicas } from "./functions/publico/obterEstatisticasPublicas";
 export { exportarDossieTitular } from "./functions/lgpd/exportarDossieTitular";
 export { atenderSolicitacaoLgpd } from "./functions/lgpd/atenderSolicitacaoLgpd";
@@ -69,6 +70,7 @@ export { consultarPrevisaoFinanceiraGerente } from "./functions/financeiro/consu
 export {
   registrarCustoInternoFornecedor,
   registrarRecebimentoFornecedor,
+  consultarOperacaoRecebimentoFornecedor,
   consultarResumoFinanceiroFornecedor,
 } from "./functions/financeiro/comandosFinanceiroFornecedor";
 export {
@@ -91,6 +93,7 @@ export {
   consultarExtratoComissao,
 } from "./functions/financeiro/comandosComissaoPlataforma";
 export { consultarDashboardFinanceiroAdmin } from "./functions/financeiro/consultarDashboardFinanceiroAdmin";
+export { resolverExecucaoMediacao } from "./functions/financeiro/resolverExecucaoMediacao";
 export {
   simularOrcamentoEvento,
   calcularPrecoFornecedor,
@@ -98,6 +101,8 @@ export {
 } from "./functions/financeiro/simularOrcamentoEvento";
 export {
   registrarRecebimentoPlataformaFn as registrarRecebimentoPlataforma,
+  autorizarRepasseOrganizadorFn as autorizarRepasseOrganizador,
+  cancelarRepassePendenteFn as cancelarRepassePendente,
   alocarRecebimentoContratosFn as alocarRecebimentoContratos,
   prepararRepasseFornecedorFn as prepararRepasseFornecedor,
   confirmarRepasseManualFn as confirmarRepasseManual,
@@ -144,3 +149,13 @@ export { confirmarAgendaCalculadora } from "./functions/calculadora/confirmarAge
 export { editarCatalogoCalculadora } from "./functions/calculadora/editarCatalogoCalculadora";
 export { migrarPlanejamentoCalculadora } from "./functions/calculadora/migrarPlanejamentoCalculadora";
 export { sugerirCandidatosCalculadora, confirmarPlanejadorCalculadora } from "./functions/calculadora/planejarServicoCalculadora";
+
+export { registrarAvaliacaoVerificada, consultarContratosAvaliaveis, moderarAvaliacaoVerificada } from "./services/avaliacoes/avaliacaoVerificadaService";
+export { consultarGestaoReputacaoFn, responderReputacaoFn, denunciarReputacaoFn, listarFilaReputacaoFn, decidirDenunciaReputacaoFn, consultarPermissaoReputacaoFn, historicoRespostaReputacaoFn } from "./services/avaliacoes/gestaoReputacaoService";
+export { consultarJornadaAtendimentoFn, movimentarComercialJornadaFn, executarJornadaAtendimentoFn } from "./services/cotacao/jornadaAtendimentoService";
+
+export { consultarAgendaFornecedorFn, configurarCapacidadeFornecedorFn, confirmarAgendaContratoFn, consultarCompromissoPermitidoFn } from "./services/agenda/agendaFornecedorService";
+
+export { consultarPlanejamentoFornecedorFn, comandarPlanejamentoFornecedorFn } from "./services/financeiro/planejamentoFornecedorService";
+
+export { consultarPainelFornecedorFn } from "./services/fornecedores/painelOperacionalService";

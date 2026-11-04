@@ -1,0 +1,11 @@
+i  emulators: Starting emulators: firestore
+i  emulators: Detected demo project ID "demo-operacao-fornecedor", emulated services will use a demo configuration and attempts to access non-emulated services for this project will fail.
+i  firestore: Firestore Emulator logging to firestore-debug.log
++  firestore: Firestore Emulator UI websocket is running on 9150.
+i  Running script: node functions/scripts/testOperacaoFornecedorIntegrada.js
+EVIDENCIAS docs\evidencias_validacao\operacao-fornecedor\10-logs\run-2026-10-27T15-03-20-364Z
+INÍCIO atendimentos demo-chat-privado
+PASS atendimentos exit 0
+INÍCIO contratos demo-financeiro-contratos
+PASS contratos exit 0
+INÍCIO recebimentos demo-caixa-fornecedor

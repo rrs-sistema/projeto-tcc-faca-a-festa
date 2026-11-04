@@ -1,0 +1,149 @@
+{
+  "geradoEm": "2030-05-31T15:00:00.000Z",
+  "periodo": {
+    "de": "2030-05-01T15:00:00.000Z",
+    "ate": "2030-05-31T15:00:00.000Z",
+    "fuso": "America/Sao_Paulo",
+    "horas": "corridas",
+    "padrao": "últimas 720 horas; intervalo [de,até)"
+  },
+  "fontes": {
+    "reputacao": {
+      "estado": "atual",
+      "origem": "avaliações verificadas publicadas + respostas públicas",
+      "consultadoEm": "2030-05-31T15:00:00.000Z"
+    },
+    "agenda": {
+      "estado": "atual",
+      "origem": "contratos + agenda operacional privada",
+      "consultadoEm": "2030-05-31T15:00:00.000Z"
+    },
+    "atendimentos": {
+      "estado": "atual",
+      "origem": "cotacao/fornecedores + mensagens/propostas + orçamento",
+      "consultadoEm": "2030-05-31T15:00:00.000Z"
+    },
+    "financeiro": {
+      "estado": "parcial",
+      "origem": "planejamento privado + política de liberação de repasses",
+      "consultadoEm": "2030-05-31T15:00:00.000Z",
+      "avisos": [
+        "Resultado direto parcial: componentes não informados."
+      ]
+    }
+  },
+  "atendimentos": {
+    "recebidas": 2,
+    "semDataEnvio": 0,
+    "primeiraRespostaHoras": 1,
+    "amostraRespostas": 1,
+    "semResposta": 1,
+    "semEvidenciaPrimeiraResposta": 0,
+    "resultados": {
+      "ganhas": 1,
+      "perdidas": 0,
+      "recusadas": 0,
+      "canceladas": 0,
+      "abertas": 1,
+      "ganhasSemVinculo": 0
+    },
+    "conversao": 0.5,
+    "contratacoes": 1,
+    "contratosCancelados": 0,
+    "concluidas": 1,
+    "contratosSemDataAceite": 0,
+    "criterio": "Coorte por envio [de,até); primeira ação humana do fornecedor, horas corridas. Conversão = solicitações ganhas vigentes/com vínculo ÷ recebidas. Contratações por identidade e data de aceite; concluídas são a situação atual da coorte contratada, não outra venda nem entregas necessariamente ocorridas no período."
+  },
+  "reputacao": {
+    "media": 4,
+    "amostra": 1,
+    "totalPublicadas": 1,
+    "legadoNaoVerificado": 1
+  },
+  "financeiro": {
+    "movimentoLiquidoCentavos": 0,
+    "completo": false
+  },
+  "fila": [
+    {
+      "id": "agenda:c2",
+      "tipo": "compromisso",
+      "titulo": "Serviço c2",
+      "motivo": "Próxima janela: execução",
+      "responsavel": "fornecedor",
+      "prazo": "2030-05-31T19:00:00.000Z",
+      "dataEvento": "2030-06-01T15:00:00.000Z",
+      "prioridade": 1,
+      "rota": "/fornecedor/agenda",
+      "argumentos": {
+        "idOrcamento": "c2"
+      },
+      "fonte": "agenda"
+    },
+    {
+      "id": "cotacao:parada64",
+      "tipo": "atendimento",
+      "titulo": "Buffet",
+      "motivo": "Aguardando sua resposta",
+      "responsavel": "fornecedor",
+      "prazo": null,
+      "idadeHoras": 64,
+      "prioridade": 2,
+      "rota": "/jornada-atendimento",
+      "argumentos": {
+        "idCotacao": "parada64",
+        "idFornecedor": "f"
+      },
+      "fonte": "atendimentos"
+    },
+    {
+      "id": "repasse:c2",
+      "tipo": "repasse_bloqueado",
+      "titulo": "Conferir repasse",
+      "motivo": "Aguarde a finalização do evento ou a autorização explícita do organizador.",
+      "responsavel": "participantes conforme política",
+      "prazo": null,
+      "prioridade": 3,
+      "rota": "/acompanhamento-fornecedor",
+      "argumentos": {
+        "idFornecedor": "f",
+        "idOrcamento": "c2",
+        "idEvento": "proximo"
+      },
+      "fonte": "financeiro"
+    },
+    {
+      "id": "despesa:despesa",
+      "tipo": "despesa",
+      "titulo": "Despesa vencendo",
+      "motivo": "Despesa vence nos próximos sete dias",
+      "responsavel": "fornecedor",
+      "prazo": "2030-05-31",
+      "prioridade": 4,
+      "rota": "/fornecedor/planejamento",
+      "argumentos": {
+        "idObrigacao": "despesa",
+        "idEvento": "e"
+      },
+      "fonte": "financeiro"
+    },
+    {
+      "id": "avaliacao:4f12a5a03447b27d2c83497815552509ccdb7f29606082c8e543fe6e654835de",
+      "tipo": "avaliacao",
+      "titulo": "Avaliação sem resposta",
+      "motivo": "4 estrela(s) · fornecedor verificado",
+      "responsavel": "fornecedor",
+      "prazo": null,
+      "recebidaEm": "2030-05-30T19:00:00.000Z",
+      "prioridade": 4,
+      "rota": "/fornecedor/reputacao",
+      "argumentos": {
+        "idFornecedor": "f",
+        "idAvaliacao": "4f12a5a03447b27d2c83497815552509ccdb7f29606082c8e543fe6e654835de"
+      },
+      "fonte": "reputacao"
+    }
+  ],
+  "completo": false,
+  "criterioFila": "Pendências atuais independem do período das métricas. Vencido exige prazo persistido. Agenda e despesas: próximos 7 dias. Sem prazo: não informado. Sem IA."
+}

@@ -4,6 +4,17 @@ import 'package:app_faca_festa/domain/entities/convidado.dart';
 import 'package:app_faca_festa/domain/entities/evento.dart';
 import 'package:app_faca_festa/domain/entities/inspiracao.dart';
 
+class FornecedorRouteArgs {
+  /// Aceita o ID legado e o mapa enviado pelos atalhos do painel.
+  /// Sem um ID válido, a rota deve usar o fornecedor da sessão.
+  static String? idFornecedorOf(Object? arguments) {
+    final value = arguments is Map ? arguments['idFornecedor'] : arguments;
+    if (value is! String) return null;
+    final id = value.trim();
+    return id.isEmpty ? null : id;
+  }
+}
+
 class AuthFluxoArgs {
   const AuthFluxoArgs({
     this.tipo = 'O',

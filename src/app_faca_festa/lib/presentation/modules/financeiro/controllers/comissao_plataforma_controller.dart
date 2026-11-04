@@ -31,6 +31,22 @@ class ComissaoPlataformaController extends GetxController {
 
   bool get isAdmin => _ehAdmin?.call() == true;
 
+  static String _nomeDe(
+      Map<String, dynamic> o, List<String> campos, String vazio) {
+    for (final campo in campos) {
+      final valor = o[campo];
+      if (valor is String && valor.trim().isNotEmpty) return valor.trim();
+    }
+    return vazio;
+  }
+
+  static String nomeEventoDe(Map<String, dynamic> o) =>
+      _nomeDe(o, ['nome_evento', 'nomeEvento'], 'Nome do evento indisponível');
+  static String nomeFornecedorDe(Map<String, dynamic> o) => _nomeDe(o,
+      ['nome_fornecedor', 'nomeFornecedor'], 'Nome do fornecedor indisponível');
+  static String nomePagadorDe(Map<String, dynamic> o) => _nomeDe(
+      o, ['nome_pagador', 'nomePagador'], 'Nome do pagador indisponível');
+
   /// Totais de apresentação a partir das cobranças carregadas (não recalcula domínio).
   int get totalGeradoCentavos {
     var t = 0;
@@ -90,6 +106,23 @@ class ComissaoPlataformaController extends GetxController {
       _valorOriginalCentavos(o);
   static int valorLiquidadoDe(Map<String, dynamic> o) =>
       _valorLiquidadoCentavos(o);
+  static int retidaDe(Map<String, dynamic> o) =>
+      (o['liquidado_por_retencao_repasse_centavos'] as num?)?.toInt() ?? 0;
+  static int separadaDe(Map<String, dynamic> o) =>
+      (valorLiquidadoDe(o) - retidaDe(o)).clamp(0, 100000000);
+  static bool retencaoPrevistaDe(Map<String, dynamic> o) {
+    final p = o['politica_aplicada'];
+    return p is Map &&
+        p['pagador'] != 'plataforma_absorve' &&
+        saldoDe(o) > 0 &&
+        o['status'] != 'estornada';
+  }
+
+  static String statusApresentacaoDe(Map<String, dynamic> o) =>
+      retencaoPrevistaDe(o)
+          ? 'retencao_prevista'
+          : (o['status'] ?? '').toString();
+
   static int saldoDe(Map<String, dynamic> o) => _saldoCentavos(o);
 
   static int _valorOriginalCentavos(Map<String, dynamic> o) {
@@ -157,6 +190,7 @@ class ComissaoPlataformaController extends GetxController {
       }
     } catch (e) {
       if (geracao != _geracao) return;
+      obrigacoes.clear();
       erro.value = e.toString();
     } finally {
       if (geracao == _geracao) carregando.value = false;
@@ -216,7 +250,8 @@ class ComissaoPlataformaController extends GetxController {
     }
     final idLimpo = id.trim();
     if (idLimpo.isEmpty) {
-      erro.value = 'Política sem identificador — atualize o extrato e tente de novo.';
+      erro.value =
+          'Política sem identificador — atualize o extrato e tente de novo.';
       return false;
     }
     if (enviando.value) return false;

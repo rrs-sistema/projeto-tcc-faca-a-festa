@@ -1,0 +1,23 @@
+00:00 +0: loading D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/avaliacoes/gestao_reputacao_test.dart
+00:00 +0: (setUpAll)
+00:00 +0: persistência real separa intenção de reputação do recebimento e de outros usuários
+00:00 +1: timeout pós-persistência retoma mesma operação em nova instância sem duplicar
+00:00 +2: timeout antes do commit preserva intenção e CAS rejeita edição desatualizada
+00:00 +3: filtro de período mantém limite temporal estável durante paginação
+00:00 +4: troca de sessão descarta consulta antiga e bloqueia comandos
+00:00 +5: erro com retry, comentário, distribuição e resposta persistida após reabrir
+00:02 +6: denúncia não apaga a crítica nem expõe notas internas
+00:02 +7: fila exige autorização específica
+00:02 +8: loading e semântica informam amostra sem ocultar indisponibilidade
+00:03 +9: resposta pública é separada da nota e não confere selo ao legado
+00:03 +10: editar resposta envia versão corrente e preserva histórico
+00:03 +11: fila registra decisão e mantém nota interna só no painel restrito
+00:04 +12: vazio e envio desconhecido têm estados explícitos com retomada
+00:05 +13: atalho sem resposta e restauração aplicam filtros reais
+00:05 +14: reputação com fonte ampliada em 360.0
+00:05 +15: reputação com fonte ampliada em 1200.0
+00:05 +16: evidência visual responsiva em 360.0
+00:06 +17: evidência visual responsiva em 1200.0
+00:06 +18: evidência visual da fila restrita
+00:06 +19: (tearDownAll)
+00:06 +19: All tests passed!

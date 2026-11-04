@@ -20,11 +20,13 @@ class FornecedorPainelAoVivo {
     required RxString erro,
     required GerenciarFornecedores Function() usecase,
     required bool Function() usuarioEhFornecedor,
+    String? Function()? usuarioAtual,
     required void Function(Fornecedor atualizado) aoAtualizar,
     required void Function() aoLimpar,
   })  : _erro = erro,
         _usecase = usecase,
         _usuarioEhFornecedor = usuarioEhFornecedor,
+        _usuarioAtual = usuarioAtual,
         _aoAtualizar = aoAtualizar,
         _aoLimpar = aoLimpar;
 
@@ -38,6 +40,11 @@ class FornecedorPainelAoVivo {
   final RxString _erro;
   final GerenciarFornecedores Function() _usecase;
   final bool Function() _usuarioEhFornecedor;
+  final String? Function()? _usuarioAtual;
+  int _msg = 0, _forn = 0, _sol = 0, _estat = 0;
+  bool _conta(String id) =>
+      _usuarioEhFornecedor() &&
+      (_usuarioAtual == null || _usuarioAtual() == id);
   final void Function(Fornecedor atualizado) _aoAtualizar;
   final void Function() _aoLimpar;
 
@@ -48,6 +55,7 @@ class FornecedorPainelAoVivo {
   final Map<String, int> _mensagensNaoLidasPorCotacao = {};
 
   Future<void> ouvirMensagensNaoLidas(String idFornecedor) async {
+    final versao = ++_msg;
     if (idFornecedor.trim().isEmpty) return;
     if (!_usuarioEhFornecedor()) return;
 
@@ -64,6 +72,7 @@ class FornecedorPainelAoVivo {
 
     _mensagensSub =
         _usecase().observarMensagensNaoLidas(idFornecedor).listen((total) {
+      if (versao != _msg || !_conta(idFornecedor)) return;
       mensagensNaoLidas.value = total;
     }, onError: (e) {
       debugPrint('❌ Erro ao escutar cotações do fornecedor para mensagens: $e');
@@ -71,12 +80,14 @@ class FornecedorPainelAoVivo {
   }
 
   void iniciarListenerFornecedor(String idFornecedor) {
+    final versao = ++_forn;
     debugPrint('📡 Iniciando listener para fornecedor $idFornecedor...');
 
     _fornecedorSub?.cancel();
 
     _fornecedorSub =
         _usecase().observarFornecedorAtivo(idFornecedor).listen((atualizado) {
+      if (versao != _forn) return;
       if (atualizado != null) {
         fornecedor.value = atualizado;
         aptoParaOperar.value = atualizado.aptoParaOperar;
@@ -92,6 +103,8 @@ class FornecedorPainelAoVivo {
   }
 
   Future<void> pararListenerFornecedor() async {
+    ++_forn;
+    ++_estat;
     debugPrint('🛑 Parando listener de fornecedor...');
     await _fornecedorSub?.cancel();
     _fornecedorSub = null;
@@ -100,6 +113,7 @@ class FornecedorPainelAoVivo {
   }
 
   Future<void> escutarSolicitacoesPendentes(String? idFornecedor) async {
+    final versao = ++_sol;
     if (idFornecedor == null) return;
     if (!_usuarioEhFornecedor()) return;
 
@@ -111,6 +125,7 @@ class FornecedorPainelAoVivo {
       _solicitacoesSub = _usecase()
           .observarSolicitacoesPendentes(idFornecedor)
           .listen((total) {
+        if (versao != _sol || !_conta(idFornecedor)) return;
         solicitacoesPendentes.value = total;
       }, onError: (e) {
         debugPrint('❌ Erro ao escutar solicitações pendentes: $e');
@@ -122,11 +137,18 @@ class FornecedorPainelAoVivo {
   }
 
   Future<void> atualizarEstatisticas() async {
+    final versao = ++_estat;
     final f = fornecedor.value;
     if (f == null) return;
 
     try {
-      final estatisticas = await _usecase().carregarEstatisticas(f.idFornecedor);
+      final estatisticas =
+          await _usecase().carregarEstatisticas(f.idFornecedor);
+      if (versao != _estat ||
+          !_conta(f.idFornecedor) ||
+          fornecedor.value?.idFornecedor != f.idFornecedor) {
+        return;
+      }
       solicitacoesPendentes.value = estatisticas.solicitacoesPendentes;
       servicosFornecedor.assignAll(estatisticas.servicosAtivos);
       mensagensNaoLidas.value = estatisticas.mensagensNaoLidas;
@@ -143,6 +165,10 @@ class FornecedorPainelAoVivo {
   }
 
   Future<void> cancelarEscutas() async {
+    ++_msg;
+    ++_forn;
+    ++_sol;
+    ++_estat;
     await _fornecedorSub?.cancel();
     _fornecedorSub = null;
     await _solicitacoesSub?.cancel();

@@ -1,0 +1,322 @@
+[
+  {
+    "id": "criarCotacao",
+    "reason": "implementacao/dependencia alterada",
+    "module": "functions\\lib\\functions\\cotacao\\criarCotacao.js"
+  },
+  {
+    "id": "responderCotacao",
+    "reason": "implementacao/dependencia alterada",
+    "module": "functions\\lib\\functions\\cotacao\\responderCotacao.js"
+  },
+  {
+    "id": "fecharCotacao",
+    "reason": "implementacao/dependencia alterada",
+    "module": "functions\\lib\\functions\\cotacao\\fecharCotacao.js"
+  },
+  {
+    "id": "cancelarCotacao",
+    "reason": "implementacao/dependencia alterada",
+    "module": "functions\\lib\\functions\\cotacao\\cancelarCotacao.js"
+  },
+  {
+    "id": "registrarContratoFinanceiro",
+    "reason": "implementacao/dependencia alterada",
+    "module": "functions\\lib\\functions\\financeiro\\comandosFinanceiro.js"
+  },
+  {
+    "id": "cancelarContratoFinanceiro",
+    "reason": "implementacao/dependencia alterada",
+    "module": "functions\\lib\\functions\\financeiro\\comandosFinanceiro.js"
+  },
+  {
+    "id": "registrarLiquidacaoFinanceira",
+    "reason": "implementacao/dependencia alterada",
+    "module": "functions\\lib\\functions\\financeiro\\comandosFinanceiro.js"
+  },
+  {
+    "id": "registrarCustoInternoFornecedor",
+    "reason": "implementacao/dependencia alterada",
+    "module": "functions\\lib\\functions\\financeiro\\comandosFinanceiroFornecedor.js"
+  },
+  {
+    "id": "registrarRecebimentoFornecedor",
+    "reason": "implementacao/dependencia alterada",
+    "module": "functions\\lib\\functions\\financeiro\\comandosFinanceiroFornecedor.js"
+  },
+  {
+    "id": "consultarOperacaoRecebimentoFornecedor",
+    "reason": "ausente",
+    "module": "functions\\lib\\functions\\financeiro\\comandosFinanceiroFornecedor.js"
+  },
+  {
+    "id": "consultarResumoFinanceiroFornecedor",
+    "reason": "implementacao/dependencia alterada",
+    "module": "functions\\lib\\functions\\financeiro\\comandosFinanceiroFornecedor.js"
+  },
+  {
+    "id": "cadastrarItemEstoqueFornecedor",
+    "reason": "implementacao/dependencia alterada",
+    "module": "functions\\lib\\functions\\financeiro\\comandosEstoqueFornecedor.js"
+  },
+  {
+    "id": "registrarEntradaEstoqueFornecedor",
+    "reason": "implementacao/dependencia alterada",
+    "module": "functions\\lib\\functions\\financeiro\\comandosEstoqueFornecedor.js"
+  },
+  {
+    "id": "reservarEstoqueFornecedor",
+    "reason": "implementacao/dependencia alterada",
+    "module": "functions\\lib\\functions\\financeiro\\comandosEstoqueFornecedor.js"
+  },
+  {
+    "id": "retirarEstoqueFornecedor",
+    "reason": "implementacao/dependencia alterada",
+    "module": "functions\\lib\\functions\\financeiro\\comandosEstoqueFornecedor.js"
+  },
+  {
+    "id": "consumirEstoqueFornecedor",
+    "reason": "implementacao/dependencia alterada",
+    "module": "functions\\lib\\functions\\financeiro\\comandosEstoqueFornecedor.js"
+  },
+  {
+    "id": "cancelarReservaEstoqueFornecedor",
+    "reason": "implementacao/dependencia alterada",
+    "module": "functions\\lib\\functions\\financeiro\\comandosEstoqueFornecedor.js"
+  },
+  {
+    "id": "devolverEstoqueFornecedor",
+    "reason": "implementacao/dependencia alterada",
+    "module": "functions\\lib\\functions\\financeiro\\comandosEstoqueFornecedor.js"
+  },
+  {
+    "id": "consultarEstoqueFornecedor",
+    "reason": "implementacao/dependencia alterada",
+    "module": "functions\\lib\\functions\\financeiro\\comandosEstoqueFornecedor.js"
+  },
+  {
+    "id": "salvarPoliticaComissao",
+    "reason": "implementacao/dependencia alterada",
+    "module": "functions\\lib\\functions\\financeiro\\comandosComissaoPlataforma.js"
+  },
+  {
+    "id": "ativarPoliticaComissao",
+    "reason": "implementacao/dependencia alterada",
+    "module": "functions\\lib\\functions\\financeiro\\comandosComissaoPlataforma.js"
+  },
+  {
+    "id": "simularComissaoPlataforma",
+    "reason": "implementacao/dependencia alterada",
+    "module": "functions\\lib\\functions\\financeiro\\comandosComissaoPlataforma.js"
+  },
+  {
+    "id": "gerarObrigacaoComissao",
+    "reason": "implementacao/dependencia alterada",
+    "module": "functions\\lib\\functions\\financeiro\\comandosComissaoPlataforma.js"
+  },
+  {
+    "id": "liquidarComissaoManual",
+    "reason": "implementacao/dependencia alterada",
+    "module": "functions\\lib\\functions\\financeiro\\comandosComissaoPlataforma.js"
+  },
+  {
+    "id": "registrarAjusteComissao",
+    "reason": "implementacao/dependencia alterada",
+    "module": "functions\\lib\\functions\\financeiro\\comandosComissaoPlataforma.js"
+  },
+  {
+    "id": "consultarExtratoComissao",
+    "reason": "implementacao/dependencia alterada",
+    "module": "functions\\lib\\functions\\financeiro\\comandosComissaoPlataforma.js"
+  },
+  {
+    "id": "consultarDashboardFinanceiroAdmin",
+    "reason": "implementacao/dependencia alterada",
+    "module": "functions\\lib\\functions\\financeiro\\consultarDashboardFinanceiroAdmin.js"
+  },
+  {
+    "id": "resolverExecucaoMediacao",
+    "reason": "implementacao/dependencia alterada",
+    "module": "functions\\lib\\functions\\financeiro\\resolverExecucaoMediacao.js"
+  },
+  {
+    "id": "registrarRecebimentoPlataforma",
+    "reason": "implementacao/dependencia alterada",
+    "module": "functions\\lib\\functions\\financeiro\\comandosIntermediacaoFinanceira.js"
+  },
+  {
+    "id": "autorizarRepasseOrganizador",
+    "reason": "implementacao/dependencia alterada",
+    "module": "functions\\lib\\functions\\financeiro\\comandosIntermediacaoFinanceira.js"
+  },
+  {
+    "id": "cancelarRepassePendente",
+    "reason": "implementacao/dependencia alterada",
+    "module": "functions\\lib\\functions\\financeiro\\comandosIntermediacaoFinanceira.js"
+  },
+  {
+    "id": "alocarRecebimentoContratos",
+    "reason": "implementacao/dependencia alterada",
+    "module": "functions\\lib\\functions\\financeiro\\comandosIntermediacaoFinanceira.js"
+  },
+  {
+    "id": "prepararRepasseFornecedor",
+    "reason": "implementacao/dependencia alterada",
+    "module": "functions\\lib\\functions\\financeiro\\comandosIntermediacaoFinanceira.js"
+  },
+  {
+    "id": "confirmarRepasseManual",
+    "reason": "implementacao/dependencia alterada",
+    "module": "functions\\lib\\functions\\financeiro\\comandosIntermediacaoFinanceira.js"
+  },
+  {
+    "id": "registrarAjustePosRepasse",
+    "reason": "implementacao/dependencia alterada",
+    "module": "functions\\lib\\functions\\financeiro\\comandosIntermediacaoFinanceira.js"
+  },
+  {
+    "id": "consultarExtratoIntermediacao",
+    "reason": "implementacao/dependencia alterada",
+    "module": "functions\\lib\\functions\\financeiro\\comandosIntermediacaoFinanceira.js"
+  },
+  {
+    "id": "salvarPoliticaLiberacaoRepasse",
+    "reason": "implementacao/dependencia alterada",
+    "module": "functions\\lib\\functions\\financeiro\\comandosIntermediacaoFinanceira.js"
+  },
+  {
+    "id": "simularPosicaoIntermediacao",
+    "reason": "implementacao/dependencia alterada",
+    "module": "functions\\lib\\functions\\financeiro\\comandosIntermediacaoFinanceira.js"
+  },
+  {
+    "id": "consultarCentralContratacoes",
+    "reason": "implementacao/dependencia alterada",
+    "module": "functions\\lib\\functions\\financeiro\\consultarCentralContratacoes.js"
+  },
+  {
+    "id": "consultarDetalheContratacao",
+    "reason": "implementacao/dependencia alterada",
+    "module": "functions\\lib\\functions\\financeiro\\consultarCentralContratacoes.js"
+  },
+  {
+    "id": "abrirCasoMediacao",
+    "reason": "implementacao/dependencia alterada",
+    "module": "functions\\lib\\functions\\financeiro\\comandosMediacao.js"
+  },
+  {
+    "id": "atribuirResponsavelCaso",
+    "reason": "implementacao/dependencia alterada",
+    "module": "functions\\lib\\functions\\financeiro\\comandosMediacao.js"
+  },
+  {
+    "id": "registrarRegistroMediacao",
+    "reason": "implementacao/dependencia alterada",
+    "module": "functions\\lib\\functions\\financeiro\\comandosMediacao.js"
+  },
+  {
+    "id": "solicitarInformacaoCaso",
+    "reason": "implementacao/dependencia alterada",
+    "module": "functions\\lib\\functions\\financeiro\\comandosMediacao.js"
+  },
+  {
+    "id": "registrarDecisaoCaso",
+    "reason": "implementacao/dependencia alterada",
+    "module": "functions\\lib\\functions\\financeiro\\comandosMediacao.js"
+  },
+  {
+    "id": "fecharCasoMediacao",
+    "reason": "implementacao/dependencia alterada",
+    "module": "functions\\lib\\functions\\financeiro\\comandosMediacao.js"
+  },
+  {
+    "id": "recomendarBloqueioRevisao",
+    "reason": "implementacao/dependencia alterada",
+    "module": "functions\\lib\\functions\\financeiro\\comandosMediacao.js"
+  },
+  {
+    "id": "consultarCasoMediacao",
+    "reason": "implementacao/dependencia alterada",
+    "module": "functions\\lib\\functions\\financeiro\\comandosMediacao.js"
+  },
+  {
+    "id": "consultarAcompanhamentoOrganizador",
+    "reason": "implementacao/dependencia alterada",
+    "module": "functions\\lib\\functions\\financeiro\\comandosAcompanhamentoPartes.js"
+  },
+  {
+    "id": "consultarAcompanhamentoFornecedor",
+    "reason": "implementacao/dependencia alterada",
+    "module": "functions\\lib\\functions\\financeiro\\comandosAcompanhamentoPartes.js"
+  },
+  {
+    "id": "declararPagamentoPlataforma",
+    "reason": "implementacao/dependencia alterada",
+    "module": "functions\\lib\\functions\\financeiro\\comandosAcompanhamentoPartes.js"
+  },
+  {
+    "id": "informarEntregaFornecedor",
+    "reason": "implementacao/dependencia alterada",
+    "module": "functions\\lib\\functions\\financeiro\\comandosAcompanhamentoPartes.js"
+  },
+  {
+    "id": "registrarAceiteCliente",
+    "reason": "implementacao/dependencia alterada",
+    "module": "functions\\lib\\functions\\financeiro\\comandosAcompanhamentoPartes.js"
+  },
+  {
+    "id": "abrirCasoMediacaoParte",
+    "reason": "implementacao/dependencia alterada",
+    "module": "functions\\lib\\functions\\financeiro\\comandosAcompanhamentoPartes.js"
+  },
+  {
+    "id": "consultarJornadaAtendimentoFn",
+    "reason": "ausente",
+    "module": "functions\\lib\\services\\cotacao\\jornadaAtendimentoService.js"
+  },
+  {
+    "id": "movimentarComercialJornadaFn",
+    "reason": "ausente",
+    "module": "functions\\lib\\services\\cotacao\\jornadaAtendimentoService.js"
+  },
+  {
+    "id": "executarJornadaAtendimentoFn",
+    "reason": "ausente",
+    "module": "functions\\lib\\services\\cotacao\\jornadaAtendimentoService.js"
+  },
+  {
+    "id": "consultarAgendaFornecedorFn",
+    "reason": "ausente",
+    "module": "functions\\lib\\services\\agenda\\agendaFornecedorService.js"
+  },
+  {
+    "id": "configurarCapacidadeFornecedorFn",
+    "reason": "ausente",
+    "module": "functions\\lib\\services\\agenda\\agendaFornecedorService.js"
+  },
+  {
+    "id": "confirmarAgendaContratoFn",
+    "reason": "ausente",
+    "module": "functions\\lib\\services\\agenda\\agendaFornecedorService.js"
+  },
+  {
+    "id": "consultarCompromissoPermitidoFn",
+    "reason": "ausente",
+    "module": "functions\\lib\\services\\agenda\\agendaFornecedorService.js"
+  },
+  {
+    "id": "consultarPlanejamentoFornecedorFn",
+    "reason": "ausente",
+    "module": "functions\\lib\\services\\financeiro\\planejamentoFornecedorService.js"
+  },
+  {
+    "id": "comandarPlanejamentoFornecedorFn",
+    "reason": "ausente",
+    "module": "functions\\lib\\services\\financeiro\\planejamentoFornecedorService.js"
+  },
+  {
+    "id": "consultarPainelFornecedorFn",
+    "reason": "ausente",
+    "module": "functions\\lib\\services\\fornecedores\\painelOperacionalService.js"
+  }
+]

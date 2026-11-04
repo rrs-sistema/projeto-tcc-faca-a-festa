@@ -1,0 +1,27 @@
+[
+  {
+    "id": "consultarResumoFinanceiroFornecedor",
+    "http": 401,
+    "error": "UNAUTHENTICATED"
+  },
+  {
+    "id": "consultarJornadaAtendimentoFn",
+    "http": 401,
+    "error": "UNAUTHENTICATED"
+  },
+  {
+    "id": "consultarAgendaFornecedorFn",
+    "http": 401,
+    "error": "UNAUTHENTICATED"
+  },
+  {
+    "id": "consultarPlanejamentoFornecedorFn",
+    "http": 401,
+    "error": "UNAUTHENTICATED"
+  },
+  {
+    "id": "consultarPainelFornecedorFn",
+    "http": 401,
+    "error": "UNAUTHENTICATED"
+  }
+]

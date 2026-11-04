@@ -15,15 +15,17 @@ class IntermediacaoFinanceiraService {
     if (modo == ModoComissaoIntermediacao.descontadaFornecedor) {
       return DireitosContratoIntermediado(
         comissaoPrevistaCentavos: comissao,
-        direitoFornecedorPrevistoCentavos:
-            valorContratadoCentavos - comissao,
+        direitoFornecedorPrevistoCentavos: valorContratadoCentavos - comissao,
         precoClienteCentavos: valorContratadoCentavos,
       );
     }
     return DireitosContratoIntermediado(
       comissaoPrevistaCentavos: comissao,
       direitoFornecedorPrevistoCentavos: valorContratadoCentavos,
-      precoClienteCentavos: valorContratadoCentavos + comissao,
+      precoClienteCentavos: valorContratadoCentavos +
+          (modo == ModoComissaoIntermediacao.absorvidaPlataforma
+              ? 0
+              : comissao),
     );
   }
 
@@ -69,10 +71,11 @@ class IntermediacaoFinanceiraService {
     bool permiteParcial = false,
     int? tetoParcialCentavos,
   }) {
-    final teto = (direitoFornecedorCentavos - jaRepassadoCentavos - jaAuthCentavos)
-        .clamp(0, direitoFornecedorCentavos);
-    final financiado =
-        (alocadoCentavos - jaRepassadoCentavos - jaAuthCentavos).clamp(0, alocadoCentavos);
+    final teto =
+        (direitoFornecedorCentavos - jaRepassadoCentavos - jaAuthCentavos)
+            .clamp(0, direitoFornecedorCentavos);
+    final financiado = (alocadoCentavos - jaRepassadoCentavos - jaAuthCentavos)
+        .clamp(0, alocadoCentavos);
     final bruto = teto < financiado ? teto : financiado;
 
     if (!politicaAtiva) {
@@ -85,7 +88,8 @@ class IntermediacaoFinanceiraService {
     }
     var elegivel = bruto;
     if (permiteParcial && tetoParcialCentavos != null) {
-      elegivel = elegivel < tetoParcialCentavos ? elegivel : tetoParcialCentavos;
+      elegivel =
+          elegivel < tetoParcialCentavos ? elegivel : tetoParcialCentavos;
     } else if (!permiteParcial && financiado < teto) {
       return (
         estado: EstadoRepasse.elegivelPendente,
@@ -127,7 +131,8 @@ class IntermediacaoFinanceiraService {
     final ok = alocadoCentavos <= recebidoCentavos &&
         repassadoCentavos <= alocadoCentavos;
     return (
-      semAlocacao: (recebidoCentavos - alocadoCentavos).clamp(0, recebidoCentavos),
+      semAlocacao:
+          (recebidoCentavos - alocadoCentavos).clamp(0, recebidoCentavos),
       residual: (alocadoCentavos - repassadoCentavos).clamp(0, alocadoCentavos),
       ok: ok,
     );

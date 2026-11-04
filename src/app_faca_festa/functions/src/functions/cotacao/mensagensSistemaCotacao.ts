@@ -1,4 +1,4 @@
-import { FieldValue, Firestore } from "firebase-admin/firestore";
+import { FieldValue, Firestore, Transaction } from "firebase-admin/firestore";
 
 /**
  * Mensagens de sistema no chat mediado (Admin SDK — bypass rules).
@@ -38,4 +38,10 @@ export async function gravarMensagemSistemaParaFornecedores(
   await Promise.all(
     idsFornecedor.map((id) => gravarMensagemSistema(db, idCotacao, id, mensagem)),
   );
+}
+
+/** Mesmo chat e schema; gravação atômica/idempotente junto da ação humana. */
+export function gravarMensagemSistemaNaTransacao(tx:Transaction,fornecedorRef:FirebaseFirestore.DocumentReference,chave:string,mensagem:string):void {
+ const texto=String(mensagem||"").trim().slice(0,2000);if(!texto)return;
+ tx.set(fornecedorRef.collection("mensagens").doc(`jornada_${chave}`),{id_usuario:"sistema",nome_usuario:"Faça a Festa",mensagem:texto,enviado_em:FieldValue.serverTimestamp(),lido:false,sistema:true});
 }

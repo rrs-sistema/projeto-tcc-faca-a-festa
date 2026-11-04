@@ -1,4 +1,8 @@
 class AvaliacaoServico {
+  final String? respostaFornecedor;
+  final DateTime? respostaData;
+  final bool verificada;
+  final String? idContrato;
   final String id;
   final String idFornecedorServico;
   final String idCliente;
@@ -10,6 +14,10 @@ class AvaliacaoServico {
   final String? nomeEvento;
 
   const AvaliacaoServico({
+    this.respostaFornecedor,
+    this.respostaData,
+    this.verificada = false,
+    this.idContrato,
     required this.id,
     required this.idFornecedorServico,
     required this.idCliente,

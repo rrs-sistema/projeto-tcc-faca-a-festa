@@ -41,6 +41,39 @@ class _EnviarAvaliacaoDialogState extends State<EnviarAvaliacaoDialog> {
   final _formKey = GlobalKey<FormState>();
   var _autovalidateMode = AutovalidateMode.disabled;
   double nota = 0;
+  List<Map<String, dynamic>> contratos = [];
+  String? idOrcamento;
+  String? erroContratos;
+  bool carregandoContratos = true;
+  @override
+  void initState() {
+    super.initState();
+    widget.controller
+        .contratosAvaliaveis(
+            idFornecedor: widget.idFornecedor,
+            idEvento: widget.idEvento,
+            idServico:
+                widget.tipo == TipoAvaliacao.servico ? widget.idServico : null)
+        .then((lista) {
+      if (!mounted) return;
+      setState(() {
+        contratos = lista;
+        carregandoContratos = false;
+        if (lista.length == 1) {
+          idOrcamento = lista.single['idOrcamento'] as String;
+        }
+      });
+    }).catchError((Object e) {
+      if (mounted) {
+        setState(() {
+          carregandoContratos = false;
+          erroContratos =
+              'Não foi possível consultar as contratações concluídas.';
+        });
+      }
+    });
+  }
+
   final comentarioCtrl = TextEditingController();
   final RxBool salvando = false.obs;
 
@@ -77,7 +110,7 @@ class _EnviarAvaliacaoDialogState extends State<EnviarAvaliacaoDialog> {
         : "Escolha uma nota para avaliar o serviço.";
 
     Future<void> enviarAvaliacao() async {
-      if (salvando.value) return;
+      if (salvando.value || carregandoContratos || idOrcamento == null) return;
       setState(() => _autovalidateMode = AutovalidateMode.onUserInteraction);
       if (!(_formKey.currentState?.validate() ?? false)) return;
 
@@ -94,6 +127,7 @@ class _EnviarAvaliacaoDialogState extends State<EnviarAvaliacaoDialog> {
             comentario: comentarioCtrl.text.trim(),
             idEvento: widget.idEvento,
             nomeEvento: widget.nomeEventoAtual,
+            idOrcamento: idOrcamento,
           );
         } else {
           await widget.controller.adicionarAvaliacaoServico(
@@ -105,6 +139,7 @@ class _EnviarAvaliacaoDialogState extends State<EnviarAvaliacaoDialog> {
             comentario: comentarioCtrl.text.trim(),
             idEvento: widget.idEvento,
             nomeEvento: widget.nomeEventoAtual,
+            idOrcamento: idOrcamento,
           );
         }
 
@@ -221,6 +256,30 @@ class _EnviarAvaliacaoDialogState extends State<EnviarAvaliacaoDialog> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      if (carregandoContratos) const LinearProgressIndicator(),
+                      if (erroContratos != null) Text(erroContratos!),
+                      if (!carregandoContratos &&
+                          contratos.isEmpty &&
+                          erroContratos == null)
+                        const Text(
+                            'Nenhuma contratação com entrega aceita disponível para este objeto.'),
+                      if (contratos.isNotEmpty)
+                        DropdownButtonFormField<String>(
+                          value: idOrcamento,
+                          decoration: const InputDecoration(
+                              labelText: 'Contratação com entrega aceita'),
+                          items: contratos
+                              .map((c) => DropdownMenuItem(
+                                  value: c['idOrcamento'] as String,
+                                  child: Text(
+                                      '${c['nome']} (${c['idContrato']})')))
+                              .toList(),
+                          onChanged: (v) => setState(() => idOrcamento = v),
+                          validator: (v) =>
+                              v == null ? 'Selecione a contratação.' : null,
+                        ),
+                      const Text(
+                          'Uma avaliação por contratação e objeto. Após o envio, nota e comentário são preservados.'),
                       // === ESTRELAS ===
                       FormField<double>(
                         validator: (_) => nota < 1 ? mensagemErroNota : null,
@@ -344,7 +403,11 @@ class _EnviarAvaliacaoDialogState extends State<EnviarAvaliacaoDialog> {
                                 borderRadius: BorderRadius.circular(14),
                               ),
                             ),
-                            onPressed: isSaving ? null : enviarAvaliacao,
+                            onPressed: isSaving ||
+                                    carregandoContratos ||
+                                    idOrcamento == null
+                                ? null
+                                : enviarAvaliacao,
                             icon: isSaving
                                 ? const SizedBox(
                                     width: 16,

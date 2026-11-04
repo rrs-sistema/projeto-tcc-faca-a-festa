@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'visao_operacional_fornecedor.dart';
+import 'perfil_section.dart';
+import '../pages/chat/chat_mensagens_page.dart';
+import '../controllers/painel_operacional_controller.dart';
 
 import 'package:app_faca_festa/domain/usecases/gerenciar_cotacoes.dart';
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
@@ -12,7 +15,6 @@ import 'package:app_faca_festa/presentation/modules/catalogo/controllers/subcate
 import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_controller.dart';
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import 'package:app_faca_festa/presentation/modules/catalogo/pages/servico/servico_produto_list_screen.dart';
-import 'package:app_faca_festa/presentation/modules/fornecedor/pages/chat/fornecedor_mensagens_page.dart';
 
 class ResumoSection extends StatelessWidget {
   const ResumoSection({
@@ -27,6 +29,8 @@ class ResumoSection extends StatelessWidget {
     required this.subcategoriaController,
     required this.avaliacaoController,
     this.onAbrirPedidos,
+    this.onAbrirPerfil,
+    this.onController,
   });
 
   final FornecedorController controller;
@@ -38,494 +42,64 @@ class ResumoSection extends StatelessWidget {
   final CategoriaServicoController categoriaController;
   final SubcategoriaServicoController subcategoriaController;
   final AvaliacaoServicoController avaliacaoController;
-  final VoidCallback? onAbrirPedidos;
+  final VoidCallback? onAbrirPedidos, onAbrirPerfil;
+  final ValueChanged<PainelOperacionalController>? onController;
 
   @override
-  Widget build(BuildContext context) {
-    return Obx(() {
-      final fornecedor = controller.fornecedor.value;
-      final servicosAtivosDetalhados =
-          controller.servicosDetalhado.where((s) => s.ativo).length;
-      final servicosAtivosBasicos =
-          controller.servicosFornecedor.where((s) => s.ativo).length;
-      final totalServicosAtivos = servicosAtivosDetalhados > 0
-          ? servicosAtivosDetalhados
-          : servicosAtivosBasicos;
-
-      final reputacao = controller.ai.resumoReputacao.value;
-      final media = reputacao?.mediaGeral ??
-          (controller.avaliacaoMedia.value > 0
-              ? controller.avaliacaoMedia.value
-              : fornecedor?.mediaAvaliacoes ?? 0.0);
-      final totalAvaliacoes =
-          reputacao?.totalAvaliacoes ?? fornecedor?.totalAvaliacoes ?? 0;
-      final respostaHoras = fornecedor?.tempoMedioRespostaHoras ??
-          (controller.tempoMedioResposta.value > 0
-              ? controller.tempoMedioResposta.value / 60
-              : 0.0);
-      final contratacoes = fornecedor?.totalContratacoes ?? 0;
-      final perfilCompleto = _calcularPerfilCompleto(controller);
-      final oportunidadesQuentes =
-          controller.ai.scoresCotacoes.values.where((s) => s.score >= 75).length;
-
-      final cards = [
-        _MetricData(
-          title: 'Pedidos aguardando',
-          value: controller.solicitacoesPendentes.value.toString(),
-          subtitle: 'abrir lista de pedidos',
-          icon: Icons.receipt_long_rounded,
-          color: const Color(0xFF6366F1),
-          onTap: onAbrirPedidos,
-        ),
-        _MetricData(
-          title: 'Financeiro',
-          value: 'Privado',
-          subtitle: 'custos, caixa e resultado',
-          icon: Icons.account_balance_wallet_outlined,
-          color: const Color(0xFF0F766E),
-          onTap: () {
-            final id = controller.fornecedor.value?.idFornecedor ?? '';
-            if (id.isEmpty) {
-              Get.snackbar(
-                'Financeiro',
-                'Não foi possível identificar o fornecedor.',
-              );
-              return;
-            }
-            Get.toNamed('/fornecedor/financeiro', arguments: id);
-          },
-        ),
-        _MetricData(
-          title: 'Estoque interno',
-          value: 'Quantidades',
-          subtitle: 'materiais, reservas e consumo',
-          icon: Icons.warehouse_outlined,
-          color: const Color(0xFFB45309),
-          onTap: () {
-            final id = controller.fornecedor.value?.idFornecedor ?? '';
-            if (id.isEmpty) {
-              Get.snackbar(
-                'Estoque',
-                'Não foi possível identificar o fornecedor.',
-              );
-              return;
-            }
-            Get.toNamed('/fornecedor/estoque', arguments: id);
-          },
-        ),
-        _MetricData(
-          title: 'Comissões',
-          value: 'Pagador',
-          subtitle: 'suas obrigações com a plataforma',
-          icon: Icons.percent_rounded,
-          color: const Color(0xFF4338CA),
-          onTap: () {
-            Get.toNamed('/fornecedor/comissoes');
-          },
-        ),
-        _MetricData(
-          title: 'Mensagens não lidas',
-          value: controller.mensagensNaoLidas.value.toString(),
-          subtitle: 'abrir comunicações',
-          icon: Icons.mark_chat_unread_rounded,
-          color: const Color(0xFF0EA5E9),
-          onTap: () => Get.to(
-            () => FornecedorMensagensPage(
-              appController: appController,
-              theme: themeController,
-              cotacoes: cotacoes,
-            ),
-          ),
-        ),
-        _MetricData(
-          title: 'Catálogo de venda',
-          value: totalServicosAtivos.toString(),
-          subtitle: 'o que você oferece e o preço',
-          icon: Icons.storefront_outlined,
-          color: const Color(0xFF8B5CF6),
-          onTap: () async {
-            final fornecedorAtual = controller.fornecedor.value;
-
-            if (fornecedorAtual == null) {
-              Get.snackbar(
-                'Catálogo',
-                'Não foi possível identificar o fornecedor para abrir o catálogo.',
-                backgroundColor: const Color(0xFF111827),
-                colorText: Colors.white,
-              );
-              return;
-            }
-
-            try {
-              controller.carregando.value = true;
-              await controller.escutarServicosFornecedor(
-                fornecedorAtual.idFornecedor,
-              );
-            } finally {
-              controller.carregando.value = false;
-            }
-
-            Get.to(
-              () => ServicoProdutoListScreen(
-                fornecedorId: fornecedorAtual.idFornecedor,
-                servicoController: servicoController,
-                fotoController: fotoController,
-                fornecedorController: controller,
-                appController: appController,
-                categoriaController: categoriaController,
-                subcategoriaController: subcategoriaController,
-                avaliacaoController: avaliacaoController,
-                theme: themeController,
-              ),
-            );
-          },
-        ),
-        _MetricData(
-          title: 'Reputação',
-          value: media > 0 ? media.toStringAsFixed(1) : '--',
-          subtitle:
-              '$totalAvaliacoes avaliação${totalAvaliacoes == 1 ? '' : 'ões'}',
-          icon: Icons.star_rate_rounded,
-          color: const Color(0xFFF59E0B),
-        ),
-        _MetricData(
-          title: 'Resposta média',
-          value:
-              respostaHoras > 0 ? '${respostaHoras.toStringAsFixed(1)}h' : '--',
-          subtitle: 'tempo estimado',
-          icon: Icons.timer_rounded,
-          color: const Color(0xFF14B8A6),
-        ),
-        _MetricData(
-          title: 'Contratações',
-          value: contratacoes.toString(),
-          subtitle: 'histórico',
-          icon: Icons.handshake_rounded,
-          color: const Color(0xFF10B981),
-          onTap: () {
-            final id = controller.fornecedor.value?.idFornecedor ?? '';
-            if (id.isEmpty) {
-              Get.snackbar(
-                'Contratações',
-                'Não foi possível identificar o fornecedor.',
-              );
-              return;
-            }
-            Get.toNamed(
-              '/acompanhamento-fornecedor',
-              arguments: {'idFornecedor': id},
-            );
-          },
-        ),
-        _MetricData(
-          title: 'Perfil completo',
-          value: '$perfilCompleto%',
-          subtitle: _perfilLabel(perfilCompleto),
-          icon: Icons.verified_user_rounded,
-          color: const Color(0xFF2563EB),
-        ),
-        _MetricData(
-          title: 'Oportunidades quentes',
-          value: oportunidadesQuentes.toString(),
-          subtitle: 'score acima de 75%',
-          icon: Icons.local_fire_department_rounded,
-          color: const Color(0xFFEF4444),
-        ),
-      ];
-
-      return _SectionShell(
-        title: 'Visão operacional',
-        subtitle: 'Indicadores essenciais sem repetir dados do cabeçalho.',
-        action: controller.ai.isLoadingAi.value
-            ? const SizedBox(
-                width: 18,
-                height: 18,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
-            : TextButton.icon(
-                onPressed: () => controller.atualizarPainelOperacional(),
-                icon: const Icon(Icons.auto_awesome_rounded, size: 17),
-                label: Text(
-                  'Atualizar IA',
-                  style: GoogleFonts.poppins(
-                      fontSize: 12, fontWeight: FontWeight.w800),
-                ),
-              ),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final width = constraints.maxWidth;
-            final columns = width >= 1040
-                ? 4
-                : width >= 720
-                    ? 3
-                    : width >= 460
-                        ? 2
-                        : 1;
-
-            return GridView.builder(
-              itemCount: cards.length,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: columns,
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
-                mainAxisExtent: 118,
-              ),
-              itemBuilder: (_, index) => _MetricCard(data: cards[index]),
-            );
-          },
-        ),
-      );
-    });
-  }
-
-  static int _calcularPerfilCompleto(FornecedorController controller) {
-    final f = controller.fornecedor.value;
-    if (f == null) return 0;
-
-    final servicosAtivos = controller.servicosDetalhado.any((s) => s.ativo) ||
-        controller.servicosFornecedor.any((s) => s.ativo);
-
-    final checks = [
-      f.razaoSocial.trim().isNotEmpty,
-      (f.email).trim().isNotEmpty || (f.telefone).trim().isNotEmpty,
-      (f.descricao ?? '').trim().isNotEmpty,
-      (f.bannerUrl ?? '').trim().isNotEmpty,
-      f.categorias.isNotEmpty,
-      f.tipoEventoIds.isNotEmpty ||
-          f.tipoEventoSlugs.isNotEmpty ||
-          f.tipoEventoNomes.isNotEmpty,
-      f.precoMinimo != null || f.precoMaximo != null || f.precoMedio != null,
-      servicosAtivos,
-    ];
-
-    final done = checks.where((item) => item).length;
-    return ((done / checks.length) * 100).round();
-  }
-
-  static String _perfilLabel(int value) {
-    if (value >= 90) return 'excelente';
-    if (value >= 70) return 'bom';
-    if (value >= 45) return 'em evolução';
-    return 'incompleto';
-  }
-}
-
-class _SectionShell extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final Widget child;
-  final Widget? action;
-
-  const _SectionShell({
-    required this.title,
-    required this.subtitle,
-    required this.child,
-    this.action,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final compact = constraints.maxWidth < 520;
-              final header = Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(9),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF1F5F9),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: const Icon(Icons.dashboard_customize_rounded,
-                        size: 19, color: Color(0xFF111827)),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          title,
-                          style: GoogleFonts.poppins(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                            color: const Color(0xFF111827),
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          subtitle,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.poppins(
-                              fontSize: 12, color: const Color(0xFF6B7280)),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              );
-
-              if (compact || action == null) return header;
-
-              return Row(
-                children: [
-                  Expanded(child: header),
-                  const SizedBox(width: 12),
-                  action!
-                ],
-              );
-            },
-          ),
-          const SizedBox(height: 16),
-          child,
-        ],
-      ),
-    );
-  }
-}
-
-class _MetricData {
-  final String title;
-  final String value;
-  final String subtitle;
-  final IconData icon;
-  final Color color;
-  final VoidCallback? onTap;
-
-  const _MetricData({
-    required this.title,
-    required this.value,
-    required this.subtitle,
-    required this.icon,
-    required this.color,
-    this.onTap,
-  });
-}
-
-class _MetricCard extends StatelessWidget {
-  final _MetricData data;
-
-  const _MetricCard({required this.data});
-
-  @override
-  Widget build(BuildContext context) {
-    final clickable = data.onTap != null;
-
-    // Preenche a célula do GridView — sem isso o card encolhe ao conteúdo
-    // e títulos de 1 vs 2 linhas desalinhham as colunas visualmente.
-    return SizedBox.expand(
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: data.onTap,
-          borderRadius: BorderRadius.circular(18),
-          hoverColor: clickable
-              ? data.color.withValues(alpha: 0.04)
-              : Colors.transparent,
-          splashColor: clickable
-              ? data.color.withValues(alpha: 0.08)
-              : Colors.transparent,
-          child: Ink(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(
-                color: clickable
-                    ? data.color.withValues(alpha: 0.22)
-                    : data.color.withValues(alpha: 0.12),
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: data.color.withValues(alpha: 0.10),
-                      borderRadius: BorderRadius.circular(13),
-                    ),
-                    child: Icon(data.icon, color: data.color, size: 18),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      data.title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.poppins(
-                        fontSize: 11.5,
-                        color: const Color(0xFF64748B),
-                        fontWeight: FontWeight.w700,
-                        height: 1.2,
-                      ),
-                    ),
-                  ),
-                  if (clickable) ...[
-                    const SizedBox(width: 6),
-                    Icon(
-                      Icons.open_in_new_rounded,
-                      size: 15,
-                      color: data.color,
-                    ),
-                  ],
-                ],
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    data.value,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.poppins(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w900,
-                      color: const Color(0xFF111827),
-                      height: 1,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    data.subtitle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.poppins(
-                      fontSize: 11,
-                      color: const Color(0xFF94A3B8),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => VisaoOperacionalFornecedor(
+      onController: onController,
+      onPedidos: onAbrirPedidos,
+      perfilCompleto: () => controller.fornecedor.value?.idFornecedor ==
+              appController.usuarioLogado.value?.idUsuario
+          ? PerfilSection.calcularScoreCatalogo(controller)
+          : null,
+      analiseIa: () {
+        final scores = controller.ai.scoresCotacoes.values;
+        return scores.isEmpty
+            ? null
+            : {
+                'amostra': scores.length,
+                'quentes': scores.where((s) => s.score >= 75).length
+              };
+      },
+      onAtendimento: (prioridade) {
+        final f = controller.fornecedor.value,
+            usuario = appController.usuarioLogado.value;
+        final enviado =
+            DateTime.tryParse(prioridade['enviadoEm']?.toString() ?? '');
+        if (f == null ||
+            usuario == null ||
+            usuario.idUsuario != f.idFornecedor) {
+          return;
+        }
+        if (enviado == null) {
+          onAbrirPedidos?.call();
+          return;
+        }
+        Get.to(() => ChatMensagensPage(
+            idCotacao: prioridade['idCotacao'],
+            idFornecedor: f.idFornecedor,
+            nomeFornecedor: f.razaoSocial,
+            dataSolicitacao: enviado,
+            cotacoes: cotacoes,
+            theme: themeController,
+            usuario: usuario));
+      },
+      onPerfil: onAbrirPerfil,
+      onCatalogo: () async {
+        final f = controller.fornecedor.value;
+        if (f == null) return;
+        await controller.escutarServicosFornecedor(f.idFornecedor);
+        if (controller.fornecedor.value?.idFornecedor != f.idFornecedor) return;
+        Get.to(() => ServicoProdutoListScreen(
+            fornecedorId: f.idFornecedor,
+            servicoController: servicoController,
+            fotoController: fotoController,
+            fornecedorController: controller,
+            appController: appController,
+            categoriaController: categoriaController,
+            subcategoriaController: subcategoriaController,
+            avaliacaoController: avaliacaoController,
+            theme: themeController));
+      });
 }

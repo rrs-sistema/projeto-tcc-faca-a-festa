@@ -1,5 +1,13 @@
 # Arquitetura do Faça a Festa
 
+Atualização de 29/10/2026: o inventário abaixo é histórico. A revisão de imports
+do código atual identificou dependências adicionais entre apresentação e dados,
+GetX em gateways de dados e dependência indireta de Flutter em um serviço de
+domínio. Consulte o capítulo 8 da
+[documentação consolidada](../tcc/documentacao-software-faca-a-festa.md#8-arquitetura-do-sistema)
+para as visões revisadas e os limites observados. As regras de separação deste
+acervo não devem ser interpretadas como isolamento integral já verificado no código atual.
+
 Documentação técnica da **Clean Architecture** do cliente Flutter (`lib/`) e de como ele se conecta ao Firebase e às Cloud Functions.
 
 Inventário conferido no código em setembro de 2026. Não descreve um modelo ideal: descreve o que o repositório faz hoje.

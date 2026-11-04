@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'chat_notifications_controller.dart';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -282,6 +283,9 @@ class AppCicloSessao {
         }
 
         final usuario = aplicarPerfil(perfil);
+        if (Get.isRegistered<ChatNotificationsController>()) {
+          unawaited(Get.find<ChatNotificationsController>().iniciar(usuario));
+        }
         _theme.definirPapelSessao(usuario.tipo);
 
         AppDestinoRota destino;
@@ -348,6 +352,9 @@ class AppCicloSessao {
       }
     } finally {
       _processandoSessao = false;
+      if (_usuarioLogado?.value != null && Get.isRegistered<ChatNotificationsController>()) {
+        Get.find<ChatNotificationsController>().abrirPendente();
+      }
       if (_sessaoPendente) {
         _sessaoPendente = false;
         final idUsuario = _autenticacao.idUsuarioAtual;
@@ -435,6 +442,9 @@ class AppCicloSessao {
         },
       );
 
+      if (Get.isRegistered<ChatNotificationsController>()) {
+        await Get.find<ChatNotificationsController>().encerrar();
+      }
       await _autenticacao.sair();
       _usuarioLogado?.value = null;
       _enderecoPrincipal?.value = null;

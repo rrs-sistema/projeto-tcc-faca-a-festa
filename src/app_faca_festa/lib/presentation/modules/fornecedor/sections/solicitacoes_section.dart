@@ -1,3 +1,7 @@
+import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
+import 'package:app_faca_festa/presentation/modules/fornecedor/pages/chat/chat_mensagens_page.dart';
+import 'package:app_faca_festa/presentation/modules/fornecedor/components/acesso_atendimento.dart';
+import 'package:app_faca_festa/domain/entities/jornada_atendimento.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -12,7 +16,16 @@ import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/forne
 import 'package:app_faca_festa/presentation/modules/cotacao/controllers/solicitacoes_controller.dart';
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import 'package:app_faca_festa/presentation/modules/fornecedor/components/show_responder_cotacao_bottom_sheet.dart';
-enum _FiltroPedidos { todos, aguardando, respondidas, finalizadas }
+
+enum _FiltroPedidos {
+  todos,
+  aguardando,
+  respondidas,
+  negociacao,
+  contratadas,
+  entregues,
+  encerradas
+}
 
 class SolicitacoesSection extends StatefulWidget {
   const SolicitacoesSection({
@@ -41,9 +54,11 @@ class _SolicitacoesSectionState extends State<SolicitacoesSection> {
       widget.solicitacoesController;
 
   void _inicializarSeNecessario(String? idFornecedor) {
-    if (idFornecedor == null ||
-        idFornecedor.isEmpty ||
-        _fornecedorInicializado == idFornecedor) {
+    if (idFornecedor == null || idFornecedor.isEmpty) {
+      _fornecedorInicializado = null;
+      return;
+    }
+    if (_fornecedorInicializado == idFornecedor) {
       return;
     }
 
@@ -51,28 +66,21 @@ class _SolicitacoesSectionState extends State<SolicitacoesSection> {
     Future.microtask(() => solicitacoesController.inicializar(idFornecedor));
   }
 
-  List<Cotacao> _filtrar(List<Cotacao> lista) {
-    switch (_filtro) {
-      case _FiltroPedidos.aguardando:
-        return lista.where((c) => c.status == StatusCotacao.pendente).toList();
-      case _FiltroPedidos.respondidas:
-        return lista
-            .where((c) =>
-                c.status == StatusCotacao.respondida ||
-                c.status == StatusCotacao.parcial)
-            .toList();
-      case _FiltroPedidos.finalizadas:
-        return lista
-            .where((c) =>
-                c.status == StatusCotacao.concluida ||
-                c.status == StatusCotacao.cancelada ||
-                c.status == StatusCotacao.recusado ||
-                c.status == StatusCotacao.perdeuCotacao)
-            .toList();
-      case _FiltroPedidos.todos:
-        return lista;
-    }
-  }
+  List<Cotacao> _filtrar(List<Cotacao> lista) => lista
+      .where((c) => switch (_filtro) {
+            _FiltroPedidos.todos => true,
+            _FiltroPedidos.aguardando =>
+              estadoComercialCotacao(c) == 'nova_solicitacao',
+            _FiltroPedidos.respondidas =>
+              estadoComercialCotacao(c) == 'proposta_enviada',
+            _FiltroPedidos.negociacao =>
+              estadoComercialCotacao(c) == 'negociacao',
+            _FiltroPedidos.contratadas => estadoComercialCotacao(c) == 'ganho',
+            _FiltroPedidos.entregues => entregaAceitaCotacao(c),
+            _FiltroPedidos.encerradas => ['perdido', 'recusado', 'cancelado']
+                .contains(estadoComercialCotacao(c)),
+          })
+      .toList();
 
   @override
   Widget build(BuildContext context) {
@@ -105,11 +113,8 @@ class _SolicitacoesSectionState extends State<SolicitacoesSection> {
       final aguardando =
           todas.where((c) => c.status == StatusCotacao.pendente).length;
       final finalizadas = todas
-          .where((c) =>
-              c.status == StatusCotacao.concluida ||
-              c.status == StatusCotacao.cancelada ||
-              c.status == StatusCotacao.recusado ||
-              c.status == StatusCotacao.perdeuCotacao)
+          .where((c) => ['perdido', 'recusado', 'cancelado']
+              .contains(estadoComercialCotacao(c)))
           .length;
       final quentes = fornecedorController.ai.scoresCotacoes.values
           .where((s) => s.score >= 75)
@@ -122,61 +127,69 @@ class _SolicitacoesSectionState extends State<SolicitacoesSection> {
         quentes: quentes,
         onAtualizarIa: todas.isEmpty
             ? null
-            : () => fornecedorController.ai.carregarAiDasSolicitacoesPendentes(
-                forceRefresh: true),
+            : () => fornecedorController.ai
+                .carregarAiDasSolicitacoesPendentes(forceRefresh: true),
         filtro: _filtro,
         onFiltro: (f) => setState(() => _filtro = f),
-        child: lista.isEmpty
-            ? _MensagemEstado(
-                icon: Icons.inbox_outlined,
-                title: todas.isEmpty
-                    ? 'Nenhum pedido de preço'
-                    : 'Nenhum pedido neste filtro',
-                message: todas.isEmpty
-                    ? 'Quando um organizador pedir preço, as oportunidades aparecem aqui.'
-                    : 'Troque o filtro acima para ver outros pedidos.',
-                color: const Color(0xFF6366F1),
-              )
-            : LayoutBuilder(
-                builder: (context, constraints) {
-                  final usarDuasColunas = constraints.maxWidth >= 860;
+        child: Column(children: [
+          Align(
+              alignment: Alignment.centerLeft,
+              child: OutlinedButton.icon(
+                  onPressed: () => Get.toNamed('/fornecedor/agenda'),
+                  icon: const Icon(Icons.calendar_month),
+                  label: const Text('Agenda e capacidade'))),
+          lista.isEmpty
+              ? _MensagemEstado(
+                  icon: Icons.inbox_outlined,
+                  title: todas.isEmpty
+                      ? 'Nenhum pedido de preço'
+                      : 'Nenhum pedido neste filtro',
+                  message: todas.isEmpty
+                      ? 'Quando um organizador pedir preço, as oportunidades aparecem aqui.'
+                      : 'Troque o filtro acima para ver outros pedidos.',
+                  color: const Color(0xFF6366F1),
+                )
+              : LayoutBuilder(
+                  builder: (context, constraints) {
+                    final usarDuasColunas = constraints.maxWidth >= 860;
 
-                  if (!usarDuasColunas) {
-                    return ListView.separated(
-                      itemCount: lista.length,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      separatorBuilder: (_, __) => const SizedBox(height: 9),
-                      itemBuilder: (context, index) =>
-                          _buildCotacaoCard(context, lista[index], index),
-                    );
-                  }
-
-                  // Grid 2 colunas com altura mínima comum (sem IntrinsicHeight:
-                  // LayoutBuilder no card não calcula intrínseco).
-                  const gap = 12.0;
-                  final itemWidth = (constraints.maxWidth - gap) / 2;
-                  return Wrap(
-                    spacing: gap,
-                    runSpacing: gap,
-                    alignment: WrapAlignment.start,
-                    crossAxisAlignment: WrapCrossAlignment.start,
-                    children: List.generate(lista.length, (index) {
-                      return SizedBox(
-                        width: itemWidth,
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(minHeight: 168),
-                          child: _buildCotacaoCard(
-                            context,
-                            lista[index],
-                            index,
-                          ),
-                        ),
+                    if (!usarDuasColunas) {
+                      return ListView.separated(
+                        itemCount: lista.length,
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        separatorBuilder: (_, __) => const SizedBox(height: 9),
+                        itemBuilder: (context, index) =>
+                            _buildCotacaoCard(context, lista[index], index),
                       );
-                    }),
-                  );
-                },
-              ),
+                    }
+
+                    // Grid 2 colunas com altura mínima comum (sem IntrinsicHeight:
+                    // LayoutBuilder no card não calcula intrínseco).
+                    const gap = 12.0;
+                    final itemWidth = (constraints.maxWidth - gap) / 2;
+                    return Wrap(
+                      spacing: gap,
+                      runSpacing: gap,
+                      alignment: WrapAlignment.start,
+                      crossAxisAlignment: WrapCrossAlignment.start,
+                      children: List.generate(lista.length, (index) {
+                        return SizedBox(
+                          width: itemWidth,
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(minHeight: 168),
+                            child: _buildCotacaoCard(
+                              context,
+                              lista[index],
+                              index,
+                            ),
+                          ),
+                        );
+                      }),
+                    );
+                  },
+                ),
+        ]),
       );
     });
   }
@@ -189,29 +202,96 @@ class _SolicitacoesSectionState extends State<SolicitacoesSection> {
 
     final podeResponder = item.status == StatusCotacao.pendente;
 
-    return _CotacaoInteligenteCard(
-      solicitacao: item,
-      idCotacao: idCotacao,
-      score: score?.score,
-      nivel: score?.nivel,
-      motivos: score?.motivosPositivos ?? const [],
-      alertas: score?.alertas ?? const [],
-      isGerandoResposta: isGerando,
-      onGerarResposta: !podeResponder || isGerando
-          ? null
-          : () async {
-              final sugestao =
-                  await fornecedorController.ai.gerarRespostaCotacaoComIa(
-                solicitacao: item,
-                forceRefresh: true,
-              );
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      AcessoAtendimento(
+        onAbrir: () => _abrirAtendimento(item),
+        child: _CotacaoInteligenteCard(
+          solicitacao: item,
+          idCotacao: idCotacao,
+          score: score?.score,
+          nivel: score?.nivel,
+          motivos: score?.motivosPositivos ?? const [],
+          alertas: score?.alertas ?? const [],
+          isGerandoResposta: isGerando,
+          onGerarResposta: !podeResponder || isGerando
+              ? null
+              : () async {
+                  final sugestao =
+                      await fornecedorController.ai.gerarRespostaCotacaoComIa(
+                    solicitacao: item,
+                    forceRefresh: true,
+                  );
 
-              if (!context.mounted) return;
-              _abrirRespostaSugerida(context, item, sugestao);
-            },
-      onResponder:
-          podeResponder ? () => _abrirResponderCotacao(context, item) : null,
-    );
+                  if (!context.mounted) return;
+                  _abrirRespostaSugerida(context, item, sugestao);
+                },
+          onResponder: podeResponder
+              ? () => _abrirResponderCotacao(context, item)
+              : null,
+        ),
+      ),
+      if (estadoComercialCotacao(item) == 'ganho')
+        Padding(
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+            child: Text(
+                const {
+                      'nao_iniciado': 'Preparação não iniciada',
+                      'agendado': 'Preparação agendada',
+                      'em_execucao': 'Serviço em execução',
+                      'entrega_informada':
+                          'Entrega informada · aguardando cliente',
+                      'aceito': 'Entrega aceita pelo cliente',
+                      'contestado': 'Entrega em contestação',
+                      'cancelado_execucao': 'Execução cancelada'
+                    }[item.estadoExecucao] ??
+                    item.estadoExecucao?.replaceAll('_', ' ') ??
+                    'Execução ainda não informada',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant))),
+      Wrap(
+        alignment: WrapAlignment.end,
+        children: [
+          if (estadoComercialCotacao(item) == 'ganho')
+            TextButton.icon(
+              onPressed: () => Get.toNamed('/jornada-atendimento', arguments: {
+                'idCotacao': item.id,
+                'idFornecedor':
+                    fornecedorController.fornecedor.value?.idFornecedor,
+              }),
+              icon: const Icon(Icons.route_outlined),
+              label: const Text('Jornada e execução'),
+            ),
+          TextButton.icon(
+            onPressed: () => _abrirAtendimento(item),
+            icon: const Icon(Icons.chat_outlined),
+            label: const Text('Ver atendimento'),
+          ),
+        ],
+      ),
+    ]);
+  }
+
+  void _abrirAtendimento(Cotacao item) {
+    final fornecedor = fornecedorController.fornecedor.value;
+    final usuario = Get.isRegistered<AppController>()
+        ? Get.find<AppController>().usuarioLogado.value
+        : null;
+    if (fornecedor == null ||
+        usuario == null ||
+        usuario.idUsuario != fornecedor.idFornecedor ||
+        item.id.trim().isEmpty) {
+      Get.snackbar('Atendimento', 'Entre novamente para abrir esta conversa.');
+      return;
+    }
+    Get.to(() => ChatMensagensPage(
+          idCotacao: item.id,
+          idFornecedor: fornecedor.idFornecedor,
+          nomeFornecedor: item.nomeUsuarioSolicitante,
+          dataSolicitacao: item.dataCadastro,
+          cotacoes: widget.cotacoes,
+          theme: widget.themeController,
+          usuario: usuario,
+        ));
   }
 
   void _abrirResponderCotacao(BuildContext context, Cotacao solicitacao) {
@@ -825,7 +905,7 @@ class _CotacoesShell extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'Aguardando, respondidas e finalizadas — tudo no mesmo lugar.',
+                          'Comercial e execução separados. Contratar não registra entrega.',
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.poppins(
@@ -851,33 +931,39 @@ class _CotacoesShell extends StatelessWidget {
                         color: const Color(0xFFF59E0B)),
                   if (finalizadas > 0)
                     _Chip(
-                        text: '$finalizadas finalizada${finalizadas == 1 ? '' : 's'}',
+                        text:
+                            '$finalizadas encerrada${finalizadas == 1 ? '' : 's'} sem contrato',
                         color: const Color(0xFF10B981)),
                   if (quentes > 0)
                     _Chip(
                         text: '$quentes quente${quentes == 1 ? '' : 's'}',
                         color: const Color(0xFFEF4444)),
                   if (onAtualizarIa != null)
-                    SizedBox(
-                      height: 34,
-                      child: OutlinedButton.icon(
-                        onPressed: onAtualizarIa,
-                        icon: const Icon(Icons.auto_awesome_rounded, size: 15),
-                        label: Text(
-                          'Calcular IA',
-                          style: GoogleFonts.poppins(
-                              fontSize: 11, fontWeight: FontWeight.w800),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: const Color(0xFF4F46E5),
-                          iconColor: const Color(0xFF4F46E5),
-                          side: const BorderSide(color: Color(0xFFC7D2FE)),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(11)),
-                          padding: const EdgeInsets.symmetric(horizontal: 10),
-                        ),
-                      ),
-                    ),
+                    Tooltip(
+                        message:
+                            'Índices e sugestões de IA são apoio à análise. Revise antes de enviar; não representam probabilidade comprovada nem garantia de pagamento.',
+                        child: SizedBox(
+                          height: 34,
+                          child: OutlinedButton.icon(
+                            onPressed: onAtualizarIa,
+                            icon: const Icon(Icons.auto_awesome_rounded,
+                                size: 15),
+                            label: Text(
+                              'Calcular IA',
+                              style: GoogleFonts.poppins(
+                                  fontSize: 11, fontWeight: FontWeight.w800),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: const Color(0xFF4F46E5),
+                              iconColor: const Color(0xFF4F46E5),
+                              side: const BorderSide(color: Color(0xFFC7D2FE)),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(11)),
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 10),
+                            ),
+                          ),
+                        )),
                 ],
               );
 
@@ -922,10 +1008,21 @@ class _CotacoesShell extends StatelessWidget {
                     onTap: () => onFiltro!(_FiltroPedidos.respondidas),
                   ),
                   const SizedBox(width: 6),
+                  for (final e in {
+                    _FiltroPedidos.negociacao: 'Negociação',
+                    _FiltroPedidos.contratadas: 'Contratadas',
+                    _FiltroPedidos.entregues: 'Entregas aceitas'
+                  }.entries) ...[
+                    _FiltroChip(
+                        label: e.value,
+                        selected: filtro == e.key,
+                        onTap: () => onFiltro!(e.key)),
+                    const SizedBox(width: 6),
+                  ],
                   _FiltroChip(
-                    label: 'Finalizadas',
-                    selected: filtro == _FiltroPedidos.finalizadas,
-                    onTap: () => onFiltro!(_FiltroPedidos.finalizadas),
+                    label: 'Encerradas sem contrato',
+                    selected: filtro == _FiltroPedidos.encerradas,
+                    onTap: () => onFiltro!(_FiltroPedidos.encerradas),
                   ),
                 ],
               ),
@@ -1013,7 +1110,7 @@ class _CotacaoInteligenteCard extends StatelessWidget {
     final statusColor = _statusColor(solicitacao.status);
 
     final color = _scoreColor(score);
-    final scoreLabel = score == null ? 'IA' : '${score!.toStringAsFixed(0)}%';
+    final scoreLabel = score == null ? 'IA' : score!.toStringAsFixed(0);
     final reasons = [
       ...motivos.take(1),
       ...alertas.take(1).map((e) => 'Atenção: $e'),
@@ -1050,7 +1147,17 @@ class _CotacaoInteligenteCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _ScoreBadge(score: scoreLabel, nivel: nivel, color: color),
+              Tooltip(
+                  message:
+                      'Índice heurístico de prioridade: $scoreLabel em 100. Não representa probabilidade comprovada de contratação ou pagamento.',
+                  child: Semantics(
+                      label:
+                          'Índice heurístico de prioridade $scoreLabel em 100',
+                      excludeSemantics: true,
+                      child: _ScoreBadge(
+                          score: scoreLabel,
+                          nivel: 'índice IA',
+                          color: color))),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
@@ -1170,7 +1277,8 @@ class _CotacaoInteligenteCard extends StatelessWidget {
   static Color _statusColor(StatusCotacao status) {
     return switch (status) {
       StatusCotacao.pendente => const Color(0xFFF59E0B),
-      StatusCotacao.respondida || StatusCotacao.parcial =>
+      StatusCotacao.respondida ||
+      StatusCotacao.parcial =>
         const Color(0xFF2563EB),
       StatusCotacao.concluida => const Color(0xFF10B981),
       StatusCotacao.cancelada ||

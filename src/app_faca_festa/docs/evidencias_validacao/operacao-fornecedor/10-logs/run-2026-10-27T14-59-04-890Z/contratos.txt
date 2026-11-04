@@ -1,0 +1,1 @@
+PASS integração contratos: aceite 3150/157,50/2992,50/1992,50; modos; retenção parcial/integral; separado/misto; legado; cancelamento/estorno; indisponibilidade; privacidade.

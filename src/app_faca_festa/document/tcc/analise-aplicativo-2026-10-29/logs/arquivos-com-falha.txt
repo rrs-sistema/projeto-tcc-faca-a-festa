@@ -1,0 +1,5 @@
+test/features/calculadora/calculadora_decisoes_test.dart
+test/features/calculadora/calculadora_jornada_base_test.dart
+test/features/calculadora/calculadora_operacao_layout_test.dart
+test/features/calculadora/ergonomia_jornada_test.dart
+test/features/operacao/layout_operacional_test.dart

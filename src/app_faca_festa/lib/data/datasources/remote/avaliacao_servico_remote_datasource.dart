@@ -1,222 +1,231 @@
-import 'dart:developer' as developer;
-
 import 'package:cloud_firestore/cloud_firestore.dart';
-
+import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../models/avaliacao/avaliacao_model.dart';
 import '../../models/fornecedor/avaliacao_servico_model.dart';
+import '../../services/stream_da_sessao.dart';
 
 class AvaliacaoServicoRemoteDatasource {
-  AvaliacaoServicoRemoteDatasource({required FirebaseFirestore firestore})
-      : _db = firestore;
-
+  AvaliacaoServicoRemoteDatasource(
+      {required FirebaseFirestore firestore,
+      FirebaseFunctions? functions,
+      FirebaseAuth? auth})
+      : _db = firestore,
+        _functions = functions ??
+            FirebaseFunctions.instanceFor(region: 'southamerica-east1'),
+        _auth = auth ?? FirebaseAuth.instance;
   final FirebaseFirestore _db;
+  final FirebaseFunctions _functions;
+  final FirebaseAuth _auth;
+  Stream<T> _sessao<T>(Stream<T> fonte, T vazio) => streamDaSessao(
+      fonte: fonte,
+      sessoes: _auth.authStateChanges().map((u) => u?.uid),
+      identidade: _auth.currentUser?.uid,
+      vazio: vazio);
 
-  Stream<List<AvaliacaoServicoModel>> observarAvaliacoesServico({
-    required String idFornecedor,
-    required String idServico,
-  }) {
-    final idFornecedorServico = '${idFornecedor}_$idServico';
-
-    return _db
-        .collection('fornecedor_servico')
-        .doc(idFornecedorServico)
-        .collection('avaliacoes')
-        .orderBy('data', descending: true)
-        .snapshots()
-        .map(
-          (snapshot) => snapshot.docs
-              .map(
-                (doc) => AvaliacaoServicoModel.fromMap(
-                  doc.data(),
-                  documentId: doc.id,
-                  idFornecedorServico: idFornecedorServico,
-                ),
-              )
-              .toList(),
-        );
-  }
-
-  Future<double> getMediaServico({
-    required String idFornecedor,
-    required String idServico,
-  }) async {
-    final idFornecedorServico = '${idFornecedor}_$idServico';
-
-    final snap = await _db
-        .collection('fornecedor_servico')
-        .doc(idFornecedorServico)
-        .collection('avaliacoes')
-        .get();
-
-    if (snap.docs.isEmpty) return 0;
-
-    var soma = 0.0;
-    for (final doc in snap.docs) {
-      soma += (doc.data()['nota'] ?? 0);
+  Future<Map<String, dynamic>> _comprovar(
+      QueryDocumentSnapshot<Map<String, dynamic>> doc) async {
+    final d = doc.data();
+    var comprovada = false;
+    if (d['schema'] == 2 &&
+        d['id_contrato'] is String &&
+        (d['id_contrato'] as String).isNotEmpty) {
+      final h =
+          await doc.reference.collection('historico').doc('criacao').get();
+      comprovada = h.data()?['acao'] == 'criar' &&
+          [
+            'id_contrato',
+            'id_cliente',
+            'id_fornecedor',
+            'id_servico',
+            'tipo',
+            'nota',
+            'comentario'
+          ].every((k) => h.data()?[k] == d[k]);
     }
-
-    return soma / snap.docs.length;
+    final resposta=await doc.reference.collection('respostas_publicas').doc('atual').get();
+    return {
+      ...d,
+      '_resposta_publica':resposta.data(),
+      '_integridade_confirmada': comprovada,
+      'verificada': d['verificada'] == true && comprovada
+    };
   }
 
-  Future<void> adicionarAvaliacaoServico({
-    required String idFornecedor,
-    required String idServico,
-    required String idCliente,
-    required String nomeCliente,
-    required double nota,
-    required String comentario,
-    String? idEvento,
-    String? nomeEvento,
-  }) {
-    final idFornecedorServico = '${idFornecedor}_$idServico';
-    final ref = _db
-        .collection('fornecedor_servico')
-        .doc(idFornecedorServico)
-        .collection('avaliacoes')
-        .doc();
-
-    return ref.set({
-      'id': ref.id,
-      'id_fornecedor': idFornecedor,
-      'id_servico': idServico,
-      'id_cliente': idCliente,
-      'nome_cliente': nomeCliente,
-      'nota': nota,
-      'comentario': comentario,
-      'data': Timestamp.now(),
-      'id_evento': idEvento,
-      'nome_evento': nomeEvento,
-    });
-  }
-
-  Stream<List<AvaliacaoModel>> observarAvaliacoesFornecedor(
-    String idFornecedor,
-  ) {
-    return _db
-        .collection('fornecedor')
-        .doc(idFornecedor)
-        .collection('avaliacoes')
-        .orderBy('data', descending: true)
-        .snapshots()
-        .map(
-          (snapshot) => snapshot.docs.map(AvaliacaoModel.fromSnapshot).toList(),
-        );
-  }
-
-  Future<void> adicionarAvaliacaoFornecedor({
-    required String idFornecedor,
-    required String idCliente,
-    required String nomeCliente,
-    required double nota,
-    required String comentario,
-    String? idEvento,
-    String? nomeEvento,
-  }) {
-    final ref = _db
-        .collection('fornecedor')
-        .doc(idFornecedor)
-        .collection('avaliacoes')
-        .doc();
-
-    return ref.set({
-      'id': ref.id,
-      'id_fornecedor': idFornecedor,
-      'id_cliente': idCliente,
-      'nome_cliente': nomeCliente,
-      'nota': nota,
-      'comentario': comentario,
-      'data': Timestamp.now(),
-      'id_evento': idEvento,
-      'nome_evento': nomeEvento,
-    });
-  }
-
-  Future<bool> podeAvaliarFornecedor({
-    required String idFornecedor,
-    required String idEvento,
-    required String idUsuario,
-  }) async {
-    try {
-      final avaliacao = await _db
-          .collection('avaliacao_fornecedor')
-          .where('id_evento', isEqualTo: idEvento)
-          .where('id_fornecedor', isEqualTo: idFornecedor)
-          .where('id_usuario', isEqualTo: idUsuario)
-          .limit(1)
+  Future<List<Map<String, dynamic>>> _historico(String fornecedor,
+      {String? servico}) async {
+    final resultado = <Map<String, dynamic>>[];
+    for (final colecao in [
+      'avaliacao_fornecedor',
+      'avaliacoes',
+      'fornecedor_avaliacoes'
+    ]) {
+      final s = await _db
+          .collection(colecao)
+          .where('id_fornecedor', isEqualTo: fornecedor)
           .get();
-
-      if (avaliacao.docs.isNotEmpty) return false;
-
-      // A regra de `cotacao` só libera listagem para o solicitante
-      // (`id_usuario_solicitante == uid`). Filtrar só por `id_evento`
-      // gera PERMISSION_DENIED e derruba a tela de detalhe.
-      final cotacoes = await _db
-          .collection('cotacao')
-          .where('id_usuario_solicitante', isEqualTo: idUsuario)
-          .get();
-
-      for (final cotacao in cotacoes.docs) {
-        if (cotacao.data()['id_evento'] != idEvento) continue;
-
-        final fornecedorSnap = await cotacao.reference
-            .collection('fornecedores')
-            .doc(idFornecedor)
-            .get();
-
-        if (fornecedorSnap.exists) return true;
+      for (final doc in s.docs) {
+        final d = doc.data();
+        final objeto = d['id_servico'] ?? d['id_produto_servico'];
+        if (servico == null ? objeto == null : objeto == servico) {
+          resultado.add({...d, 'id': doc.reference.path, 'verificada': false});
+        }
       }
-
-      final orcamentos = await _db
-          .collection('orcamento')
-          .where('id_evento', isEqualTo: idEvento)
-          .where('id_fornecedor', isEqualTo: idFornecedor)
-          .get();
-
-      return orcamentos.docs.isNotEmpty;
-    } catch (e, s) {
-      developer.log(
-        'Erro ao verificar se pode avaliar fornecedor',
-        name: 'AvaliacaoServicoRemoteDatasource',
-        error: e,
-        stackTrace: s,
-      );
-      return false;
     }
+    return resultado;
   }
 
-  Future<bool> podeAvaliarCotacao({
-    required String idFornecedor,
-    required String idEvento,
-    required String idUsuario,
-  }) async {
-    try {
-      final jaAvaliou = await _db
-          .collection('avaliacao_fornecedor')
-          .where('id_evento', isEqualTo: idEvento)
-          .where('id_fornecedor', isEqualTo: idFornecedor)
-          .where('id_usuario', isEqualTo: idUsuario)
-          .limit(1)
+  Stream<List<AvaliacaoServicoModel>> observarAvaliacoesServico(
+      {required String idFornecedor, required String idServico}) {
+    // Uma consulta canônica, sem espelho da avaliação do fornecedor.
+    final fonte = _db
+        .collection('fornecedor')
+        .doc(idFornecedor)
+        .collection('avaliacoes')
+        .snapshots()
+        .asyncMap((s) async {
+      final historico = await _historico(idFornecedor, servico: idServico);
+      final antigos = await _db
+          .collection('fornecedor_servico')
+          .doc('${idFornecedor}_$idServico')
+          .collection('avaliacoes')
           .get();
-      if (jaAvaliou.docs.isNotEmpty) return false;
-
-      // Só após contratação efetiva (orçamento fechado com o fornecedor).
-      final contratado = await _db
-          .collection('orcamento')
-          .where('id_evento', isEqualTo: idEvento)
-          .where('id_fornecedor', isEqualTo: idFornecedor)
-          .where('orcamento_fechado', isEqualTo: true)
-          .limit(1)
-          .get();
-
-      return contratado.docs.isNotEmpty;
-    } catch (e, s) {
-      developer.log(
-        'Erro ao verificar se pode avaliar cotação',
-        name: 'AvaliacaoServicoRemoteDatasource',
-        error: e,
-        stackTrace: s,
-      );
-      return false;
-    }
+      final novos = s.docs.where((d) =>
+          d.data()['tipo'] == 'servico' &&
+          d.data()['id_servico'] == idServico &&
+          d.data()['moderacao'] != 'oculta');
+      final lista = [
+        ...historico.map((d) => AvaliacaoServicoModel.fromMap(d,
+            idFornecedorServico: '${idFornecedor}_$idServico')),
+        ...await Future.wait(novos.map((d) async =>
+            AvaliacaoServicoModel.fromMap(await _comprovar(d),
+                documentId: d.id,
+                idFornecedorServico: '${idFornecedor}_$idServico'))),
+        ...antigos.docs.map((d) => AvaliacaoServicoModel.fromMap(
+            {...d.data(), 'verificada': false},
+            documentId: d.id,
+            idFornecedorServico: '${idFornecedor}_$idServico'))
+      ];
+      lista.sort((a, b) => b.data.compareTo(a.data));
+      return lista;
+    });
+    return _sessao(fonte, <AvaliacaoServicoModel>[]);
   }
+
+  Future<double> getMediaServico(
+      {required String idFornecedor, required String idServico}) async {
+    final s =
+        await _db.doc('fornecedor_servico/${idFornecedor}_$idServico').get();
+    final r = s.data()?['reputacao_verificada'];
+    return r is Map && r['schema'] == 2 ? (r['media'] as num).toDouble() : 0;
+  }
+
+  Future<List<Map<String, dynamic>>> contratosAvaliaveis(
+      {required String idFornecedor,
+      required String idEvento,
+      String? idServico}) async {
+    final r =
+        await _functions.httpsCallable('consultarContratosAvaliaveis').call({
+      'idFornecedor': idFornecedor,
+      'idEvento': idEvento,
+      if (idServico != null) 'idServico': idServico
+    });
+    return (r.data['contratos'] as List)
+        .map((v) => Map<String, dynamic>.from(v as Map))
+        .toList();
+  }
+
+  Future<void> _enviar(
+      {required String idFornecedor,
+      required double nota,
+      required String comentario,
+      String? idEvento,
+      String? idServico,
+      String? idOrcamento}) async {
+    if (idOrcamento == null) {
+      if (idEvento == null) {
+        throw StateError('Selecione a contratação concluída.');
+      }
+      final contratos = await contratosAvaliaveis(
+          idFornecedor: idFornecedor, idEvento: idEvento, idServico: idServico);
+      if (contratos.length != 1) {
+        throw StateError('Selecione explicitamente a contratação concluída.');
+      }
+      idOrcamento = contratos.single['idOrcamento'] as String;
+    }
+    await _functions.httpsCallable('registrarAvaliacaoVerificada').call({
+      'idFornecedor': idFornecedor,
+      'idOrcamento': idOrcamento,
+      if (idServico != null) 'idServico': idServico,
+      'nota': nota,
+      'comentario': comentario
+    });
+  }
+
+  Future<void> adicionarAvaliacaoServico(
+          {required String idFornecedor,
+          required String idServico,
+          required String idCliente,
+          required String nomeCliente,
+          required double nota,
+          required String comentario,
+          String? idEvento,
+          String? nomeEvento,
+          String? idOrcamento}) =>
+      _enviar(
+          idFornecedor: idFornecedor,
+          idServico: idServico,
+          nota: nota,
+          comentario: comentario,
+          idEvento: idEvento,
+          idOrcamento: idOrcamento);
+  Future<void> adicionarAvaliacaoFornecedor(
+          {required String idFornecedor,
+          required String idCliente,
+          required String nomeCliente,
+          required double nota,
+          required String comentario,
+          String? idEvento,
+          String? nomeEvento,
+          String? idOrcamento}) =>
+      _enviar(
+          idFornecedor: idFornecedor,
+          nota: nota,
+          comentario: comentario,
+          idEvento: idEvento,
+          idOrcamento: idOrcamento);
+  Stream<List<AvaliacaoModel>> observarAvaliacoesFornecedor(
+          String idFornecedor) =>
+      _sessao(
+          _db
+              .collection('fornecedor')
+              .doc(idFornecedor)
+              .collection('avaliacoes')
+              .snapshots()
+              .asyncMap((s) async {
+            final historico = await _historico(idFornecedor);
+            final lista = await Future.wait(s.docs
+                .where((d) =>
+                    d.data()['tipo'] != 'servico' &&
+                    d.data()['moderacao'] != 'oculta')
+                .map((d) async => AvaliacaoModel.fromMap(
+                    {...await _comprovar(d), 'id': d.id})));
+            lista.addAll(historico.map(AvaliacaoModel.fromMap));
+            lista.sort((a, b) => b.data.compareTo(a.data));
+            return lista;
+          }),
+          <AvaliacaoModel>[]);
+  Future<bool> podeAvaliarFornecedor(
+          {required String idFornecedor,
+          required String idEvento,
+          required String idUsuario}) async =>
+      (await contratosAvaliaveis(
+              idFornecedor: idFornecedor, idEvento: idEvento))
+          .isNotEmpty;
+  Future<bool> podeAvaliarCotacao(
+          {required String idFornecedor,
+          required String idEvento,
+          required String idUsuario}) =>
+      podeAvaliarFornecedor(
+          idFornecedor: idFornecedor, idEvento: idEvento, idUsuario: idUsuario);
 }

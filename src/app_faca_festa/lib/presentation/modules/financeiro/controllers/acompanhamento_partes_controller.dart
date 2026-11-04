@@ -94,7 +94,8 @@ class AcompanhamentoPartesController extends GetxController {
     if (b is List) {
       acoesBloqueadas.assignAll(b.map((e) => e.toString()));
     } else {
-      acoesBloqueadas.assignAll(AcompanhamentoPartesService.ctasIntegracaoAusente);
+      acoesBloqueadas
+          .assignAll(AcompanhamentoPartesService.ctasIntegracaoAusente);
     }
   }
 
@@ -116,6 +117,27 @@ class AcompanhamentoPartesController extends GetxController {
       );
       aviso.value = (r['aviso'] ?? '').toString();
       await carregarOrganizador(idEvento.value);
+      return true;
+    } catch (e) {
+      erro.value = e.toString();
+      return false;
+    } finally {
+      enviando.value = false;
+    }
+  }
+
+  Future<bool> autorizarRepasse(String idOrcamento, String motivo,
+      {required bool autorizar}) async {
+    if (enviando.value) return false;
+    enviando.value = true;
+    erro.value = '';
+    try {
+      await remote.autorizarRepasse(
+          idOrcamento: idOrcamento, motivo: motivo, autorizar: autorizar);
+      await carregarOrganizador(idEvento.value);
+      aviso.value = autorizar
+          ? 'Autorização registrada. A administração ainda confere o saldo e possíveis mediações antes de pagar.'
+          : 'Autorização antecipada revogada. Repasses confirmados permanecem no histórico.';
       return true;
     } catch (e) {
       erro.value = e.toString();
@@ -196,8 +218,7 @@ class AcompanhamentoPartesController extends GetxController {
         chaveIdempotencia:
             'caso-p-$idOrcamento-${DateTime.now().millisecondsSinceEpoch}',
       );
-      aviso.value =
-          'Caso de mediação aberto. A equipe analisa em seguida. '
+      aviso.value = 'Caso de mediação aberto. A equipe analisa em seguida. '
           'Notas internas permanecem privadas.';
       if (idEvento.value.isNotEmpty) {
         await carregarOrganizador(idEvento.value);
@@ -211,8 +232,7 @@ class AcompanhamentoPartesController extends GetxController {
           msg.toLowerCase().contains('já existe') ||
           msg.toLowerCase().contains('ja existe') ||
           msg.toLowerCase().contains('caso aberto')) {
-        erro.value =
-            'Já existe um caso de mediação aberto para este contrato.';
+        erro.value = 'Já existe um caso de mediação aberto para este contrato.';
       } else {
         erro.value = 'Não foi possível abrir a mediação. Tente de novo.';
       }

@@ -1,0 +1,9 @@
+Analyzing lib, test...
+
+warning - test\features\calculadora\homologacao_receitas12_test.dart:8:8 - Unused import: 'package:app_faca_festa/domain/services/plano_execucao_service.dart'. Try removing the import directive. - unused_import
+   info - lib\core\legal\dossie_titular_documento.dart:2:8 - The import of 'dart:typed_data' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/services.dart'. Try removing the import directive. - unnecessary_import
+   info - lib\presentation\modules\calculadora\controllers\calculadora_festa_operacao.dart:35:37 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - test\features\admin\orcamentos_admin_conciliacao_test.dart:4:1 - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private. - library_private_types_in_public_api
+   info - test\features\admin\orcamentos_admin_conciliacao_test.dart:8:12 - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private. - library_private_types_in_public_api
+
+5 issues found.

@@ -26,7 +26,10 @@ class FirebasePushTokenRepository implements PushTokenRepository {
   @override
   Future<String?> obterTokenAtual() {
     return UpdateOperations.run(() async {
-      return _messaging.getToken();
+      const vapidKey = String.fromEnvironment('FCM_WEB_VAPID_KEY');
+      return _messaging.getToken(
+        vapidKey: PlataformaApp.ehWeb && vapidKey.isNotEmpty ? vapidKey : null,
+      );
     });
   }
 

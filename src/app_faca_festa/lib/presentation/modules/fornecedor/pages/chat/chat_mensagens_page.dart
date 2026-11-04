@@ -4,11 +4,12 @@ import 'package:intl/intl.dart';
 import 'package:get/get.dart';
 
 import 'package:app_faca_festa/domain/entities/cotacao_chat.dart';
+import 'package:app_faca_festa/presentation/modules/app/controllers/chat_notifications_controller.dart';
 import 'package:app_faca_festa/domain/entities/usuario.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_cotacoes.dart';
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 
-class ChatMensagensPage extends StatelessWidget {
+class ChatMensagensPage extends StatefulWidget {
   final String idCotacao;
   final String idFornecedor;
   final String nomeFornecedor;
@@ -17,7 +18,7 @@ class ChatMensagensPage extends StatelessWidget {
   final EventThemeController theme;
   final Usuario usuario;
 
-  ChatMensagensPage({
+  const ChatMensagensPage({
     super.key,
     required this.idCotacao,
     required this.idFornecedor,
@@ -28,26 +29,78 @@ class ChatMensagensPage extends StatelessWidget {
     required this.usuario,
   });
 
+  @override
+  State<ChatMensagensPage> createState() => _ChatMensagensPageState();
+}
+
+class _ChatMensagensPageState extends State<ChatMensagensPage>
+    with WidgetsBindingObserver {
   final msgController = TextEditingController();
   final scrollCtrl = ScrollController();
+  late final Stream<List<CotacaoMensagem>> _mensagens;
+  late final Stream<List<CotacaoFornecedorResumo>> _fornecedores;
+  bool _enviando = false;
+  bool _marcandoLeitura = false;
+  bool _primeiraCarga = true;
+  String get idCotacao => widget.idCotacao;
+  String get idFornecedor => widget.idFornecedor;
+  String get nomeFornecedor => widget.nomeFornecedor;
+  DateTime get dataSolicitacao => widget.dataSolicitacao;
+  GerenciarCotacoes get cotacoes => widget.cotacoes;
+  EventThemeController get theme => widget.theme;
+  Usuario get usuario => widget.usuario;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _mensagens = cotacoes.observarMensagens(
+        idCotacao: idCotacao, idFornecedor: idFornecedor);
+    _fornecedores = cotacoes.observarFornecedoresDaCotacao(idCotacao);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      marcarMensagensComoLidas(usuario.idUsuario);
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    msgController.dispose();
+    scrollCtrl.dispose();
+    super.dispose();
+  }
 
   Future<void> marcarMensagensComoLidas(String idUsuario) async {
-    await cotacoes.marcarMensagensComoLidas(
-      idCotacao: idCotacao,
-      idFornecedor: idFornecedor,
-      idUsuario: idUsuario,
-    );
+    if (!mounted ||
+        _marcandoLeitura ||
+        ModalRoute.of(context)?.isCurrent != true ||
+        (WidgetsBinding.instance.lifecycleState != null &&
+            WidgetsBinding.instance.lifecycleState !=
+                AppLifecycleState.resumed)) {
+      return;
+    }
+    _marcandoLeitura = true;
+    try {
+      await cotacoes.marcarMensagensComoLidas(
+        idCotacao: idCotacao,
+        idFornecedor: idFornecedor,
+        idUsuario: idUsuario,
+      );
+    } catch (e) {
+      debugPrint('Falha ao confirmar leitura do chat: ${e.runtimeType}');
+    } finally {
+      _marcandoLeitura = false;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final gradient = theme.gradient.value;
     final primary = theme.primaryColor.value;
-
-    // Marca como lidas ao abrir a tela
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      marcarMensagensComoLidas(usuario.idUsuario);
-    });
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC), // Fundo mais neutro e limpo
@@ -110,7 +163,22 @@ class ChatMensagensPage extends StatelessWidget {
                         color: Colors.white,
                       ),
                     ),
-                  )
+                  ),
+                  if (Get.isRegistered<ChatNotificationsController>())
+                    IconButton(
+                      tooltip: 'Habilitar notificações do chat',
+                      icon: const Icon(Icons.notifications_outlined,
+                          color: Colors.white),
+                      onPressed: () async {
+                        try {
+                          await Get.find<ChatNotificationsController>()
+                              .habilitarNotificacoes();
+                        } catch (e) {
+                          debugPrint(
+                              'Falha ao habilitar notificações: ${e.runtimeType}');
+                        }
+                      },
+                    ),
                 ],
               ),
             ),
@@ -182,10 +250,7 @@ class ChatMensagensPage extends StatelessWidget {
   // ----------------------------------------------------------
   Widget _buildMensagens(Usuario usuario, Color primary) {
     return StreamBuilder<List<CotacaoMensagem>>(
-      stream: cotacoes.observarMensagens(
-        idCotacao: idCotacao,
-        idFornecedor: idFornecedor,
-      ),
+      stream: _mensagens,
       builder: (context, snap) {
         if (snap.hasError) {
           debugPrint('❌ Erro ao ouvir mensagens do chat: ${snap.error}');
@@ -213,9 +278,17 @@ class ChatMensagensPage extends StatelessWidget {
 
         if (msgs.isEmpty) return _emptyChat();
 
-        // Faz o scroll ir para o fim sempre que chegar mensagem
+        final acompanhar = _primeiraCarga ||
+            !scrollCtrl.hasClients ||
+            scrollCtrl.position.extentAfter < 100;
+        _primeiraCarga = false;
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (scrollCtrl.hasClients) {
+          if (!mounted) return;
+          if (msgs.any((m) =>
+              !m.ehSistema && m.idUsuario != usuario.idUsuario && !m.lido)) {
+            marcarMensagensComoLidas(usuario.idUsuario);
+          }
+          if (acompanhar && scrollCtrl.hasClients) {
             scrollCtrl.jumpTo(scrollCtrl.position.maxScrollExtent);
           }
         });
@@ -275,8 +348,8 @@ class ChatMensagensPage extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 6),
         padding: const EdgeInsets.symmetric(
             horizontal: 12, vertical: 8), // 🔹 Margens ajustadas
-        constraints: BoxConstraints(
-            maxWidth: Get.width * 0.75), // 🔹 Evita balões largos demais
+        constraints:
+            BoxConstraints(maxWidth: (Get.width * 0.75).clamp(0.0, 560.0)),
         decoration: BoxDecoration(
           color: isMe ? primary : Colors.white,
           borderRadius: BorderRadius.only(
@@ -306,15 +379,28 @@ class ChatMensagensPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 2),
-            Text(
-              DateFormat("HH:mm").format(data.enviadoEm),
-              style: GoogleFonts.poppins(
-                fontSize: 9.5,
-                fontWeight: FontWeight.w500,
-                color: isMe
-                    ? Colors.white.withValues(alpha: 0.75)
-                    : Colors.grey.shade500,
-              ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  DateFormat("dd/MM HH:mm").format(data.enviadoEm),
+                  style: GoogleFonts.poppins(
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.w500,
+                    color: isMe
+                        ? Colors.white.withValues(alpha: 0.75)
+                        : Colors.grey.shade500,
+                  ),
+                ),
+                if (isMe) ...[
+                  const SizedBox(width: 4),
+                  Tooltip(
+                    message: data.lido ? 'Lida' : 'Enviada',
+                    child: Icon(data.lido ? Icons.done_all : Icons.check,
+                        size: 14, color: Colors.white),
+                  ),
+                ],
+              ],
             ),
           ],
         ),
@@ -327,7 +413,7 @@ class ChatMensagensPage extends StatelessWidget {
   // ----------------------------------------------------------
   Widget _buildInputField(Color primary, Usuario usuario) {
     return StreamBuilder<List<CotacaoFornecedorResumo>>(
-      stream: cotacoes.observarFornecedoresDaCotacao(idCotacao),
+      stream: _fornecedores,
       builder: (context, snap) {
         CotacaoFornecedorResumo? forn;
         for (final f in snap.data ?? const <CotacaoFornecedorResumo>[]) {
@@ -380,8 +466,10 @@ class ChatMensagensPage extends StatelessWidget {
                     controller: msgController,
                     keyboardType: TextInputType.multiline,
                     maxLines: null,
+                    maxLength: 2000,
                     style: GoogleFonts.poppins(fontSize: 13),
                     decoration: InputDecoration(
+                      counterText: '',
                       hintText: "Digite sua mensagem...",
                       hintStyle: GoogleFonts.poppins(
                           fontSize: 12.5, color: Colors.grey.shade500),
@@ -402,7 +490,7 @@ class ChatMensagensPage extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(bottom: 2),
                 child: InkWell(
-                  onTap: () => _enviarMensagem(usuario),
+                  onTap: _enviando ? null : () => _enviarMensagem(usuario),
                   borderRadius: BorderRadius.circular(50),
                   child: Container(
                     padding: const EdgeInsets.all(10),
@@ -410,8 +498,14 @@ class ChatMensagensPage extends StatelessWidget {
                       color: primary,
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.send_rounded,
-                        color: Colors.white, size: 18),
+                    child: _enviando
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2, color: Colors.white))
+                        : const Icon(Icons.send_rounded,
+                            color: Colors.white, size: 18),
                   ),
                 ),
               ),
@@ -424,7 +518,8 @@ class ChatMensagensPage extends StatelessWidget {
 
   Future<void> _enviarMensagem(Usuario usuario) async {
     final texto = msgController.text.trim();
-    if (texto.isEmpty) return;
+    if (texto.isEmpty || _enviando) return;
+    setState(() => _enviando = true);
 
     msgController.clear(); // Limpa na hora para a UI ficar fluida
 
@@ -436,8 +531,13 @@ class ChatMensagensPage extends StatelessWidget {
         nomeUsuario: usuario.nome,
         mensagem: texto,
       );
+      if (mounted && scrollCtrl.hasClients) {
+        scrollCtrl.animateTo(scrollCtrl.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 200), curve: Curves.easeOut);
+      }
     } catch (e) {
-      msgController.text = texto;
+      if (!mounted) return;
+      if (msgController.text.isEmpty) msgController.text = texto;
       debugPrint('❌ Erro ao enviar mensagem do chat: $e');
       Get.snackbar(
         'Mensagem',
@@ -446,6 +546,8 @@ class ChatMensagensPage extends StatelessWidget {
         backgroundColor: Colors.redAccent,
         colorText: Colors.white,
       );
+    } finally {
+      if (mounted) setState(() => _enviando = false);
     }
   }
 

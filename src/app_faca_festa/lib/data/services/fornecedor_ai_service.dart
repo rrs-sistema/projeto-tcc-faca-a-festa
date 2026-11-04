@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/domain/services/avaliacao_catalogo_fornecedor_service.dart';
 import '../models/fornecedor_intelligence/sugestao_catalogo_fornecedor_model.dart';
 import '../models/fornecedor_intelligence/resumo_reputacao_fornecedor_model.dart';
 import '../models/fornecedor_intelligence/sugestao_resposta_cotacao_model.dart';
@@ -655,134 +656,34 @@ class FornecedorAiService implements FornecedorAiRegrasService {
   }) {
     final now = _clock();
 
-    double score = 0;
-    final pendencias = <String>[];
-    final melhorias = <String>[];
-    final camposAusentes = <String>[];
-    final servicosComAlerta = <ServicoCatalogoAlerta>[];
-
-    if (_hasText(fornecedor.bannerUrl)) {
-      score += 10;
-    } else {
-      pendencias.add('Adicione uma imagem ou banner para melhorar a vitrine.');
-      melhorias.add('Cadastrar banner do fornecedor');
-      camposAusentes.add('banner_url');
-    }
-
-    if (_hasText(fornecedor.descricao) &&
-        fornecedor.descricao!.trim().length >= 80) {
-      score += 10;
-    } else {
-      pendencias.add('Melhore a descrição do fornecedor com mais detalhes.');
-      melhorias.add('Completar descrição comercial');
-      camposAusentes.add('descricao');
-    }
-
-    if (fornecedor.categorias.isNotEmpty) {
-      score += 10;
-    } else {
-      pendencias.add('Cadastre pelo menos uma categoria de atendimento.');
-      melhorias.add('Adicionar categorias');
-      camposAusentes.add('categorias');
-    }
-
-    if (fornecedor.tipoEventoIds.isNotEmpty ||
-        fornecedor.tipoEventoSlugs.isNotEmpty ||
-        fornecedor.tipoEventoNomes.isNotEmpty) {
-      score += 10;
-    } else {
-      pendencias.add('Informe os tipos de evento que o fornecedor atende.');
-      melhorias.add('Selecionar tipos de evento atendidos');
-      camposAusentes.add('tipo_evento_ids');
-    }
-
-    if (fornecedor.precoMinimo != null ||
-        fornecedor.precoMaximo != null ||
-        fornecedor.precoMedio != null) {
-      score += 10;
-    } else {
-      pendencias
-          .add('Cadastre uma faixa de preço para melhorar recomendações.');
-      melhorias.add('Informar faixa de preço');
-      camposAusentes.add('preco_minimo/preco_maximo/preco_medio');
-    }
-
-    final servicosAtivos = servicos.where((s) => s.ativo).toList();
-
-    if (servicosAtivos.length >= 3) {
-      score += 15;
-    } else if (servicosAtivos.isNotEmpty) {
-      score += 8;
-      pendencias.add('Cadastre mais serviços para fortalecer o catálogo.');
-      melhorias.add('Adicionar mais serviços ativos');
-    } else {
-      pendencias.add('Cadastre serviços ativos no catálogo.');
-      melhorias.add('Criar serviços/produtos');
-      camposAusentes.add('servicos_ativos');
-    }
-
-    final totalSemImagem =
-        servicosAtivos.where((s) => !_hasText(s.imagemUrl)).length;
-    final totalSemPreco = servicosAtivos.where((s) => s.preco <= 0).length;
-    final totalSemDescricao =
-        servicosAtivos.where((s) => !_hasText(s.descricaoServico)).length;
-    final totalSemTipoMedida =
-        servicosAtivos.where((s) => !_hasText(s.tipoMedida)).length;
-
-    if (servicosAtivos.isNotEmpty) {
-      if (totalSemImagem == 0) {
-        score += 10;
-      } else {
-        pendencias.add('Alguns serviços estão sem imagem.');
-        melhorias.add('Adicionar imagens aos serviços');
-        camposAusentes.add('imagem_url');
-      }
-
-      if (totalSemDescricao == 0) {
-        score += 10;
-      } else {
-        pendencias.add('Alguns serviços estão sem descrição.');
-        melhorias.add('Completar descrição dos serviços');
-        camposAusentes.add('descricao_servico');
-      }
-
-      if (totalSemPreco == 0) {
-        score += 15;
-      } else {
-        pendencias.add('Alguns serviços estão sem preço cadastrado.');
-        melhorias.add('Informar preço ou definir como sob orçamento');
-        camposAusentes.add('preco');
-      }
-
-      if (totalSemTipoMedida == 0) {
-        score += 10;
-      } else {
-        pendencias.add('Alguns serviços estão sem tipo de medida.');
-        melhorias.add('Informar tipo de medida dos serviços');
-        camposAusentes.add('tipo_medida');
-      }
-
-      for (final servico in servicosAtivos) {
-        final alertas = <String>[];
-
-        if (!_hasText(servico.imagemUrl)) alertas.add('sem_imagem');
-        if (!_hasText(servico.descricaoServico)) alertas.add('sem_descricao');
-        if (servico.preco <= 0) alertas.add('sem_preco');
-        if (!_hasText(servico.tipoMedida)) alertas.add('sem_tipo_medida');
-
-        if (alertas.isNotEmpty) {
-          servicosComAlerta.add(
-            ServicoCatalogoAlerta(
-              idServico: servico.id,
-              nomeServico: servico.nomeServico ?? '',
-              alertas: alertas,
-            ),
-          );
-        }
-      }
-    }
-
-    score = score.clamp(0, 100);
+    final avaliacao = const AvaliacaoCatalogoFornecedorService()
+        .avaliar(fornecedor: fornecedor, servicos: servicos);
+    final score = avaliacao.score;
+    final pendencias = avaliacao.pendentes.map((c) => c.detalhe).toList();
+    final melhorias = avaliacao.pendentes.map((c) => c.acao).toList();
+    final camposAusentes = avaliacao.pendentes.map((c) => c.campo).toList();
+    final servicosAtivos = avaliacao.servicos;
+    final totalSemImagem = avaliacao.semFoto;
+    final totalSemPreco = avaliacao.semPreco;
+    final totalSemDescricao = avaliacao.semDescricao;
+    final servicosComAlerta = <ServicoCatalogoAlerta>[
+      for (final s in servicosAtivos)
+        if (!AvaliacaoCatalogo.temTexto(s.imagemUrl) ||
+            !AvaliacaoCatalogo.temTexto(s.descricaoServico) ||
+            !AvaliacaoCatalogo.precoValido(s.precoEfetivo) ||
+            !AvaliacaoCatalogo.temTexto(s.tipoMedida))
+          ServicoCatalogoAlerta(
+              idServico: s.id,
+              nomeServico: s.nomeServico ?? '',
+              alertas: [
+                if (!AvaliacaoCatalogo.temTexto(s.imagemUrl)) 'sem_imagem',
+                if (!AvaliacaoCatalogo.temTexto(s.descricaoServico))
+                  'sem_descricao',
+                if (!AvaliacaoCatalogo.precoValido(s.precoEfetivo)) 'sem_preco',
+                if (!AvaliacaoCatalogo.temTexto(s.tipoMedida))
+                  'sem_tipo_medida',
+              ]),
+    ];
 
     final nivel = _nivelCatalogo(score);
 
@@ -794,7 +695,7 @@ class FornecedorAiService implements FornecedorAiRegrasService {
       titulo: _tituloCatalogo(nivel),
       descricao: _descricaoCatalogo(nivel, pendencias),
       pendencias: pendencias,
-      melhoriasPrioritarias: melhorias.take(5).toList(),
+      melhoriasPrioritarias: melhorias,
       camposAusentes: camposAusentes.toSet().toList(),
       servicosComAlerta: servicosComAlerta,
       categoriasSemServico: _categoriasSemServico(
@@ -806,7 +707,7 @@ class FornecedorAiService implements FornecedorAiRegrasService {
       totalServicosSemPreco: totalSemPreco,
       totalServicosSemDescricao: totalSemDescricao,
       origem: 'deterministic_rules',
-      versaoRegra: versaoRegra,
+      versaoRegra: 'catalogo-2.0.0',
       status: 'nova',
       createdAt: now,
       expiresAt: now.add(const Duration(hours: 24)),
@@ -821,14 +722,12 @@ class FornecedorAiService implements FornecedorAiRegrasService {
     required Fornecedor fornecedor,
     List<AvaliacaoServico> avaliacoes = const [],
   }) {
+    avaliacoes = avaliacoes.where((a) => a.verificada).toList();
     final now = _clock();
 
-    final totalAvaliacoes =
-        avaliacoes.isNotEmpty ? avaliacoes.length : fornecedor.totalAvaliacoes;
-
-    final mediaGeral = avaliacoes.isNotEmpty
-        ? _mediaAvaliacoes(avaliacoes)
-        : fornecedor.mediaAvaliacoes;
+    // Notas de objetos de serviço não substituem o agregado do fornecedor.
+    final totalAvaliacoes = fornecedor.totalAvaliacoes;
+    final mediaGeral = fornecedor.mediaAvaliacoes;
 
     final positivas = avaliacoes.where((a) => a.nota >= 4).length;
     final neutras = avaliacoes.where((a) => a.nota == 3).length;

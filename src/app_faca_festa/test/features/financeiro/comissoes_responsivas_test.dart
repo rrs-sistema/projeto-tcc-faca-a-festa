@@ -216,6 +216,8 @@ void main() {
     final gateway = _Gateway()..falhaRegistro = true;
     await _abrir(tester, gateway, size: const Size(390, 844), admin: true);
     await _detalhes(tester);
+    await tester.tap(find.text('Registrar recebimento'));
+    await tester.pumpAndSettle();
     tester.view.viewInsets = const FakeViewPadding(bottom: 300);
     addTearDown(tester.view.resetViewInsets);
     await tester.pumpAndSettle();
@@ -223,7 +225,7 @@ void main() {
         of: find.byType(ComissaoModal), matching: find.byType(TextField));
     await tester.ensureVisible(campo);
     await tester.enterText(campo, '0');
-    final registrar = find.text('Registrar recebimento');
+    final registrar = find.text('Revisar recebimento');
     expect(tester.getRect(registrar).bottom, lessThan(544));
     await tester.tap(registrar);
     await tester.pumpAndSettle();
@@ -231,6 +233,9 @@ void main() {
     expect(gateway.escritas, 0);
     await tester.enterText(campo, '25,00');
     await tester.tap(registrar);
+    await tester.pumpAndSettle();
+    expect(gateway.escritas, 0);
+    await tester.tap(find.text('Confirmar registro'));
     await tester.pumpAndSettle();
     expect(gateway.escritas, 1);
     expect(find.byType(ComissaoModal), findsOneWidget);
@@ -270,13 +275,28 @@ void main() {
       (tester) async {
     final gateway = _Gateway();
     final c = await _abrir(tester, gateway, admin: true);
+    await _capturar(tester, 'admin-comissoes');
     await _detalhes(tester);
+    expect(find.byType(TextField), findsNothing);
+    await tester.tap(find.text('Registrar recebimento'));
+    await tester.pumpAndSettle();
+    await _capturar(tester, 'admin-formulario-recebimento');
     final campo = find.descendant(
         of: find.byType(ComissaoModal), matching: find.byType(TextField));
     await tester.ensureVisible(campo);
     await tester.pumpAndSettle();
     await tester.enterText(campo, '25,50');
-    await tester.tap(find.text('Registrar recebimento'));
+    await tester.tap(find.text('Revisar recebimento'));
+    await tester.pumpAndSettle();
+    expect(gateway.escritas, 0);
+    await _capturar(tester, 'admin-revisao-recebimento');
+    await tester.tap(find.text('Voltar'));
+    await tester.pumpAndSettle();
+    expect(gateway.escritas, 0);
+    expect(tester.widget<TextField>(campo).controller!.text, '25,50');
+    await tester.tap(find.text('Revisar recebimento'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Confirmar registro'));
     await tester.pumpAndSettle();
     expect(gateway.escritas, 1);
     expect(gateway.valorRegistrado, 2550);

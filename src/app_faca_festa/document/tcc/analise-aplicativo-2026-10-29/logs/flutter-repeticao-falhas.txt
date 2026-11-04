@@ -1,0 +1,1860 @@
+00:00 +0: loading D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_decisoes_test.dart
+00:00 +0: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_decisoes_test.dart: consolida compras, orçamento e pagamentos sem confundir fluxo de caixa com custo
+00:00 +1: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_decisoes_test.dart: conferência explícita distingue despesa realizada de compra futura e invalida quando o valor muda
+00:00 +1 -1: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_decisoes_test.dart: conferência explícita distingue despesa realizada de compra futura e invalida quando o valor muda [E]
+  Expected: false
+    Actual: <true>
+  
+  package:matcher                                                expect
+  package:flutter_test/src/widget_tester.dart 480:18             expect
+  test\features\calculadora\calculadora_decisoes_test.dart 90:5  main.<fn>
+  
+00:00 +1 -1: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_decisoes_test.dart: espaço sem itens do cardápio só deixa de ser ambíguo depois de declaração explícita
+00:00 +2 -1: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_decisoes_test.dart: preço ou quantidade desconhecidos não são custo zero definitivo
+00:00 +3 -1: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_decisoes_test.dart: orçamento que pode cobrir a compra restante bloqueia soma duplicada
+00:00 +4 -1: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_decisoes_test.dart: compra física sem registro de custo não vira saldo financeiro fictício
+00:00 +5 -1: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_decisoes_test.dart: consulta incompleta e item sem regra impedem afirmar que cabe no limite
+00:00 +6 -1: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_decisoes_test.dart: cobertura contratada e estoque completo não exigem preço para comprar zero
+00:00 +7 -1: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_decisoes_test.dart: refeição completa aponta falta de principal sem impor isso ao coffee break
+00:00 +8 -1: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_decisoes_test.dart: alternativas não declaradas geram orientação sem modificar porções
+00:00 +9 -1: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_decisoes_test.dart: público infantil sem alimento participante é uma pendência explícita
+00:00 +10 -1: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_decisoes_test.dart: substituição usa a nova porção e preço sem alterar o original
+00:00 +11 -1: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_decisoes_test.dart: troca sem preço, estado ou papel compatível é recusada
+00:00 +12 -1: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_decisoes_test.dart: outro item sem preço torna a economia total desconhecida
+00:00 +13 -1: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_decisoes_test.dart: menos variedade preserva outra alternativa e recompõe participação
+00:00 +14 -1: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_decisoes_test.dart: não retira alimento independente nem troca papéis entre grupos
+00:00 +15 -1: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_decisoes_test.dart: novas referências preservam fonte, estado e unidade específica
+00:00 +16 -1: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_decisoes_test.dart: medição de sessão exporta contagens sem nomes ou identificadores
+00:00 +17 -1: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_jornada_base_test.dart: rascunho preserva regras, seleções e premissas ao reabrir e vincula uma vez por ID
+[CalculadoraFestaController] Itens carregados do Firestore | tipoEvento=aniversario | perfil=padrao | total=5
+[CalculadoraFestaController] Itens carregados do Firestore | tipoEvento=aniversario | perfil=padrao | total=5
+00:01 +18 -1: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_jornada_base_test.dart: novo cadastro não herda evento, público ou limite do evento ativo e devolve o rascunho
+00:03 +19 -1: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_jornada_base_test.dart: novo cadastro não herda evento, público ou limite do evento ativo e devolve o rascunho
+🎯 [ThemeController] Instância única ativa.
+[CalculadoraFestaController] Itens carregados do Firestore | tipoEvento=aniversario | perfil=padrao | total=5
+00:03 +20 -1: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_operacao_layout_test.dart: estoque usa uma janela e voltar ou cancelar não cadastram lote
+══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+The following assertion was thrown running a test:
+The finder "Found 0 widgets with widget matching predicate: []" (used in a call to "tap()") could
+not find any matching widgets.
+
+When the exception was thrown, this was the stack:
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:1895:7)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1795:12)
+#2      WidgetController.tap (package:flutter_test/src/controller.dart:1043:18)
+#3      main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_operacao_layout_test.dart:67:18)
+<asynchronous suspension>
+#4      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#5      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided one frame from package:stack_trace)
+
+The test description was:
+  estoque usa uma janela e voltar ou cancelar não cadastram lote
+════════════════════════════════════════════════════════════════════════════════════════════════════
+00:04 +20 -2: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/ergonomia_jornada_test.dart: preço e fechamento ficam utilizáveis em paisagem; falha preserva valor e permite tentar novamente
+00:04 +20 -2: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_operacao_layout_test.dart: estoque usa uma janela e voltar ou cancelar não cadastram lote [E]
+  Test failed. See exception logs above.
+  The test description was: estoque usa uma janela e voltar ou cancelar não cadastram lote
+  
+00:04 +21 -2: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/ergonomia_jornada_test.dart: preço e fechamento ficam utilizáveis em paisagem; falha preserva valor e permite tentar novamente
+00:05 +21 -2: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/layout_operacional_test.dart: consulta inválida mantém filtros editáveis e limpar recupera o relatório
+══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+The following TestFailure was thrown running a test:
+Expected: exactly one matching candidate
+  Actual: _KeyWidgetFinder:<Found 0 widgets with key [<'filtro-evento'>]: []>
+   Which: means none were found but one was expected
+
+When the exception was thrown, this was the stack:
+#4      main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/layout_operacional_test.dart:97:5)
+<asynchronous suspension>
+#5      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#6      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided one frame from package:stack_trace)
+
+This was caught by the test expectation on the following line:
+  file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/layout_operacional_test.dart line 97
+The test description was:
+  consulta inválida mantém filtros editáveis e limpar recupera o relatório
+════════════════════════════════════════════════════════════════════════════════════════════════════
+00:05 +21 -3: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/ergonomia_jornada_test.dart: preço e fechamento ficam utilizáveis em paisagem; falha preserva valor e permite tentar novamente
+00:05 +21 -3: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/layout_operacional_test.dart: consulta inválida mantém filtros editáveis e limpar recupera o relatório [E]
+  Test failed. See exception logs above.
+  The test description was: consulta inválida mantém filtros editáveis e limpar recupera o relatório
+  
+00:05 +22 -3: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/ergonomia_jornada_test.dart: preço e fechamento ficam utilizáveis em paisagem; falha preserva valor e permite tentar novamente
+00:05 +22 -3: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_jornada_base_test.dart: lista atualiza público na calculadora aberta e respeita manual
+🎯 [ThemeController] Instância única ativa.
+[CalculadoraFestaController] Itens carregados do Firestore | tipoEvento=aniversario | perfil=padrao | total=5
+
+Warning: A call to drag() with finder "Found 1 widget with type "Scrollable" (ignoring all but first): [
+  Scrollable-[GlobalKey#cc730](axisDirection: right, physics: null, restorationId: "editable", dependencies: [InheritedCupertinoTheme, MediaQuery, UnmanagedRestorationScope, _InheritedTheme, _LocalizationsScope-[GlobalKey#64375]], state: ScrollableState#b16da(position: ScrollPositionWithSingleContext#9c6eb(offset: 0.0, range: 0.0..0.0, viewport: 223.3, ScrollableState, ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics, IdleScrollActivity#7d32a, ScrollDirection.idle), effective physics: ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics)),
+]" derived an Offset (Offset(647.3, 1294.5)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+Indeed, Offset(647.3, 1294.5) is outside the bounds of the root of the render tree, Size(800.0, 600.0).
+The finder corresponds to this RenderBox: RenderPointerListener#54d62 relayoutBoundary=up21
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#f7660(_ReusableRenderView#078a1), HitTestEntry<HitTestTarget>#ed1c4(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:1944:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1795:12)
+#2      WidgetController.drag (package:flutter_test/src/controller.dart:1474:7)
+#3      WidgetController.dragUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2227:15)
+#4      _rootRun (dart:async/zone.dart:1414:13)
+#5      _CustomZone.run (dart:async/zone.dart:1317:19)
+#6      TestAsyncUtils.guard (package:flutter_test/src/test_async_utils.dart:74:41)
+#7      WidgetController.dragUntilVisible (package:flutter_test/src/controller.dart:2225:27)
+#8      WidgetController.scrollUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2197:13)
+#9      _rootRun (dart:async/zone.dart:1414:13)
+#10     _CustomZone.run (dart:async/zone.dart:1317:19)
+#11     TestAsyncUtils.guard (package:flutter_test/src/test_async_utils.dart:74:41)
+#12     WidgetController.scrollUntilVisible (package:flutter_test/src/controller.dart:2185:27)
+#13     main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_jornada_base_test.dart:260:18)
+<asynchronous suspension>
+#14     testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#15     TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+#16     StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "drag()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+
+Warning: A call to drag() with finder "Found 1 widget with type "Scrollable" (ignoring all but first): [
+  Scrollable-[GlobalKey#cc730](axisDirection: right, physics: null, restorationId: "editable", dependencies: [InheritedCupertinoTheme, MediaQuery, UnmanagedRestorationScope, _InheritedTheme, _LocalizationsScope-[GlobalKey#64375]], state: ScrollableState#b16da(position: ScrollPositionWithSingleContext#9c6eb(offset: 0.0, range: 0.0..0.0, viewport: 223.3, ScrollableState, ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics, IdleScrollActivity#7d32a, ScrollDirection.idle), effective physics: ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics)),
+]" derived an Offset (Offset(647.3, 1294.5)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+Indeed, Offset(647.3, 1294.5) is outside the bounds of the root of the render tree, Size(800.0, 600.0).
+The finder corresponds to this RenderBox: RenderPointerListener#54d62 relayoutBoundary=up21
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#9bcc6(_ReusableRenderView#078a1), HitTestEntry<HitTestTarget>#9e31c(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:1944:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1795:12)
+#2      WidgetController.drag (package:flutter_test/src/controller.dart:1474:7)
+#3      WidgetController.dragUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2227:15)
+<asynchronous suspension>
+#4      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#5      WidgetController.scrollUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2197:7)
+<asynchronous suspension>
+#6      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#7      main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_jornada_base_test.dart:260:5)
+<asynchronous suspension>
+#8      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#9      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+#10     StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "drag()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+
+Warning: A call to drag() with finder "Found 1 widget with type "Scrollable" (ignoring all but first): [
+  Scrollable-[GlobalKey#cc730](axisDirection: right, physics: null, restorationId: "editable", dependencies: [InheritedCupertinoTheme, MediaQuery, UnmanagedRestorationScope, _InheritedTheme, _LocalizationsScope-[GlobalKey#64375]], state: ScrollableState#b16da(position: ScrollPositionWithSingleContext#9c6eb(offset: 0.0, range: 0.0..0.0, viewport: 223.3, ScrollableState, ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics, IdleScrollActivity#7d32a, ScrollDirection.idle), effective physics: ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics)),
+]" derived an Offset (Offset(647.3, 1294.5)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+Indeed, Offset(647.3, 1294.5) is outside the bounds of the root of the render tree, Size(800.0, 600.0).
+The finder corresponds to this RenderBox: RenderPointerListener#54d62 relayoutBoundary=up21
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#289d1(_ReusableRenderView#078a1), HitTestEntry<HitTestTarget>#afe37(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:1944:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1795:12)
+#2      WidgetController.drag (package:flutter_test/src/controller.dart:1474:7)
+#3      WidgetController.dragUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2227:15)
+<asynchronous suspension>
+#4      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#5      WidgetController.scrollUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2197:7)
+<asynchronous suspension>
+#6      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#7      main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_jornada_base_test.dart:260:5)
+<asynchronous suspension>
+#8      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#9      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+#10     StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "drag()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+
+Warning: A call to drag() with finder "Found 1 widget with type "Scrollable" (ignoring all but first): [
+  Scrollable-[GlobalKey#cc730](axisDirection: right, physics: null, restorationId: "editable", dependencies: [InheritedCupertinoTheme, MediaQuery, UnmanagedRestorationScope, _InheritedTheme, _LocalizationsScope-[GlobalKey#64375]], state: ScrollableState#b16da(position: ScrollPositionWithSingleContext#9c6eb(offset: 0.0, range: 0.0..0.0, viewport: 223.3, ScrollableState, ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics, IdleScrollActivity#7d32a, ScrollDirection.idle), effective physics: ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics)),
+]" derived an Offset (Offset(647.3, 1294.5)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+Indeed, Offset(647.3, 1294.5) is outside the bounds of the root of the render tree, Size(800.0, 600.0).
+The finder corresponds to this RenderBox: RenderPointerListener#54d62 relayoutBoundary=up21
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#0a5fb(_ReusableRenderView#078a1), HitTestEntry<HitTestTarget>#69078(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:1944:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1795:12)
+#2      WidgetController.drag (package:flutter_test/src/controller.dart:1474:7)
+#3      WidgetController.dragUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2227:15)
+<asynchronous suspension>
+#4      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#5      WidgetController.scrollUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2197:7)
+<asynchronous suspension>
+#6      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#7      main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_jornada_base_test.dart:260:5)
+<asynchronous suspension>
+#8      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#9      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+#10     StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "drag()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+
+Warning: A call to drag() with finder "Found 1 widget with type "Scrollable" (ignoring all but first): [
+  Scrollable-[GlobalKey#cc730](axisDirection: right, physics: null, restorationId: "editable", dependencies: [InheritedCupertinoTheme, MediaQuery, UnmanagedRestorationScope, _InheritedTheme, _LocalizationsScope-[GlobalKey#64375]], state: ScrollableState#b16da(position: ScrollPositionWithSingleContext#9c6eb(offset: 0.0, range: 0.0..0.0, viewport: 223.3, ScrollableState, ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics, IdleScrollActivity#7d32a, ScrollDirection.idle), effective physics: ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics)),
+]" derived an Offset (Offset(647.3, 1294.5)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+Indeed, Offset(647.3, 1294.5) is outside the bounds of the root of the render tree, Size(800.0, 600.0).
+The finder corresponds to this RenderBox: RenderPointerListener#54d62 relayoutBoundary=up21
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#b7937(_ReusableRenderView#078a1), HitTestEntry<HitTestTarget>#1302a(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:1944:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1795:12)
+#2      WidgetController.drag (package:flutter_test/src/controller.dart:1474:7)
+#3      WidgetController.dragUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2227:15)
+<asynchronous suspension>
+#4      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#5      WidgetController.scrollUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2197:7)
+<asynchronous suspension>
+#6      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#7      main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_jornada_base_test.dart:260:5)
+<asynchronous suspension>
+#8      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#9      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+#10     StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "drag()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+
+Warning: A call to drag() with finder "Found 1 widget with type "Scrollable" (ignoring all but first): [
+  Scrollable-[GlobalKey#cc730](axisDirection: right, physics: null, restorationId: "editable", dependencies: [InheritedCupertinoTheme, MediaQuery, UnmanagedRestorationScope, _InheritedTheme, _LocalizationsScope-[GlobalKey#64375]], state: ScrollableState#b16da(position: ScrollPositionWithSingleContext#9c6eb(offset: 0.0, range: 0.0..0.0, viewport: 223.3, ScrollableState, ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics, IdleScrollActivity#7d32a, ScrollDirection.idle), effective physics: ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics)),
+]" derived an Offset (Offset(647.3, 1294.5)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+Indeed, Offset(647.3, 1294.5) is outside the bounds of the root of the render tree, Size(800.0, 600.0).
+The finder corresponds to this RenderBox: RenderPointerListener#54d62 relayoutBoundary=up21
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#8720a(_ReusableRenderView#078a1), HitTestEntry<HitTestTarget>#6e12c(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:1944:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1795:12)
+#2      WidgetController.drag (package:flutter_test/src/controller.dart:1474:7)
+#3      WidgetController.dragUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2227:15)
+<asynchronous suspension>
+#4      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#5      WidgetController.scrollUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2197:7)
+<asynchronous suspension>
+#6      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#7      main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_jornada_base_test.dart:260:5)
+<asynchronous suspension>
+#8      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#9      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+#10     StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "drag()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+
+Warning: A call to drag() with finder "Found 1 widget with type "Scrollable" (ignoring all but first): [
+  Scrollable-[GlobalKey#cc730](axisDirection: right, physics: null, restorationId: "editable", dependencies: [InheritedCupertinoTheme, MediaQuery, UnmanagedRestorationScope, _InheritedTheme, _LocalizationsScope-[GlobalKey#64375]], state: ScrollableState#b16da(position: ScrollPositionWithSingleContext#9c6eb(offset: 0.0, range: 0.0..0.0, viewport: 223.3, ScrollableState, ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics, IdleScrollActivity#7d32a, ScrollDirection.idle), effective physics: ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics)),
+]" derived an Offset (Offset(647.3, 1294.5)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+Indeed, Offset(647.3, 1294.5) is outside the bounds of the root of the render tree, Size(800.0, 600.0).
+The finder corresponds to this RenderBox: RenderPointerListener#54d62 relayoutBoundary=up21
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#731ef(_ReusableRenderView#078a1), HitTestEntry<HitTestTarget>#74b99(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:1944:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1795:12)
+#2      WidgetController.drag (package:flutter_test/src/controller.dart:1474:7)
+#3      WidgetController.dragUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2227:15)
+<asynchronous suspension>
+#4      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#5      WidgetController.scrollUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2197:7)
+<asynchronous suspension>
+#6      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#7      main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_jornada_base_test.dart:260:5)
+<asynchronous suspension>
+#8      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#9      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+#10     StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "drag()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+
+Warning: A call to drag() with finder "Found 1 widget with type "Scrollable" (ignoring all but first): [
+  Scrollable-[GlobalKey#cc730](axisDirection: right, physics: null, restorationId: "editable", dependencies: [InheritedCupertinoTheme, MediaQuery, UnmanagedRestorationScope, _InheritedTheme, _LocalizationsScope-[GlobalKey#64375]], state: ScrollableState#b16da(position: ScrollPositionWithSingleContext#9c6eb(offset: 0.0, range: 0.0..0.0, viewport: 223.3, ScrollableState, ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics, IdleScrollActivity#7d32a, ScrollDirection.idle), effective physics: ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics)),
+]" derived an Offset (Offset(647.3, 1294.5)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+Indeed, Offset(647.3, 1294.5) is outside the bounds of the root of the render tree, Size(800.0, 600.0).
+The finder corresponds to this RenderBox: RenderPointerListener#54d62 relayoutBoundary=up21
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#2095c(_ReusableRenderView#078a1), HitTestEntry<HitTestTarget>#91500(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:1944:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1795:12)
+#2      WidgetController.drag (package:flutter_test/src/controller.dart:1474:7)
+#3      WidgetController.dragUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2227:15)
+<asynchronous suspension>
+#4      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#5      WidgetController.scrollUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2197:7)
+<asynchronous suspension>
+#6      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#7      main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_jornada_base_test.dart:260:5)
+<asynchronous suspension>
+#8      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#9      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+#10     StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "drag()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+
+Warning: A call to drag() with finder "Found 1 widget with type "Scrollable" (ignoring all but first): [
+  Scrollable-[GlobalKey#cc730](axisDirection: right, physics: null, restorationId: "editable", dependencies: [InheritedCupertinoTheme, MediaQuery, UnmanagedRestorationScope, _InheritedTheme, _LocalizationsScope-[GlobalKey#64375]], state: ScrollableState#b16da(position: ScrollPositionWithSingleContext#9c6eb(offset: 0.0, range: 0.0..0.0, viewport: 223.3, ScrollableState, ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics, IdleScrollActivity#7d32a, ScrollDirection.idle), effective physics: ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics)),
+]" derived an Offset (Offset(647.3, 1294.5)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+Indeed, Offset(647.3, 1294.5) is outside the bounds of the root of the render tree, Size(800.0, 600.0).
+The finder corresponds to this RenderBox: RenderPointerListener#54d62 relayoutBoundary=up21
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#4e1e3(_ReusableRenderView#078a1), HitTestEntry<HitTestTarget>#aee16(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:1944:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1795:12)
+#2      WidgetController.drag (package:flutter_test/src/controller.dart:1474:7)
+#3      WidgetController.dragUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2227:15)
+<asynchronous suspension>
+#4      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#5      WidgetController.scrollUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2197:7)
+<asynchronous suspension>
+#6      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#7      main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_jornada_base_test.dart:260:5)
+<asynchronous suspension>
+#8      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#9      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+#10     StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "drag()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+
+Warning: A call to drag() with finder "Found 1 widget with type "Scrollable" (ignoring all but first): [
+  Scrollable-[GlobalKey#cc730](axisDirection: right, physics: null, restorationId: "editable", dependencies: [InheritedCupertinoTheme, MediaQuery, UnmanagedRestorationScope, _InheritedTheme, _LocalizationsScope-[GlobalKey#64375]], state: ScrollableState#b16da(position: ScrollPositionWithSingleContext#9c6eb(offset: 0.0, range: 0.0..0.0, viewport: 223.3, ScrollableState, ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics, IdleScrollActivity#7d32a, ScrollDirection.idle), effective physics: ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics)),
+]" derived an Offset (Offset(647.3, 1294.5)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+Indeed, Offset(647.3, 1294.5) is outside the bounds of the root of the render tree, Size(800.0, 600.0).
+The finder corresponds to this RenderBox: RenderPointerListener#54d62 relayoutBoundary=up21
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#1c4c3(_ReusableRenderView#078a1), HitTestEntry<HitTestTarget>#17d88(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:1944:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1795:12)
+#2      WidgetController.drag (package:flutter_test/src/controller.dart:1474:7)
+#3      WidgetController.dragUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2227:15)
+<asynchronous suspension>
+#4      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#5      WidgetController.scrollUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2197:7)
+<asynchronous suspension>
+#6      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#7      main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_jornada_base_test.dart:260:5)
+<asynchronous suspension>
+#8      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#9      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+#10     StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "drag()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+
+Warning: A call to drag() with finder "Found 1 widget with type "Scrollable" (ignoring all but first): [
+  Scrollable-[GlobalKey#cc730](axisDirection: right, physics: null, restorationId: "editable", dependencies: [InheritedCupertinoTheme, MediaQuery, UnmanagedRestorationScope, _InheritedTheme, _LocalizationsScope-[GlobalKey#64375]], state: ScrollableState#b16da(position: ScrollPositionWithSingleContext#9c6eb(offset: 0.0, range: 0.0..0.0, viewport: 223.3, ScrollableState, ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics, IdleScrollActivity#7d32a, ScrollDirection.idle), effective physics: ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics)),
+]" derived an Offset (Offset(647.3, 1294.5)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+Indeed, Offset(647.3, 1294.5) is outside the bounds of the root of the render tree, Size(800.0, 600.0).
+The finder corresponds to this RenderBox: RenderPointerListener#54d62 relayoutBoundary=up21
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#020ca(_ReusableRenderView#078a1), HitTestEntry<HitTestTarget>#fcb47(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:1944:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1795:12)
+#2      WidgetController.drag (package:flutter_test/src/controller.dart:1474:7)
+#3      WidgetController.dragUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2227:15)
+<asynchronous suspension>
+#4      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#5      WidgetController.scrollUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2197:7)
+<asynchronous suspension>
+#6      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#7      main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_jornada_base_test.dart:260:5)
+<asynchronous suspension>
+#8      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#9      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+#10     StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "drag()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+
+Warning: A call to drag() with finder "Found 1 widget with type "Scrollable" (ignoring all but first): [
+  Scrollable-[GlobalKey#cc730](axisDirection: right, physics: null, restorationId: "editable", dependencies: [InheritedCupertinoTheme, MediaQuery, UnmanagedRestorationScope, _InheritedTheme, _LocalizationsScope-[GlobalKey#64375]], state: ScrollableState#b16da(position: ScrollPositionWithSingleContext#9c6eb(offset: 0.0, range: 0.0..0.0, viewport: 223.3, ScrollableState, ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics, IdleScrollActivity#7d32a, ScrollDirection.idle), effective physics: ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics)),
+]" derived an Offset (Offset(647.3, 1294.5)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+Indeed, Offset(647.3, 1294.5) is outside the bounds of the root of the render tree, Size(800.0, 600.0).
+The finder corresponds to this RenderBox: RenderPointerListener#54d62 relayoutBoundary=up21
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#f98ae(_ReusableRenderView#078a1), HitTestEntry<HitTestTarget>#ec2ea(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:1944:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1795:12)
+#2      WidgetController.drag (package:flutter_test/src/controller.dart:1474:7)
+#3      WidgetController.dragUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2227:15)
+<asynchronous suspension>
+#4      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#5      WidgetController.scrollUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2197:7)
+<asynchronous suspension>
+#6      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#7      main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_jornada_base_test.dart:260:5)
+<asynchronous suspension>
+#8      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#9      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+#10     StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "drag()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+
+Warning: A call to drag() with finder "Found 1 widget with type "Scrollable" (ignoring all but first): [
+  Scrollable-[GlobalKey#cc730](axisDirection: right, physics: null, restorationId: "editable", dependencies: [InheritedCupertinoTheme, MediaQuery, UnmanagedRestorationScope, _InheritedTheme, _LocalizationsScope-[GlobalKey#64375]], state: ScrollableState#b16da(position: ScrollPositionWithSingleContext#9c6eb(offset: 0.0, range: 0.0..0.0, viewport: 223.3, ScrollableState, ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics, IdleScrollActivity#7d32a, ScrollDirection.idle), effective physics: ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics)),
+]" derived an Offset (Offset(647.3, 1294.5)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+Indeed, Offset(647.3, 1294.5) is outside the bounds of the root of the render tree, Size(800.0, 600.0).
+The finder corresponds to this RenderBox: RenderPointerListener#54d62 relayoutBoundary=up21
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#8a513(_ReusableRenderView#078a1), HitTestEntry<HitTestTarget>#46405(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:1944:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1795:12)
+#2      WidgetController.drag (package:flutter_test/src/controller.dart:1474:7)
+#3      WidgetController.dragUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2227:15)
+<asynchronous suspension>
+#4      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#5      WidgetController.scrollUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2197:7)
+<asynchronous suspension>
+#6      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#7      main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_jornada_base_test.dart:260:5)
+<asynchronous suspension>
+#8      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#9      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+#10     StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "drag()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+
+Warning: A call to drag() with finder "Found 1 widget with type "Scrollable" (ignoring all but first): [
+  Scrollable-[GlobalKey#cc730](axisDirection: right, physics: null, restorationId: "editable", dependencies: [InheritedCupertinoTheme, MediaQuery, UnmanagedRestorationScope, _InheritedTheme, _LocalizationsScope-[GlobalKey#64375]], state: ScrollableState#b16da(position: ScrollPositionWithSingleContext#9c6eb(offset: 0.0, range: 0.0..0.0, viewport: 223.3, ScrollableState, ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics, IdleScrollActivity#7d32a, ScrollDirection.idle), effective physics: ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics)),
+]" derived an Offset (Offset(647.3, 1294.5)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+Indeed, Offset(647.3, 1294.5) is outside the bounds of the root of the render tree, Size(800.0, 600.0).
+The finder corresponds to this RenderBox: RenderPointerListener#54d62 relayoutBoundary=up21
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#9ac65(_ReusableRenderView#078a1), HitTestEntry<HitTestTarget>#7a0e7(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:1944:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1795:12)
+#2      WidgetController.drag (package:flutter_test/src/controller.dart:1474:7)
+#3      WidgetController.dragUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2227:15)
+<asynchronous suspension>
+#4      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#5      WidgetController.scrollUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2197:7)
+<asynchronous suspension>
+#6      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#7      main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_jornada_base_test.dart:260:5)
+<asynchronous suspension>
+#8      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#9      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+#10     StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "drag()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+
+Warning: A call to drag() with finder "Found 1 widget with type "Scrollable" (ignoring all but first): [
+  Scrollable-[GlobalKey#cc730](axisDirection: right, physics: null, restorationId: "editable", dependencies: [InheritedCupertinoTheme, MediaQuery, UnmanagedRestorationScope, _InheritedTheme, _LocalizationsScope-[GlobalKey#64375]], state: ScrollableState#b16da(position: ScrollPositionWithSingleContext#9c6eb(offset: 0.0, range: 0.0..0.0, viewport: 223.3, ScrollableState, ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics, IdleScrollActivity#7d32a, ScrollDirection.idle), effective physics: ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics)),
+]" derived an Offset (Offset(647.3, 1294.5)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+Indeed, Offset(647.3, 1294.5) is outside the bounds of the root of the render tree, Size(800.0, 600.0).
+The finder corresponds to this RenderBox: RenderPointerListener#54d62 relayoutBoundary=up21
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#b3d2d(_ReusableRenderView#078a1), HitTestEntry<HitTestTarget>#4fe28(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:1944:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1795:12)
+#2      WidgetController.drag (package:flutter_test/src/controller.dart:1474:7)
+#3      WidgetController.dragUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2227:15)
+<asynchronous suspension>
+#4      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#5      WidgetController.scrollUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2197:7)
+<asynchronous suspension>
+#6      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#7      main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_jornada_base_test.dart:260:5)
+<asynchronous suspension>
+#8      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#9      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+#10     StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "drag()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+
+Warning: A call to drag() with finder "Found 1 widget with type "Scrollable" (ignoring all but first): [
+  Scrollable-[GlobalKey#cc730](axisDirection: right, physics: null, restorationId: "editable", dependencies: [InheritedCupertinoTheme, MediaQuery, UnmanagedRestorationScope, _InheritedTheme, _LocalizationsScope-[GlobalKey#64375]], state: ScrollableState#b16da(position: ScrollPositionWithSingleContext#9c6eb(offset: 0.0, range: 0.0..0.0, viewport: 223.3, ScrollableState, ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics, IdleScrollActivity#7d32a, ScrollDirection.idle), effective physics: ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics)),
+]" derived an Offset (Offset(647.3, 1294.5)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+Indeed, Offset(647.3, 1294.5) is outside the bounds of the root of the render tree, Size(800.0, 600.0).
+The finder corresponds to this RenderBox: RenderPointerListener#54d62 relayoutBoundary=up21
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#57a64(_ReusableRenderView#078a1), HitTestEntry<HitTestTarget>#d6a3c(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:1944:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1795:12)
+#2      WidgetController.drag (package:flutter_test/src/controller.dart:1474:7)
+#3      WidgetController.dragUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2227:15)
+<asynchronous suspension>
+#4      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#5      WidgetController.scrollUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2197:7)
+<asynchronous suspension>
+#6      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#7      main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_jornada_base_test.dart:260:5)
+<asynchronous suspension>
+#8      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#9      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+#10     StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "drag()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+
+Warning: A call to drag() with finder "Found 1 widget with type "Scrollable" (ignoring all but first): [
+  Scrollable-[GlobalKey#cc730](axisDirection: right, physics: null, restorationId: "editable", dependencies: [InheritedCupertinoTheme, MediaQuery, UnmanagedRestorationScope, _InheritedTheme, _LocalizationsScope-[GlobalKey#64375]], state: ScrollableState#b16da(position: ScrollPositionWithSingleContext#9c6eb(offset: 0.0, range: 0.0..0.0, viewport: 223.3, ScrollableState, ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics, IdleScrollActivity#7d32a, ScrollDirection.idle), effective physics: ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics)),
+]" derived an Offset (Offset(647.3, 1294.5)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+Indeed, Offset(647.3, 1294.5) is outside the bounds of the root of the render tree, Size(800.0, 600.0).
+The finder corresponds to this RenderBox: RenderPointerListener#54d62 relayoutBoundary=up21
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#5c6f6(_ReusableRenderView#078a1), HitTestEntry<HitTestTarget>#52bc5(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:1944:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1795:12)
+#2      WidgetController.drag (package:flutter_test/src/controller.dart:1474:7)
+#3      WidgetController.dragUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2227:15)
+<asynchronous suspension>
+#4      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#5      WidgetController.scrollUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2197:7)
+<asynchronous suspension>
+#6      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#7      main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_jornada_base_test.dart:260:5)
+<asynchronous suspension>
+#8      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#9      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+#10     StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "drag()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+
+Warning: A call to drag() with finder "Found 1 widget with type "Scrollable" (ignoring all but first): [
+  Scrollable-[GlobalKey#cc730](axisDirection: right, physics: null, restorationId: "editable", dependencies: [InheritedCupertinoTheme, MediaQuery, UnmanagedRestorationScope, _InheritedTheme, _LocalizationsScope-[GlobalKey#64375]], state: ScrollableState#b16da(position: ScrollPositionWithSingleContext#9c6eb(offset: 0.0, range: 0.0..0.0, viewport: 223.3, ScrollableState, ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics, IdleScrollActivity#7d32a, ScrollDirection.idle), effective physics: ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics)),
+]" derived an Offset (Offset(647.3, 1294.5)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+Indeed, Offset(647.3, 1294.5) is outside the bounds of the root of the render tree, Size(800.0, 600.0).
+The finder corresponds to this RenderBox: RenderPointerListener#54d62 relayoutBoundary=up21
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#c0846(_ReusableRenderView#078a1), HitTestEntry<HitTestTarget>#9c901(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:1944:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1795:12)
+#2      WidgetController.drag (package:flutter_test/src/controller.dart:1474:7)
+#3      WidgetController.dragUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2227:15)
+<asynchronous suspension>
+#4      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#5      WidgetController.scrollUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2197:7)
+<asynchronous suspension>
+#6      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#7      main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_jornada_base_test.dart:260:5)
+<asynchronous suspension>
+#8      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#9      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+#10     StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "drag()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+
+Warning: A call to drag() with finder "Found 1 widget with type "Scrollable" (ignoring all but first): [
+  Scrollable-[GlobalKey#cc730](axisDirection: right, physics: null, restorationId: "editable", dependencies: [InheritedCupertinoTheme, MediaQuery, UnmanagedRestorationScope, _InheritedTheme, _LocalizationsScope-[GlobalKey#64375]], state: ScrollableState#b16da(position: ScrollPositionWithSingleContext#9c6eb(offset: 0.0, range: 0.0..0.0, viewport: 223.3, ScrollableState, ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics, IdleScrollActivity#7d32a, ScrollDirection.idle), effective physics: ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics)),
+]" derived an Offset (Offset(647.3, 1294.5)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+Indeed, Offset(647.3, 1294.5) is outside the bounds of the root of the render tree, Size(800.0, 600.0).
+The finder corresponds to this RenderBox: RenderPointerListener#54d62 relayoutBoundary=up21
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#af2fa(_ReusableRenderView#078a1), HitTestEntry<HitTestTarget>#eabd8(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:1944:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1795:12)
+#2      WidgetController.drag (package:flutter_test/src/controller.dart:1474:7)
+#3      WidgetController.dragUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2227:15)
+<asynchronous suspension>
+#4      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#5      WidgetController.scrollUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2197:7)
+<asynchronous suspension>
+#6      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#7      main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_jornada_base_test.dart:260:5)
+<asynchronous suspension>
+#8      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#9      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+#10     StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "drag()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+
+Warning: A call to drag() with finder "Found 1 widget with type "Scrollable" (ignoring all but first): [
+  Scrollable-[GlobalKey#cc730](axisDirection: right, physics: null, restorationId: "editable", dependencies: [InheritedCupertinoTheme, MediaQuery, UnmanagedRestorationScope, _InheritedTheme, _LocalizationsScope-[GlobalKey#64375]], state: ScrollableState#b16da(position: ScrollPositionWithSingleContext#9c6eb(offset: 0.0, range: 0.0..0.0, viewport: 223.3, ScrollableState, ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics, IdleScrollActivity#7d32a, ScrollDirection.idle), effective physics: ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics)),
+]" derived an Offset (Offset(647.3, 1294.5)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+Indeed, Offset(647.3, 1294.5) is outside the bounds of the root of the render tree, Size(800.0, 600.0).
+The finder corresponds to this RenderBox: RenderPointerListener#54d62 relayoutBoundary=up21
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#7f841(_ReusableRenderView#078a1), HitTestEntry<HitTestTarget>#9faf4(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:1944:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1795:12)
+#2      WidgetController.drag (package:flutter_test/src/controller.dart:1474:7)
+#3      WidgetController.dragUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2227:15)
+<asynchronous suspension>
+#4      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#5      WidgetController.scrollUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2197:7)
+<asynchronous suspension>
+#6      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#7      main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_jornada_base_test.dart:260:5)
+<asynchronous suspension>
+#8      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#9      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+#10     StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "drag()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+
+Warning: A call to drag() with finder "Found 1 widget with type "Scrollable" (ignoring all but first): [
+  Scrollable-[GlobalKey#cc730](axisDirection: right, physics: null, restorationId: "editable", dependencies: [InheritedCupertinoTheme, MediaQuery, UnmanagedRestorationScope, _InheritedTheme, _LocalizationsScope-[GlobalKey#64375]], state: ScrollableState#b16da(position: ScrollPositionWithSingleContext#9c6eb(offset: 0.0, range: 0.0..0.0, viewport: 223.3, ScrollableState, ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics, IdleScrollActivity#7d32a, ScrollDirection.idle), effective physics: ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics)),
+]" derived an Offset (Offset(647.3, 1294.5)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+Indeed, Offset(647.3, 1294.5) is outside the bounds of the root of the render tree, Size(800.0, 600.0).
+The finder corresponds to this RenderBox: RenderPointerListener#54d62 relayoutBoundary=up21
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#fb6dc(_ReusableRenderView#078a1), HitTestEntry<HitTestTarget>#98805(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:1944:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1795:12)
+#2      WidgetController.drag (package:flutter_test/src/controller.dart:1474:7)
+#3      WidgetController.dragUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2227:15)
+<asynchronous suspension>
+#4      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#5      WidgetController.scrollUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2197:7)
+<asynchronous suspension>
+#6      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#7      main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_jornada_base_test.dart:260:5)
+<asynchronous suspension>
+#8      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#9      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+#10     StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "drag()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+
+Warning: A call to drag() with finder "Found 1 widget with type "Scrollable" (ignoring all but first): [
+  Scrollable-[GlobalKey#cc730](axisDirection: right, physics: null, restorationId: "editable", dependencies: [InheritedCupertinoTheme, MediaQuery, UnmanagedRestorationScope, _InheritedTheme, _LocalizationsScope-[GlobalKey#64375]], state: ScrollableState#b16da(position: ScrollPositionWithSingleContext#9c6eb(offset: 0.0, range: 0.0..0.0, viewport: 223.3, ScrollableState, ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics, IdleScrollActivity#7d32a, ScrollDirection.idle), effective physics: ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics)),
+]" derived an Offset (Offset(647.3, 1294.5)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+Indeed, Offset(647.3, 1294.5) is outside the bounds of the root of the render tree, Size(800.0, 600.0).
+The finder corresponds to this RenderBox: RenderPointerListener#54d62 relayoutBoundary=up21
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#b76ce(_ReusableRenderView#078a1), HitTestEntry<HitTestTarget>#ee4a7(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:1944:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1795:12)
+#2      WidgetController.drag (package:flutter_test/src/controller.dart:1474:7)
+#3      WidgetController.dragUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2227:15)
+<asynchronous suspension>
+#4      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#5      WidgetController.scrollUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2197:7)
+<asynchronous suspension>
+#6      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#7      main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_jornada_base_test.dart:260:5)
+<asynchronous suspension>
+#8      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#9      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+#10     StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "drag()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+
+Warning: A call to drag() with finder "Found 1 widget with type "Scrollable" (ignoring all but first): [
+  Scrollable-[GlobalKey#cc730](axisDirection: right, physics: null, restorationId: "editable", dependencies: [InheritedCupertinoTheme, MediaQuery, UnmanagedRestorationScope, _InheritedTheme, _LocalizationsScope-[GlobalKey#64375]], state: ScrollableState#b16da(position: ScrollPositionWithSingleContext#9c6eb(offset: 0.0, range: 0.0..0.0, viewport: 223.3, ScrollableState, ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics, IdleScrollActivity#7d32a, ScrollDirection.idle), effective physics: ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics)),
+]" derived an Offset (Offset(647.3, 1294.5)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+Indeed, Offset(647.3, 1294.5) is outside the bounds of the root of the render tree, Size(800.0, 600.0).
+The finder corresponds to this RenderBox: RenderPointerListener#54d62 relayoutBoundary=up21
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#f476f(_ReusableRenderView#078a1), HitTestEntry<HitTestTarget>#e72a5(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:1944:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1795:12)
+#2      WidgetController.drag (package:flutter_test/src/controller.dart:1474:7)
+#3      WidgetController.dragUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2227:15)
+<asynchronous suspension>
+#4      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#5      WidgetController.scrollUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2197:7)
+<asynchronous suspension>
+#6      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#7      main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_jornada_base_test.dart:260:5)
+<asynchronous suspension>
+#8      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#9      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+#10     StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "drag()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+
+Warning: A call to drag() with finder "Found 1 widget with type "Scrollable" (ignoring all but first): [
+  Scrollable-[GlobalKey#cc730](axisDirection: right, physics: null, restorationId: "editable", dependencies: [InheritedCupertinoTheme, MediaQuery, UnmanagedRestorationScope, _InheritedTheme, _LocalizationsScope-[GlobalKey#64375]], state: ScrollableState#b16da(position: ScrollPositionWithSingleContext#9c6eb(offset: 0.0, range: 0.0..0.0, viewport: 223.3, ScrollableState, ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics, IdleScrollActivity#7d32a, ScrollDirection.idle), effective physics: ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics)),
+]" derived an Offset (Offset(647.3, 1294.5)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+Indeed, Offset(647.3, 1294.5) is outside the bounds of the root of the render tree, Size(800.0, 600.0).
+The finder corresponds to this RenderBox: RenderPointerListener#54d62 relayoutBoundary=up21
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#421d3(_ReusableRenderView#078a1), HitTestEntry<HitTestTarget>#9e148(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:1944:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1795:12)
+#2      WidgetController.drag (package:flutter_test/src/controller.dart:1474:7)
+#3      WidgetController.dragUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2227:15)
+<asynchronous suspension>
+#4      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#5      WidgetController.scrollUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2197:7)
+<asynchronous suspension>
+#6      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#7      main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_jornada_base_test.dart:260:5)
+<asynchronous suspension>
+#8      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#9      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+#10     StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "drag()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+
+Warning: A call to drag() with finder "Found 1 widget with type "Scrollable" (ignoring all but first): [
+  Scrollable-[GlobalKey#cc730](axisDirection: right, physics: null, restorationId: "editable", dependencies: [InheritedCupertinoTheme, MediaQuery, UnmanagedRestorationScope, _InheritedTheme, _LocalizationsScope-[GlobalKey#64375]], state: ScrollableState#b16da(position: ScrollPositionWithSingleContext#9c6eb(offset: 0.0, range: 0.0..0.0, viewport: 223.3, ScrollableState, ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics, IdleScrollActivity#7d32a, ScrollDirection.idle), effective physics: ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics)),
+]" derived an Offset (Offset(647.3, 1294.5)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+Indeed, Offset(647.3, 1294.5) is outside the bounds of the root of the render tree, Size(800.0, 600.0).
+The finder corresponds to this RenderBox: RenderPointerListener#54d62 relayoutBoundary=up21
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#1ab31(_ReusableRenderView#078a1), HitTestEntry<HitTestTarget>#26759(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:1944:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1795:12)
+#2      WidgetController.drag (package:flutter_test/src/controller.dart:1474:7)
+#3      WidgetController.dragUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2227:15)
+<asynchronous suspension>
+#4      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#5      WidgetController.scrollUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2197:7)
+<asynchronous suspension>
+#6      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#7      main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_jornada_base_test.dart:260:5)
+<asynchronous suspension>
+#8      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#9      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+#10     StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "drag()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+
+Warning: A call to drag() with finder "Found 1 widget with type "Scrollable" (ignoring all but first): [
+  Scrollable-[GlobalKey#cc730](axisDirection: right, physics: null, restorationId: "editable", dependencies: [InheritedCupertinoTheme, MediaQuery, UnmanagedRestorationScope, _InheritedTheme, _LocalizationsScope-[GlobalKey#64375]], state: ScrollableState#b16da(position: ScrollPositionWithSingleContext#9c6eb(offset: 0.0, range: 0.0..0.0, viewport: 223.3, ScrollableState, ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics, IdleScrollActivity#7d32a, ScrollDirection.idle), effective physics: ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics)),
+]" derived an Offset (Offset(647.3, 1294.5)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+Indeed, Offset(647.3, 1294.5) is outside the bounds of the root of the render tree, Size(800.0, 600.0).
+The finder corresponds to this RenderBox: RenderPointerListener#54d62 relayoutBoundary=up21
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#395d7(_ReusableRenderView#078a1), HitTestEntry<HitTestTarget>#03458(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:1944:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1795:12)
+#2      WidgetController.drag (package:flutter_test/src/controller.dart:1474:7)
+#3      WidgetController.dragUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2227:15)
+<asynchronous suspension>
+#4      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#5      WidgetController.scrollUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2197:7)
+<asynchronous suspension>
+#6      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#7      main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_jornada_base_test.dart:260:5)
+<asynchronous suspension>
+#8      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#9      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+#10     StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "drag()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+
+Warning: A call to drag() with finder "Found 1 widget with type "Scrollable" (ignoring all but first): [
+  Scrollable-[GlobalKey#cc730](axisDirection: right, physics: null, restorationId: "editable", dependencies: [InheritedCupertinoTheme, MediaQuery, UnmanagedRestorationScope, _InheritedTheme, _LocalizationsScope-[GlobalKey#64375]], state: ScrollableState#b16da(position: ScrollPositionWithSingleContext#9c6eb(offset: 0.0, range: 0.0..0.0, viewport: 223.3, ScrollableState, ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics, IdleScrollActivity#7d32a, ScrollDirection.idle), effective physics: ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics)),
+]" derived an Offset (Offset(647.3, 1294.5)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+Indeed, Offset(647.3, 1294.5) is outside the bounds of the root of the render tree, Size(800.0, 600.0).
+The finder corresponds to this RenderBox: RenderPointerListener#54d62 relayoutBoundary=up21
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#2521b(_ReusableRenderView#078a1), HitTestEntry<HitTestTarget>#1312a(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:1944:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1795:12)
+#2      WidgetController.drag (package:flutter_test/src/controller.dart:1474:7)
+#3      WidgetController.dragUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2227:15)
+<asynchronous suspension>
+#4      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#5      WidgetController.scrollUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2197:7)
+<asynchronous suspension>
+#6      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#7      main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_jornada_base_test.dart:260:5)
+<asynchronous suspension>
+#8      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#9      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+#10     StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "drag()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+
+Warning: A call to drag() with finder "Found 1 widget with type "Scrollable" (ignoring all but first): [
+  Scrollable-[GlobalKey#cc730](axisDirection: right, physics: null, restorationId: "editable", dependencies: [InheritedCupertinoTheme, MediaQuery, UnmanagedRestorationScope, _InheritedTheme, _LocalizationsScope-[GlobalKey#64375]], state: ScrollableState#b16da(position: ScrollPositionWithSingleContext#9c6eb(offset: 0.0, range: 0.0..0.0, viewport: 223.3, ScrollableState, ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics, IdleScrollActivity#7d32a, ScrollDirection.idle), effective physics: ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics)),
+]" derived an Offset (Offset(647.3, 1294.5)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+Indeed, Offset(647.3, 1294.5) is outside the bounds of the root of the render tree, Size(800.0, 600.0).
+The finder corresponds to this RenderBox: RenderPointerListener#54d62 relayoutBoundary=up21
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#9ac1e(_ReusableRenderView#078a1), HitTestEntry<HitTestTarget>#ee483(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:1944:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1795:12)
+#2      WidgetController.drag (package:flutter_test/src/controller.dart:1474:7)
+#3      WidgetController.dragUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2227:15)
+<asynchronous suspension>
+#4      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#5      WidgetController.scrollUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2197:7)
+<asynchronous suspension>
+#6      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#7      main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_jornada_base_test.dart:260:5)
+<asynchronous suspension>
+#8      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#9      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+#10     StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "drag()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+
+Warning: A call to drag() with finder "Found 1 widget with type "Scrollable" (ignoring all but first): [
+  Scrollable-[GlobalKey#cc730](axisDirection: right, physics: null, restorationId: "editable", dependencies: [InheritedCupertinoTheme, MediaQuery, UnmanagedRestorationScope, _InheritedTheme, _LocalizationsScope-[GlobalKey#64375]], state: ScrollableState#b16da(position: ScrollPositionWithSingleContext#9c6eb(offset: 0.0, range: 0.0..0.0, viewport: 223.3, ScrollableState, ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics, IdleScrollActivity#7d32a, ScrollDirection.idle), effective physics: ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics)),
+]" derived an Offset (Offset(647.3, 1294.5)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+Indeed, Offset(647.3, 1294.5) is outside the bounds of the root of the render tree, Size(800.0, 600.0).
+The finder corresponds to this RenderBox: RenderPointerListener#54d62 relayoutBoundary=up21
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#2c020(_ReusableRenderView#078a1), HitTestEntry<HitTestTarget>#4e124(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:1944:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1795:12)
+#2      WidgetController.drag (package:flutter_test/src/controller.dart:1474:7)
+#3      WidgetController.dragUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2227:15)
+<asynchronous suspension>
+#4      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#5      WidgetController.scrollUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2197:7)
+<asynchronous suspension>
+#6      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#7      main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_jornada_base_test.dart:260:5)
+<asynchronous suspension>
+#8      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#9      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+#10     StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "drag()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+
+Warning: A call to drag() with finder "Found 1 widget with type "Scrollable" (ignoring all but first): [
+  Scrollable-[GlobalKey#cc730](axisDirection: right, physics: null, restorationId: "editable", dependencies: [InheritedCupertinoTheme, MediaQuery, UnmanagedRestorationScope, _InheritedTheme, _LocalizationsScope-[GlobalKey#64375]], state: ScrollableState#b16da(position: ScrollPositionWithSingleContext#9c6eb(offset: 0.0, range: 0.0..0.0, viewport: 223.3, ScrollableState, ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics, IdleScrollActivity#7d32a, ScrollDirection.idle), effective physics: ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics)),
+]" derived an Offset (Offset(647.3, 1294.5)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+Indeed, Offset(647.3, 1294.5) is outside the bounds of the root of the render tree, Size(800.0, 600.0).
+The finder corresponds to this RenderBox: RenderPointerListener#54d62 relayoutBoundary=up21
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#094c1(_ReusableRenderView#078a1), HitTestEntry<HitTestTarget>#8956c(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:1944:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1795:12)
+#2      WidgetController.drag (package:flutter_test/src/controller.dart:1474:7)
+#3      WidgetController.dragUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2227:15)
+<asynchronous suspension>
+#4      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#5      WidgetController.scrollUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2197:7)
+<asynchronous suspension>
+#6      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#7      main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_jornada_base_test.dart:260:5)
+<asynchronous suspension>
+#8      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#9      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+#10     StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "drag()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+
+Warning: A call to drag() with finder "Found 1 widget with type "Scrollable" (ignoring all but first): [
+  Scrollable-[GlobalKey#cc730](axisDirection: right, physics: null, restorationId: "editable", dependencies: [InheritedCupertinoTheme, MediaQuery, UnmanagedRestorationScope, _InheritedTheme, _LocalizationsScope-[GlobalKey#64375]], state: ScrollableState#b16da(position: ScrollPositionWithSingleContext#9c6eb(offset: 0.0, range: 0.0..0.0, viewport: 223.3, ScrollableState, ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics, IdleScrollActivity#7d32a, ScrollDirection.idle), effective physics: ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics)),
+]" derived an Offset (Offset(647.3, 1294.5)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+Indeed, Offset(647.3, 1294.5) is outside the bounds of the root of the render tree, Size(800.0, 600.0).
+The finder corresponds to this RenderBox: RenderPointerListener#54d62 relayoutBoundary=up21
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#32034(_ReusableRenderView#078a1), HitTestEntry<HitTestTarget>#ffec9(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:1944:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1795:12)
+#2      WidgetController.drag (package:flutter_test/src/controller.dart:1474:7)
+#3      WidgetController.dragUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2227:15)
+<asynchronous suspension>
+#4      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#5      WidgetController.scrollUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2197:7)
+<asynchronous suspension>
+#6      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#7      main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_jornada_base_test.dart:260:5)
+<asynchronous suspension>
+#8      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#9      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+#10     StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "drag()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+
+Warning: A call to drag() with finder "Found 1 widget with type "Scrollable" (ignoring all but first): [
+  Scrollable-[GlobalKey#cc730](axisDirection: right, physics: null, restorationId: "editable", dependencies: [InheritedCupertinoTheme, MediaQuery, UnmanagedRestorationScope, _InheritedTheme, _LocalizationsScope-[GlobalKey#64375]], state: ScrollableState#b16da(position: ScrollPositionWithSingleContext#9c6eb(offset: 0.0, range: 0.0..0.0, viewport: 223.3, ScrollableState, ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics, IdleScrollActivity#7d32a, ScrollDirection.idle), effective physics: ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics)),
+]" derived an Offset (Offset(647.3, 1294.5)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+Indeed, Offset(647.3, 1294.5) is outside the bounds of the root of the render tree, Size(800.0, 600.0).
+The finder corresponds to this RenderBox: RenderPointerListener#54d62 relayoutBoundary=up21
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#0b6d0(_ReusableRenderView#078a1), HitTestEntry<HitTestTarget>#2441d(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:1944:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1795:12)
+#2      WidgetController.drag (package:flutter_test/src/controller.dart:1474:7)
+#3      WidgetController.dragUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2227:15)
+<asynchronous suspension>
+#4      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#5      WidgetController.scrollUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2197:7)
+<asynchronous suspension>
+#6      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#7      main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_jornada_base_test.dart:260:5)
+<asynchronous suspension>
+#8      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#9      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+#10     StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "drag()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+
+Warning: A call to drag() with finder "Found 1 widget with type "Scrollable" (ignoring all but first): [
+  Scrollable-[GlobalKey#cc730](axisDirection: right, physics: null, restorationId: "editable", dependencies: [InheritedCupertinoTheme, MediaQuery, UnmanagedRestorationScope, _InheritedTheme, _LocalizationsScope-[GlobalKey#64375]], state: ScrollableState#b16da(position: ScrollPositionWithSingleContext#9c6eb(offset: 0.0, range: 0.0..0.0, viewport: 223.3, ScrollableState, ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics, IdleScrollActivity#7d32a, ScrollDirection.idle), effective physics: ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics)),
+]" derived an Offset (Offset(647.3, 1294.5)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+Indeed, Offset(647.3, 1294.5) is outside the bounds of the root of the render tree, Size(800.0, 600.0).
+The finder corresponds to this RenderBox: RenderPointerListener#54d62 relayoutBoundary=up21
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#0263e(_ReusableRenderView#078a1), HitTestEntry<HitTestTarget>#38d2e(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:1944:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1795:12)
+#2      WidgetController.drag (package:flutter_test/src/controller.dart:1474:7)
+#3      WidgetController.dragUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2227:15)
+<asynchronous suspension>
+#4      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#5      WidgetController.scrollUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2197:7)
+<asynchronous suspension>
+#6      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#7      main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_jornada_base_test.dart:260:5)
+<asynchronous suspension>
+#8      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#9      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+#10     StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "drag()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+
+Warning: A call to drag() with finder "Found 1 widget with type "Scrollable" (ignoring all but first): [
+  Scrollable-[GlobalKey#cc730](axisDirection: right, physics: null, restorationId: "editable", dependencies: [InheritedCupertinoTheme, MediaQuery, UnmanagedRestorationScope, _InheritedTheme, _LocalizationsScope-[GlobalKey#64375]], state: ScrollableState#b16da(position: ScrollPositionWithSingleContext#9c6eb(offset: 0.0, range: 0.0..0.0, viewport: 223.3, ScrollableState, ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics, IdleScrollActivity#7d32a, ScrollDirection.idle), effective physics: ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics)),
+]" derived an Offset (Offset(647.3, 1294.5)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+Indeed, Offset(647.3, 1294.5) is outside the bounds of the root of the render tree, Size(800.0, 600.0).
+The finder corresponds to this RenderBox: RenderPointerListener#54d62 relayoutBoundary=up21
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#3ac0f(_ReusableRenderView#078a1), HitTestEntry<HitTestTarget>#d6d00(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:1944:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1795:12)
+#2      WidgetController.drag (package:flutter_test/src/controller.dart:1474:7)
+#3      WidgetController.dragUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2227:15)
+<asynchronous suspension>
+#4      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#5      WidgetController.scrollUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2197:7)
+<asynchronous suspension>
+#6      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#7      main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_jornada_base_test.dart:260:5)
+<asynchronous suspension>
+#8      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#9      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+#10     StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "drag()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+
+Warning: A call to drag() with finder "Found 1 widget with type "Scrollable" (ignoring all but first): [
+  Scrollable-[GlobalKey#cc730](axisDirection: right, physics: null, restorationId: "editable", dependencies: [InheritedCupertinoTheme, MediaQuery, UnmanagedRestorationScope, _InheritedTheme, _LocalizationsScope-[GlobalKey#64375]], state: ScrollableState#b16da(position: ScrollPositionWithSingleContext#9c6eb(offset: 0.0, range: 0.0..0.0, viewport: 223.3, ScrollableState, ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics, IdleScrollActivity#7d32a, ScrollDirection.idle), effective physics: ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics)),
+]" derived an Offset (Offset(647.3, 1294.5)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+Indeed, Offset(647.3, 1294.5) is outside the bounds of the root of the render tree, Size(800.0, 600.0).
+The finder corresponds to this RenderBox: RenderPointerListener#54d62 relayoutBoundary=up21
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#bddbe(_ReusableRenderView#078a1), HitTestEntry<HitTestTarget>#233b0(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:1944:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1795:12)
+#2      WidgetController.drag (package:flutter_test/src/controller.dart:1474:7)
+#3      WidgetController.dragUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2227:15)
+<asynchronous suspension>
+#4      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#5      WidgetController.scrollUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2197:7)
+<asynchronous suspension>
+#6      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#7      main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_jornada_base_test.dart:260:5)
+<asynchronous suspension>
+#8      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#9      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+#10     StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "drag()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+
+Warning: A call to drag() with finder "Found 1 widget with type "Scrollable" (ignoring all but first): [
+  Scrollable-[GlobalKey#cc730](axisDirection: right, physics: null, restorationId: "editable", dependencies: [InheritedCupertinoTheme, MediaQuery, UnmanagedRestorationScope, _InheritedTheme, _LocalizationsScope-[GlobalKey#64375]], state: ScrollableState#b16da(position: ScrollPositionWithSingleContext#9c6eb(offset: 0.0, range: 0.0..0.0, viewport: 223.3, ScrollableState, ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics, IdleScrollActivity#7d32a, ScrollDirection.idle), effective physics: ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics)),
+]" derived an Offset (Offset(647.3, 1294.5)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+Indeed, Offset(647.3, 1294.5) is outside the bounds of the root of the render tree, Size(800.0, 600.0).
+The finder corresponds to this RenderBox: RenderPointerListener#54d62 relayoutBoundary=up21
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#5309f(_ReusableRenderView#078a1), HitTestEntry<HitTestTarget>#1f775(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:1944:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1795:12)
+#2      WidgetController.drag (package:flutter_test/src/controller.dart:1474:7)
+#3      WidgetController.dragUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2227:15)
+<asynchronous suspension>
+#4      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#5      WidgetController.scrollUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2197:7)
+<asynchronous suspension>
+#6      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#7      main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_jornada_base_test.dart:260:5)
+<asynchronous suspension>
+#8      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#9      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+#10     StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "drag()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+
+Warning: A call to drag() with finder "Found 1 widget with type "Scrollable" (ignoring all but first): [
+  Scrollable-[GlobalKey#cc730](axisDirection: right, physics: null, restorationId: "editable", dependencies: [InheritedCupertinoTheme, MediaQuery, UnmanagedRestorationScope, _InheritedTheme, _LocalizationsScope-[GlobalKey#64375]], state: ScrollableState#b16da(position: ScrollPositionWithSingleContext#9c6eb(offset: 0.0, range: 0.0..0.0, viewport: 223.3, ScrollableState, ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics, IdleScrollActivity#7d32a, ScrollDirection.idle), effective physics: ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics)),
+]" derived an Offset (Offset(647.3, 1294.5)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+Indeed, Offset(647.3, 1294.5) is outside the bounds of the root of the render tree, Size(800.0, 600.0).
+The finder corresponds to this RenderBox: RenderPointerListener#54d62 relayoutBoundary=up21
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#87332(_ReusableRenderView#078a1), HitTestEntry<HitTestTarget>#c289f(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:1944:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1795:12)
+#2      WidgetController.drag (package:flutter_test/src/controller.dart:1474:7)
+#3      WidgetController.dragUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2227:15)
+<asynchronous suspension>
+#4      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#5      WidgetController.scrollUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2197:7)
+<asynchronous suspension>
+#6      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#7      main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_jornada_base_test.dart:260:5)
+<asynchronous suspension>
+#8      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#9      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+#10     StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "drag()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+
+Warning: A call to drag() with finder "Found 1 widget with type "Scrollable" (ignoring all but first): [
+  Scrollable-[GlobalKey#cc730](axisDirection: right, physics: null, restorationId: "editable", dependencies: [InheritedCupertinoTheme, MediaQuery, UnmanagedRestorationScope, _InheritedTheme, _LocalizationsScope-[GlobalKey#64375]], state: ScrollableState#b16da(position: ScrollPositionWithSingleContext#9c6eb(offset: 0.0, range: 0.0..0.0, viewport: 223.3, ScrollableState, ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics, IdleScrollActivity#7d32a, ScrollDirection.idle), effective physics: ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics)),
+]" derived an Offset (Offset(647.3, 1294.5)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+Indeed, Offset(647.3, 1294.5) is outside the bounds of the root of the render tree, Size(800.0, 600.0).
+The finder corresponds to this RenderBox: RenderPointerListener#54d62 relayoutBoundary=up21
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#c204d(_ReusableRenderView#078a1), HitTestEntry<HitTestTarget>#8e0db(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:1944:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1795:12)
+#2      WidgetController.drag (package:flutter_test/src/controller.dart:1474:7)
+#3      WidgetController.dragUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2227:15)
+<asynchronous suspension>
+#4      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#5      WidgetController.scrollUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2197:7)
+<asynchronous suspension>
+#6      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#7      main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_jornada_base_test.dart:260:5)
+<asynchronous suspension>
+#8      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#9      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+#10     StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "drag()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+
+Warning: A call to drag() with finder "Found 1 widget with type "Scrollable" (ignoring all but first): [
+  Scrollable-[GlobalKey#cc730](axisDirection: right, physics: null, restorationId: "editable", dependencies: [InheritedCupertinoTheme, MediaQuery, UnmanagedRestorationScope, _InheritedTheme, _LocalizationsScope-[GlobalKey#64375]], state: ScrollableState#b16da(position: ScrollPositionWithSingleContext#9c6eb(offset: 0.0, range: 0.0..0.0, viewport: 223.3, ScrollableState, ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics, IdleScrollActivity#7d32a, ScrollDirection.idle), effective physics: ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics)),
+]" derived an Offset (Offset(647.3, 1294.5)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+Indeed, Offset(647.3, 1294.5) is outside the bounds of the root of the render tree, Size(800.0, 600.0).
+The finder corresponds to this RenderBox: RenderPointerListener#54d62 relayoutBoundary=up21
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#8b539(_ReusableRenderView#078a1), HitTestEntry<HitTestTarget>#ef38a(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:1944:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1795:12)
+#2      WidgetController.drag (package:flutter_test/src/controller.dart:1474:7)
+#3      WidgetController.dragUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2227:15)
+<asynchronous suspension>
+#4      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#5      WidgetController.scrollUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2197:7)
+<asynchronous suspension>
+#6      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#7      main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_jornada_base_test.dart:260:5)
+<asynchronous suspension>
+#8      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#9      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+#10     StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "drag()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+
+Warning: A call to drag() with finder "Found 1 widget with type "Scrollable" (ignoring all but first): [
+  Scrollable-[GlobalKey#cc730](axisDirection: right, physics: null, restorationId: "editable", dependencies: [InheritedCupertinoTheme, MediaQuery, UnmanagedRestorationScope, _InheritedTheme, _LocalizationsScope-[GlobalKey#64375]], state: ScrollableState#b16da(position: ScrollPositionWithSingleContext#9c6eb(offset: 0.0, range: 0.0..0.0, viewport: 223.3, ScrollableState, ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics, IdleScrollActivity#7d32a, ScrollDirection.idle), effective physics: ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics)),
+]" derived an Offset (Offset(647.3, 1294.5)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+Indeed, Offset(647.3, 1294.5) is outside the bounds of the root of the render tree, Size(800.0, 600.0).
+The finder corresponds to this RenderBox: RenderPointerListener#54d62 relayoutBoundary=up21
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#c7275(_ReusableRenderView#078a1), HitTestEntry<HitTestTarget>#8efee(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:1944:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1795:12)
+#2      WidgetController.drag (package:flutter_test/src/controller.dart:1474:7)
+#3      WidgetController.dragUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2227:15)
+<asynchronous suspension>
+#4      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#5      WidgetController.scrollUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2197:7)
+<asynchronous suspension>
+#6      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#7      main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_jornada_base_test.dart:260:5)
+<asynchronous suspension>
+#8      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#9      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+#10     StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "drag()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+
+Warning: A call to drag() with finder "Found 1 widget with type "Scrollable" (ignoring all but first): [
+  Scrollable-[GlobalKey#cc730](axisDirection: right, physics: null, restorationId: "editable", dependencies: [InheritedCupertinoTheme, MediaQuery, UnmanagedRestorationScope, _InheritedTheme, _LocalizationsScope-[GlobalKey#64375]], state: ScrollableState#b16da(position: ScrollPositionWithSingleContext#9c6eb(offset: 0.0, range: 0.0..0.0, viewport: 223.3, ScrollableState, ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics, IdleScrollActivity#7d32a, ScrollDirection.idle), effective physics: ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics)),
+]" derived an Offset (Offset(647.3, 1294.5)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+Indeed, Offset(647.3, 1294.5) is outside the bounds of the root of the render tree, Size(800.0, 600.0).
+The finder corresponds to this RenderBox: RenderPointerListener#54d62 relayoutBoundary=up21
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#1e914(_ReusableRenderView#078a1), HitTestEntry<HitTestTarget>#92ac3(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:1944:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1795:12)
+#2      WidgetController.drag (package:flutter_test/src/controller.dart:1474:7)
+#3      WidgetController.dragUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2227:15)
+<asynchronous suspension>
+#4      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#5      WidgetController.scrollUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2197:7)
+<asynchronous suspension>
+#6      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#7      main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_jornada_base_test.dart:260:5)
+<asynchronous suspension>
+#8      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#9      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+#10     StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "drag()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+
+Warning: A call to drag() with finder "Found 1 widget with type "Scrollable" (ignoring all but first): [
+  Scrollable-[GlobalKey#cc730](axisDirection: right, physics: null, restorationId: "editable", dependencies: [InheritedCupertinoTheme, MediaQuery, UnmanagedRestorationScope, _InheritedTheme, _LocalizationsScope-[GlobalKey#64375]], state: ScrollableState#b16da(position: ScrollPositionWithSingleContext#9c6eb(offset: 0.0, range: 0.0..0.0, viewport: 223.3, ScrollableState, ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics, IdleScrollActivity#7d32a, ScrollDirection.idle), effective physics: ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics)),
+]" derived an Offset (Offset(647.3, 1294.5)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+Indeed, Offset(647.3, 1294.5) is outside the bounds of the root of the render tree, Size(800.0, 600.0).
+The finder corresponds to this RenderBox: RenderPointerListener#54d62 relayoutBoundary=up21
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#207fb(_ReusableRenderView#078a1), HitTestEntry<HitTestTarget>#ee225(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:1944:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1795:12)
+#2      WidgetController.drag (package:flutter_test/src/controller.dart:1474:7)
+#3      WidgetController.dragUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2227:15)
+<asynchronous suspension>
+#4      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#5      WidgetController.scrollUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2197:7)
+<asynchronous suspension>
+#6      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#7      main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_jornada_base_test.dart:260:5)
+<asynchronous suspension>
+#8      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#9      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+#10     StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "drag()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+
+Warning: A call to drag() with finder "Found 1 widget with type "Scrollable" (ignoring all but first): [
+  Scrollable-[GlobalKey#cc730](axisDirection: right, physics: null, restorationId: "editable", dependencies: [InheritedCupertinoTheme, MediaQuery, UnmanagedRestorationScope, _InheritedTheme, _LocalizationsScope-[GlobalKey#64375]], state: ScrollableState#b16da(position: ScrollPositionWithSingleContext#9c6eb(offset: 0.0, range: 0.0..0.0, viewport: 223.3, ScrollableState, ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics, IdleScrollActivity#7d32a, ScrollDirection.idle), effective physics: ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics)),
+]" derived an Offset (Offset(647.3, 1294.5)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+Indeed, Offset(647.3, 1294.5) is outside the bounds of the root of the render tree, Size(800.0, 600.0).
+The finder corresponds to this RenderBox: RenderPointerListener#54d62 relayoutBoundary=up21
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#439be(_ReusableRenderView#078a1), HitTestEntry<HitTestTarget>#68781(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:1944:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1795:12)
+#2      WidgetController.drag (package:flutter_test/src/controller.dart:1474:7)
+#3      WidgetController.dragUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2227:15)
+<asynchronous suspension>
+#4      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#5      WidgetController.scrollUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2197:7)
+<asynchronous suspension>
+#6      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#7      main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_jornada_base_test.dart:260:5)
+<asynchronous suspension>
+#8      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#9      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+#10     StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "drag()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+
+Warning: A call to drag() with finder "Found 1 widget with type "Scrollable" (ignoring all but first): [
+  Scrollable-[GlobalKey#cc730](axisDirection: right, physics: null, restorationId: "editable", dependencies: [InheritedCupertinoTheme, MediaQuery, UnmanagedRestorationScope, _InheritedTheme, _LocalizationsScope-[GlobalKey#64375]], state: ScrollableState#b16da(position: ScrollPositionWithSingleContext#9c6eb(offset: 0.0, range: 0.0..0.0, viewport: 223.3, ScrollableState, ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics, IdleScrollActivity#7d32a, ScrollDirection.idle), effective physics: ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics)),
+]" derived an Offset (Offset(647.3, 1294.5)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+Indeed, Offset(647.3, 1294.5) is outside the bounds of the root of the render tree, Size(800.0, 600.0).
+The finder corresponds to this RenderBox: RenderPointerListener#54d62 relayoutBoundary=up21
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#06324(_ReusableRenderView#078a1), HitTestEntry<HitTestTarget>#4b44b(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:1944:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1795:12)
+#2      WidgetController.drag (package:flutter_test/src/controller.dart:1474:7)
+#3      WidgetController.dragUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2227:15)
+<asynchronous suspension>
+#4      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#5      WidgetController.scrollUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2197:7)
+<asynchronous suspension>
+#6      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#7      main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_jornada_base_test.dart:260:5)
+<asynchronous suspension>
+#8      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#9      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+#10     StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "drag()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+
+Warning: A call to drag() with finder "Found 1 widget with type "Scrollable" (ignoring all but first): [
+  Scrollable-[GlobalKey#cc730](axisDirection: right, physics: null, restorationId: "editable", dependencies: [InheritedCupertinoTheme, MediaQuery, UnmanagedRestorationScope, _InheritedTheme, _LocalizationsScope-[GlobalKey#64375]], state: ScrollableState#b16da(position: ScrollPositionWithSingleContext#9c6eb(offset: 0.0, range: 0.0..0.0, viewport: 223.3, ScrollableState, ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics, IdleScrollActivity#7d32a, ScrollDirection.idle), effective physics: ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics)),
+]" derived an Offset (Offset(647.3, 1294.5)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+Indeed, Offset(647.3, 1294.5) is outside the bounds of the root of the render tree, Size(800.0, 600.0).
+The finder corresponds to this RenderBox: RenderPointerListener#54d62 relayoutBoundary=up21
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#58f1b(_ReusableRenderView#078a1), HitTestEntry<HitTestTarget>#1da5d(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:1944:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1795:12)
+#2      WidgetController.drag (package:flutter_test/src/controller.dart:1474:7)
+#3      WidgetController.dragUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2227:15)
+<asynchronous suspension>
+#4      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#5      WidgetController.scrollUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2197:7)
+<asynchronous suspension>
+#6      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#7      main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_jornada_base_test.dart:260:5)
+<asynchronous suspension>
+#8      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#9      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+#10     StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "drag()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+
+Warning: A call to drag() with finder "Found 1 widget with type "Scrollable" (ignoring all but first): [
+  Scrollable-[GlobalKey#cc730](axisDirection: right, physics: null, restorationId: "editable", dependencies: [InheritedCupertinoTheme, MediaQuery, UnmanagedRestorationScope, _InheritedTheme, _LocalizationsScope-[GlobalKey#64375]], state: ScrollableState#b16da(position: ScrollPositionWithSingleContext#9c6eb(offset: 0.0, range: 0.0..0.0, viewport: 223.3, ScrollableState, ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics, IdleScrollActivity#7d32a, ScrollDirection.idle), effective physics: ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics)),
+]" derived an Offset (Offset(647.3, 1294.5)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+Indeed, Offset(647.3, 1294.5) is outside the bounds of the root of the render tree, Size(800.0, 600.0).
+The finder corresponds to this RenderBox: RenderPointerListener#54d62 relayoutBoundary=up21
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#f7a29(_ReusableRenderView#078a1), HitTestEntry<HitTestTarget>#cf034(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:1944:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1795:12)
+#2      WidgetController.drag (package:flutter_test/src/controller.dart:1474:7)
+#3      WidgetController.dragUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2227:15)
+<asynchronous suspension>
+#4      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#5      WidgetController.scrollUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2197:7)
+<asynchronous suspension>
+#6      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#7      main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_jornada_base_test.dart:260:5)
+<asynchronous suspension>
+#8      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#9      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+#10     StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "drag()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+
+Warning: A call to drag() with finder "Found 1 widget with type "Scrollable" (ignoring all but first): [
+  Scrollable-[GlobalKey#cc730](axisDirection: right, physics: null, restorationId: "editable", dependencies: [InheritedCupertinoTheme, MediaQuery, UnmanagedRestorationScope, _InheritedTheme, _LocalizationsScope-[GlobalKey#64375]], state: ScrollableState#b16da(position: ScrollPositionWithSingleContext#9c6eb(offset: 0.0, range: 0.0..0.0, viewport: 223.3, ScrollableState, ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics, IdleScrollActivity#7d32a, ScrollDirection.idle), effective physics: ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics)),
+]" derived an Offset (Offset(647.3, 1294.5)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+Indeed, Offset(647.3, 1294.5) is outside the bounds of the root of the render tree, Size(800.0, 600.0).
+The finder corresponds to this RenderBox: RenderPointerListener#54d62 relayoutBoundary=up21
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#ec4dd(_ReusableRenderView#078a1), HitTestEntry<HitTestTarget>#ca467(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:1944:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1795:12)
+#2      WidgetController.drag (package:flutter_test/src/controller.dart:1474:7)
+#3      WidgetController.dragUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2227:15)
+<asynchronous suspension>
+#4      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#5      WidgetController.scrollUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2197:7)
+<asynchronous suspension>
+#6      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#7      main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_jornada_base_test.dart:260:5)
+<asynchronous suspension>
+#8      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#9      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+#10     StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "drag()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+
+Warning: A call to drag() with finder "Found 1 widget with type "Scrollable" (ignoring all but first): [
+  Scrollable-[GlobalKey#cc730](axisDirection: right, physics: null, restorationId: "editable", dependencies: [InheritedCupertinoTheme, MediaQuery, UnmanagedRestorationScope, _InheritedTheme, _LocalizationsScope-[GlobalKey#64375]], state: ScrollableState#b16da(position: ScrollPositionWithSingleContext#9c6eb(offset: 0.0, range: 0.0..0.0, viewport: 223.3, ScrollableState, ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics, IdleScrollActivity#7d32a, ScrollDirection.idle), effective physics: ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics)),
+]" derived an Offset (Offset(647.3, 1294.5)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+Indeed, Offset(647.3, 1294.5) is outside the bounds of the root of the render tree, Size(800.0, 600.0).
+The finder corresponds to this RenderBox: RenderPointerListener#54d62 relayoutBoundary=up21
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#1ae00(_ReusableRenderView#078a1), HitTestEntry<HitTestTarget>#b6dc0(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:1944:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1795:12)
+#2      WidgetController.drag (package:flutter_test/src/controller.dart:1474:7)
+#3      WidgetController.dragUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2227:15)
+<asynchronous suspension>
+#4      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#5      WidgetController.scrollUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2197:7)
+<asynchronous suspension>
+#6      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#7      main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_jornada_base_test.dart:260:5)
+<asynchronous suspension>
+#8      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#9      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+#10     StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "drag()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+
+Warning: A call to drag() with finder "Found 1 widget with type "Scrollable" (ignoring all but first): [
+  Scrollable-[GlobalKey#cc730](axisDirection: right, physics: null, restorationId: "editable", dependencies: [InheritedCupertinoTheme, MediaQuery, UnmanagedRestorationScope, _InheritedTheme, _LocalizationsScope-[GlobalKey#64375]], state: ScrollableState#b16da(position: ScrollPositionWithSingleContext#9c6eb(offset: 0.0, range: 0.0..0.0, viewport: 223.3, ScrollableState, ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics, IdleScrollActivity#7d32a, ScrollDirection.idle), effective physics: ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics)),
+]" derived an Offset (Offset(647.3, 1294.5)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+Indeed, Offset(647.3, 1294.5) is outside the bounds of the root of the render tree, Size(800.0, 600.0).
+The finder corresponds to this RenderBox: RenderPointerListener#54d62 relayoutBoundary=up21
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#bc31e(_ReusableRenderView#078a1), HitTestEntry<HitTestTarget>#9d5d0(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:1944:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1795:12)
+#2      WidgetController.drag (package:flutter_test/src/controller.dart:1474:7)
+#3      WidgetController.dragUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2227:15)
+<asynchronous suspension>
+#4      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#5      WidgetController.scrollUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2197:7)
+<asynchronous suspension>
+#6      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#7      main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_jornada_base_test.dart:260:5)
+<asynchronous suspension>
+#8      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#9      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+#10     StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "drag()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+
+Warning: A call to drag() with finder "Found 1 widget with type "Scrollable" (ignoring all but first): [
+  Scrollable-[GlobalKey#cc730](axisDirection: right, physics: null, restorationId: "editable", dependencies: [InheritedCupertinoTheme, MediaQuery, UnmanagedRestorationScope, _InheritedTheme, _LocalizationsScope-[GlobalKey#64375]], state: ScrollableState#b16da(position: ScrollPositionWithSingleContext#9c6eb(offset: 0.0, range: 0.0..0.0, viewport: 223.3, ScrollableState, ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics, IdleScrollActivity#7d32a, ScrollDirection.idle), effective physics: ClampingScrollPhysics -> RangeMaintainingScrollPhysics -> ClampingScrollPhysics -> RangeMaintainingScrollPhysics)),
+]" derived an Offset (Offset(647.3, 1294.5)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+Indeed, Offset(647.3, 1294.5) is outside the bounds of the root of the render tree, Size(800.0, 600.0).
+The finder corresponds to this RenderBox: RenderPointerListener#54d62 relayoutBoundary=up21
+The hit test result at that offset is: HitTestResult(HitTestEntry<HitTestTarget>#8d3b3(_ReusableRenderView#078a1), HitTestEntry<HitTestTarget>#569c2(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:1944:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1795:12)
+#2      WidgetController.drag (package:flutter_test/src/controller.dart:1474:7)
+#3      WidgetController.dragUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2227:15)
+<asynchronous suspension>
+#4      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#5      WidgetController.scrollUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2197:7)
+<asynchronous suspension>
+#6      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#7      main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_jornada_base_test.dart:260:5)
+<asynchronous suspension>
+#8      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#9      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+#10     StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "drag()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+The following StateError was thrown running a test:
+Bad state: No element
+
+When the exception was thrown, this was the stack:
+#0      Iterable.single (dart:core/iterable.dart:675:25)
+#1      WidgetController.element (package:flutter_test/src/controller.dart:872:30)
+#2      WidgetController.dragUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2231:38)
+<asynchronous suspension>
+#3      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#4      WidgetController.scrollUntilVisible.<anonymous closure> (package:flutter_test/src/controller.dart:2197:7)
+<asynchronous suspension>
+#5      TestAsyncUtils.guard.<anonymous closure> (package:flutter_test/src/test_async_utils.dart:120:7)
+<asynchronous suspension>
+#6      main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_jornada_base_test.dart:260:5)
+<asynchronous suspension>
+#7      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#8      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided one frame from package:stack_trace)
+
+The test description was:
+  lista atualiza público na calculadora aberta e respeita manual
+════════════════════════════════════════════════════════════════════════════════════════════════════
+00:05 +22 -4: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/ergonomia_jornada_test.dart: preço e fechamento ficam utilizáveis em paisagem; falha preserva valor e permite tentar novamente
+00:05 +22 -4: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_jornada_base_test.dart: lista atualiza público na calculadora aberta e respeita manual [E]
+  Test failed. See exception logs above.
+  The test description was: lista atualiza público na calculadora aberta e respeita manual
+  
+00:05 +22 -4: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/ergonomia_jornada_test.dart: preço e fechamento ficam utilizáveis em paisagem; falha preserva valor e permite tentar novamente
+══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+The following TestFailure was thrown running a test:
+Expected: a value greater than or equal to <77.0>
+  Actual: <57.0>
+   Which: is not a value greater than or equal to <77.0>
+
+When the exception was thrown, this was the stack:
+#4      main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/ergonomia_jornada_test.dart:124:5)
+<asynchronous suspension>
+#5      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#6      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided one frame from package:stack_trace)
+
+This was caught by the test expectation on the following line:
+  file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/ergonomia_jornada_test.dart line 124
+The test description was:
+  preço e fechamento ficam utilizáveis em paisagem; falha preserva valor e permite tentar novamente
+════════════════════════════════════════════════════════════════════════════════════════════════════
+00:05 +22 -5: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/layout_operacional_test.dart: reputação mantém filtros após falha de uma consulta já carregada
+00:05 +22 -5: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/ergonomia_jornada_test.dart: preço e fechamento ficam utilizáveis em paisagem; falha preserva valor e permite tentar novamente [E]
+  Test failed. See exception logs above.
+  The test description was: preço e fechamento ficam utilizáveis em paisagem; falha preserva valor e permite tentar novamente
+  
+00:05 +23 -5: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/layout_operacional_test.dart: reputação mantém filtros após falha de uma consulta já carregada
+00:05 +24 -5: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/layout_operacional_test.dart: reputação mantém filtros após falha de uma consulta já carregada
+00:05 +25 -5: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_operacao_layout_test.dart: público mantém salvar acessível com teclado em tela pequena
+00:05 +25 -5: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_jornada_base_test.dart: medição não conta cada tecla como campo nem conta atualização automática como edição
+[CalculadoraFestaController] Itens carregados do Firestore | tipoEvento=aniversario | perfil=padrao | total=5
+00:05 +26 -5: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/calculadora_operacao_layout_test.dart: público mantém salvar acessível com teclado em tela pequena
+00:06 +27 -5: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/ergonomia_jornada_test.dart: texto revisa e confirma com teclado; cancelar IA retorna ao mesmo pedido
+00:06 +28 -5: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/ergonomia_jornada_test.dart: texto revisa e confirma com teclado; cancelar IA retorna ao mesmo pedido
+00:06 +29 -5: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/ergonomia_jornada_test.dart: texto revisa e confirma com teclado; cancelar IA retorna ao mesmo pedido
+00:07 +30 -5: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/ergonomia_jornada_test.dart: texto revisa e confirma com teclado; cancelar IA retorna ao mesmo pedido
+00:07 +31 -5: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/ergonomia_jornada_test.dart: texto revisa e confirma com teclado; cancelar IA retorna ao mesmo pedido
+[CalculadoraFestaController] Itens carregados do Firestore | tipoEvento=aniversario | perfil=padrao | total=5
+00:07 +32 -5: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/layout_operacional_test.dart: agenda em 1366.0 com dados
+00:07 +32 -5: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/ergonomia_jornada_test.dart: editor aberto fixa a sessão antes da primeira interação
+[CalculadoraFestaController] Itens carregados do Firestore | tipoEvento=aniversario | perfil=padrao | total=5
+[CalculadoraFestaController] Itens carregados do Firestore | tipoEvento=formatura | perfil=padrao | total=5
+00:07 +33 -5: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/layout_operacional_test.dart: agenda em 1366.0 com dados
+00:07 +34 -5: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/ergonomia_jornada_test.dart: resumo distingue verba zero, consulta falha e rascunho isolado do evento ativo
+[CalculadoraFestaController] Itens carregados do Firestore | tipoEvento=aniversario | perfil=padrao | total=5
+[CalculadoraFestaController] Itens carregados do Firestore | tipoEvento=formatura | perfil=padrao | total=5
+00:07 +35 -5: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/layout_operacional_test.dart: agenda em 1366.0 com falha
+00:07 +36 -5: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/ergonomia_jornada_test.dart: falha ao guardar rascunho é visível e permite retomar sem perder os valores
+00:08 +36 -5: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/layout_operacional_test.dart: financeiro em 360.0 com dados
+══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+The following TestFailure was thrown running a test:
+Expected: null
+  Actual: FlutterError:<Golden
+"../../../docs/evidencias_validacao/operacao-fornecedor/mensagens/financeiro-360-dados.png": Pixel
+test failed, 55.80%, 220981px diff detected.
+          Failure feedback can be found at
+/D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/failures>
+
+When the exception was thrown, this was the stack:
+#4      main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/layout_operacional_test.dart:177:11)
+<asynchronous suspension>
+#5      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#6      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided one frame from package:stack_trace)
+
+This was caught by the test expectation on the following line:
+  file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/layout_operacional_test.dart line 177
+The test description was:
+  financeiro em 360.0 com dados
+════════════════════════════════════════════════════════════════════════════════════════════════════
+00:08 +36 -6: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/ergonomia_jornada_test.dart: falha ao guardar rascunho é visível e permite retomar sem perder os valores
+00:08 +36 -6: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/layout_operacional_test.dart: financeiro em 360.0 com dados [E]
+  Test failed. See exception logs above.
+  The test description was: financeiro em 360.0 com dados
+  
+00:08 +36 -6: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/calculadora/ergonomia_jornada_test.dart: falha ao guardar rascunho é visível e permite retomar sem perder os valores
+🎯 [ThemeController] Instância única ativa.
+[CalculadoraFestaController] Itens carregados do Firestore | tipoEvento=formatura | perfil=padrao | total=5
+00:08 +37 -6: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/layout_operacional_test.dart: financeiro em 360.0 com falha
+00:08 +38 -6: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/layout_operacional_test.dart: financeiro em 360.0 com falha
+00:09 +39 -6: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/layout_operacional_test.dart: financeiro em 360.0 com falha
+══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+The following TestFailure was thrown running a test:
+Expected: null
+  Actual: FlutterError:<Golden
+"../../../docs/evidencias_validacao/operacao-fornecedor/mensagens/financeiro-360-falha.png": Pixel
+test failed, 13.69%, 54211px diff detected.
+          Failure feedback can be found at
+/D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/failures>
+
+When the exception was thrown, this was the stack:
+#4      main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/layout_operacional_test.dart:177:11)
+<asynchronous suspension>
+#5      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#6      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided one frame from package:stack_trace)
+
+This was caught by the test expectation on the following line:
+  file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/layout_operacional_test.dart line 177
+The test description was:
+  financeiro em 360.0 com falha
+════════════════════════════════════════════════════════════════════════════════════════════════════
+00:09 +39 -7: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/layout_operacional_test.dart: financeiro em 360.0 com falha [E]
+  Test failed. See exception logs above.
+  The test description was: financeiro em 360.0 com falha
+  
+00:09 +39 -7: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/layout_operacional_test.dart: financeiro em 1366.0 com dados
+══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+The following TestFailure was thrown running a test:
+Expected: null
+  Actual: FlutterError:<Golden
+"../../../docs/evidencias_validacao/operacao-fornecedor/mensagens/financeiro-1366-dados.png": Pixel
+test failed, 48.31%, 725960px diff detected.
+          Failure feedback can be found at
+/D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/failures>
+
+When the exception was thrown, this was the stack:
+#4      main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/layout_operacional_test.dart:177:11)
+<asynchronous suspension>
+#5      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#6      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided one frame from package:stack_trace)
+
+This was caught by the test expectation on the following line:
+  file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/layout_operacional_test.dart line 177
+The test description was:
+  financeiro em 1366.0 com dados
+════════════════════════════════════════════════════════════════════════════════════════════════════
+00:10 +39 -8: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/layout_operacional_test.dart: financeiro em 1366.0 com dados [E]
+  Test failed. See exception logs above.
+  The test description was: financeiro em 1366.0 com dados
+  
+00:10 +39 -8: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/layout_operacional_test.dart: financeiro em 1366.0 com falha
+══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+The following TestFailure was thrown running a test:
+Expected: null
+  Actual: FlutterError:<Golden
+"../../../docs/evidencias_validacao/operacao-fornecedor/mensagens/financeiro-1366-falha.png": Pixel
+test failed, 0.37%, 5626px diff detected.
+          Failure feedback can be found at
+/D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/failures>
+
+When the exception was thrown, this was the stack:
+#4      main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/layout_operacional_test.dart:177:11)
+<asynchronous suspension>
+#5      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#6      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided one frame from package:stack_trace)
+
+This was caught by the test expectation on the following line:
+  file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/layout_operacional_test.dart line 177
+The test description was:
+  financeiro em 1366.0 com falha
+════════════════════════════════════════════════════════════════════════════════════════════════════
+00:11 +39 -9: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/layout_operacional_test.dart: financeiro em 1366.0 com falha [E]
+  Test failed. See exception logs above.
+  The test description was: financeiro em 1366.0 com falha
+  
+00:11 +39 -9: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/layout_operacional_test.dart: reputacao em 360.0 com dados
+══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+The following TestFailure was thrown running a test:
+Expected: null
+  Actual: FlutterError:<Golden
+"../../../docs/evidencias_validacao/operacao-fornecedor/mensagens/reputacao-360-dados.png": Pixel
+test failed, 44.21%, 175086px diff detected.
+          Failure feedback can be found at
+/D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/failures>
+
+When the exception was thrown, this was the stack:
+#4      main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/layout_operacional_test.dart:177:11)
+<asynchronous suspension>
+#5      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#6      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided one frame from package:stack_trace)
+
+This was caught by the test expectation on the following line:
+  file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/layout_operacional_test.dart line 177
+The test description was:
+  reputacao em 360.0 com dados
+════════════════════════════════════════════════════════════════════════════════════════════════════
+00:11 +39 -10: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/layout_operacional_test.dart: reputacao em 360.0 com dados [E]
+  Test failed. See exception logs above.
+  The test description was: reputacao em 360.0 com dados
+  
+00:11 +39 -10: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/layout_operacional_test.dart: reputacao em 360.0 com falha
+00:11 +40 -10: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/layout_operacional_test.dart: reputacao em 1366.0 com dados
+══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+The following TestFailure was thrown running a test:
+Expected: null
+  Actual: FlutterError:<Golden
+"../../../docs/evidencias_validacao/operacao-fornecedor/mensagens/reputacao-1366-dados.png": Pixel
+test failed, 32.42%, 487078px diff detected.
+          Failure feedback can be found at
+/D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/failures>
+
+When the exception was thrown, this was the stack:
+#4      main.<anonymous closure> (file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/layout_operacional_test.dart:177:11)
+<asynchronous suspension>
+#5      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:189:15)
+<asynchronous suspension>
+#6      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1027:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided one frame from package:stack_trace)
+
+This was caught by the test expectation on the following line:
+  file:///D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/layout_operacional_test.dart line 177
+The test description was:
+  reputacao em 1366.0 com dados
+════════════════════════════════════════════════════════════════════════════════════════════════════
+00:12 +40 -11: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/layout_operacional_test.dart: reputacao em 1366.0 com dados [E]
+  Test failed. See exception logs above.
+  The test description was: reputacao em 1366.0 com dados
+  
+00:12 +40 -11: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/layout_operacional_test.dart: reputacao em 1366.0 com falha
+00:13 +41 -11: D:/repository/unicesumar/tcc/app/src/app_faca_festa/test/features/operacao/layout_operacional_test.dart: (tearDownAll)
+00:13 +41 -11: Some tests failed.

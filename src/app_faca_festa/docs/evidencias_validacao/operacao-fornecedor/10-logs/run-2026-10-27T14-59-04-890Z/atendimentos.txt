@@ -1,0 +1,143 @@
+PASS: 116 verificações de regras, isolamento, integridade, sobreposição, collectionGroup e estados.
+[2026-10-27T14:59:11.352Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fb70 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'update' @ L684, evaluation error at L696:28 for 'update' @ L696, false for 'update' @ L684, false for 'update' @ L696
+[2026-10-27T14:59:11.390Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fb71 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'delete' @ L684, false for 'delete' @ L699
+[2026-10-27T14:59:11.476Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fb72 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'create' @ L682, evaluation error at L692:28 for 'create' @ L692, false for 'create' @ L682, false for 'create' @ L692
+[2026-10-27T14:59:11.505Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fb73 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'create' @ L682, evaluation error at L692:28 for 'create' @ L692, false for 'create' @ L682, false for 'create' @ L692
+[2026-10-27T14:59:11.536Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fb74 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'update' @ L661
+[2026-10-27T14:59:11.553Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fb75 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'update' @ L674
+[2026-10-27T14:59:11.567Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fb76 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'delete' @ L661
+[2026-10-27T14:59:11.585Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fb77 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'delete' @ L674
+[2026-10-27T14:59:11.803Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fb79 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'update' @ L684, evaluation error at L696:28 for 'update' @ L696, false for 'update' @ L684, false for 'update' @ L696
+[2026-10-27T14:59:11.822Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fb7a error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'delete' @ L684, false for 'delete' @ L699
+[2026-10-27T14:59:11.897Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fb7b error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'create' @ L682, evaluation error at L692:28 for 'create' @ L692, false for 'create' @ L682, false for 'create' @ L692
+[2026-10-27T14:59:11.936Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fb7c error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'create' @ L682, evaluation error at L692:28 for 'create' @ L692, false for 'create' @ L682, false for 'create' @ L692
+[2026-10-27T14:59:11.964Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fb7d error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'update' @ L661
+[2026-10-27T14:59:11.997Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fb7e error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'update' @ L674
+[2026-10-27T14:59:12.014Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fb7f error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'delete' @ L661
+[2026-10-27T14:59:12.030Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fb80 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'delete' @ L674
+[2026-10-27T14:59:12.187Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fb82 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'update' @ L684, evaluation error at L696:28 for 'update' @ L696, false for 'update' @ L684, false for 'update' @ L696
+[2026-10-27T14:59:12.211Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fb83 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'delete' @ L684, false for 'delete' @ L699
+[2026-10-27T14:59:12.237Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fb84 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'create' @ L682, evaluation error at L692:28 for 'create' @ L692, false for 'create' @ L682, false for 'create' @ L692
+[2026-10-27T14:59:12.258Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fb85 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'create' @ L682, evaluation error at L692:28 for 'create' @ L692, false for 'create' @ L682, false for 'create' @ L692
+[2026-10-27T14:59:12.279Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fb86 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'create' @ L682, evaluation error at L692:28 for 'create' @ L692, false for 'create' @ L682, false for 'create' @ L692
+[2026-10-27T14:59:12.306Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fb87 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'update' @ L661
+[2026-10-27T14:59:12.320Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fb88 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'update' @ L674
+[2026-10-27T14:59:12.337Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fb89 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'delete' @ L661
+[2026-10-27T14:59:12.347Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fb8a error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'delete' @ L674
+[2026-10-27T14:59:12.475Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fb8c error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'update' @ L684, evaluation error at L696:28 for 'update' @ L696, false for 'update' @ L684, false for 'update' @ L696
+[2026-10-27T14:59:12.489Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fb8d error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'delete' @ L684, false for 'delete' @ L699
+[2026-10-27T14:59:12.521Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fb8e error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'create' @ L682, evaluation error at L692:28 for 'create' @ L692, false for 'create' @ L682, false for 'create' @ L692
+[2026-10-27T14:59:12.541Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fb8f error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'create' @ L682, evaluation error at L692:28 for 'create' @ L692, false for 'create' @ L682, false for 'create' @ L692
+[2026-10-27T14:59:12.557Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fb90 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'create' @ L682, evaluation error at L692:28 for 'create' @ L692, false for 'create' @ L682, false for 'create' @ L692
+[2026-10-27T14:59:12.571Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fb91 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'update' @ L661
+[2026-10-27T14:59:12.582Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fb92 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'update' @ L674
+[2026-10-27T14:59:12.604Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fb93 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'delete' @ L661
+[2026-10-27T14:59:12.620Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fb94 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'delete' @ L674
+[2026-10-27T14:59:12.767Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fb96 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'update' @ L684, evaluation error at L696:28 for 'update' @ L696, false for 'update' @ L684, false for 'update' @ L696
+[2026-10-27T14:59:12.783Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fb97 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'delete' @ L684, false for 'delete' @ L699
+[2026-10-27T14:59:12.808Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fb98 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'create' @ L682, evaluation error at L692:28 for 'create' @ L692, false for 'create' @ L682, false for 'create' @ L692
+[2026-10-27T14:59:12.833Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fb99 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'create' @ L682, evaluation error at L692:28 for 'create' @ L692, false for 'create' @ L682, false for 'create' @ L692
+[2026-10-27T14:59:12.863Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fb9a error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'create' @ L682, evaluation error at L692:28 for 'create' @ L692, false for 'create' @ L682, false for 'create' @ L692
+[2026-10-27T14:59:12.876Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fb9b error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'update' @ L661
+[2026-10-27T14:59:12.886Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fb9c error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'update' @ L674
+[2026-10-27T14:59:12.907Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fb9d error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'delete' @ L661
+[2026-10-27T14:59:12.917Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fb9e error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'delete' @ L674
+[2026-10-27T14:59:13.035Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fba0 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'update' @ L684, evaluation error at L696:28 for 'update' @ L696, false for 'update' @ L684, false for 'update' @ L696
+[2026-10-27T14:59:13.052Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fba1 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'delete' @ L684, false for 'delete' @ L699
+[2026-10-27T14:59:13.078Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fba2 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'create' @ L682, evaluation error at L692:28 for 'create' @ L692, false for 'create' @ L682, false for 'create' @ L692
+[2026-10-27T14:59:13.110Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fba3 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'create' @ L682, evaluation error at L692:28 for 'create' @ L692, false for 'create' @ L682, false for 'create' @ L692
+[2026-10-27T14:59:13.133Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fba4 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'create' @ L682, evaluation error at L692:28 for 'create' @ L692, false for 'create' @ L682, false for 'create' @ L692
+[2026-10-27T14:59:13.144Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fba5 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'update' @ L661
+[2026-10-27T14:59:13.163Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fba6 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'update' @ L674
+[2026-10-27T14:59:13.172Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fba7 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'delete' @ L661
+[2026-10-27T14:59:13.182Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fba8 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'delete' @ L674
+[2026-10-27T14:59:14.399Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fbae error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'update' @ L684, evaluation error at L696:28 for 'update' @ L696, false for 'update' @ L684, false for 'update' @ L696
+[2026-10-27T14:59:14.421Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fbaf error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'update' @ L684, evaluation error at L696:28 for 'update' @ L696, false for 'update' @ L684, false for 'update' @ L696
+[2026-10-27T14:59:14.440Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fbb0 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'update' @ L684, evaluation error at L696:28 for 'update' @ L696, false for 'update' @ L684, false for 'update' @ L696
+[2026-10-27T14:59:14.468Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fbb1 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'update' @ L684, evaluation error at L696:28 for 'update' @ L696, false for 'update' @ L684, false for 'update' @ L696
+[2026-10-27T14:59:14.523Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fbb2 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'update' @ L684, evaluation error at L696:28 for 'update' @ L696, false for 'update' @ L684, false for 'update' @ L696
+[2026-10-27T14:59:14.586Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fbb4 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'create' @ L682, evaluation error at L692:28 for 'create' @ L692, false for 'create' @ L682, false for 'create' @ L692
+[2026-10-27T14:59:14.605Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fbb5 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'create' @ L682, evaluation error at L692:28 for 'create' @ L692, false for 'create' @ L682, false for 'create' @ L692
+[2026-10-27T14:59:14.648Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fbb6 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'create' @ L682, evaluation error at L692:28 for 'create' @ L692, false for 'create' @ L682, false for 'create' @ L692
+[2026-10-27T14:59:14.663Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fbb7 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'create' @ L682, false for 'create' @ L692
+[2026-10-27T14:59:14.687Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fbb8 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'create' @ L682, evaluation error at L692:28 for 'create' @ L692, false for 'create' @ L682, false for 'create' @ L692
+[2026-10-27T14:59:14.720Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fbb9 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'create' @ L682, evaluation error at L692:28 for 'create' @ L692, false for 'create' @ L682, false for 'create' @ L692
+[2026-10-27T14:59:14.922Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fbbd error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'create' @ L682, evaluation error at L692:28 for 'create' @ L692, false for 'create' @ L682, false for 'create' @ L692
+[2026-10-27T14:59:14.937Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fbb3 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'create' @ L682, evaluation error at L692:28 for 'create' @ L692, false for 'create' @ L682, false for 'create' @ L692
+[2026-10-27T14:59:15.014Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fbbf error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'create' @ L682, evaluation error at L692:28 for 'create' @ L692, false for 'create' @ L682, false for 'create' @ L692
+[2026-10-27T14:59:15.042Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fbc0 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'create' @ L682, evaluation error at L692:28 for 'create' @ L692, false for 'create' @ L682, false for 'create' @ L692
+[2026-10-27T14:59:15.135Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fbc2 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'create' @ L682, evaluation error at L692:28 for 'create' @ L692, false for 'create' @ L682, false for 'create' @ L692
+[2026-10-27T14:59:15.172Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fbc3 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'create' @ L682, evaluation error at L692:28 for 'create' @ L692, false for 'create' @ L682, false for 'create' @ L692
+[2026-10-27T14:59:15.249Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fbc5 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'create' @ L682, evaluation error at L692:28 for 'create' @ L692, false for 'create' @ L682, false for 'create' @ L692
+[2026-10-27T14:59:15.271Z]  @firebase/firestore: Firestore (12.18.0): GrpcConnection RPC 'Write' stream 0x2953fbc6 error. Code: 7 Message: 7 PERMISSION_DENIED: 
+false for 'create' @ L682, evaluation error at L692:28 for 'create' @ L692, false for 'create' @ L682, false for 'create' @ L692

@@ -116,32 +116,6 @@ export async function abrirCasoMediacao(
     throw new HttpsError("invalid-argument", "Informe o motivo.");
   }
 
-  const existentes = await db
-    .collection(COL_CASOS)
-    .where("chave_idempotencia", "==", chave)
-    .limit(1)
-    .get();
-  if (!existentes.empty) {
-    const doc = existentes.docs[0];
-    return { caso: casoDeDoc(doc.id, doc.data()), idempotente: true };
-  }
-
-  const abertos = await db
-    .collection(COL_CASOS)
-    .where("id_contrato", "==", texto(entrada.idContrato))
-    .where("estado", "in", ["aberto", "em_analise", "aguardando_partes", "em_decisao"])
-    .limit(5)
-    .get();
-
-  const check = podeAbrirCaso({
-    idContrato: texto(entrada.idContrato),
-    idEvento: texto(entrada.idEvento),
-    casosAbertosNoContrato: abertos.size,
-  });
-  if (!check.ok) {
-    throw new HttpsError("failed-precondition", check.motivo);
-  }
-
   const agora = new Date().toISOString();
   const ref = db.collection(COL_CASOS).doc();
   const caso: CasoMediacao = {
@@ -166,32 +140,33 @@ export async function abrirCasoMediacao(
     retencaoEfetivaAtiva: false,
   };
 
-  const batch = db.batch();
-  batch.set(ref, {
-    ...casoParaFirestore(caso),
-    chave_idempotencia: chave,
-    atualizado_em: FieldValue.serverTimestamp(),
+  return db.runTransaction(async tx => {
+    const orcRef = db.collection("orcamento").doc(entrada.idOrcamento);
+    const orc = await tx.get(orcRef);
+    if (!orc.exists || orc.data()?.id_evento !== caso.idEvento ||
+        (orc.data()?.contrato_financeiro?.id_contrato || orcRef.id) !== caso.idContrato) {
+      throw new HttpsError("failed-precondition", "A mediação deve corresponder ao evento e à contratação.");
+    }
+    const existentes = await tx.get(db.collection(COL_CASOS).where("chave_idempotencia", "==", chave));
+    if (!existentes.empty) {
+      const anterior = casoDeDoc(existentes.docs[0].id, existentes.docs[0].data());
+      if (anterior.idOrcamento !== caso.idOrcamento || anterior.idEvento !== caso.idEvento) {
+        throw new HttpsError("already-exists", "Chave já utilizada em outra mediação.");
+      }
+      return { caso: anterior, idempotente: true };
+    }
+    const todos = await tx.get(db.collection(COL_CASOS).where("id_orcamento", "==", caso.idOrcamento));
+    const check = podeAbrirCaso({ idContrato: caso.idContrato, idEvento: caso.idEvento,
+      casosAbertosNoContrato: todos.docs.filter(d => !["fechado", "cancelado_caso"].includes(d.data().estado)).length });
+    if (!check.ok) throw new HttpsError("failed-precondition", check.motivo);
+    tx.update(orcRef, { repasse_revisao: FieldValue.increment(1) });
+    tx.create(ref, { ...casoParaFirestore(caso), chave_idempotencia: chave, atualizado_em: FieldValue.serverTimestamp() });
+    tx.create(db.collection(COL_REGISTROS).doc(), { id_caso: caso.id, tipo: "abertura", visibilidade: "interna",
+      texto: motivo, autor_id: entrada.autorId, criado_em: agora, efeito_financeiro_executado: false });
+    tx.create(db.collection(COL_AUDITORIA).doc(), { acao: "abrir_caso", id_caso: caso.id,
+      id_contrato: caso.idContrato, autor_id: entrada.autorId, criado_em: FieldValue.serverTimestamp() });
+    return { caso, idempotente: false };
   });
-  const regRef = db.collection(COL_REGISTROS).doc();
-  batch.set(regRef, {
-    id_caso: caso.id,
-    tipo: "abertura",
-    visibilidade: "interna",
-    texto: motivo,
-    autor_id: entrada.autorId,
-    criado_em: agora,
-    efeito_financeiro_executado: false,
-  });
-  await batch.commit();
-
-  await auditar(db, {
-    acao: "abrir_caso",
-    id_caso: caso.id,
-    id_contrato: caso.idContrato,
-    autor_id: entrada.autorId,
-  });
-
-  return { caso, idempotente: false };
 }
 
 export async function atribuirResponsavel(
@@ -297,6 +272,14 @@ export async function registrarDecisao(
     throw new HttpsError("not-found", "Caso não encontrado.");
   }
   const caso = casoDeDoc(snap.id, snap.data()!);
+  if (["fechado", "cancelado_caso"].includes(caso.estado)) {
+    throw new HttpsError("failed-precondition", "Mediação encerrada: abra um novo caso para registrar outra decisão.");
+  }
+  if (!["manter", "recomendar_repasse", "recomendar_reembolso", "recomendar_cancelamento", "encaminhar", "arquivar"].includes(entrada.tipoDecisao) ||
+      texto(entrada.texto).length < 10 || entrada.texto.length > 2000) {
+    throw new HttpsError("invalid-argument", "Selecione a decisão e descreva a justificativa em 10 a 2000 caracteres.");
+  }
+
   const agora = new Date().toISOString();
   const r = registrarDecisaoSemEfeitoFinanceiro({
     caso,
@@ -342,6 +325,16 @@ export async function fecharCaso(
   const snap = await ref.get();
   if (!snap.exists) {
     throw new HttpsError("not-found", "Caso não encontrado.");
+  }
+  if (snap.data()?.estado === "fechado") {
+    return { caso: casoDeDoc(snap.id, snap.data()!), efeitosFinanceiros: [] };
+  }
+  if (texto(entrada.conclusao).length < 10 || entrada.conclusao.length > 2000) {
+    throw new HttpsError("invalid-argument", "Descreva a conclusão em 10 a 2000 caracteres.");
+  }
+  const decisoes = await db.collection(COL_REGISTROS).where("id_caso", "==", ref.id).get();
+  if (!decisoes.docs.some(d => d.data().tipo === "decisao")) {
+    throw new HttpsError("failed-precondition", "Registre uma decisão antes de encerrar a mediação.");
   }
   const caso = casoDeDoc(snap.id, snap.data()!);
   const agora = new Date().toISOString();

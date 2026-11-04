@@ -1,0 +1,470 @@
+[
+  {
+    "id": "obterEstatisticasPublicas",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "novaAvaliacaoProcessar",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "us-central1"
+  },
+  {
+    "id": "criarCotacao",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "responderCotacao",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "fecharCotacao",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "cancelarCotacao",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "registrarContratoFinanceiro",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "cancelarContratoFinanceiro",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "registrarLiquidacaoFinanceira",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "registrarCustoInternoFornecedor",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "registrarRecebimentoFornecedor",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "consultarOperacaoRecebimentoFornecedor",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "consultarResumoFinanceiroFornecedor",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "cadastrarItemEstoqueFornecedor",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "registrarEntradaEstoqueFornecedor",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "reservarEstoqueFornecedor",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "retirarEstoqueFornecedor",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "consumirEstoqueFornecedor",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "cancelarReservaEstoqueFornecedor",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "devolverEstoqueFornecedor",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "consultarEstoqueFornecedor",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "salvarPoliticaComissao",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "ativarPoliticaComissao",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "simularComissaoPlataforma",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "gerarObrigacaoComissao",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "liquidarComissaoManual",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "registrarAjusteComissao",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "consultarExtratoComissao",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "consultarDashboardFinanceiroAdmin",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "resolverExecucaoMediacao",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "registrarRecebimentoPlataforma",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "autorizarRepasseOrganizador",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "cancelarRepassePendente",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "alocarRecebimentoContratos",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "prepararRepasseFornecedor",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "confirmarRepasseManual",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "registrarAjustePosRepasse",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "consultarExtratoIntermediacao",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "salvarPoliticaLiberacaoRepasse",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "simularPosicaoIntermediacao",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "consultarCentralContratacoes",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "consultarDetalheContratacao",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "abrirCasoMediacao",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "atribuirResponsavelCaso",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "registrarRegistroMediacao",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "solicitarInformacaoCaso",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "registrarDecisaoCaso",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "fecharCasoMediacao",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "recomendarBloqueioRevisao",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "consultarCasoMediacao",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "consultarAcompanhamentoOrganizador",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "consultarAcompanhamentoFornecedor",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "declararPagamentoPlataforma",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "informarEntregaFornecedor",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "registrarAceiteCliente",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "abrirCasoMediacaoParte",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "recomendarFornecedoresParaEvento",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "registrarInteracaoFornecedor",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "registrarAvaliacaoVerificada",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "consultarContratosAvaliaveis",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "moderarAvaliacaoVerificada",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "consultarGestaoReputacaoFn",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "responderReputacaoFn",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "denunciarReputacaoFn",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "listarFilaReputacaoFn",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "decidirDenunciaReputacaoFn",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "consultarPermissaoReputacaoFn",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "historicoRespostaReputacaoFn",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "consultarJornadaAtendimentoFn",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "movimentarComercialJornadaFn",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "executarJornadaAtendimentoFn",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "consultarAgendaFornecedorFn",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "configurarCapacidadeFornecedorFn",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "confirmarAgendaContratoFn",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "consultarCompromissoPermitidoFn",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "consultarPlanejamentoFornecedorFn",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "comandarPlanejamentoFornecedorFn",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  },
+  {
+    "id": "consultarPainelFornecedorFn",
+    "state": "ACTIVE",
+    "runtime": "nodejs22",
+    "region": "southamerica-east1"
+  }
+]

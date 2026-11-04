@@ -135,6 +135,7 @@ class AdminDashboardScreen extends StatelessWidget {
             ],
           ),
           actions: [
+            IconButton(tooltip:'Moderação de avaliações (permissão específica)',onPressed:()=>Get.toNamed('/moderacao-avaliacoes'),icon:const Icon(Icons.rate_review_outlined,color:Colors.white)),
             const DesktopUpdateMenuButton(color: Colors.white),
             IconButton(
               tooltip: 'Atualizar indicadores',

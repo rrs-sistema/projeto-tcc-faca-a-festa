@@ -237,6 +237,9 @@ export function liquidarManual(
       code: "failed-precondition",
     });
   }
+  if (valorCentavos > saldoCentavos(obrigacao)) {
+    throw Object.assign(new Error("Valor superior ao saldo da comissão após retenções e pagamentos registrados."), {code:"failed-precondition"});
+  }
   const liquidado = obrigacao.valorLiquidadoCentavos + valorCentavos;
   const saldo =
     obrigacao.valorOriginalCentavos +

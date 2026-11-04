@@ -36,6 +36,7 @@ class GerenciarAvaliacoesServico {
     required String comentario,
     String? idEvento,
     String? nomeEvento,
+    String? idOrcamento,
   }) {
     return repository.adicionarAvaliacaoServico(
       idFornecedor: idFornecedor,
@@ -46,6 +47,7 @@ class GerenciarAvaliacoesServico {
       comentario: comentario,
       idEvento: idEvento,
       nomeEvento: nomeEvento,
+      idOrcamento: idOrcamento,
     );
   }
 
@@ -63,6 +65,7 @@ class GerenciarAvaliacoesServico {
     required String comentario,
     String? idEvento,
     String? nomeEvento,
+    String? idOrcamento,
   }) {
     return repository.adicionarAvaliacaoFornecedor(
       idFornecedor: idFornecedor,
@@ -72,6 +75,7 @@ class GerenciarAvaliacoesServico {
       comentario: comentario,
       idEvento: idEvento,
       nomeEvento: nomeEvento,
+      idOrcamento: idOrcamento,
     );
   }
 

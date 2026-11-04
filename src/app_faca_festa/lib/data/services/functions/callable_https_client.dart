@@ -181,6 +181,10 @@ class CallableHttpsClient {
         return 'deadline-exceeded';
       case 'FAILED_PRECONDITION':
         return 'failed-precondition';
+      case 'UNAVAILABLE':
+        return 'unavailable';
+      case 'CANCELLED':
+        return 'cancelled';
       case 'NOT_FOUND':
         return 'not-found';
       default:

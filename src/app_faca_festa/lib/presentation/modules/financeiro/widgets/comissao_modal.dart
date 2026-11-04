@@ -155,6 +155,11 @@ class ComissaoStatus extends StatelessWidget {
           const Color(0xFF4338CA),
           Icons.receipt_long_outlined
         ),
+      'retencao_prevista' => (
+          'Prevista para retenção',
+          const Color(0xFF92400E),
+          Icons.schedule_rounded
+        ),
       'a_vencer' => (
           'A vencer',
           const Color(0xFF92400E),
