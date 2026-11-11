@@ -8,35 +8,37 @@ import 'package:app_faca_festa/domain/entities/cotacao_chat.dart';
 import 'package:app_faca_festa/domain/entities/usuario.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_cotacoes.dart';
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
-import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
 import 'package:app_faca_festa/presentation/widgets/festa_app_bar.dart';
 import './chat_mensagens_page.dart';
 
 class FornecedorMensagensPage extends StatelessWidget {
   const FornecedorMensagensPage({
     super.key,
-    required this.appController,
+    required this.usuario,
+    required this.mensagensNaoLidas,
     required this.theme,
     required this.cotacoes,
   });
 
-  final AppController appController;
+  final Usuario usuario;
+  final int? mensagensNaoLidas;
   final EventThemeController theme;
   final GerenciarCotacoes cotacoes;
 
   @override
   Widget build(BuildContext context) {
-    final usuario = appController.usuarioLogado.value!;
     final fornecedorId = usuario.idUsuario;
+    final naoLidas = mensagensNaoLidas ?? 0;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: FestaAppBar(
-        titulo: 'Mensagens',
+        titulo: naoLidas > 0 ? 'Mensagens ($naoLidas)' : 'Mensagens',
         automaticamenteImplyLeading: true,
         themeController: theme,
       ),
       body: StreamBuilder<List<CotacaoConversa>>(
+        key: ValueKey(fornecedorId),
         stream: cotacoes.observarConversasFornecedor(fornecedorId),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
@@ -175,6 +177,11 @@ class _CotacaoMensagemTile extends StatelessWidget {
     final ultimaMsgHora = conversa.ultimaMensagemEm != null
         ? DateFormat("dd/MM • HH:mm").format(conversa.ultimaMensagemEm!)
         : "";
+    final dataPedido = conversa.dataSolicitacao;
+    final contextoPedido = dataPedido == null
+        ? conversa.categoria
+        : '${conversa.categoria} • Pedido em ${DateFormat('dd/MM/yyyy').format(dataPedido)}';
+    final observacao = conversa.observacaoPedido?.trim() ?? '';
 
     return Container(
       margin:
@@ -222,8 +229,8 @@ class _CotacaoMensagemTile extends StatelessWidget {
                         children: [
                           Expanded(
                             child: Text(
-                              "Cotação #${conversa.idCotacao}",
-                              maxLines: 1,
+                              conversa.nomeSolicitante,
+                              maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                               style: GoogleFonts.poppins(
                                 fontWeight: FontWeight.w700,
@@ -245,13 +252,26 @@ class _CotacaoMensagemTile extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        conversa.categoria,
+                        contextoPedido,
                         style: GoogleFonts.poppins(
                           fontSize: 11,
                           color: corCategoria,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
+                      if (observacao.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          'Pedido: $observacao',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.poppins(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w500,
+                            color: const Color(0xFF1F2937),
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 4),
                       Row(
                         children: [
@@ -319,6 +339,8 @@ class _CotacaoMensagemTile extends StatelessWidget {
           idFornecedor: idFornecedor,
           nomeFornecedor: detalhes.nomeSolicitante,
           dataSolicitacao: detalhes.dataSolicitacao,
+          categoriaPedido: detalhes.categoria,
+          observacaoPedido: detalhes.observacaoPedido,
           cotacoes: cotacoes,
           theme: theme,
           usuario: usuario,

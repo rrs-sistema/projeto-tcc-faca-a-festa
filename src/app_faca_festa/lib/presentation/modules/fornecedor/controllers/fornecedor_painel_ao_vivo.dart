@@ -33,7 +33,7 @@ class FornecedorPainelAoVivo {
   final Rx<Fornecedor?> fornecedor;
   final RxBool aptoParaOperar;
   final RxInt solicitacoesPendentes;
-  final RxInt mensagensNaoLidas;
+  final RxnInt mensagensNaoLidas;
   final RxDouble avaliacaoMedia;
   final RxList<FornecedorProdutoServico> servicosFornecedor;
 
@@ -51,30 +51,22 @@ class FornecedorPainelAoVivo {
   StreamSubscription<Fornecedor?>? _fornecedorSub;
   StreamSubscription? _solicitacoesSub;
   StreamSubscription<int>? _mensagensSub;
-  final List<StreamSubscription> _mensagemListeners = [];
-  final Map<String, int> _mensagensNaoLidasPorCotacao = {};
-
   Future<void> ouvirMensagensNaoLidas(String idFornecedor) async {
+    if (idFornecedor.trim().isEmpty || !_conta(idFornecedor)) return;
     final versao = ++_msg;
-    if (idFornecedor.trim().isEmpty) return;
-    if (!_usuarioEhFornecedor()) return;
-
-    debugPrint(
-        '\n📡 [MSG] Iniciando listener de mensagens NÃO lidas para $idFornecedor');
-
-    await _mensagensSub?.cancel();
-    for (final listener in _mensagemListeners) {
-      await listener.cancel();
-    }
-    _mensagemListeners.clear();
-    _mensagensNaoLidasPorCotacao.clear();
-    mensagensNaoLidas.value = 0;
+    final anterior = _mensagensSub;
+    _mensagensSub = null;
+    mensagensNaoLidas.value = null;
+    await anterior?.cancel();
+    if (versao != _msg || !_conta(idFornecedor)) return;
 
     _mensagensSub =
         _usecase().observarMensagensNaoLidas(idFornecedor).listen((total) {
       if (versao != _msg || !_conta(idFornecedor)) return;
       mensagensNaoLidas.value = total;
     }, onError: (e) {
+      if (versao != _msg || !_conta(idFornecedor)) return;
+      mensagensNaoLidas.value = null;
       debugPrint('❌ Erro ao escutar cotações do fornecedor para mensagens: $e');
     });
   }
@@ -151,7 +143,6 @@ class FornecedorPainelAoVivo {
       }
       solicitacoesPendentes.value = estatisticas.solicitacoesPendentes;
       servicosFornecedor.assignAll(estatisticas.servicosAtivos);
-      mensagensNaoLidas.value = estatisticas.mensagensNaoLidas;
       avaliacaoMedia.value = estatisticas.avaliacaoMedia;
     } catch (e, s) {
       debugPrint('❌ Erro ao atualizar estatísticas: $e\n$s');
@@ -169,17 +160,13 @@ class FornecedorPainelAoVivo {
     ++_forn;
     ++_sol;
     ++_estat;
+    final mensagensCanceladas = _mensagensSub?.cancel();
+    _mensagensSub = null;
+    mensagensNaoLidas.value = null;
     await _fornecedorSub?.cancel();
     _fornecedorSub = null;
     await _solicitacoesSub?.cancel();
     _solicitacoesSub = null;
-    await _mensagensSub?.cancel();
-    _mensagensSub = null;
-    for (final listener in _mensagemListeners) {
-      await listener.cancel();
-    }
-    _mensagemListeners.clear();
-    _mensagensNaoLidasPorCotacao.clear();
-    mensagensNaoLidas.value = 0;
+    await mensagensCanceladas;
   }
 }

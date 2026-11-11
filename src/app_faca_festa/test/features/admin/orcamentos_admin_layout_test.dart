@@ -46,7 +46,7 @@ Future<OrcamentosAdminController> _abrir(
     WidgetTester tester, List<OrcamentoAdmin> itens,
     {double largura = 1440, double escala = 1}) async {
   tester.view.devicePixelRatio = 1;
-  tester.view.physicalSize = Size(largura, 1080);
+  tester.view.physicalSize = Size(largura, largura < 600 ? 640 : 1080);
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
   final c = OrcamentosAdminController(
@@ -146,27 +146,44 @@ void main() {
             [_item('1', valor: 13386.40), _item('2', valor: 600, pago: 600)],
             largura: largura, escala: escala);
         await _capturar(tester, 'inicio-${largura.toInt()}-${escala.toInt()}');
-        final abrir = find.byKey(const ValueKey('expandir-evento:evento-1'));
+        final abrir = find.byKey(const ValueKey('ver-itens-evento:evento-1'));
         await tester.scrollUntilVisible(abrir, 350,
             scrollable: find.byType(Scrollable).first);
         await tester.ensureVisible(abrir);
         await tester.pumpAndSettle();
+        final listaEventos =
+            tester.state<ScrollableState>(find.byType(Scrollable).first);
+        final posicaoEventos = listaEventos.position.pixels;
+        expect(find.text('Ver detalhes'), findsNothing);
         await tester.tap(abrir);
         await tester.pumpAndSettle();
-        final detalhes = find.text('Ver orçamento').first;
-        await tester.scrollUntilVisible(detalhes, 350,
-            scrollable: find.byType(Scrollable).first);
+        expect(find.text('Itens do orçamento'), findsOneWidget);
+        expect(find.byType(DataTable),
+            largura == 1440 && escala == 1 ? findsOneWidget : findsNothing);
+        await _capturar(tester, 'itens-${largura.toInt()}-${escala.toInt()}');
+        final listaItens = find.descendant(
+            of: find.byType(Dialog), matching: find.byType(Scrollable));
+        final detalhes = find.text('Ver detalhes').first;
+        await tester.scrollUntilVisible(detalhes, 350, scrollable: listaItens);
         await tester.ensureVisible(detalhes);
         await tester.pumpAndSettle();
-        await _capturar(tester, 'itens-${largura.toInt()}-${escala.toInt()}');
+        final posicaoItens =
+            tester.state<ScrollableState>(listaItens).position.pixels;
         await tester.tap(detalhes);
         await tester.pumpAndSettle();
         expect(find.text('R\$ 13.386,40'), findsWidgets);
         expect(find.textContaining('R\$ 13386.40'), findsNothing);
         expect(find.text('Negociação: Pendente'), findsWidgets);
         await _capturar(tester, 'detalhe-${largura.toInt()}-${escala.toInt()}');
-        await tester.tap(find.text('Fechar'));
+        await tester.tap(find.text('Voltar aos itens'));
         await tester.pumpAndSettle();
+        expect(tester.state<ScrollableState>(listaItens).position.pixels,
+            posicaoItens);
+        await tester.tap(find.byTooltip('Fechar itens do orçamento'));
+        await tester.pumpAndSettle();
+        expect(find.text('Itens do orçamento'), findsNothing);
+        expect(find.text('Ver detalhes'), findsNothing);
+        expect(listaEventos.position.pixels, posicaoEventos);
         expect(tester.takeException(), isNull);
       });
     }
@@ -183,7 +200,7 @@ void main() {
         find.widgetWithText(TextField, 'Buscar na lista'), 'Fotografia');
     await tester.pumpAndSettle();
     expect(find.text('129,1% do planejamento'), findsOneWidget);
-    final abrir = find.byKey(const ValueKey('expandir-evento:evento-1'));
+    final abrir = find.byKey(const ValueKey('ver-itens-evento:evento-1'));
     await tester.ensureVisible(abrir);
     await tester.pumpAndSettle();
     await tester.tap(abrir);
@@ -191,27 +208,41 @@ void main() {
     expect(find.byWidgetPredicate((w) => w is Text && w.data == 'Fotografia'),
         findsOneWidget);
     expect(find.text('Decoração temática completa'), findsNothing);
+    expect(
+        find.descendant(
+            of: find.byType(Dialog),
+            matching: find.text('1 de 2 itens · filtros ativos')),
+        findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
   testWidgets(
-      'eventos homônimos expandem independentemente e percentual é real',
+      'modal lista somente os itens do evento selecionado entre homônimos',
       (tester) async {
-    final c = await _abrir(tester, [
+    await _abrir(tester, [
       _item('1', valor: 13386.40),
-      _item('2', evento: 'evento-2', plano: 0)
+      _item('2', evento: 'evento-2', plano: 0, descricao: 'Fotografia')
     ]);
     expect(find.byKey(const ValueKey('evento:evento-1')), findsOneWidget);
     expect(find.byKey(const ValueKey('evento:evento-2')), findsOneWidget);
     expect(find.text('243,4% do planejamento'), findsOneWidget);
     expect(find.textContaining('Excedente de R\$ 7.886,40'), findsOneWidget);
     expect(find.text('Planejamento não definido'), findsOneWidget);
-    await tester
-        .ensureVisible(find.byKey(const ValueKey('expandir-evento:evento-1')));
-    await tester.tap(find.byKey(const ValueKey('expandir-evento:evento-1')));
-    await tester.pumpAndSettle();
-    expect(c.detalhesVisiveis['evento:evento-1'], true);
-    expect(c.detalhesVisiveis['evento:evento-2'], isNot(true));
     await _capturar(tester, 'desktop-visao-geral');
+    for (final (evento, item, outro) in [
+      ('evento-1', 'Decoração temática completa', 'Fotografia'),
+      ('evento-2', 'Fotografia', 'Decoração temática completa'),
+    ]) {
+      final abrir = find.byKey(ValueKey('ver-itens-evento:$evento'));
+      await tester.ensureVisible(abrir);
+      await tester.pumpAndSettle();
+      await tester.tap(abrir);
+      await tester.pumpAndSettle();
+      expect(find.text(item), findsOneWidget);
+      expect(find.text(outro), findsNothing);
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      expect(find.text(item), findsNothing);
+    }
   });
 }

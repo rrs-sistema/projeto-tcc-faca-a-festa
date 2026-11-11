@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/presentation/modules/financeiro/widgets/ajuda_fluxo_financeiro.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -8,6 +9,7 @@ import 'package:app_faca_festa/core/utils/numeric_input.dart';
 import 'package:app_faca_festa/domain/services/acompanhamento_partes_service.dart';
 import 'package:app_faca_festa/presentation/modules/financeiro/controllers/acompanhamento_partes_controller.dart';
 import 'package:app_faca_festa/presentation/modules/financeiro/widgets/abrir_mediacao_sheet.dart';
+import 'package:app_faca_festa/presentation/modules/financeiro/widgets/autorizacao_repasse_modal.dart';
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import 'package:app_faca_festa/presentation/widgets/festa_app_bar.dart';
 
@@ -37,49 +39,25 @@ class _AcompanhamentoOrganizadorPageState
     extends State<AcompanhamentoOrganizadorPage> {
   AcompanhamentoPartesController get c => widget.controller;
 
-  Future<void> _autorizarRepasse(String idOrcamento, bool autorizar) async {
-    final motivo = TextEditingController();
-    final confirmado = await showDialog<bool>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-              title: Text(autorizar
-                  ? 'Autorizar pagamento ao fornecedor'
-                  : 'Revogar autorização antecipada'),
-              content: SizedBox(
-                  width: 440,
-                  child: Column(mainAxisSize: MainAxisSize.min, children: [
-                    Text(autorizar
-                        ? 'Você autoriza a administração a pagar este fornecedor antes da finalização do evento. O pagamento depende de saldo conferido e ausência de bloqueios de mediação.'
-                        : 'A administração deverá aguardar a finalização do evento. Esta ação não desfaz pagamentos já confirmados.'),
-                    const SizedBox(height: 16),
-                    TextField(
-                        controller: motivo,
-                        maxLength: 500,
-                        maxLines: 3,
-                        decoration: const InputDecoration(
-                            labelText: 'Motivo (mínimo de 10 caracteres)')),
-                  ])),
-              actions: [
-                TextButton(
-                    onPressed: () => Navigator.pop(ctx, false),
-                    child: const Text('Voltar')),
-                TextButton(
-                    onPressed: () {
-                      if (motivo.text.trim().length >= 10) {
-                        Navigator.pop(ctx, true);
-                      }
-                    },
-                    child: Text(autorizar
-                        ? 'Autorizar pagamento'
-                        : 'Revogar autorização'))
-              ],
-            ));
-    final texto = motivo.text.trim();
-    // O diálogo ainda pode estar concluindo a animação de saída.
-    WidgetsBinding.instance.addPostFrameCallback((_) => motivo.dispose());
-    if (confirmado == true) {
-      await c.autorizarRepasse(idOrcamento, texto, autorizar: autorizar);
-    }
+  Future<void> _autorizarRepasse(
+      VisaoOrganizadorContrato contrato, bool autorizar) async {
+    final registrado = await mostrarAutorizacaoRepasseModal(
+      context: context,
+      autorizar: autorizar,
+      fornecedor: contrato.nomeFornecedor,
+      servico: contrato.nomeServico,
+      onConfirmar: (motivo) => c.autorizarRepasse(
+        contrato.idOrcamento,
+        motivo,
+        autorizar: autorizar,
+      ),
+    );
+    if (!mounted || registrado != true) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(autorizar
+          ? 'Autorização registrada.'
+          : 'Autorização antecipada revogada.'),
+    ));
   }
 
   @override
@@ -231,6 +209,7 @@ class _AcompanhamentoOrganizadorPageState
       l.idOrcamento,
       pedido.motivo,
       descricao: pedido.descricao,
+      categoria: pedido.categoria,
     );
     EasyLoading.dismiss();
     if (!mounted) return;
@@ -697,7 +676,22 @@ class _AcompanhamentoOrganizadorPageState
               ],
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 6),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: AjudaFluxoFinanceiro(
+              perfil: PerfilAjudaFinanceira.organizador,
+              contrato: (
+                contrato: servico,
+                situacao: l.nivelPagamento == 'declarado'
+                    ? '${_reais(l.valorDeclaradoCentavos)} declarados · aguardando conferência'
+                    : _rotuloNivel(l.nivelPagamento),
+                proximoPasso: l.proximoPasso.rotulo,
+                responsavel: l.proximoPasso.responsavel,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
           SizedBox(
             width: double.infinity,
             child: FilledButton.icon(
@@ -728,13 +722,13 @@ class _AcompanhamentoOrganizadorPageState
             TextButton.icon(
                 onPressed: c.enviando.value
                     ? null
-                    : () => _autorizarRepasse(l.idOrcamento, true),
+                    : () => _autorizarRepasse(l, true),
                 icon: const Icon(Icons.verified_user_outlined, size: 18),
                 label: const Text('Autorizar pagamento antecipado')),
             TextButton(
                 onPressed: c.enviando.value
                     ? null
-                    : () => _autorizarRepasse(l.idOrcamento, false),
+                    : () => _autorizarRepasse(l, false),
                 child: const Text('Revogar autorização')),
           ]),
           if (l.estadoExecucao == 'entrega_informada') ...[

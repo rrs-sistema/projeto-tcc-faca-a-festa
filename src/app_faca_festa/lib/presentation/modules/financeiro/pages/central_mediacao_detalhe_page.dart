@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'package:app_faca_festa/core/utils/numeric_input.dart';
+import 'package:app_faca_festa/domain/entities/financeiro/mediacao_operacional.dart';
 import 'package:app_faca_festa/presentation/modules/financeiro/controllers/central_mediacao_controller.dart';
 import 'package:app_faca_festa/presentation/modules/tema/admin_theme.dart';
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
@@ -18,11 +19,13 @@ class CentralMediacaoDetalhePage extends StatefulWidget {
     required this.controller,
     required this.themeController,
     required this.idOrcamento,
+    this.abrirMediacao = false,
   });
 
   final CentralMediacaoController controller;
   final EventThemeController themeController;
   final String idOrcamento;
+  final bool abrirMediacao;
 
   @override
   State<CentralMediacaoDetalhePage> createState() =>
@@ -47,6 +50,7 @@ class _CentralMediacaoDetalhePageState
   @override
   void initState() {
     super.initState();
+    if (widget.abrirMediacao) _secao = 'Mediação e histórico';
     WidgetsBinding.instance.addPostFrameCallback((_) {
       c.abrirDetalhe(widget.idOrcamento);
     });
@@ -75,6 +79,15 @@ class _CentralMediacaoDetalhePageState
       if (v != null && v.toString().trim().isNotEmpty) return v.toString();
     }
     return '—';
+  }
+
+  String _nomeResponsavel(Map caso) {
+    final nome = (caso['nomeResponsavel'] ?? '').toString().trim();
+    if (nome.isNotEmpty) return nome;
+    final id = (caso['idResponsavel'] ?? caso['id_responsavel'] ?? '')
+        .toString()
+        .trim();
+    return id.isEmpty ? 'Sem responsável' : 'Nome indisponível';
   }
 
   String _rotuloComercial(String raw) {
@@ -1003,7 +1016,8 @@ class _CentralMediacaoDetalhePageState
               ),
               if ((caso['categoria'] ?? '').toString().isNotEmpty)
                 AdminStatusChip(
-                  label: (caso['categoria'] ?? '').toString(),
+                  label: tiposIncidenteFornecedor[caso['categoria']] ??
+                      (caso['categoria'] ?? '').toString(),
                   color: AdminPalette.primary,
                 ),
             ],
@@ -1012,7 +1026,7 @@ class _CentralMediacaoDetalhePageState
           _linha('Motivo', (caso['motivo'] ?? '—').toString()),
           _linha(
             'Responsável',
-            (caso['idResponsavel'] ?? caso['id_responsavel'] ?? '—').toString(),
+            _nomeResponsavel(caso),
           ),
           if (caso['recomendacaoBloqueioAtiva'] == true ||
               caso['recomendacao_bloqueio_ativa'] == true)

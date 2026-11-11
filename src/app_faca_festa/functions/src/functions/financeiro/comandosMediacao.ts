@@ -16,7 +16,8 @@ import {
   abrirCasoMediacao,
   adicionarRegistro,
   atribuirResponsavel,
-  carregarCasoComRegistros,
+  carregarRegistrosCaso,
+  lerCasoMediacao,
   fecharCaso,
   recomendarBloqueio,
   registrarDecisao,
@@ -65,7 +66,8 @@ export const atribuirResponsavelCasoFn = onCall(
     const data = (request.data ?? {}) as Record<string, unknown>;
     const caso = await atribuirResponsavel(admin.firestore(), {
       idCaso: texto(data.idCaso ?? data.id_caso),
-      idResponsavel: texto(data.idResponsavel ?? data.id_responsavel),
+      idResponsavel: data.assumir === true ? perfil.uid : texto(data.idResponsavel ?? data.id_responsavel),
+      somenteSemResponsavel: data.assumir === true,
       autorId: perfil.uid,
     });
     return { ok: true, caso };
@@ -227,12 +229,7 @@ export const consultarCasoMediacaoFn = onCall(
           : "cliente";
 
     const db = admin.firestore();
-    // Carrega bruto para checar vínculo antes de filtrar.
-    const { caso } = await carregarCasoComRegistros(db, {
-      idCaso,
-      papel: "admin",
-      caps: capacidadesParaTipoUsuario("A"),
-    });
+    const caso = await lerCasoMediacao(db, idCaso);
 
     if (papel !== "admin") {
       let idFornecedorOperador: string | null = null;
@@ -252,19 +249,17 @@ export const consultarCasoMediacaoFn = onCall(
       }
     }
 
-    const filtrados = await carregarCasoComRegistros(db, {
-      idCaso,
+    const registros = await carregarRegistrosCaso(db, {
+      idCaso: caso.id,
       papel,
       caps,
     });
 
-    const exportaveis = registrosParaExportacao(filtrados.registros);
-
     return {
       ok: true,
-      caso: filtrados.caso,
-      registros: filtrados.registros,
-      exportacao_compartilhavel: exportaveis,
+      caso,
+      registros,
+      exportacao_compartilhavel: registrosParaExportacao(registros),
       capacidades: caps,
       papel_consulta: papel,
     };

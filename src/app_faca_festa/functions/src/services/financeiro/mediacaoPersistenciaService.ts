@@ -4,6 +4,7 @@
 
 import { FieldValue, Firestore } from "firebase-admin/firestore";
 import { HttpsError } from "firebase-functions/v2/https";
+import { transacaoIdempotente } from "../../shared/transacaoIdempotente";
 import {
   aplicarRecomendacaoBloqueio,
   CasoMediacao,
@@ -41,7 +42,7 @@ async function auditar(
   });
 }
 
-function casoDeDoc(id: string, d: FirebaseFirestore.DocumentData): CasoMediacao {
+export function casoDeDoc(id: string, d: FirebaseFirestore.DocumentData): CasoMediacao {
   return {
     id,
     idEvento: String(d.id_evento ?? ""),
@@ -174,41 +175,46 @@ export async function atribuirResponsavel(
   entrada: {
     idCaso: string;
     idResponsavel: string;
+    somenteSemResponsavel?: boolean;
     autorId: string;
   },
 ): Promise<CasoMediacao> {
   const ref = db.collection(COL_CASOS).doc(texto(entrada.idCaso));
-  const snap = await ref.get();
-  if (!snap.exists) {
-    throw new HttpsError("not-found", "Caso não encontrado.");
-  }
-  const caso = casoDeDoc(snap.id, snap.data()!);
-  if (caso.estado === "fechado" || caso.estado === "cancelado_caso") {
-    throw new HttpsError("failed-precondition", "Caso já encerrado.");
-  }
-  const agora = new Date().toISOString();
-  const novo: CasoMediacao = {
-    ...caso,
-    idResponsavel: texto(entrada.idResponsavel),
-    estado: caso.estado === "aberto" ? "em_analise" : caso.estado,
-  };
-  const batch = db.batch();
-  batch.update(ref, {
-    id_responsavel: novo.idResponsavel,
-    estado: novo.estado,
-    atualizado_em: FieldValue.serverTimestamp(),
+  return transacaoIdempotente(db, async tx => {
+    const snap = await tx.get(ref);
+    if (!snap.exists) {
+      throw new HttpsError("not-found", "Caso não encontrado.");
+    }
+    const caso = casoDeDoc(snap.id, snap.data()!);
+    if (caso.estado === "fechado" || caso.estado === "cancelado_caso") {
+      throw new HttpsError("failed-precondition", "Caso já encerrado.");
+    }
+    if (entrada.somenteSemResponsavel && caso.idResponsavel) {
+      if (caso.idResponsavel === entrada.idResponsavel) return caso;
+      throw new HttpsError("aborted", "Outro administrador já assumiu este caso. Atualize a fila.");
+    }
+    const agora = new Date().toISOString();
+    const novo: CasoMediacao = {
+      ...caso,
+      idResponsavel: texto(entrada.idResponsavel),
+      estado: caso.estado === "aberto" ? "em_analise" : caso.estado,
+    };
+    tx.update(ref, {
+      id_responsavel: novo.idResponsavel,
+      estado: novo.estado,
+      atualizado_em: FieldValue.serverTimestamp(),
+    });
+    tx.create(db.collection(COL_REGISTROS).doc(), {
+      id_caso: caso.id,
+      tipo: "atribuicao",
+      visibilidade: "interna",
+      texto: `Responsável atribuído: ${novo.idResponsavel}`,
+      autor_id: entrada.autorId,
+      criado_em: agora,
+      efeito_financeiro_executado: false,
+    });
+    return novo;
   });
-  batch.set(db.collection(COL_REGISTROS).doc(), {
-    id_caso: caso.id,
-    tipo: "atribuicao",
-    visibilidade: "interna",
-    texto: `Responsável atribuído: ${novo.idResponsavel}`,
-    autor_id: entrada.autorId,
-    criado_em: agora,
-    efeito_financeiro_executado: false,
-  });
-  await batch.commit();
-  return novo;
 }
 
 export async function adicionarRegistro(
@@ -434,22 +440,25 @@ export async function recomendarBloqueio(
   };
 }
 
-export async function carregarCasoComRegistros(
+export async function lerCasoMediacao(db: Firestore, idCaso: string): Promise<CasoMediacao> {
+  const snap = await db.collection(COL_CASOS).doc(texto(idCaso)).get();
+  if (!snap.exists) {
+    throw new HttpsError("not-found", "Caso não encontrado.");
+  }
+  return casoDeDoc(snap.id, snap.data()!);
+}
+
+export async function carregarRegistrosCaso(
   db: Firestore,
   entrada: {
     idCaso: string;
     papel: PapelConsultaMediacao;
     caps: CapacidadeMediacao[];
   },
-): Promise<{ caso: CasoMediacao; registros: RegistroMediacao[] }> {
-  const snap = await db.collection(COL_CASOS).doc(texto(entrada.idCaso)).get();
-  if (!snap.exists) {
-    throw new HttpsError("not-found", "Caso não encontrado.");
-  }
-  const caso = casoDeDoc(snap.id, snap.data()!);
+): Promise<RegistroMediacao[]> {
   const regs = await db
     .collection(COL_REGISTROS)
-    .where("id_caso", "==", caso.id)
+    .where("id_caso", "==", entrada.idCaso)
     .limit(200)
     .get();
   const todos: RegistroMediacao[] = regs.docs.map((d) => {
@@ -470,10 +479,7 @@ export async function carregarCasoComRegistros(
     };
   });
   todos.sort((a, b) => a.criadoEm.localeCompare(b.criadoEm));
-  return {
-    caso,
-    registros: filtrarRegistrosPorPapel(todos, entrada.papel, entrada.caps),
-  };
+  return filtrarRegistrosPorPapel(todos, entrada.papel, entrada.caps);
 }
 
 export async function listarCasosPorContratos(
@@ -482,15 +488,17 @@ export async function listarCasosPorContratos(
 ): Promise<Map<string, CasoMediacao>> {
   const mapa = new Map<string, CasoMediacao>();
   const unicos = [...new Set(idsContrato.filter(Boolean))];
-  const chunk = 10;
+  const chunk = 30;
+  const lotes: string[][] = [];
   for (let i = 0; i < unicos.length; i += chunk) {
-    const fatia = unicos.slice(i, i + chunk);
-    const snap = await db
+    lotes.push(unicos.slice(i, i + chunk));
+  }
+  const resultados = await Promise.all(lotes.map(fatia => db
       .collection(COL_CASOS)
       .where("id_contrato", "in", fatia)
-      .limit(50)
       .get()
-      .catch(() => null);
+      .catch(() => null)));
+  for (const snap of resultados) {
     if (!snap) continue;
     for (const doc of snap.docs) {
       const c = casoDeDoc(doc.id, doc.data());

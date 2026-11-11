@@ -164,7 +164,7 @@ class FornecedorController extends GetxController {
 
   final ordenacaoSelecionada = 'status'.obs;
   final RxInt solicitacoesPendentes = 0.obs;
-  final RxInt mensagensNaoLidas = 0.obs;
+  final RxnInt mensagensNaoLidas = RxnInt();
   final RxDouble avaliacaoMedia = 0.0.obs;
   final RxDouble faturamentoMes = 0.0.obs;
 

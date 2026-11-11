@@ -17,6 +17,8 @@ class EnviarAvaliacaoDialog extends StatefulWidget {
   final String nomeCliente;
   final String idEvento;
   final String nomeEventoAtual;
+  final String? idOrcamentoAlvo;
+  final String? idContratoAlvo;
   final AvaliacaoServicoController controller;
   final EventThemeController themeController;
 
@@ -31,6 +33,8 @@ class EnviarAvaliacaoDialog extends StatefulWidget {
     required this.tipo,
     required this.controller,
     required this.themeController,
+    this.idOrcamentoAlvo,
+    this.idContratoAlvo,
   });
 
   @override
@@ -48,6 +52,12 @@ class _EnviarAvaliacaoDialogState extends State<EnviarAvaliacaoDialog> {
   @override
   void initState() {
     super.initState();
+    if (widget.tipo == TipoAvaliacao.servico &&
+        (widget.idServico?.trim().isEmpty ?? true)) {
+      erroContratos = 'Não foi possível identificar o serviço deste pedido.';
+      carregandoContratos = false;
+      return;
+    }
     widget.controller
         .contratosAvaliaveis(
             idFornecedor: widget.idFornecedor,
@@ -56,11 +66,19 @@ class _EnviarAvaliacaoDialogState extends State<EnviarAvaliacaoDialog> {
                 widget.tipo == TipoAvaliacao.servico ? widget.idServico : null)
         .then((lista) {
       if (!mounted) return;
+      final alvo = widget.idOrcamentoAlvo;
+      final contrato = widget.idContratoAlvo;
+      final selecionado = alvo == null
+          ? null
+          : lista.firstWhereOrNull((item) => item['idOrcamento'] == alvo) ??
+              lista.firstWhereOrNull(
+                  (item) => contrato != null && item['idContrato'] == contrato);
       setState(() {
-        contratos = lista;
+        contratos =
+            alvo == null ? lista : [if (selecionado != null) selecionado];
         carregandoContratos = false;
-        if (lista.length == 1) {
-          idOrcamento = lista.single['idOrcamento'] as String;
+        if (contratos.length == 1) {
+          idOrcamento = contratos.single['idOrcamento'] as String;
         }
       });
     }).catchError((Object e) {
@@ -261,9 +279,14 @@ class _EnviarAvaliacaoDialogState extends State<EnviarAvaliacaoDialog> {
                       if (!carregandoContratos &&
                           contratos.isEmpty &&
                           erroContratos == null)
-                        const Text(
-                            'Nenhuma contratação com entrega aceita disponível para este objeto.'),
-                      if (contratos.isNotEmpty)
+                        Text(widget.idOrcamentoAlvo == null
+                            ? 'Nenhuma contratação com entrega aceita disponível para este objeto.'
+                            : 'Esta contratação não está disponível para avaliação. Confira o aceite da entrega no acompanhamento e se o serviço já foi avaliado.'),
+                      if (contratos.isNotEmpty &&
+                          widget.idOrcamentoAlvo != null)
+                        Text(contratos.single['nome'].toString()),
+                      if (contratos.isNotEmpty &&
+                          widget.idOrcamentoAlvo == null)
                         DropdownButtonFormField<String>(
                           value: idOrcamento,
                           decoration: const InputDecoration(
@@ -278,115 +301,119 @@ class _EnviarAvaliacaoDialogState extends State<EnviarAvaliacaoDialog> {
                           validator: (v) =>
                               v == null ? 'Selecione a contratação.' : null,
                         ),
-                      const Text(
-                          'Uma avaliação por contratação e objeto. Após o envio, nota e comentário são preservados.'),
-                      // === ESTRELAS ===
-                      FormField<double>(
-                        validator: (_) => nota < 1 ? mensagemErroNota : null,
-                        builder: (state) {
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            child: Column(
-                              children: [
-                                Text(
-                                  'Sua nota *',
-                                  style: GoogleFonts.poppins(
-                                    color: textDark,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                const SizedBox(height: 10),
-                                StarRatingWidget(
-                                  rating: nota,
-                                  onChanged: (v) {
-                                    setState(() => nota = v);
-                                    state.didChange(v);
-                                  },
-                                  size: 44,
-                                ),
-                                if (state.hasError) ...[
-                                  const SizedBox(height: 8),
+                      if (contratos.isNotEmpty) ...[
+                        const Text(
+                            'Uma avaliação por contratação e objeto. Após o envio, nota e comentário são preservados.'),
+                        // === ESTRELAS ===
+                        FormField<double>(
+                          validator: (_) => nota < 1 ? mensagemErroNota : null,
+                          builder: (state) {
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              child: Column(
+                                children: [
                                   Text(
-                                    state.errorText!,
+                                    'Sua nota *',
                                     style: GoogleFonts.poppins(
-                                      color: Colors.redAccent,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
+                                      color: textDark,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
                                     ),
                                   ),
+                                  const SizedBox(height: 10),
+                                  StarRatingWidget(
+                                    rating: nota,
+                                    onChanged: (v) {
+                                      setState(() => nota = v);
+                                      state.didChange(v);
+                                    },
+                                    size: 44,
+                                  ),
+                                  if (state.hasError) ...[
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      state.errorText!,
+                                      style: GoogleFonts.poppins(
+                                        color: Colors.redAccent,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
                                 ],
-                              ],
-                            ),
-                          );
-                        },
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      // === CAMPO DE COMENTÁRIO ===
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(14),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.04),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
-                            )
-                          ],
+                              ),
+                            );
+                          },
                         ),
-                        child: TextFormField(
-                          controller: comentarioCtrl,
-                          maxLines: 4,
-                          textCapitalization: TextCapitalization.sentences,
-                          validator: (v) => FormValidators.descricao(
-                            v,
-                            campo: 'o comentário',
-                            obrigatorio: false,
-                            minimo: 3,
-                            maximo: 500,
+
+                        const SizedBox(height: 20),
+
+                        // === CAMPO DE COMENTÁRIO ===
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(14),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.04),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              )
+                            ],
                           ),
-                          style: GoogleFonts.poppins(
-                              color: textDark,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500),
-                          decoration: InputDecoration(
-                            hintText: hintComentario,
-                            hintStyle: GoogleFonts.poppins(
-                                color: textMuted.withValues(alpha: 0.7),
-                                fontSize: 12),
-                            prefixIcon: Column(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 16.0),
-                                  child: Icon(Icons.chat_bubble_outline_rounded,
-                                      color: primary, size: 20),
-                                ),
-                              ],
+                          child: TextFormField(
+                            controller: comentarioCtrl,
+                            maxLines: 4,
+                            textCapitalization: TextCapitalization.sentences,
+                            validator: (v) => FormValidators.descricao(
+                              v,
+                              campo: 'o comentário',
+                              obrigatorio: false,
+                              minimo: 3,
+                              maximo: 500,
                             ),
-                            filled: true,
-                            fillColor: Colors.white,
-                            contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 16),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide:
-                                  BorderSide(color: Colors.grey.shade200),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide:
-                                  BorderSide(color: primary, width: 1.2),
+                            style: GoogleFonts.poppins(
+                                color: textDark,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500),
+                            decoration: InputDecoration(
+                              hintText: hintComentario,
+                              hintStyle: GoogleFonts.poppins(
+                                  color: textMuted.withValues(alpha: 0.7),
+                                  fontSize: 12),
+                              prefixIcon: Column(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 16.0),
+                                    child: Icon(
+                                        Icons.chat_bubble_outline_rounded,
+                                        color: primary,
+                                        size: 20),
+                                  ),
+                                ],
+                              ),
+                              filled: true,
+                              fillColor: Colors.white,
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 16),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide:
+                                    BorderSide(color: Colors.grey.shade200),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide:
+                                    BorderSide(color: primary, width: 1.2),
+                              ),
                             ),
                           ),
                         ),
-                      ),
 
-                      const SizedBox(height: 28),
+                        const SizedBox(height: 28),
+                      ],
 
                       // === BOTÕES ===
                       Obx(() {

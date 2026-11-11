@@ -201,6 +201,7 @@ class AcompanhamentoPartesController extends GetxController {
     String idOrcamento,
     String motivo, {
     String? descricao,
+    String categoria = 'divergencia_servico',
   }) async {
     if (enviando.value) return false;
     final motivoLimpo = motivo.trim();
@@ -214,6 +215,7 @@ class AcompanhamentoPartesController extends GetxController {
       await remote.abrirCasoParte(
         idOrcamento: idOrcamento,
         motivo: motivoLimpo,
+        categoria: categoria,
         descricao: descricao?.trim().isEmpty == true ? null : descricao?.trim(),
         chaveIdempotencia:
             'caso-p-$idOrcamento-${DateTime.now().millisecondsSinceEpoch}',

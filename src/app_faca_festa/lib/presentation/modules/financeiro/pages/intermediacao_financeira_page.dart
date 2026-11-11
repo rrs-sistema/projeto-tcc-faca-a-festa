@@ -1,4 +1,4 @@
-import 'package:app_faca_festa/presentation/modules/financeiro/widgets/financeiro_contexto.dart';
+import 'package:app_faca_festa/presentation/modules/financeiro/widgets/ajuda_fluxo_financeiro.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -28,6 +28,8 @@ class IntermediacaoFinanceiraPage extends StatefulWidget {
       _IntermediacaoFinanceiraPageState();
 }
 
+enum _EnvioIntermediacao { recebimento, alocacao }
+
 class _IntermediacaoFinanceiraPageState
     extends State<IntermediacaoFinanceiraPage> {
   final _eventoCtrl = TextEditingController();
@@ -39,6 +41,8 @@ class _IntermediacaoFinanceiraPageState
   final _valorAlocCtrl = TextEditingController();
   bool _contratoDistinto = false;
   bool _simAberta = false;
+  _EnvioIntermediacao? _envio;
+  ({String texto, bool erro})? _avisoRecebimento, _avisoAlocacao;
 
   IntermediacaoFinanceiraController get c => widget.controller;
 
@@ -137,10 +141,9 @@ class _IntermediacaoFinanceiraPageState
   }
 
   int? _centavosDeCampo(TextEditingController ctrl) {
-    final t = ctrl.text.trim().replaceAll('.', '').replaceAll(',', '.');
-    final v = double.tryParse(t);
-    if (v == null || !v.isFinite || v < 0) return null;
-    return (v * 100).round();
+    final valor = NumericInput.parseMoeda(ctrl.text);
+    if (valor == null || valor <= 0) return null;
+    return (valor * 100).round();
   }
 
   void _usarRecebimento(Map<String, dynamic> m, {bool avisar = true}) {
@@ -153,9 +156,8 @@ class _IntermediacaoFinanceiraPageState
     final restante = (valor - alocado).clamp(0, valor);
     setState(() {
       _recIdCtrl.text = id;
-      if (restante > 0) {
-        _valorAlocCtrl.text = (restante / 100.0).toStringAsFixed(2);
-      }
+      _valorAlocCtrl.text = restante > 0 ? _reais(restante) : '';
+      _avisoAlocacao = null;
     });
     if (avisar) {
       Get.snackbar(
@@ -236,19 +238,16 @@ class _IntermediacaoFinanceiraPageState
                       ),
                     ),
                     const SizedBox(height: 12),
-                    const FinanceiroAjuda(itens: {
-                      ...ajudaFinanceira,
-                      'Conferir o recebimento':
-                          'Registre o valor efetivamente recebido e a referência para conferência. Declarações de pagamento não financiam repasses.',
-                      'Vincular aos contratos':
-                          'Distribua o recebimento entre as contratações do evento. O mesmo dinheiro não pode ser usado duas vezes.',
-                      'Preparar e confirmar o repasse':
-                          'Prepare o valor elegível, realize a transferência bancária e só então confirme o pagamento com uma referência ou comprovante.',
-                    }),
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: AjudaFluxoFinanceiro(
+                        perfil: PerfilAjudaFinanceira.administrador,
+                      ),
+                    ),
                     const SizedBox(height: 12),
                     _passosVisuais(),
                     const SizedBox(height: 16),
-                    _painelConsulta(busy),
+                    _painelConsulta(busy || _envio != null),
                     if (err.isNotEmpty) ...[
                       const SizedBox(height: 12),
                       _banner(err, AdminPalette.danger),
@@ -436,6 +435,7 @@ class _IntermediacaoFinanceiraPageState
               final stack = box.maxWidth < 520;
               final campo = TextField(
                 controller: _eventoCtrl,
+                readOnly: _envio != null,
                 decoration: _campo(
                   label: 'Referência do evento',
                   hint: 'ID do evento',
@@ -716,8 +716,9 @@ class _IntermediacaoFinanceiraPageState
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton(
-                        onPressed:
-                            restante <= 0 ? null : () => _usarRecebimento(m),
+                        onPressed: restante <= 0 || _envio != null
+                            ? null
+                            : () => _usarRecebimento(m),
                         child: Text(
                           selecionado ? 'Selecionado' : 'Usar na alocação',
                           style: GoogleFonts.poppins(
@@ -904,6 +905,60 @@ class _IntermediacaoFinanceiraPageState
     }
   }
 
+  ContextoAjudaFinanceira _contextoAjudaContrato(Map<String, dynamic> dados) {
+    num valor(String campo) {
+      final valor = dados[campo];
+      return valor is num ? valor : 0;
+    }
+    final declarado = valor('pagamento_declarado_centavos');
+    final alocado = valor('alocado_centavos');
+    final autorizado = valor('repasse_autorizado_centavos');
+    final confirmado = valor('repasse_confirmado_centavos');
+    final direito = valor('direito_fornecedor_centavos');
+    final elegivel = valor('elegivel_centavos');
+    final motivo = (dados['motivo_bloqueio'] ?? '').toString().trim();
+    final (situacao, passo) = switch (dados) {
+      {'fechado': false} => (
+          'Contratação pendente',
+          'Confira o fechamento do contrato antes de preparar o repasse.',
+        ),
+      _ when (dados['id_fornecedor'] ?? '').toString().isEmpty => (
+          'Fornecedor sem vínculo',
+          'Confira o fornecedor vinculado ao contrato.',
+        ),
+      _ when autorizado > 0 => (
+          '${_reais(autorizado)} autorizados para repasse',
+          'Confira se a transferência foi realizada. Registre a confirmação com a referência ou o comprovante após transferir.',
+        ),
+      _ when direito > 0 && confirmado >= direito => (
+          'Repasse confirmado de ${_reais(confirmado)}',
+          'Consulte o histórico do repasse.',
+        ),
+      _ when elegivel > 0 => (
+          '${_reais(elegivel)} disponíveis para liberar',
+          'Confira o valor elegível e autorize o repasse.',
+        ),
+      _ when alocado == 0 && declarado > 0 => (
+          '${_reais(declarado)} declarados · sem valor alocado',
+          'Confira a entrada na conta. Se o valor entrou, registre o recebimento, caso ainda falte, e aloque-o a este contrato.',
+        ),
+      _ when alocado == 0 => (
+          'Sem recebimento alocado ao contrato',
+          'Confira se há uma entrada na conta ou um recebimento já registrado que possa ser alocado.',
+        ),
+      _ => (
+          '${_reais(alocado)} alocados ao contrato',
+          motivo.isEmpty ? 'Confira o saldo e as condições de liberação.' : motivo,
+        ),
+    };
+    return (
+      contrato: (dados['nome_servico'] ?? 'Serviço contratado').toString(),
+      situacao: situacao,
+      proximoPasso: passo,
+      responsavel: 'Administração',
+    );
+  }
+
   Widget _contratoRepasse(Map<String, dynamic> m) {
     final elegivel = (m['elegivel_centavos'] is num)
         ? (m['elegivel_centavos'] as num).toInt()
@@ -957,20 +1012,25 @@ class _IntermediacaoFinanceiraPageState
                 ),
               ),
               TextButton(
-                onPressed: () {
-                  setState(() {
-                    _orcCtrl.text = (m['id_orcamento'] ?? '').toString();
-                    final idContrato = (m['id_contrato'] ?? '').toString();
-                    _contratoDistinto =
-                        idContrato.isNotEmpty && idContrato != _orcCtrl.text;
-                    _contratoCtrl.text = _contratoDistinto ? idContrato : '';
-                  });
-                  Get.snackbar(
-                    'Alocação',
-                    'Contrato preenchido no passo 3.',
-                    snackPosition: SnackPosition.BOTTOM,
-                  );
-                },
+                onPressed: _envio != null
+                    ? null
+                    : () {
+                        setState(() {
+                          _orcCtrl.text = (m['id_orcamento'] ?? '').toString();
+                          final idContrato =
+                              (m['id_contrato'] ?? '').toString();
+                          _contratoDistinto = idContrato.isNotEmpty &&
+                              idContrato != _orcCtrl.text;
+                          _contratoCtrl.text =
+                              _contratoDistinto ? idContrato : '';
+                          _avisoAlocacao = null;
+                        });
+                        Get.snackbar(
+                          'Alocação',
+                          'Contrato preenchido no passo 3.',
+                          snackPosition: SnackPosition.BOTTOM,
+                        );
+                      },
                 child: Text(
                   'Usar na alocação',
                   style: GoogleFonts.poppins(
@@ -1070,6 +1130,12 @@ class _IntermediacaoFinanceiraPageState
                 height: 1.3,
               ),
             ),
+          const SizedBox(height: 8),
+          AjudaFluxoFinanceiro(
+            perfil: PerfilAjudaFinanceira.administrador,
+            rotulo: 'Entenda este repasse',
+            contrato: _contextoAjudaContrato(m),
+          ),
         ],
       ),
     );
@@ -1213,6 +1279,125 @@ class _IntermediacaoFinanceiraPageState
     );
   }
 
+  Future<void> _registrarRecebimento() async {
+    if (_envio != null || c.enviando.value || c.carregando.value) return;
+    final centavos = _centavosDeCampo(_valorRecCtrl);
+    final evento = _eventoCtrl.text.trim();
+    if (centavos == null || evento.isEmpty) {
+      setState(() => _avisoRecebimento = (
+            texto: centavos == null
+                ? 'Informe um valor de recebimento maior que zero.'
+                : 'Consulte o evento no passo 1.',
+            erro: true,
+          ));
+      return;
+    }
+    FocusScope.of(context).unfocus();
+    setState(() {
+      _envio = _EnvioIntermediacao.recebimento;
+      _avisoRecebimento = null;
+    });
+    c.idEvento.value = evento;
+    final referencia = _refCtrl.text.trim();
+    final ok = await c.registrarRecebimento(
+      valorCentavos: centavos,
+      referencia: referencia.isEmpty ? null : referencia,
+    );
+    if (!mounted) return;
+    if (ok) {
+      _valorRecCtrl.clear();
+      _refCtrl.clear();
+      final lista = c.extrato.value?['recebimentos'];
+      if (lista is List && lista.isNotEmpty) {
+        _usarRecebimento(Map<String, dynamic>.from(lista.last as Map),
+            avisar: false);
+      }
+    }
+    setState(() {
+      _envio = null;
+      _avisoRecebimento = (
+        texto: ok
+            ? 'Recebimento registrado. Você pode alocá-lo a um contrato.'
+            : 'Não foi possível confirmar o registro. Confira o extrato antes de tentar novamente.',
+        erro: !ok,
+      );
+    });
+  }
+
+  Future<void> _alocarAoContrato() async {
+    if (_envio != null || c.enviando.value || c.carregando.value) return;
+    final centavos = _centavosDeCampo(_valorAlocCtrl);
+    final orcamento = _orcCtrl.text.trim();
+    final recebimento = _recIdCtrl.text.trim();
+    final contrato = _contratoCtrl.text.trim();
+    if (centavos == null || orcamento.isEmpty || recebimento.isEmpty) {
+      final faltam = [
+        if (recebimento.isEmpty) 'Selecione um recebimento.',
+        if (orcamento.isEmpty) 'Informe o orçamento ou contrato.',
+        if (centavos == null) 'Informe um valor maior que zero.',
+      ];
+      setState(() => _avisoAlocacao = (texto: faltam.join(' '), erro: true));
+      return;
+    }
+    FocusScope.of(context).unfocus();
+    setState(() {
+      _envio = _EnvioIntermediacao.alocacao;
+      _avisoAlocacao = null;
+    });
+    final ok = await c.alocarManual(
+      idRecebimento: recebimento,
+      idOrcamento: orcamento,
+      idContrato: contrato.isEmpty ? orcamento : contrato,
+      valorCentavos: centavos,
+    );
+    if (!mounted) return;
+    if (ok) _valorAlocCtrl.clear();
+    setState(() {
+      _envio = null;
+      _avisoAlocacao = (
+        texto: ok
+            ? 'Valor alocado ao contrato. O repasse é conferido no passo 4.'
+            : 'Não foi possível confirmar a alocação. Confira o extrato antes de tentar novamente.',
+        erro: !ok,
+      );
+    });
+  }
+
+  Widget _botaoEnvio({
+    required _EnvioIntermediacao acao,
+    required IconData icone,
+    required String rotulo,
+    required String progresso,
+    required VoidCallback onPressed,
+  }) {
+    final executando = _envio == acao;
+    return FilledButton.icon(
+      onPressed: _envio != null || c.enviando.value || c.carregando.value
+          ? null
+          : onPressed,
+      icon: executando
+          ? const SizedBox.square(
+              dimension: 18,
+              child: CircularProgressIndicator(
+                  strokeWidth: 2, color: Colors.white),
+            )
+          : Icon(icone, size: 18),
+      label: Semantics(
+        liveRegion: executando,
+        child: Text(
+          executando ? progresso : rotulo,
+          style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+        ),
+      ),
+      style: FilledButton.styleFrom(
+        backgroundColor: AdminPalette.primary,
+        disabledBackgroundColor: executando ? AdminPalette.primary : null,
+        disabledForegroundColor: executando ? Colors.white : null,
+        minimumSize: const Size(48, 48),
+      ),
+    );
+  }
+
   Widget _painelRecebimento() {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
@@ -1229,63 +1414,35 @@ class _IntermediacaoFinanceiraPageState
           const SizedBox(height: 12),
           TextField(
             controller: _valorRecCtrl,
+            readOnly: _envio != null,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            inputFormatters: [NumericInput.moeda()],
             decoration: _campo(label: 'Valor (R\$)'),
           ),
           const SizedBox(height: 10),
           TextField(
             controller: _refCtrl,
+            readOnly: _envio != null,
             decoration: _campo(
               label: 'Referência externa (opcional)',
               hint: 'Ex.: comprovante, PIX',
             ),
           ),
           const SizedBox(height: 12),
-          FilledButton.icon(
-            onPressed: c.enviando.value
-                ? null
-                : () async {
-                    final cent = _centavosDeCampo(_valorRecCtrl);
-                    if (cent == null) {
-                      Get.snackbar('Recebimento', 'Informe um valor válido.');
-                      return;
-                    }
-                    if (_eventoCtrl.text.trim().isEmpty) {
-                      Get.snackbar(
-                          'Recebimento', 'Consulte o evento no passo 1.');
-                      return;
-                    }
-                    c.idEvento.value = _eventoCtrl.text.trim();
-                    final ok = await c.registrarRecebimento(
-                      valorCentavos: cent,
-                      referencia: _refCtrl.text.trim().isEmpty
-                          ? null
-                          : _refCtrl.text.trim(),
-                    );
-                    if (ok && mounted) {
-                      _valorRecCtrl.clear();
-                      _refCtrl.clear();
-                      final lista = c.extrato.value?['recebimentos'];
-                      if (lista is List && lista.isNotEmpty) {
-                        final m = Map<String, dynamic>.from(lista.last as Map);
-                        _usarRecebimento(m, avisar: false);
-                      }
-                      Get.snackbar(
-                        'Recebimento',
-                        'Registrado e pronto para alocar ao contrato.',
-                        snackPosition: SnackPosition.BOTTOM,
-                      );
-                    }
-                  },
-            icon: const Icon(Icons.add_rounded, size: 18),
-            label: Text(
-              'Registrar recebimento',
-              style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+          if (_avisoRecebimento case final aviso?) ...[
+            Semantics(
+              liveRegion: true,
+              child: _banner(aviso.texto,
+                  aviso.erro ? AdminPalette.danger : AdminPalette.success),
             ),
-            style: FilledButton.styleFrom(
-              backgroundColor: AdminPalette.primary,
-              minimumSize: const Size(48, 48),
-            ),
+            const SizedBox(height: 10),
+          ],
+          _botaoEnvio(
+            acao: _EnvioIntermediacao.recebimento,
+            icone: Icons.add_rounded,
+            rotulo: 'Registrar recebimento',
+            progresso: 'Registrando recebimento…',
+            onPressed: _registrarRecebimento,
           ),
         ],
       ),
@@ -1308,6 +1465,7 @@ class _IntermediacaoFinanceiraPageState
           const SizedBox(height: 12),
           TextField(
             controller: _recIdCtrl,
+            readOnly: _envio != null,
             decoration: _campo(
               label: 'Recebimento selecionado',
               hint: 'Toque em “Usar na alocação” ou cole o ID',
@@ -1320,6 +1478,7 @@ class _IntermediacaoFinanceiraPageState
           const SizedBox(height: 10),
           TextField(
             controller: _orcCtrl,
+            readOnly: _envio != null,
             decoration: _campo(
               label: 'ID do orçamento / contrato',
               hint: 'Destino comercial',
@@ -1327,7 +1486,9 @@ class _IntermediacaoFinanceiraPageState
           ),
           const SizedBox(height: 4),
           InkWell(
-            onTap: () => setState(() => _contratoDistinto = !_contratoDistinto),
+            onTap: _envio != null
+                ? null
+                : () => setState(() => _contratoDistinto = !_contratoDistinto),
             borderRadius: BorderRadius.circular(8),
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),
@@ -1358,6 +1519,7 @@ class _IntermediacaoFinanceiraPageState
           if (_contratoDistinto) ...[
             TextField(
               controller: _contratoCtrl,
+              readOnly: _envio != null,
               decoration: _campo(
                 label: 'ID do contrato',
                 hint: 'Só se for diferente do orçamento',
@@ -1367,51 +1529,26 @@ class _IntermediacaoFinanceiraPageState
           ],
           TextField(
             controller: _valorAlocCtrl,
+            readOnly: _envio != null,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            inputFormatters: [NumericInput.moeda()],
             decoration: _campo(label: 'Valor a alocar (R\$)'),
           ),
           const SizedBox(height: 12),
-          FilledButton.icon(
-            onPressed: c.enviando.value
-                ? null
-                : () async {
-                    final cent = _centavosDeCampo(_valorAlocCtrl);
-                    final orc = _orcCtrl.text.trim();
-                    final rec = _recIdCtrl.text.trim();
-                    if (cent == null || orc.isEmpty || rec.isEmpty) {
-                      Get.snackbar(
-                        'Alocação',
-                        'Selecione um recebimento, informe o contrato e o valor.',
-                      );
-                      return;
-                    }
-                    final contrato = _contratoCtrl.text.trim().isEmpty
-                        ? orc
-                        : _contratoCtrl.text.trim();
-                    final ok = await c.alocarManual(
-                      idRecebimento: rec,
-                      idOrcamento: orc,
-                      idContrato: contrato,
-                      valorCentavos: cent,
-                    );
-                    if (ok && mounted) {
-                      _valorAlocCtrl.clear();
-                      Get.snackbar(
-                        'Alocação',
-                        'Registrada. Não implica repasse automático.',
-                        snackPosition: SnackPosition.BOTTOM,
-                      );
-                    }
-                  },
-            icon: const Icon(Icons.link_rounded, size: 18),
-            label: Text(
-              'Alocar ao contrato',
-              style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+          if (_avisoAlocacao case final aviso?) ...[
+            Semantics(
+              liveRegion: true,
+              child: _banner(aviso.texto,
+                  aviso.erro ? AdminPalette.danger : AdminPalette.success),
             ),
-            style: FilledButton.styleFrom(
-              backgroundColor: AdminPalette.primary,
-              minimumSize: const Size(48, 48),
-            ),
+            const SizedBox(height: 10),
+          ],
+          _botaoEnvio(
+            acao: _EnvioIntermediacao.alocacao,
+            icone: Icons.link_rounded,
+            rotulo: 'Alocar ao contrato',
+            progresso: 'Alocando ao contrato…',
+            onPressed: _alocarAoContrato,
           ),
         ],
       ),

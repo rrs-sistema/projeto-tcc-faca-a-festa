@@ -11,6 +11,7 @@ class CotacaoConversaModel extends CotacaoConversa {
     required super.ultimaMensagem,
     required super.ultimaMensagemEm,
     required super.naoLidas,
+    super.observacaoPedido,
   });
 }
 
@@ -42,5 +43,6 @@ class CotacaoFornecedorResumoModel extends CotacaoFornecedorResumo {
     required super.condicaoPagamento,
     required List<CotacaoServicoResumoModel> super.servicos,
     super.valorCotado,
+    super.nomeFornecedor,
   });
 }

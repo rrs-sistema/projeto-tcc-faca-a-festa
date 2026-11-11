@@ -12,6 +12,10 @@ function parseCsv(s){const rows=[];let row=[],v='',q=false;for(let i=0;i<s.lengt
  const desp={acao:'obrigacao',chave:'despesa',idObrigacao:'despesa',idEvento:'e',idOrcamento:'ct',descricao:'=HYPERLINK("teste")',valorCentavos:100000,vencimento:'2026-10-01',incorrido:false};
  await neg(()=>cmd(db,'c',desp));await neg(()=>cmd(db,'a',desp));await neg(()=>cmd(db,'g',desp));await cmd(db,'f',desp);assert.equal((await cmd(db,'f',desp)).idempotente,true);await neg(()=>cmd(db,'f',{...desp,valorCentavos:1}));
  let r=await ler(db,'f');assert.equal(r.resultados[0].nomeEvento,'Festa sintética');assert.equal(r.resultados[0].resultadoDiretoPrevistoCentavos,199250);assert.equal(r.resultados[0].situacao,'parcial');assert.equal(r.movimentoLiquidoCentavos,0);assert.equal(r.saldoProjetadoCentavos,null);assert.equal(r.contas.find(c=>c.tipo==='receber').situacao,'sem_previsao');assert.equal(r.contas.find(c=>c.tipo==='pagar').situacao,'vencida');
+ const apenasContas = await ler(db, 'f', { inicio: '2026-10-01', fim: '2026-10-10' });
+ assert.equal(apenasContas.resultados.length, 0);
+ assert.equal(apenasContas.contas.find(c => c.tipo === 'pagar').nomeEvento, 'Festa sintética');
+ assert.equal(apenasContas.contas.find(c => c.tipo === 'receber').nomeEvento, 'Festa sintética');
  await db.doc('plataforma_pagamentos_declarados/nao-caixa').set({id_orcamento:'ct',valor_centavos:315000,confirmado:false});assert.equal((await ler(db,'f')).movimentoLiquidoCentavos,0);
  await db.doc('plataforma_repasses/rep').set({id_orcamento:'ct',id_fornecedor:'f',id_evento:'e',valor_centavos:100000,estado:'confirmado',confirmado_em:admin.firestore.Timestamp.fromDate(new Date(hoje+'T15:00:00Z'))});
  const baixa={acao:'baixar',chave:'baixa',idObrigacao:'despesa',valorCentavos:40000,data:hoje,motivo:'Pagamento real informado pelo fornecedor'};const conc=await Promise.all(Array.from({length:4},()=>cmd(db,'f',baixa)));assert.equal(conc.filter(x=>!x.idempotente).length,1);await neg(()=>cmd(db,'f',{...baixa,valorCentavos:50000}));

@@ -343,6 +343,18 @@ const catalogoAcoesAuditoria = <String, AuditoriaAcaoInfo>{
     area: 'ORCAMENTO',
     areaLabel: 'Orçamentos',
   ),
+  'REPASSE_ANTECIPADO_AUTORIZADO': AuditoriaAcaoInfo(
+    codigo: 'REPASSE_ANTECIPADO_AUTORIZADO',
+    titulo: 'Repasse antecipado autorizado',
+    area: 'ORCAMENTO',
+    areaLabel: 'Orçamentos',
+  ),
+  'REPASSE_ANTECIPADO_REVOGADO': AuditoriaAcaoInfo(
+    codigo: 'REPASSE_ANTECIPADO_REVOGADO',
+    titulo: 'Autorização de repasse antecipado revogada',
+    area: 'ORCAMENTO',
+    areaLabel: 'Orçamentos',
+  ),
   'ORCAMENTO_CANCELADO': AuditoriaAcaoInfo(
     codigo: 'ORCAMENTO_CANCELADO',
     titulo: 'Orçamento cancelado',

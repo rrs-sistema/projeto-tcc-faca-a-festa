@@ -713,6 +713,34 @@ service cloud.firestore {
       }
     }
 
+    function contratoLegadoConfirmado(dados) {
+      return !(dados.get('status', '') in ['cancelado', 'cancelada', 'estornado'])
+        && (dados.get('orcamento_fechado', false) == true
+          || dados.get('status', '') in ['fechado', 'contratado']);
+    }
+
+    function fornecedorDisponivelParaContrato(fornecedor, dados) {
+      let medida = /databases/$(database)/documents/plataforma_medidas_fornecedor/$(fornecedor);
+      return !exists(medida) || medidaPermiteContrato(get(medida).data, dados);
+    }
+
+    function medidaPermiteContrato(medida, dados) {
+      let servico = medida.get('idServico', null);
+      return medida.get('acao', '') != 'descredenciar'
+        && (!(medida.get('acao', '') in ['restringir', 'suspender'])
+          || medida.get('ateTimestamp', request.time) <= request.time
+          || (servico != null && !(servico in [
+            dados.get('id_servico', null), dados.get('id_produto_servico', null),
+            dados.get('id_servico_fornecido', null)
+          ])));
+    }
+
+    function podeConfirmarContratoLegado(dados) {
+      let fornecedor = dados.get('id_fornecedor', '');
+      return !contratoLegadoConfirmado(dados) || fornecedor == '' || fornecedor == null
+        || (fornecedor is string && fornecedorDisponivelParaContrato(fornecedor, dados));
+    }
+
     match /orcamento/{id} {
       allow read: if isAdmin()
         || (
@@ -726,6 +754,7 @@ service cloud.firestore {
 
       allow create: if !request.resource.data.keys()
           .hasAny(['contrato_financeiro', 'valor_contratado_centavos', 'estado_execucao', 'repasse_revisao', 'execucao_revisao', 'proposta_aceita', 'agendamento_operacional', 'agenda_operacional'])
+        && podeConfirmarContratoLegado(request.resource.data)
         && (isAdmin()
           || eventoDono(request.resource.data.id_evento)
           || (isTipo('O') && orcamentoDoSolicitante(request.resource.data)));
@@ -737,6 +766,11 @@ service cloud.firestore {
           || (signedIn() && resource.data.id_fornecedor == uid())
         ) && !request.resource.data.diff(resource.data).affectedKeys()
           .hasAny(['contrato_financeiro', 'valor_contratado_centavos', 'estado_execucao', 'repasse_revisao', 'execucao_revisao', 'proposta_aceita', 'agendamento_operacional', 'agenda_operacional'])
+        && ((contratoLegadoConfirmado(resource.data)
+            && !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+              'id_fornecedor', 'id_servico', 'id_produto_servico', 'id_servico_fornecido'
+            ]))
+          || podeConfirmarContratoLegado(request.resource.data))
         && (!resource.data.keys().hasAny(['agenda_operacional']) || !request.resource.data.diff(resource.data).affectedKeys().hasAny(['status', 'orcamento_fechado']))
         && (!resource.data.keys().hasAny(['proposta_aceita']) || !request.resource.data.diff(resource.data).affectedKeys().hasAny(['valor_contratado', 'custo_estimado', 'escopo', 'condicao_pagamento', 'status', 'orcamento_fechado', 'id_cotacao']))
         && (!(resource.data.keys().hasAny(['contrato_financeiro']) || resource.data.get('estado_execucao', '') == 'aceito') || !request.resource.data.diff(resource.data).affectedKeys().hasAny(['id_fornecedor', 'id_evento', 'id_solicitante', 'id_servico', 'id_produto_servico', 'id_fornecedor_servico']))

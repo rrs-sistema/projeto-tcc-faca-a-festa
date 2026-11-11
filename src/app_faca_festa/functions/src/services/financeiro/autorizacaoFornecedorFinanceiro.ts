@@ -11,21 +11,21 @@ export async function exigirAcessoFinanceiroFornecedor(
   perfil: PerfilAuth,
   idFornecedor: string,
 ): Promise<void> {
+  exigirVinculoFinanceiroFornecedor(perfil.uid, idFornecedor);
+  const snap = await db.collection("fornecedor").doc(idFornecedor).get();
+  if (!snap.exists) {
+    throw new HttpsError("not-found", "Fornecedor não encontrado.");
+  }
+}
+
+export function exigirVinculoFinanceiroFornecedor(uid: string, idFornecedor: string): void {
   if (!idFornecedor) {
     throw new HttpsError("invalid-argument", "Informe o fornecedor.");
   }
-  if (perfil.uid !== idFornecedor) {
+  if (uid !== idFornecedor) {
     throw new HttpsError(
       "permission-denied",
       "Sem autorização para o financeiro privado deste fornecedor.",
     );
-  }
-  if (perfil.tipo !== "F" && perfil.tipo !== "A") {
-    // Mesmo admin tipado: só passa se uid == idFornecedor (dono da conta).
-    // Tipo A com outro uid já foi barrado acima.
-  }
-  const snap = await db.collection("fornecedor").doc(idFornecedor).get();
-  if (!snap.exists) {
-    throw new HttpsError("not-found", "Fornecedor não encontrado.");
   }
 }

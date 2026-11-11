@@ -169,7 +169,9 @@ extension _CalculadoraPlanejamento on _CalculadoraFestaScreenState {
   }
 
   Future<void> _editarRegra(
-      {CardapioItem? item, ItemEstimativaFinanceira? regra}) async {
+      {CardapioItem? item,
+      ItemEstimativaFinanceira? regra,
+      ReferenciaContextual? referencia}) async {
     UnidadeEstimativa? unidade;
     if (item != null) {
       for (final u in UnidadeEstimativa.values) {
@@ -199,6 +201,7 @@ extension _CalculadoraPlanejamento on _CalculadoraFestaScreenState {
               contextoReferencia: calculadoraController.contextoReferenciaPara(
                   item?.idCardapio ?? calculadoraController.idCardapioAtual),
               inicial: regra,
+              referenciaInicial: referencia,
               nome: item?.nome,
               id: item == null
                   ? regra?.id
@@ -219,6 +222,12 @@ extension _CalculadoraPlanejamento on _CalculadoraFestaScreenState {
                       if (item != null) 'id_item_cardapio': item.idItem,
                     }),
                     anterior: anterior);
+                if (item == null &&
+                    regra == null &&
+                    sessaoEdicao == calculadoraController.sessaoPlanejador &&
+                    calculadoraController.revisarCardapio.value) {
+                  calculadoraController.alterarModoCardapio(false);
+                }
               },
               confirmarLabel: calculadoraController.possuiEventoVinculado
                   ? 'Salvar porção e preço'

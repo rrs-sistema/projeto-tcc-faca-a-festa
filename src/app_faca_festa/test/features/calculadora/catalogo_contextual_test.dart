@@ -104,6 +104,40 @@ Map<String, String> respostasQA(ReferenciaContextual r,
         {String obtencao = 'pronto'}) =>
     {'obtencao_item': obtencao, 'referencia_item': r.chave};
 void main() {
+  testWidgets('item escolhido no catálogo abre com dados para consultar a porção',
+      (tester) async {
+    final referencia = referenciaQA();
+    await tester.pumpWidget(MaterialApp(
+        home: Builder(
+            builder: (context) => Scaffold(
+                body: TextButton(
+                    onPressed: () => showDialog<void>(
+                        context: context,
+                        builder: (_) => CalculadoraRegraManualDialog(
+                            catalogo: CatalogoContextual([referencia]),
+                            referenciaInicial: referencia,
+                            contextoReferencia: contextoQA)),
+                    child: const Text('Abrir regra'))))));
+    await tester.tap(find.text('Abrir regra'));
+    await tester.pumpAndSettle();
+    expect(find.text(referencia.nome), findsOneWidget);
+    await tester.tap(find.text('Consultar porção de referência'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Escolha para continuar').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Calcular somente o que será servido').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Escolha para continuar').first);
+    await tester.pumpAndSettle();
+    await tester
+        .tap(find.textContaining(referencia.dados['contexto'] as String).last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Usar no editor para revisão'));
+    await tester.pumpAndSettle();
+    expect(find.text('0.1'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   test(
       'mudar formato regenera regra de catálogo já adotada e libera nova aplicação',
       () {

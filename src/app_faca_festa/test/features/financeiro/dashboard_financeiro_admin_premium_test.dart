@@ -190,6 +190,69 @@ void main() {
     expect(find.textContaining('Falha na consulta'), findsOneWidget);
   });
 
+  for (final largura in [390.0, 1440.0]) {
+    testWidgets('fechar contratação retorna ao resumo do evento em $largura',
+        (tester) async {
+      final contratacao = {
+        'idEvento': 'evt-100',
+        'idOrcamento': 'orc-100',
+        'nomeServico': 'Decoração do salão',
+        'contratado': true,
+        'valorContratadoCentavos': 8000000,
+      };
+      final resumo = _fixturePreenchido();
+      (resumo['linhasEvento'] as List).first['contratacoes'] = [contratacao];
+      resumo['linhasContratacao'] = [contratacao];
+      final c = DashboardFinanceiroAdminController(
+        consultarFn: ({
+          required eixoTemporal,
+          periodoInicio,
+          periodoFim,
+          idFornecedor,
+          estado,
+        }) async =>
+            resumo,
+      );
+
+      await tester.binding.setSurfaceSize(Size(largura, 1100));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(GetMaterialApp(
+        home: DashboardFinanceiroAdminPage(
+          controller: c,
+          themeController: EventThemeController(),
+        ),
+      ));
+      await tester.pumpAndSettle();
+
+      final abrirEvento =
+          find.text(largura < 768 ? 'Abrir resumo' : 'Abrir').first;
+      await tester.ensureVisible(abrirEvento);
+      await tester.pumpAndSettle();
+      await tester.tap(abrirEvento);
+      await tester.pumpAndSettle();
+      final painelEvento = find.text('Resumo financeiro do evento');
+      expect(painelEvento.hitTestable(), findsOneWidget);
+
+      final linha = find.text('Decoração do salão').hitTestable();
+      await tester.tap(linha);
+      await tester.pumpAndSettle();
+      final detalhe = find.text('Ver contratação e mediação');
+      expect(detalhe.hitTestable(), findsOneWidget);
+
+      final fechar = find.byTooltip('Fechar').hitTestable();
+      await tester.tap(fechar);
+      await tester.pumpAndSettle();
+      expect(detalhe, findsNothing);
+      expect(painelEvento.hitTestable(), findsOneWidget);
+      expect(linha, findsOneWidget);
+
+      await tester.tap(fechar);
+      await tester.pumpAndSettle();
+      expect(painelEvento, findsNothing);
+      expect(abrirEvento.hitTestable(), findsOneWidget);
+    });
+  }
+
   testWidgets('erro sem resumo não aparece como lista vazia de eventos',
       (tester) async {
     final theme = EventThemeController();

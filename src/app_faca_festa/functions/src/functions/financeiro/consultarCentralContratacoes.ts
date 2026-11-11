@@ -2,6 +2,7 @@ import { divisaoContrato, carregarContextoRepasse } from "../../services/finance
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { admin } from "../../shared/firebaseAdmin";
 import { exigirUsuarioAutenticado, exigirTipo } from "../../shared/auth";
+import { carregarMapaDocs } from "../../shared/carregarMapaDocs";
 import {
   resolverLinhaContratacao,
 } from "../../services/financeiro/contratacaoIdentidadeService";
@@ -13,6 +14,8 @@ import {
 } from "../../services/financeiro/mediacaoOperacionalService";
 import {
   listarCasosPorContratos,
+  carregarRegistrosCaso,
+  casoDeDoc,
   COL_CASOS,
 } from "../../services/financeiro/mediacaoPersistenciaService";
 import {
@@ -40,23 +43,46 @@ function parseData(v: unknown): string | null {
   return null;
 }
 
-async function carregarMapaDocs(
+type ChavesContratacao = { id: string; idContrato: string };
+type CasosPorContrato = Awaited<ReturnType<typeof listarCasosPorContratos>>;
+
+function idsParaMediacao(itens: ChavesContratacao[]): string[] {
+  return itens.flatMap(({ id, idContrato }) => [id, idContrato]);
+}
+
+async function carregarFinanceiroPagina(
   db: FirebaseFirestore.Firestore,
-  colecao: string,
-  ids: Set<string>,
-): Promise<Map<string, Record<string, unknown>>> {
-  const mapa = new Map<string, Record<string, unknown>>();
-  const lista = [...ids].filter(Boolean);
-  for (let i = 0; i < lista.length; i += 100) {
-    const fatia = lista.slice(i, i + 100);
-    await Promise.all(
-      fatia.map(async (id) => {
-        const snap = await db.collection(colecao).doc(id).get();
-        if (snap.exists) mapa.set(id, (snap.data() ?? {}) as Record<string, unknown>);
-      }),
-    );
+  pagina: ChavesContratacao[],
+  casosFiltro: CasosPorContrato | null,
+) {
+  const idsOrc = pagina.map(({ id }) => id);
+  const lotes: string[][] = [];
+  for (let i = 0; i < idsOrc.length; i += 30) lotes.push(idsOrc.slice(i, i + 30));
+  const [casosMap, comissoes, movimentos] = await Promise.all([
+    casosFiltro ?? listarCasosPorContratos(db, idsParaMediacao(pagina)),
+    carregarMapaDocs(db, "plataforma_comissao_obrigacoes",
+      new Set(pagina.map(({ idContrato }) => `comissao-${idContrato}`))),
+    Promise.all(lotes.map(fatia => Promise.all([
+      db.collection(COL_ALOCACOES).where("id_orcamento", "in", fatia)
+        .select("id_orcamento", "valor_centavos").get().catch(() => null),
+      db.collection(COL_REPASSES).where("id_orcamento", "in", fatia)
+        .select("id_orcamento", "valor_centavos", "estado").get().catch(() => null),
+    ]))),
+  ]);
+  const alocadoPorOrc = new Map<string, number>();
+  const repassadoPorOrc = new Map<string, number>();
+  for (const [alocacoes, repasses] of movimentos) {
+    for (const doc of alocacoes?.docs ?? []) {
+      const { id_orcamento, valor_centavos } = doc.data();
+      alocadoPorOrc.set(id_orcamento, (alocadoPorOrc.get(id_orcamento) ?? 0) + Number(valor_centavos ?? 0));
+    }
+    for (const doc of repasses?.docs ?? []) {
+      const { id_orcamento, valor_centavos, estado } = doc.data();
+      if (estado !== "confirmado") continue;
+      repassadoPorOrc.set(id_orcamento, (repassadoPorOrc.get(id_orcamento) ?? 0) + Number(valor_centavos ?? 0));
+    }
   }
-  return mapa;
+  return { casosMap, comissoes, alocadoPorOrc, repassadoPorOrc };
 }
 
 /**
@@ -84,11 +110,17 @@ export const consultarCentralContratacoes = onCall(
     const limite = Math.min(LIMITE, Math.max(1, Number(data.limite ?? 50) || 50));
 
     const db = admin.firestore();
-    const orcSnap = await db.collection("orcamento").limit(LIMITE).get();
+    const [orcSnap, qtdCasosAbertos] = await Promise.all([
+      db.collection("orcamento").limit(LIMITE).get(),
+      db.collection(COL_CASOS)
+        .where("estado", "in", ["aberto", "em_analise", "aguardando_partes", "em_decisao"])
+        .limit(100).count().get().then(snap => snap.data().count).catch(() => null),
+    ]);
     const truncado = orcSnap.size >= LIMITE;
 
     const itens: Array<{
       id: string;
+      idContrato: string;
       data: Record<string, unknown>;
       contratado: boolean;
       vals: ReturnType<typeof centavosDeOrcamento>;
@@ -102,7 +134,7 @@ export const consultarCentralContratacoes = onCall(
       const status = texto(d.status).toLowerCase();
       const contratoMap =
         d.contrato_financeiro && typeof d.contrato_financeiro === "object"
-          ? (d.contrato_financeiro as { estado_comercial?: string; estado_execucao?: string })
+          ? (d.contrato_financeiro as { id_contrato?: string; estado_comercial?: string; estado_execucao?: string })
           : null;
       const contratado =
         d.orcamento_fechado === true ||
@@ -129,6 +161,7 @@ export const consultarCentralContratacoes = onCall(
 
       itens.push({
         id: doc.id,
+        idContrato: String(contratoMap?.id_contrato || doc.id),
         data: d,
         contratado,
         vals: centavosDeOrcamento(d),
@@ -136,10 +169,21 @@ export const consultarCentralContratacoes = onCall(
       });
     }
 
+    const filtrarPorCaso = typeof casoAbertoFiltro === "boolean" || !!idResponsavel;
+    const casosFiltro = filtrarPorCaso ? await listarCasosPorContratos(db, idsParaMediacao(itens)) : null;
+    const candidatos = casosFiltro ? itens.filter(it => {
+      const caso = casosFiltro.get(it.idContrato) ?? casosFiltro.get(it.id);
+      if (casoAbertoFiltro === true && !caso) return false;
+      if (casoAbertoFiltro === false && caso) return false;
+      return !idResponsavel || caso?.idResponsavel === idResponsavel;
+    }) : itens;
+
+    // Sem busca textual, a página é conhecida antes de ler nomes ou valores.
+    const itensParaEnriquecer = busca ? candidatos : candidatos.slice(offset, offset + limite);
     const idsEvento = new Set<string>();
     const idsFornecedor = new Set<string>();
     const idsUsuario = new Set<string>();
-    for (const it of itens) {
+    for (const it of itensParaEnriquecer) {
       const idEvento = texto(it.data.id_evento);
       if (idEvento) idsEvento.add(idEvento);
       const idForn = texto(it.data.id_fornecedor);
@@ -147,67 +191,30 @@ export const consultarCentralContratacoes = onCall(
       const idSol = texto(it.data.id_solicitante);
       if (idSol) idsUsuario.add(idSol);
     }
-    const eventos = await carregarMapaDocs(db, "evento", idsEvento);
-    for (const ev of eventos.values()) {
-      const uid = texto(ev.id_usuario) || texto(ev.idUsuario);
-      if (uid) idsUsuario.add(uid);
-    }
-    const [fornecedores, usuarios] = await Promise.all([
+    const [eventos, fornecedores, usuarios, financeiroDireto] = await Promise.all([
+      carregarMapaDocs(db, "evento", idsEvento),
       carregarMapaDocs(db, "fornecedor", idsFornecedor),
       carregarMapaDocs(db, "usuarios", idsUsuario),
+      busca ? null : carregarFinanceiroPagina(db, itensParaEnriquecer, casosFiltro),
     ]);
-
-    const idsContrato = itens.map((it) => {
-      const cf = it.data.contrato_financeiro;
-      if (cf && typeof cf === "object" && (cf as { id?: string }).id) {
-        return String((cf as { id: string }).id);
-      }
-      return it.id;
-    });
-    const casosMap = await listarCasosPorContratos(db, idsContrato);
-
-    // Agregados de intermediação por orçamento (amostra).
-    const alocadoPorOrc = new Map<string, number>();
-    const repassadoPorOrc = new Map<string, number>();
-    const idsOrc = itens.map((i) => i.id);
-    for (let i = 0; i < idsOrc.length; i += 10) {
-      const fatia = idsOrc.slice(i, i + 10);
-      const [alocSnap, repSnap] = await Promise.all([
-        db.collection(COL_ALOCACOES).where("id_orcamento", "in", fatia).get().catch(() => null),
-        db.collection(COL_REPASSES).where("id_orcamento", "in", fatia).get().catch(() => null),
-      ]);
-      if (alocSnap) {
-        for (const d of alocSnap.docs) {
-          const x = d.data();
-          const id = String(x.id_orcamento ?? "");
-          alocadoPorOrc.set(id, (alocadoPorOrc.get(id) ?? 0) + Number(x.valor_centavos ?? 0));
-        }
-      }
-      if (repSnap) {
-        for (const d of repSnap.docs) {
-          const x = d.data();
-          if (String(x.estado ?? "") !== "confirmado") continue;
-          const id = String(x.id_orcamento ?? "");
-          repassadoPorOrc.set(id, (repassadoPorOrc.get(id) ?? 0) + Number(x.valor_centavos ?? 0));
-        }
-      }
+    const organizadoresRestantes = new Set<string>();
+    for (const ev of eventos.values()) {
+      const uid = texto(ev.id_usuario) || texto(ev.idUsuario);
+      if (uid && !idsUsuario.has(uid)) organizadoresRestantes.add(uid);
+    }
+    for (const [uid, usuario] of await carregarMapaDocs(db, "usuarios", organizadoresRestantes)) {
+      usuarios.set(uid, usuario);
     }
 
-    const comissoes = await carregarMapaDocs(db, "plataforma_comissao_obrigacoes",
-      new Set(itens.map(it => `comissao-${(it.data.contrato_financeiro as any)?.id_contrato || it.id}`)));
-    let linhas = [];
-    for (const it of itens) {
+    const filtradas = [];
+    for (const it of itensParaEnriquecer) {
       const d = it.data;
       const idEvento = texto(d.id_evento);
       const evento = eventos.get(idEvento);
       const idOrganizador = texto(evento?.id_usuario) || texto(evento?.idUsuario) || "";
       const idSolicitante = texto(d.id_solicitante);
       const idFornecedor = texto(d.id_fornecedor);
-      const idContrato =
-        (d.contrato_financeiro &&
-          typeof d.contrato_financeiro === "object" &&
-          (d.contrato_financeiro as { id_contrato?: string }).id_contrato) ||
-        it.id;
+      const { idContrato } = it;
 
       const linhaId = resolverLinhaContratacao({
         idOrcamento: it.id,
@@ -246,11 +253,19 @@ export const consultarCentralContratacoes = onCall(
         if (!hay.includes(busca)) continue;
       }
 
-      const caso = casosMap.get(String(idContrato)) ?? casosMap.get(it.id) ?? null;
-      if (casoAbertoFiltro === true && !caso) continue;
-      if (casoAbertoFiltro === false && caso) continue;
-      if (idResponsavel && (!caso || caso.idResponsavel !== idResponsavel)) continue;
+      filtradas.push({ it, idContrato, idEvento, evento, linhaId });
+    }
 
+    // Os totais de paginação dependem dos filtros, mas o financeiro só é
+    // necessário para as linhas que serão devolvidas ao aplicativo.
+    const totalFiltrado = busca ? filtradas.length : candidatos.length;
+    const pagina = busca ? filtradas.slice(offset, offset + limite) : filtradas;
+    const { casosMap, comissoes, alocadoPorOrc, repassadoPorOrc } =
+      financeiroDireto ?? await carregarFinanceiroPagina(db, pagina.map(({ it }) => it), casosFiltro);
+
+    const linhas = pagina.map(({ it, idContrato, idEvento, evento, linhaId }) => {
+      const d = it.data;
+      const caso = casosMap.get(idContrato) ?? casosMap.get(it.id) ?? null;
       const obrigacao = comissoes.get(`comissao-${idContrato}`);
       const divisao = divisaoContrato(d, obrigacao ? [obrigacao] : []);
       const fin = calcularDimensoesFinanceiras({
@@ -263,7 +278,7 @@ export const consultarCentralContratacoes = onCall(
       fin.remuneracaoAppPrevistaCentavos = divisao?.comissaoCentavos ?? 0;
       fin.pendenteRepasseCentavos = divisao ? Math.max(0, divisao.direitoFornecedorCentavos - fin.repassadoConfirmadoCentavos) : 0;
       const linha = montarLinhaCentral({
-        idContrato: String(idContrato),
+        idContrato,
         idOrcamento: it.id,
         idEvento,
         nomeEvento: linhaId.nome_evento,
@@ -279,7 +294,7 @@ export const consultarCentralContratacoes = onCall(
         financeiro: fin,
         casoAberto: caso,
       });
-      linhas.push({
+      return {
         ...linha,
         comissao_centavos: divisao?.comissaoCentavos ?? null,
         liquido_fornecedor_centavos: divisao?.direitoFornecedorCentavos ?? null,
@@ -294,11 +309,8 @@ export const consultarCentralContratacoes = onCall(
         id_contratante: linhaId.id_contratante,
         id_fornecedor: linhaId.id_fornecedor,
         perfil_atual_separado: linhaId.perfil_atual_separado,
-      });
-    }
-
-    const totalFiltrado = linhas.length;
-    linhas = linhas.slice(offset, offset + limite);
+      };
+    });
 
     let gruposEvento: Array<Record<string, unknown>> | null = null;
     if (agruparPorEvento) {
@@ -315,13 +327,6 @@ export const consultarCentralContratacoes = onCall(
         contratacoes,
       }));
     }
-
-    const qtdCasosAbertosSnap = await db
-      .collection(COL_CASOS)
-      .where("estado", "in", ["aberto", "em_analise", "aguardando_partes", "em_decisao"])
-      .limit(100)
-      .get()
-      .catch(() => null);
 
     return {
       ok: true,
@@ -352,7 +357,7 @@ export const consultarCentralContratacoes = onCall(
       },
       metricas_amostra: {
         qtd_linhas_filtradas: totalFiltrado,
-        qtd_casos_abertos_amostra: qtdCasosAbertosSnap?.size ?? null,
+        qtd_casos_abertos_amostra: qtdCasosAbertos,
         completo: !truncado,
       },
       gerado_em: new Date().toISOString(),
@@ -372,24 +377,38 @@ export const consultarDetalheContratacao = onCall(
       throw new HttpsError("invalid-argument", "Informe idOrcamento.");
     }
     const db = admin.firestore();
-    const orcSnap = await db.collection("orcamento").doc(idOrcamento).get();
-    if (!orcSnap.exists) {
-      throw new HttpsError("not-found", "Contratação não encontrada.");
-    }
-    const d = orcSnap.data() as Record<string, unknown>;
-    const idEvento = texto(d.id_evento);
-    const [eventoSnap, fornSnap] = await Promise.all([
-      idEvento ? db.collection("evento").doc(idEvento).get() : null,
-      texto(d.id_fornecedor)
-        ? db.collection("fornecedor").doc(texto(d.id_fornecedor)).get()
-        : null,
+    const [contexto, alocSnap, repSnap] = await Promise.all([
+      db.runTransaction(tx => carregarContextoRepasse(db, tx, idOrcamento), { readOnly: true }),
+      db.collection(COL_ALOCACOES).where("id_orcamento", "==", idOrcamento).get().catch(() => null),
+      db.collection(COL_REPASSES).where("id_orcamento", "==", idOrcamento).get().catch(() => null),
     ]);
-    const evento = eventoSnap?.exists ? (eventoSnap.data() as Record<string, unknown>) : null;
+    const { orcamento: d, evento, idContrato } = contexto;
+    const idEvento = texto(d.id_evento);
     const idOrg = texto(evento?.id_usuario) || texto(evento?.idUsuario);
     const idsU = new Set<string>();
     if (idOrg) idsU.add(idOrg);
     if (texto(d.id_solicitante)) idsU.add(texto(d.id_solicitante));
-    const usuarios = await carregarMapaDocs(db, "usuarios", idsU);
+
+    const encerrados = contexto.casos.filter(c => (c as any).estado === "fechado")
+      .sort((a, b) => String((b as any).fechado_em ?? "").localeCompare(String((a as any).fechado_em ?? "")));
+    const [fornSnap, usuarios, mediacao] = await Promise.all([
+      texto(d.id_fornecedor) ? db.collection("fornecedor").doc(texto(d.id_fornecedor)).get() : null,
+      carregarMapaDocs(db, "usuarios", idsU),
+      (async () => {
+        const casos = await listarCasosPorContratos(db, [String(idContrato), idOrcamento]);
+        const caso = casos.get(String(idContrato)) ?? casos.get(idOrcamento) ?? null;
+        const encerrado = encerrados[0];
+        const selecionado = caso ?? (encerrado ? casoDeDoc(encerrado.id, encerrado) : null);
+        const registros = data.incluirRegistros === true && selecionado
+          ? await carregarRegistrosCaso(db, {
+            idCaso: selecionado.id,
+            papel: "admin",
+            caps: capacidadesParaTipoUsuario(perfil.tipo),
+          }).catch(() => null)
+          : null;
+        return { caso, consultaCaso: registros !== null ? { caso: selecionado, registros } : null };
+      })(),
+    ]);
 
     const vals = centavosDeOrcamento(d);
     const contratado =
@@ -420,18 +439,6 @@ export const consultarDetalheContratacao = onCall(
       contratado,
     });
 
-    const idContrato =
-      (d.contrato_financeiro &&
-        typeof d.contrato_financeiro === "object" &&
-        (d.contrato_financeiro as { id_contrato?: string }).id_contrato) ||
-      idOrcamento;
-
-    const [alocSnap, repSnap, casosMap] = await Promise.all([
-      db.collection(COL_ALOCACOES).where("id_orcamento", "==", idOrcamento).get().catch(() => null),
-      db.collection(COL_REPASSES).where("id_orcamento", "==", idOrcamento).get().catch(() => null),
-      listarCasosPorContratos(db, [String(idContrato), idOrcamento]),
-    ]);
-
     let alocado = 0;
     const alocacoes: Array<Record<string, unknown>> = [];
     if (alocSnap) {
@@ -459,15 +466,11 @@ export const consultarDetalheContratacao = onCall(
       repassadoConfirmadoCentavos: repassado,
     });
 
-    const contexto = await db.runTransaction(tx => carregarContextoRepasse(db, tx, idOrcamento));
     const divisao = contexto.divisao;
     fin.aReceberClienteCentavos = Math.max(0, (divisao?.precoClienteCentavos ?? vals.contratado) - alocado - (divisao?.comissaoExternaOrganizadorCentavos ?? 0));
     fin.remuneracaoAppPrevistaCentavos = divisao?.comissaoCentavos ?? 0;
     fin.pendenteRepasseCentavos = divisao ? Math.max(0, divisao.direitoFornecedorCentavos - repassado) : 0;
-    const encerrados = contexto.casos.filter(c => (c as any).estado === "fechado")
-      .sort((a, b) => String((b as any).fechado_em ?? "").localeCompare(String((a as any).fechado_em ?? "")));
-    const caso =
-      casosMap.get(String(idContrato)) ?? casosMap.get(idOrcamento) ?? null;
+    const { caso, consultaCaso } = mediacao;
 
     // Contatos autorizados (mínimo) — sem dados bancários.
     const contatoContratante = (() => {
@@ -560,6 +563,7 @@ export const consultarDetalheContratacao = onCall(
       historico_mediacao: {
         caso_aberto: caso,
         ultimo_caso_encerrado: encerrados[0] ?? null,
+        ...(consultaCaso ? { consulta_caso: consultaCaso } : {}),
       },
       capacidades: capacidadesParaTipoUsuario(perfil.tipo),
     };

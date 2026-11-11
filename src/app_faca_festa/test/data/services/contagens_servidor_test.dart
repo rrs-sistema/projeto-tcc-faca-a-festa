@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:app_faca_festa/data/datasources/remote/admin_dashboard_remote_datasource.dart';
 import 'package:app_faca_festa/data/datasources/remote/painel_fontes_disponiveis.dart';
 import 'package:app_faca_festa/data/models/evento/tema_festa_model.dart';
+import 'package:app_faca_festa/data/services/functions/callable_sessao_gateway.dart';
 
 class _Db extends Fake implements FirebaseFirestore {
   final downloads = <String>[];
@@ -17,19 +18,43 @@ class _Db extends Fake implements FirebaseFirestore {
   Query<Map<String, dynamic>> collectionGroup(String path) =>
       _Collection(this, path);
   @override
-  DocumentReference<Map<String, dynamic>> doc(String path) => _Doc();
+  DocumentReference<Map<String, dynamic>> doc(String path) {
+    downloads.add(path);
+    return _Doc(dados[path]?.first ?? {});
+  }
 }
 
 class _Doc extends Fake implements DocumentReference<Map<String, dynamic>> {
+  _Doc(this.linha);
+  final Map<String, dynamic> linha;
+
   @override
   Future<DocumentSnapshot<Map<String, dynamic>>> get(
           [GetOptions? options]) async =>
-      _Document();
+      _Document(linha);
 }
 
 class _Document extends Fake implements DocumentSnapshot<Map<String, dynamic>> {
+  _Document(this.linha);
+  final Map<String, dynamic> linha;
+
   @override
-  Map<String, dynamic> data() => {};
+  Map<String, dynamic> data() => linha;
+}
+
+class _ReputacaoGateway extends Fake implements CallableSessaoGateway {
+  @override
+  String get usuario => 'f';
+
+  Map<String, dynamic> resumo = {'quantidade': 0, 'media': null};
+
+  @override
+  Future<Map<String, dynamic>> chamar(
+      String funcao, Map<String, dynamic> dados) async {
+    expect(funcao, 'consultarGestaoReputacaoFn');
+    expect(dados, {'idFornecedor': 'f', 'tipo': 'fornecedor', 'limite': 1});
+    return {'resumo': resumo};
+  }
 }
 
 class _Collection extends Fake
@@ -165,10 +190,29 @@ void main() {
     ];
     db.dados['fornecedor/f/estoque_itens'] = List.generate(2000, (_) => {});
     final r =
-        await PainelFontesDisponiveis(db: db, usuario: () => 'f').carregar('f');
+        await PainelFontesDisponiveis(db: db, gateway: _ReputacaoGateway())
+            .carregar('f');
     expect(r['catalogo'], 1);
     expect(r['estoque'], 2000);
     expect(db.downloads, isNot(contains('fornecedor_servico')));
     expect(db.downloads, isNot(contains('fornecedor/f/estoque_itens')));
+  });
+  test('painel usa o resumo de avaliações e ignora o agregado do cadastro',
+      () async {
+    final db = _Db();
+    db.dados['fornecedor/f'] = [
+      {'media_avaliacoes': 4.4, 'total_avaliacoes': 45},
+    ];
+    final gateway = _ReputacaoGateway();
+    final fontes = PainelFontesDisponiveis(db: db, gateway: gateway);
+
+    final semAvaliacoes = await fontes.carregar('f');
+    expect(semAvaliacoes['reputacao'], isNull);
+    expect(semAvaliacoes['fontes']['reputacao']['estado'], 'disponivel');
+
+    gateway.resumo = {'quantidade': 2, 'media': 4.5};
+    final comAvaliacoes = await fontes.carregar('f');
+    expect(comAvaliacoes['reputacao'], {'quantidade': 2, 'media': 4.5});
+    expect(db.downloads, isNot(contains('fornecedor/f')));
   });
 }

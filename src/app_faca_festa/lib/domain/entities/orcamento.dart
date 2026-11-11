@@ -73,9 +73,13 @@ class Orcamento {
     DateTime? dataCadastro,
     this.dataFechamento,
     this.fechadoPor,
+    this.estadoExecucao,
+    this.idContrato,
   }) : dataCadastro = dataCadastro ?? DateTime.now();
 
   final String idOrcamento;
+  final String? estadoExecucao;
+  final String? idContrato;
   final String idEvento;
   final String? idFornecedor;
   final String? nomeFornecedor;
@@ -115,6 +119,8 @@ class Orcamento {
   }) {
     return Orcamento(
       idOrcamento: idOrcamento,
+      estadoExecucao: estadoExecucao,
+      idContrato: idContrato,
       idEvento: idEvento,
       idServicoFornecido: idServicoFornecido ?? this.idServicoFornecido,
       idFornecedor: idFornecedor ?? this.idFornecedor,

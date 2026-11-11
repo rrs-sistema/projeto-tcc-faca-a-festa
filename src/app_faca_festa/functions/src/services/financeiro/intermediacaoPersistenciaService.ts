@@ -365,12 +365,32 @@ export async function autorizarRepasseOrganizador(db: Firestore, entrada: {
     if (entrada.autorizar && (!contratado(ctx.orcamento) || !ctx.divisao)) {
       throw new HttpsError("failed-precondition", "Confirme a contratação e confira a comissão antes de autorizar.");
     }
+    const anterior = ctx.autorizacao;
+    const motivo = texto(entrada.motivo);
+    const mesmaAutorizacao = anterior?.autor_id === entrada.autorId &&
+      anterior?.ativa === entrada.autorizar && anterior?.assinatura_contrato === ctx.assinatura;
+    if (mesmaAutorizacao && anterior?.motivo === motivo) return { ok: true as const };
+
+    const auditoria = db.collection(COL_AUDITORIA).doc();
     const dados = { id_orcamento: entrada.idOrcamento, id_evento: ctx.orcamento.id_evento,
-      autor_id: entrada.autorId, ativa: entrada.autorizar, motivo: texto(entrada.motivo),
+      autor_id: entrada.autorId, ativa: entrada.autorizar, motivo,
       assinatura_contrato: ctx.assinatura, atualizado_em: FieldValue.serverTimestamp() };
-    tx.set(db.collection(COL_AUTORIZACOES).doc(entrada.idOrcamento), dados);
+    const notificar = entrada.autorizar && !mesmaAutorizacao;
+    tx.set(db.collection(COL_AUTORIZACOES).doc(entrada.idOrcamento), {
+      ...dados,
+      id_auditoria_push: notificar ? auditoria.id : mesmaAutorizacao ? anterior?.id_auditoria_push ?? null : null,
+    });
     tx.update(ctx.ref, { repasse_revisao: FieldValue.increment(1) });
-    tx.set(db.collection(COL_AUDITORIA).doc(), { ...dados, acao: entrada.autorizar ? "organizador_autorizou_repasse" : "organizador_revogou_autorizacao" });
+    tx.create(auditoria, {
+      ...dados,
+      schema: 1,
+      id_contrato: ctx.idContrato,
+      id_fornecedor: ctx.orcamento.id_fornecedor ?? null,
+      ativa_anterior: anterior?.ativa ?? null,
+      acao: entrada.autorizar ? "organizador_autorizou_repasse" : "organizador_revogou_autorizacao",
+      criado_em: FieldValue.serverTimestamp(),
+      ...(notificar ? { push: { estado: "pendente" } } : {}),
+    });
     return { ok: true as const };
   });
 }

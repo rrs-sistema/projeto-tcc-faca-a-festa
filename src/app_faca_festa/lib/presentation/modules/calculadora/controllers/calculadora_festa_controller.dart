@@ -176,11 +176,11 @@ class CalculadoraFestaController extends GetxController {
           'regras': fonte(
               carregandoItensBase.value
                   ? EstadoFontePlanejamento.carregando
-                  : erroItensBase.value.isNotEmpty
-                      ? EstadoFontePlanejamento.erro
-                      : regrasDisponiveis.isEmpty
-                          ? EstadoFontePlanejamento.vazia
-                          : EstadoFontePlanejamento.disponivel,
+                  : itensParaCalculo.isNotEmpty
+                      ? EstadoFontePlanejamento.disponivel
+                      : erroItensBase.value.isNotEmpty
+                          ? EstadoFontePlanejamento.erro
+                          : EstadoFontePlanejamento.vazia,
               origemItensCalculadora.value.name,
               assinaturaExecucao(
                   regrasDisponiveis.map((r) => r.toPlanejamento()).toList())),
@@ -1309,12 +1309,6 @@ class CalculadoraFestaController extends GetxController {
       if (_itensBaseRepository is CatalogoContextualRepository) {
         await atualizarCatalogoContextual();
         if (versao != _versaoCarregamentoItens) return;
-        origemItensCalculadora.value =
-            catalogoContextual.value.estado == 'indisponivel'
-                ? OrigemItensCalculadora.indisponivel
-                : OrigemItensCalculadora.firestore;
-        itensOrigemRemota.value =
-            catalogoContextual.value.estado == 'disponivel';
         if (recalcularAposCarregar) calcular();
         return;
       }
@@ -1581,7 +1575,6 @@ class CalculadoraFestaController extends GetxController {
   void adicionarItemManual(ItemEstimativaFinanceira item) {
     regrasManuais.removeWhere((atual) => atual.id == item.id);
     regrasManuais.add(item);
-    erroItensBase.value = '';
     calcular();
   }
 

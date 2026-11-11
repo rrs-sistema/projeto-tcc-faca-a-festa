@@ -43,6 +43,7 @@ class CentralMediacaoController extends GetxController {
   final scrollOffsetLista = 0.0.obs;
 
   int _geracao = 0;
+  int _geracaoDetalhe = 0;
 
   bool get temPaginaAnterior => offset.value > 0;
 
@@ -141,22 +142,29 @@ class CentralMediacaoController extends GetxController {
   }
 
   Future<void> abrirDetalhe(String idOrcamento) async {
+    final geracao = ++_geracaoDetalhe;
     erroRegistro.value = '';
     erroConclusao.value = '';
     idOrcamentoSelecionado.value = idOrcamento;
     carregando.value = true;
     erro.value = '';
     try {
-      detalhe.value = await remote.consultarDetalhe(idOrcamento: idOrcamento);
+      final resposta = await remote.consultarDetalhe(idOrcamento: idOrcamento);
+      if (geracao != _geracaoDetalhe || isClosed) return;
+      detalhe.value = resposta;
       final av = (detalhe.value?['aviso'] ?? '').toString().trim();
       if (av.isNotEmpty) aviso.value = av;
       final hist = detalhe.value?['historico_mediacao'];
-      if (hist is Map &&
+      if (hist is Map && hist['consulta_caso'] is Map) {
+        _aplicarConsultaCaso(Map<String, dynamic>.from(hist['consulta_caso']));
+      } else if (hist is Map &&
           (hist['caso_aberto'] ?? hist['ultimo_caso_encerrado']) is Map) {
         final caso = Map<String, dynamic>.from(
             (hist['caso_aberto'] ?? hist['ultimo_caso_encerrado']) as Map);
         final idCaso = (caso['id'] ?? '').toString();
         if (idCaso.isNotEmpty) {
+          casoDetalhe.value = caso;
+          registrosCaso.clear();
           await carregarCaso(idCaso);
         } else {
           casoDetalhe.value = caso;
@@ -167,33 +175,40 @@ class CentralMediacaoController extends GetxController {
         registrosCaso.clear();
       }
     } catch (e) {
+      if (geracao != _geracaoDetalhe || isClosed) return;
       erro.value = e.toString();
       detalhe.value = null;
     } finally {
-      carregando.value = false;
+      if (geracao == _geracaoDetalhe && !isClosed) carregando.value = false;
     }
   }
 
   Future<void> carregarCaso(String idCaso) async {
+    final geracao = _geracaoDetalhe;
     try {
       final r = await remote.consultarCaso(idCaso: idCaso);
-      casoDetalhe.value =
-          r['caso'] is Map ? Map<String, dynamic>.from(r['caso'] as Map) : null;
-      final regs = r['registros'];
-      final lista = <RegistroMediacaoView>[];
-      if (regs is List) {
-        for (final item in regs) {
-          if (item is Map) {
-            lista.add(RegistroMediacaoView.fromMap(
-              Map<String, dynamic>.from(item),
-            ));
-          }
+      if (geracao != _geracaoDetalhe || isClosed) return;
+      _aplicarConsultaCaso(r);
+    } catch (e) {
+      if (geracao == _geracaoDetalhe && !isClosed) erro.value = e.toString();
+    }
+  }
+
+  void _aplicarConsultaCaso(Map<String, dynamic> resposta) {
+    final caso = resposta['caso'];
+    casoDetalhe.value = caso is Map ? Map<String, dynamic>.from(caso) : null;
+    final registros = resposta['registros'];
+    final lista = <RegistroMediacaoView>[];
+    if (registros is List) {
+      for (final item in registros) {
+        if (item is Map) {
+          lista.add(RegistroMediacaoView.fromMap(
+            Map<String, dynamic>.from(item),
+          ));
         }
       }
-      registrosCaso.assignAll(lista);
-    } catch (e) {
-      erro.value = e.toString();
     }
+    registrosCaso.assignAll(lista);
   }
 
   Future<bool> abrirCaso({

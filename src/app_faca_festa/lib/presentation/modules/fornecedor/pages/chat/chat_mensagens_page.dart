@@ -13,7 +13,9 @@ class ChatMensagensPage extends StatefulWidget {
   final String idCotacao;
   final String idFornecedor;
   final String nomeFornecedor;
-  final DateTime dataSolicitacao;
+  final DateTime? dataSolicitacao;
+  final String? categoriaPedido;
+  final String? observacaoPedido;
   final GerenciarCotacoes cotacoes;
   final EventThemeController theme;
   final Usuario usuario;
@@ -27,6 +29,8 @@ class ChatMensagensPage extends StatefulWidget {
     required this.cotacoes,
     required this.theme,
     required this.usuario,
+    this.categoriaPedido,
+    this.observacaoPedido,
   });
 
   @override
@@ -44,8 +48,6 @@ class _ChatMensagensPageState extends State<ChatMensagensPage>
   bool _primeiraCarga = true;
   String get idCotacao => widget.idCotacao;
   String get idFornecedor => widget.idFornecedor;
-  String get nomeFornecedor => widget.nomeFornecedor;
-  DateTime get dataSolicitacao => widget.dataSolicitacao;
   GerenciarCotacoes get cotacoes => widget.cotacoes;
   EventThemeController get theme => widget.theme;
   Usuario get usuario => widget.usuario;
@@ -101,26 +103,42 @@ class _ChatMensagensPageState extends State<ChatMensagensPage>
   Widget build(BuildContext context) {
     final gradient = theme.gradient.value;
     final primary = theme.primaryColor.value;
+    final organizador = usuario.idUsuario != idFornecedor;
+    final mensagens = _buildMensagens(usuario, primary);
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC), // Fundo mais neutro e limpo
-      appBar: _buildHeader(gradient),
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildChatHeader(dataSolicitacao),
-            Expanded(child: _buildMensagens(usuario, primary)),
-            _buildInputField(primary, usuario),
-          ],
-        ),
-      ),
+    return StreamBuilder<List<CotacaoFornecedorResumo>>(
+      stream: _fornecedores,
+      builder: (context, snapshot) {
+        final fornecedor = snapshot.data?.firstWhereOrNull(
+          (item) => item.idFornecedor == idFornecedor,
+        );
+        final nome = organizador ? fornecedor?.nomeFornecedor?.trim() : null;
+
+        return Scaffold(
+          backgroundColor: const Color(0xFFF8FAFC),
+          appBar: _buildHeader(
+            gradient,
+            nome != null && nome.isNotEmpty ? nome : widget.nomeFornecedor,
+          ),
+          body: SafeArea(
+            child: Column(
+              children: [
+                _buildChatHeader(organizador ? fornecedor?.servicos : null),
+                Expanded(child: mensagens),
+                _buildInputField(
+                    primary, usuario, fornecedor?.chatAberto ?? true),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
   // ----------------------------------------------------------
   // 🔹 HEADER COMPACTO E ELEGANTE
   // ----------------------------------------------------------
-  PreferredSizeWidget _buildHeader(LinearGradient gradient) {
+  PreferredSizeWidget _buildHeader(LinearGradient gradient, String nome) {
     return PreferredSize(
       preferredSize: const Size.fromHeight(56), // 🔹 AppBar mais fina
       child: AppBar(
@@ -154,7 +172,7 @@ class _ChatMensagensPageState extends State<ChatMensagensPage>
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      nomeFornecedor,
+                      nome,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.poppins(
@@ -191,7 +209,14 @@ class _ChatMensagensPageState extends State<ChatMensagensPage>
   // ----------------------------------------------------------
   // 🔹 INFO DA COTAÇÃO (FIXO NO TOPO)
   // ----------------------------------------------------------
-  Widget _buildChatHeader(DateTime dataSolicitacao) {
+  Widget _buildChatHeader(List<CotacaoServicoResumo>? servicos) {
+    final dataSolicitacao = widget.dataSolicitacao;
+    final categoria = widget.categoriaPedido?.trim() ?? '';
+    final observacao = widget.observacaoPedido?.trim() ?? '';
+    final itens = [
+      for (final servico in servicos ?? const <CotacaoServicoResumo>[])
+        '${servico.nome} (×${servico.quantidade})',
+    ];
     return Container(
       padding: const EdgeInsets.symmetric(
           horizontal: 14, vertical: 10), // 🔹 Compacto
@@ -223,20 +248,63 @@ class _ChatMensagensPageState extends State<ChatMensagensPage>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "Pedido de preço",
+                  categoria.isEmpty ? 'Pedido de preço' : categoria,
                   style: GoogleFonts.poppins(
                     fontWeight: FontWeight.w700,
                     fontSize: 12.5,
                     color: const Color(0xFF1F2937),
                   ),
                 ),
+                if (itens.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    itens.first,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF1F2937),
+                    ),
+                  ),
+                  if (itens.length > 1)
+                    TextButton(
+                      onPressed: () => showDialog<void>(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Serviços deste pedido'),
+                          scrollable: true,
+                          content: Text(itens.join('\n')),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text('Fechar'),
+                            ),
+                          ],
+                        ),
+                      ),
+                      child: Text('Ver os ${itens.length} serviços'),
+                    ),
+                ],
                 Text(
-                  "Enviada em: ${DateFormat("dd/MM/yyyy HH:mm").format(dataSolicitacao)}",
+                  dataSolicitacao == null
+                      ? 'Data de envio não informada'
+                      : 'Pedido enviado em ${DateFormat('dd/MM/yyyy HH:mm').format(dataSolicitacao)}',
                   style: GoogleFonts.poppins(
                     fontSize: 11,
                     color: Colors.grey.shade600,
                   ),
                 ),
+                if (observacao.isNotEmpty)
+                  Text(
+                    observacao,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      color: const Color(0xFF1F2937),
+                    ),
+                  ),
               ],
             ),
           ),
@@ -411,108 +479,94 @@ class _ChatMensagensPageState extends State<ChatMensagensPage>
   // ----------------------------------------------------------
   // 🔹 CAIXA DE ENTRADA (MENSAGEM)
   // ----------------------------------------------------------
-  Widget _buildInputField(Color primary, Usuario usuario) {
-    return StreamBuilder<List<CotacaoFornecedorResumo>>(
-      stream: _fornecedores,
-      builder: (context, snap) {
-        CotacaoFornecedorResumo? forn;
-        for (final f in snap.data ?? const <CotacaoFornecedorResumo>[]) {
-          if (f.idFornecedor == idFornecedor) {
-            forn = f;
-            break;
-          }
-        }
-        final aberto = forn == null || forn.chatAberto;
+  Widget _buildInputField(Color primary, Usuario usuario, bool aberto) {
+    if (!aberto) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        color: Colors.grey.shade100,
+        child: Text(
+          'Esta conversa está encerrada para novas mensagens.',
+          textAlign: TextAlign.center,
+          style: GoogleFonts.poppins(
+            fontSize: 12.5,
+            color: Colors.grey.shade700,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      );
+    }
 
-        if (!aberto) {
-          return Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            color: Colors.grey.shade100,
-            child: Text(
-              'Esta conversa está encerrada para novas mensagens.',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.poppins(
-                fontSize: 12.5,
-                color: Colors.grey.shade700,
-                fontWeight: FontWeight.w600,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            blurRadius: 8,
+            color: Colors.black.withValues(alpha: 0.05),
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Expanded(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                minHeight: 40,
+                maxHeight: 120,
+              ),
+              child: TextField(
+                controller: msgController,
+                keyboardType: TextInputType.multiline,
+                maxLines: null,
+                maxLength: 2000,
+                style: GoogleFonts.poppins(fontSize: 13),
+                decoration: InputDecoration(
+                  counterText: '',
+                  hintText: "Digite sua mensagem...",
+                  hintStyle: GoogleFonts.poppins(
+                      fontSize: 12.5, color: Colors.grey.shade500),
+                  filled: true,
+                  fillColor: const Color(0xFFF1F5F9),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    borderSide: BorderSide.none,
+                  ),
+                  isDense: true,
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                ),
               ),
             ),
-          );
-        }
-
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            boxShadow: [
-              BoxShadow(
-                blurRadius: 8,
-                color: Colors.black.withValues(alpha: 0.05),
-                offset: const Offset(0, -2),
-              ),
-            ],
           ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Expanded(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    minHeight: 40,
-                    maxHeight: 120,
-                  ),
-                  child: TextField(
-                    controller: msgController,
-                    keyboardType: TextInputType.multiline,
-                    maxLines: null,
-                    maxLength: 2000,
-                    style: GoogleFonts.poppins(fontSize: 13),
-                    decoration: InputDecoration(
-                      counterText: '',
-                      hintText: "Digite sua mensagem...",
-                      hintStyle: GoogleFonts.poppins(
-                          fontSize: 12.5, color: Colors.grey.shade500),
-                      filled: true,
-                      fillColor: const Color(0xFFF1F5F9),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(20),
-                        borderSide: BorderSide.none,
-                      ),
-                      isDense: true,
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 10),
-                    ),
-                  ),
+          const SizedBox(width: 8),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 2),
+            child: InkWell(
+              onTap: _enviando ? null : () => _enviarMensagem(usuario),
+              borderRadius: BorderRadius.circular(50),
+              child: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: primary,
+                  shape: BoxShape.circle,
                 ),
+                child: _enviando
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white))
+                    : const Icon(Icons.send_rounded,
+                        color: Colors.white, size: 18),
               ),
-              const SizedBox(width: 8),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 2),
-                child: InkWell(
-                  onTap: _enviando ? null : () => _enviarMensagem(usuario),
-                  borderRadius: BorderRadius.circular(50),
-                  child: Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: primary,
-                      shape: BoxShape.circle,
-                    ),
-                    child: _enviando
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                                strokeWidth: 2, color: Colors.white))
-                        : const Icon(Icons.send_rounded,
-                            color: Colors.white, size: 18),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
-        );
-      },
+        ],
+      ),
     );
   }
 

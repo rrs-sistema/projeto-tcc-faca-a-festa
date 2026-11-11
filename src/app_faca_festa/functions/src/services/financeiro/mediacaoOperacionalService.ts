@@ -19,6 +19,9 @@ export type CategoriaCaso =
   | "pagamento"
   | "reembolso_solicitado"
   | "cancelamento_solicitado"
+  | "cancelamento_fornecedor"
+  | "nao_comparecimento"
+  | "risco_seguranca"
   | "identificacao"
   | "outro";
 
@@ -415,6 +418,12 @@ export function rotuloCategoria(c: CategoriaCaso): string {
       return "Pedido de reembolso";
     case "cancelamento_solicitado":
       return "Solicitação de cancelamento";
+    case "cancelamento_fornecedor":
+      return "Relato de cancelamento pelo fornecedor";
+    case "nao_comparecimento":
+      return "Relato de não comparecimento";
+    case "risco_seguranca":
+      return "Relato de risco à segurança";
     case "identificacao":
       return "Identificação";
     default:

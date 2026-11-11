@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 
@@ -93,7 +95,11 @@ class DashboardFinanceiroAdminRemote {
     int? despesasPlataformaCentavos,
   }) async {
     final db = _db!;
-    final orcSnap = await db.collection('orcamento').limit(500).get();
+    final (orcSnap, comissoes, politicaAtiva) = await (
+      db.collection('orcamento').limit(500).get(),
+      _lerComissoes(db),
+      _politicaAtiva(db),
+    ).wait;
     final fatos = <FatoComercialAdmin>[];
     final linhasContratacao = <Map<String, dynamic>>[];
     for (final doc in orcSnap.docs) {
@@ -167,9 +173,6 @@ class DashboardFinanceiroAdminRemote {
         'origem_identidade': 'documento',
       });
     }
-
-    final comissoes = await _lerComissoes(db);
-    final politicaAtiva = await _politicaAtiva(db);
 
     final dash = DashboardFinanceiroAdminService.agregar(
       fatos: fatos,

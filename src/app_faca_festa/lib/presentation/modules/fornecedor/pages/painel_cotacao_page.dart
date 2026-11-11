@@ -351,16 +351,22 @@ class PainelCotacaoPage extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text("Resumo do Evento",
-                  style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white)),
-              Text("$contratados de $total contratados",
-                  style: GoogleFonts.poppins(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white.withValues(alpha: 0.9))),
+              Expanded(
+                child: Text("Resumo do Evento",
+                    style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white)),
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text("$contratados de $total contratados",
+                    textAlign: TextAlign.end,
+                    style: GoogleFonts.poppins(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white.withValues(alpha: 0.9))),
+              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -431,6 +437,8 @@ class PainelCotacaoPage extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      if (cotacao.servicos.isNotEmpty)
+                        _buildItensSolicitados(cotacao, corIcone),
                       Wrap(
                         spacing: 6,
                         runSpacing: 4,
@@ -483,7 +491,7 @@ class PainelCotacaoPage extends StatelessWidget {
                       ),
                       child: Text(
                         'Quem fecha o negócio: você (organizador). '
-                        'Abra os detalhes e toque em Contratar este.',
+                        'Abra os detalhes e toque em Revisar proposta.',
                         style: GoogleFonts.poppins(
                           fontSize: 11.5,
                           height: 1.35,
@@ -602,6 +610,65 @@ class PainelCotacaoPage extends StatelessWidget {
     );
   }
 
+  Widget _buildItensSolicitados(Cotacao cotacao, Color cor) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(top: 2, bottom: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
+      decoration: BoxDecoration(
+        color: cor.withValues(alpha: 0.08),
+        border: Border.all(color: cor.withValues(alpha: 0.26)),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.inventory_2_outlined, size: 13, color: cor),
+              const SizedBox(width: 5),
+              Flexible(
+                child: Text(
+                  'Itens solicitados',
+                  style: GoogleFonts.poppins(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.grey.shade800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          for (final item in cotacao.servicos.take(2))
+            Padding(
+              padding: const EdgeInsets.only(top: 3),
+              child: Text(
+                '${item.nome} (×${item.quantidade})',
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                ),
+              ),
+            ),
+          if (cotacao.servicos.length > 2)
+            Padding(
+              padding: const EdgeInsets.only(top: 3),
+              child: Text(
+                '+${cotacao.servicos.length - 2} na lista completa',
+                style: GoogleFonts.poppins(
+                  fontSize: 11,
+                  color: Colors.grey.shade700,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildAcaoCotacao(
       Color color, String label, IconData icon, VoidCallback onTap) {
     return InkWell(
@@ -613,9 +680,11 @@ class PainelCotacaoPage extends StatelessWidget {
           children: [
             Icon(icon, color: color, size: 18),
             const SizedBox(width: 8),
-            Text(label,
-                style: GoogleFonts.poppins(
-                    fontSize: 12, fontWeight: FontWeight.w600, color: color)),
+            Flexible(
+              child: Text(label,
+                  style: GoogleFonts.poppins(
+                      fontSize: 12, fontWeight: FontWeight.w600, color: color)),
+            ),
           ],
         ),
       ),

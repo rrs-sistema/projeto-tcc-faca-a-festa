@@ -1,11 +1,16 @@
+import 'package:app_faca_festa/domain/entities/financeiro/mediacao_operacional.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class PedidoMediacao {
-  const PedidoMediacao({required this.motivo, this.descricao});
+  const PedidoMediacao(
+      {required this.motivo,
+      this.descricao,
+      this.categoria = 'divergencia_servico'});
 
   final String motivo;
   final String? descricao;
+  final String categoria;
 }
 
 /// Sheet para o organizador/fornecedor pedir mediação com motivo e detalhes.
@@ -58,6 +63,7 @@ class _AbrirMediacaoSheetState extends State<_AbrirMediacaoSheet> {
   final _motivoCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
   String? _erro;
+  String _categoria = 'divergencia_servico';
 
   @override
   void dispose() {
@@ -75,6 +81,7 @@ class _AbrirMediacaoSheetState extends State<_AbrirMediacaoSheet> {
     widget.onConfirmar(
       PedidoMediacao(
         motivo: motivo,
+        categoria: _categoria,
         descricao: _descCtrl.text.trim().isEmpty ? null : _descCtrl.text.trim(),
       ),
     );
@@ -139,6 +146,20 @@ class _AbrirMediacaoSheetState extends State<_AbrirMediacaoSheet> {
               ),
             ),
             const SizedBox(height: 16),
+            DropdownButtonFormField<String>(
+              value: _categoria,
+              isExpanded: true,
+              decoration: const InputDecoration(labelText: 'Tipo de problema'),
+              items: [
+                const DropdownMenuItem(
+                    value: 'divergencia_servico',
+                    child: Text('Divergência na entrega ou outro motivo')),
+                for (final item in tiposIncidenteFornecedor.entries)
+                  DropdownMenuItem(value: item.key, child: Text(item.value)),
+              ],
+              onChanged: (value) => setState(() => _categoria = value!),
+            ),
+            const SizedBox(height: 12),
             TextField(
               controller: _motivoCtrl,
               textCapitalization: TextCapitalization.sentences,

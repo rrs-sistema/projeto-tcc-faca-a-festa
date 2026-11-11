@@ -7,6 +7,7 @@ import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { admin } from "../../shared/firebaseAdmin";
 import { atualizarExecucaoContrato } from "../financeiro/acompanhamentoPersistenciaService";
 import { exigirUsuarioAutenticado } from "../../shared/auth";
+import { exigirNovosNegociosPermitidos } from "../fornecedores/restricaoComercial";
 export const hashJornada=(v:unknown)=>createHash("sha256").update(JSON.stringify(v)).digest("hex");
 export function idJornada(v:unknown):string{if(typeof v!=="string"||!v.trim()||v.length>200||v.includes("/"))throw new HttpsError("invalid-argument","Identificador inválido.");return v.trim();}
 const texto=(v:unknown,max=2000)=>{if(typeof v!=="string"||v.length>max)throw new HttpsError("invalid-argument","Texto inválido.");return v.trim();};
@@ -110,6 +111,7 @@ export async function contratarProposta(db:Firestore,uid:string,d:any){
  const p=x.f.proposta_atual;
  if(!p||p.versao!==versao||p.assinatura!==assinaturaEsperada)throw new HttpsError("aborted","Revise a versão vigente antes de aceitar.");
  if(Date.parse(p.validade)<=Date.now())throw new HttpsError("failed-precondition","Proposta expirada; solicite revisão ao fornecedor.");
+ await exigirNovosNegociosPermitidos(db,tx,idFornecedor,(p.itens||[]).map((item:any)=>item.idServico));
  const idEvento=idJornada(x.c.id_evento),ev=await tx.get(db.doc(`evento/${idEvento}`)),perfilSnap=await tx.get(db.doc(`usuarios/${uid}`)),fornSnap=await tx.get(db.doc(`fornecedor/${idFornecedor}`));
  if(!ev.exists||["cancelado","cancelada"].includes(ev.data()?.status))throw new HttpsError("failed-precondition","Evento indisponível.");
  const fornecedoresSnap=await tx.get(x.cRef.collection("fornecedores"));

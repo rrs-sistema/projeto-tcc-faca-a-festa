@@ -22,6 +22,7 @@ class CalculadoraRegraManualDialog extends StatefulWidget {
   final Future<void> Function(ItemEstimativaFinanceira)? onSalvar;
   final String confirmarLabel;
   final CatalogoContextual? catalogo;
+  final ReferenciaContextual? referenciaInicial;
   final Map<String, dynamic> contextoReferencia;
 
   const CalculadoraRegraManualDialog(
@@ -33,6 +34,7 @@ class CalculadoraRegraManualDialog extends StatefulWidget {
       this.onSalvar,
       this.confirmarLabel = 'Usar no cálculo',
       this.catalogo,
+      this.referenciaInicial,
       this.contextoReferencia = const {},
       this.publico = 'todos',
       this.tipo = 'outro'});
@@ -142,7 +144,14 @@ class _RegraState extends State<CalculadoraRegraManualDialog>
     _consumoFocus.addListener(_revelarCampo);
     _precoFocus.addListener(_revelarCampo);
     _precoFocus.addListener(_selecionarPrecoZerado);
-    _nome = TextEditingController(text: widget.inicial?.nome ?? widget.nome);
+    final referencia = widget.referenciaInicial;
+    final nomeReferencia = referencia == null
+        ? null
+        : referencia.reconhece(referencia.nome)
+            ? referencia.nome
+            : referencia.lista('aliases').firstOrNull;
+    _nome = TextEditingController(
+        text: widget.inicial?.nome ?? widget.nome ?? nomeReferencia);
     _consumo = TextEditingController(
         text: widget.inicial?.quantidadePorConvidadoEquivalente
                 .toString()
@@ -152,9 +161,15 @@ class _RegraState extends State<CalculadoraRegraManualDialog>
         text: widget.inicial == null
             ? ''
             : NumericInput.dinheiro(widget.inicial!.valorUnitarioMedio));
-    _unidade =
-        widget.inicial?.unidade ?? widget.unidade ?? UnidadeEstimativa.unidade;
-    final publico = widget.inicial?.publicoAlvo ?? widget.publico;
+    _unidade = widget.inicial?.unidade ??
+        widget.unidade ??
+        UnidadeEstimativa.values
+            .byName(referencia?.dados['unidade'] as String? ?? 'unidade');
+    final publicosReferencia = referencia?.lista('publicos') ?? [];
+    final publico = widget.inicial?.publicoAlvo ??
+        (publicosReferencia.contains(widget.publico)
+            ? widget.publico
+            : publicosReferencia.firstOrNull ?? widget.publico);
     _publico = _publicos.containsKey(publico) ? publico : 'todos';
     final meta = widget.inicial?.premissas ?? {};
     _premissasEditadas = Map<String, dynamic>.from(meta);
@@ -165,7 +180,8 @@ class _RegraState extends State<CalculadoraRegraManualDialog>
     _pesoBebe = TextEditingController(
         text:
             (((meta['peso_bebe'] as num?)?.toDouble() ?? .2) * 100).toString());
-    final papel = meta['papel_na_refeicao']?.toString();
+    final papel =
+        (meta['papel_na_refeicao'] ?? referencia?.dados['papel'])?.toString();
     _papel = ['principal', 'acompanhamento', 'bebida', 'outro'].contains(papel)
         ? papel!
         : 'a_confirmar';
@@ -173,7 +189,9 @@ class _RegraState extends State<CalculadoraRegraManualDialog>
     _ajustarDuracao = meta['ajustar_por_duracao'] == true;
     _servicos =
         TextEditingController(text: (meta['numero_servicos'] ?? 1).toString());
-    final estado = meta['estado']?.toString() ?? '';
+    final estado =
+        (meta['estado'] ?? referencia?.dados['estado_consumo'])?.toString() ??
+            '';
     _estado =
         ['cru', 'seco', 'pronto'].contains(estado) ? estado : 'não informado';
     _grupo = meta['grupo'] as String? ?? '';
@@ -865,6 +883,13 @@ class _RegraState extends State<CalculadoraRegraManualDialog>
                                         padding: const EdgeInsets.all(8),
                                         child: Text(aviso))
                                 ]),
+                          if (widget.referenciaInicial != null)
+                            TextButton.icon(
+                              onPressed: _buscarReferencia,
+                              icon: const Icon(Icons.menu_book_outlined),
+                              label:
+                                  const Text('Consultar porção de referência'),
+                            ),
                           _secao('O que será servido?',
                               'Identifique o item e quem vai consumi-lo.', [
                             TextFormField(
@@ -951,11 +976,13 @@ class _RegraState extends State<CalculadoraRegraManualDialog>
                                 const SizedBox(height: 8),
                                 const Text(
                                     'Informe abaixo a porção adequada a esse papel. A seleção não converte automaticamente uma porção de prato principal em acompanhamento.'),
-                                TextButton.icon(
-                                    onPressed: _buscarReferencia,
-                                    icon: const Icon(Icons.menu_book_outlined),
-                                    label: const Text(
-                                        'Buscar referência para este contexto')),
+                                if (widget.referenciaInicial == null)
+                                  TextButton.icon(
+                                      onPressed: _buscarReferencia,
+                                      icon:
+                                          const Icon(Icons.menu_book_outlined),
+                                      label: const Text(
+                                          'Buscar referência para este contexto')),
                                 if (_premissasEditadas[
                                         'referencia_contextual'] !=
                                     null)

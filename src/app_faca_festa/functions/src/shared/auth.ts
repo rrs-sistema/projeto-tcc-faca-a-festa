@@ -7,13 +7,17 @@ export type PerfilAuth = {
   ativo: boolean;
 };
 
-export async function exigirUsuarioAutenticado(
-  uid: string | undefined,
-): Promise<PerfilAuth> {
+export function exigirUidAutenticado(uid: string | undefined): string {
   if (!uid) {
     throw new HttpsError("unauthenticated", "Faça login para continuar.");
   }
+  return uid;
+}
 
+export async function exigirUsuarioAutenticado(
+  uid: string | undefined,
+): Promise<PerfilAuth> {
+  uid = exigirUidAutenticado(uid);
   const snapshot = await admin.firestore().collection("usuarios").doc(uid).get();
   if (!snapshot.exists) {
     throw new HttpsError("permission-denied", "Perfil não encontrado.");

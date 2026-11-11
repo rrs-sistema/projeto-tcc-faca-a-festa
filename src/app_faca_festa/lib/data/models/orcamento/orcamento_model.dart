@@ -28,6 +28,8 @@ class OrcamentoModel extends Orcamento {
     super.dataCadastro,
     super.dataFechamento,
     super.fechadoPor,
+    super.estadoExecucao,
+    super.idContrato,
   });
 
   /// ===========================================================
@@ -63,10 +65,17 @@ class OrcamentoModel extends Orcamento {
   /// 🔸 Conversão a partir do Firestore
   /// ===========================================================
   factory OrcamentoModel.fromMap(Map<String, dynamic> map, {String? docId}) {
+    final financeiro = map['contrato_financeiro'];
+    final contrato = financeiro is Map ? financeiro : null;
     return OrcamentoModel(
       idOrcamento: map['id_orcamento'] ?? docId ?? '',
+      estadoExecucao:
+          (contrato?['estado_execucao'] ?? map['estado_execucao'])?.toString(),
+      idContrato: contrato?['id_contrato']?.toString(),
       idEvento: map['id_evento'] ?? '',
-      idServicoFornecido: map['id_servico_fornecido'],
+      idServicoFornecido: map['id_servico_fornecido'] ??
+          map['id_produto_servico'] ??
+          map['id_servico'],
       idFornecedor: map['id_fornecedor'],
       nomeFornecedor: map['nome_fornecedor'],
       idSolicitante: map['id_solicitante'],
@@ -94,6 +103,8 @@ class OrcamentoModel extends Orcamento {
 
     return OrcamentoModel(
       idOrcamento: entity.idOrcamento,
+      estadoExecucao: entity.estadoExecucao,
+      idContrato: entity.idContrato,
       idEvento: entity.idEvento,
       idServicoFornecido: entity.idServicoFornecido,
       idFornecedor: entity.idFornecedor,
@@ -152,6 +163,8 @@ class OrcamentoModel extends Orcamento {
   }) {
     return OrcamentoModel(
       idOrcamento: idOrcamento,
+      estadoExecucao: estadoExecucao,
+      idContrato: idContrato,
       idEvento: idEvento,
       idServicoFornecido: idServicoFornecido ?? this.idServicoFornecido,
       idFornecedor: idFornecedor ?? this.idFornecedor,

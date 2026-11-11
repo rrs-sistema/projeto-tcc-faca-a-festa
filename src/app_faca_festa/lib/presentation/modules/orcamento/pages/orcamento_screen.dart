@@ -200,17 +200,14 @@ class _OrcamentoScreenState extends State<OrcamentoScreen> {
                           : gastos.map((g) {
                               return _gastoItem(
                                 context,
+                                orcamento: orcamento,
                                 idOrcamento: g.idOrcamento,
                                 idServico: g.idServicoContratado,
-                                idFornecedor: orcamento.idFornecedor ?? '',
                                 idGasto: g.idGasto,
                                 nome: g.nome,
                                 custo: g.custo,
                                 pago: g.pago,
                                 themeController: themeController,
-                                appController: appController,
-                                eventoController: eventoController,
-                                avaliacaoController: avaliacaoController,
                                 gastoController: gastoC,
                               );
                             }).toList();
@@ -234,9 +231,9 @@ class _OrcamentoScreenState extends State<OrcamentoScreen> {
                     [
                       _gastoItem(
                         context,
+                        orcamento: orcamento,
                         idOrcamento: orcamento.idOrcamento,
-                        idServico: null,
-                        idFornecedor: orcamento.idFornecedor ?? '',
+                        idServico: orcamento.idServicoFornecido,
                         idGasto: null,
                         nome:
                             orcamento.nomeFornecedor?.trim().isNotEmpty == true
@@ -247,9 +244,6 @@ class _OrcamentoScreenState extends State<OrcamentoScreen> {
                             ? (orcamento.custoEstimado ?? 0)
                             : 0,
                         themeController: themeController,
-                        appController: appController,
-                        eventoController: eventoController,
-                        avaliacaoController: avaliacaoController,
                         gastoController: null,
                       ),
                     ],

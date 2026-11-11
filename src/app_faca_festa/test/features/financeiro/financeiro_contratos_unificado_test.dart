@@ -141,6 +141,7 @@ class _Remote extends Fake implements FinanceiroFornecedorRemoteDatasource {
       'contratos': [
         {
           'id': 'c',
+          'idOrcamento': 'orc-c',
           'idEvento': 'e',
           'nomeServico': 'Buffet sintético',
           'valorContratado': 3150,
@@ -415,6 +416,45 @@ void main() {
     expect(tester.takeException(), isNull);
     c.onClose();
   });
+  testWidgets('destaca o repasse recebido e abre o contrato selecionado',
+      (tester) async {
+    tester.view.physicalSize = const Size(360, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final c = FinanceiroFornecedorController(
+        firestore: _Db(),
+        idFornecedor: 'f',
+        usuarioAtual: () => 'f',
+        remote: _Remote()..recebido = 2992.5,
+        pendencias: _Pendencias());
+    await tester.pumpWidget(GetMaterialApp(
+      home: FinanceiroFornecedorPage(
+          controller: c, themeController: EventThemeController()),
+      getPages: [
+        GetPage(
+          name: '/acompanhamento-fornecedor',
+          page: () => Scaffold(
+              body: Text('Contrato ${(Get.arguments as Map)['idOrcamento']}')),
+        ),
+      ],
+    ));
+    await tester.pumpAndSettle();
+    final servico = find.text('Buffet sintético');
+    await tester.ensureVisible(servico);
+    await tester.pumpAndSettle();
+    expect(find.text('Repasse quitado'), findsOneWidget);
+    expect(find.text('Repasse recebido'), findsOneWidget);
+    expect(find.text('Já recebido'), findsOneWidget);
+    expect(find.text('R\$ 2.992,50'), findsWidgets);
+    expect(find.text('A receber'), findsNothing);
+    expect(tester.takeException(), isNull);
+    await tester.tap(servico);
+    await tester.pumpAndSettle();
+    expect(find.text('Contrato orc-c'), findsOneWidget);
+    c.onClose();
+  });
+
   testWidgets('crédito excedente permanece visível no resumo e contrato',
       (tester) async {
     final c = FinanceiroFornecedorController(

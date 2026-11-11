@@ -45,6 +45,7 @@ extension CalculadoraFestaOperacao on CalculadoraFestaController {
       return;
     }
     final evento = idEventoAtual.value;
+    final sessao = sessaoPlanejador;
     if (regrasManuais.any((r) =>
         (r.premissas['id_evento']?.toString() ?? '').isNotEmpty &&
         r.premissas['id_evento'] != evento)) {
@@ -54,13 +55,17 @@ extension CalculadoraFestaOperacao on CalculadoraFestaController {
     final regras = regrasManuais
         .map(
             (r) => r.copyWith(premissas: {...r.premissas, 'id_evento': evento}))
+        .where((r) =>
+            assinaturaExecucao(r.toPlanejamento()) !=
+            assinaturaExecucao(regraPersistida(r.id)))
         .toList();
+    if (regras.isEmpty) return;
     await alterarOperacao({
       'tipo': 'regras',
       'regras': regras.map((r) => r.toPlanejamento()).toList(),
       'anteriores': {for (final r in regras) r.id: regraPersistida(r.id)}
     });
-    if (idEventoAtual.value != evento || usandoContextoHistorico.value) return;
+    if (sessao != sessaoPlanejador || usandoContextoHistorico.value) return;
     for (final r in regras) {
       regrasManuais.removeWhere((atual) => atual.id == r.id);
       regrasManuais.add(r);

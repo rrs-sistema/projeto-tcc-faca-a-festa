@@ -1,16 +1,17 @@
-// Registra antes do SDK para tratar o clique sem perder a conversa de destino.
+// Registra antes do SDK para manter o destino do clique na notificação.
 self.addEventListener('notificationclick', event => {
     const data = event.notification.data?.FCM_MSG?.data;
-    if (data?.screen !== 'chat_cotacao') return;
+    if (data?.screen !== 'chat_cotacao' && data?.screen !== 'autorizacao_repasse') return;
     event.stopImmediatePropagation();
     event.notification.close();
     const url = new URL(self.registration.scope);
     url.pathname = '/';
     url.search = new URLSearchParams({
-        push_screen: 'chat_cotacao',
-        push_cotacao: data.id_cotacao,
-        push_fornecedor: data.id_fornecedor,
+        push_screen: data.screen,
         push_destinatario: data.id_destinatario,
+        ...(data.screen === 'chat_cotacao'
+            ? { push_cotacao: data.id_cotacao, push_fornecedor: data.id_fornecedor }
+            : { push_orcamento: data.id_orcamento }),
     }).toString();
     event.waitUntil((async () => {
         const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });

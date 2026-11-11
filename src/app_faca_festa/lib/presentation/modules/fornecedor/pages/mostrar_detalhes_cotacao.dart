@@ -177,6 +177,25 @@ class _DetalhesCotacaoContent extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        if (cotacao.servicos.isNotEmpty) ...[
+                          Text(
+                            'Serviços e produtos solicitados',
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          for (final item in cotacao.servicos)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 4),
+                              child: Text(
+                                '${item.nome} (×${item.quantidade})',
+                                style: GoogleFonts.poppins(fontSize: 12),
+                              ),
+                            ),
+                          const SizedBox(height: 12),
+                        ],
                         // === CARD DE RESUMO (GRADIENTE) ===
                         Container(
                           width: double.infinity,
@@ -265,8 +284,8 @@ class _DetalhesCotacaoContent extends StatelessWidget {
                                 Expanded(
                                   child: Text(
                                     'O fornecedor já enviou o preço. '
-                                    'Quem fecha o negócio é você: toque em '
-                                    'Contratar este no fornecedor escolhido.',
+                                    'Toque em Revisar proposta para conferir '
+                                    'as condições e a validade.',
                                     style: GoogleFonts.poppins(
                                       fontSize: 12,
                                       height: 1.35,
@@ -530,7 +549,8 @@ class _DetalhesCotacaoContent extends StatelessWidget {
                                                 CrossAxisAlignment.start,
                                             children: [
                                               const Divider(height: 16),
-                                              Text("Serviços cotados",
+                                              Text(
+                                                  "Serviços e valores estimados",
                                                   style: GoogleFonts.poppins(
                                                       fontWeight:
                                                           FontWeight.w600,
@@ -637,11 +657,11 @@ class _DetalhesCotacaoContent extends StatelessWidget {
                                                 Icons.check_circle_outline,
                                                 data.valorCotado != null &&
                                                         data.valorCotado! > 0
-                                                    ? 'Contratar este · ${NumericInput.dinheiro(data.valorCotado!)}'
-                                                    : 'Contratar este',
+                                                    ? 'Revisar proposta · ${NumericInput.dinheiro(data.valorCotado!)}'
+                                                    : 'Revisar proposta',
                                                 Colors.green.shade600,
                                                 () => cotacaoController
-                                                    .confirmarFornecedorEscolhido(
+                                                    .abrirRevisaoProposta(
                                                         idFornecedor,
                                                         cotacao.id)),
                                           if (status == 'fechado' ||
@@ -673,6 +693,10 @@ class _DetalhesCotacaoContent extends StatelessWidget {
                                                                 .razaoSocial,
                                                         dataSolicitacao: cotacao
                                                             .dataCadastro,
+                                                        categoriaPedido: cotacao
+                                                            .categoriaNome,
+                                                        observacaoPedido:
+                                                            cotacao.descricao,
                                                         cotacoes: cotacoes,
                                                         theme: theme,
                                                         usuario: appController

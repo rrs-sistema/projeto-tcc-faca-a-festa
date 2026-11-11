@@ -1,5 +1,6 @@
 import 'package:app_faca_festa/domain/repositories/fornecedor_repository.dart';
 import 'package:app_faca_festa/presentation/modules/financeiro/widgets/financeiro_contexto.dart';
+import 'package:app_faca_festa/presentation/modules/financeiro/widgets/ajuda_fluxo_financeiro.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -197,6 +198,13 @@ class _DashboardFinanceiroAdminPageState
                           ],
                           const SizedBox(height: 14),
                           const FinanceiroAjuda(itens: ajudaFinanceira),
+                          const SizedBox(height: 8),
+                          const Align(
+                            alignment: Alignment.centerLeft,
+                            child: AjudaFluxoFinanceiro(
+                              perfil: PerfilAjudaFinanceira.administrador,
+                            ),
+                          ),
                           if (r != null) ...[
                             const SizedBox(height: 16),
                             _heroReceita(r),
@@ -1092,8 +1100,13 @@ class _DashboardFinanceiroAdminPageState
     required Widget detalhe,
     String? subtitulo,
     IconData icone = Icons.receipt_long_rounded,
+    bool sobreOutroPainel = false,
   }) async {
     final wide = MediaQuery.sizeOf(context).width >= 768;
+    void fecharPainel(BuildContext ctx) {
+      if (ModalRoute.of(ctx)?.isCurrent == true) Navigator.of(ctx).pop();
+    }
+
     Widget painel(VoidCallback fechar) {
       return ColoredBox(
         color: AdminPalette.surface,
@@ -1173,7 +1186,9 @@ class _DashboardFinanceiroAdminPageState
         context: context,
         barrierDismissible: true,
         barrierLabel: 'Fechar',
-        barrierColor: Colors.black.withValues(alpha: 0.45),
+        barrierColor: sobreOutroPainel
+            ? Colors.transparent
+            : Colors.black.withValues(alpha: 0.45),
         transitionDuration: const Duration(milliseconds: 240),
         pageBuilder: (ctx, _, __) {
           return Align(
@@ -1191,7 +1206,7 @@ class _DashboardFinanceiroAdminPageState
                 width: MediaQuery.sizeOf(ctx).width.clamp(440.0, 560.0),
                 height: double.infinity,
                 child: SafeArea(
-                  child: painel(() => Navigator.of(ctx).pop()),
+                  child: painel(() => fecharPainel(ctx)),
                 ),
               ),
             ),
@@ -1203,15 +1218,17 @@ class _DashboardFinanceiroAdminPageState
 
     await showModalBottomSheet<void>(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       useSafeArea: true,
+      barrierColor: sobreOutroPainel ? Colors.transparent : null,
       backgroundColor: AdminPalette.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
       ),
       builder: (ctx) => SizedBox(
         height: MediaQuery.sizeOf(ctx).height * 0.9,
-        child: painel(() => Navigator.of(ctx).pop()),
+        child: painel(() => fecharPainel(ctx)),
       ),
     );
   }
@@ -2005,14 +2022,12 @@ class _DashboardFinanceiroAdminPageState
       );
       return;
     }
-    Get.back();
-    await Future<void>.delayed(const Duration(milliseconds: 80));
-    if (!mounted) return;
     await _abrirPainelDetalhe(
       titulo: linha.rotuloServico,
       subtitulo: linha.rotuloEvento,
       icone: Icons.handshake_outlined,
       detalhe: _detalheContratacao(linha),
+      sobreOutroPainel: true,
     );
   }
 

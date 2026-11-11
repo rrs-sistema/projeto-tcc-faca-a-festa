@@ -497,6 +497,18 @@ export const CATALOGO_ACOES_AUDITORIA: Record<string, DefinicaoAcaoAuditoria> = 
     visivelFornecedor: true,
     somenteAdmin: false,
   },
+  REPASSE_ANTECIPADO_AUTORIZADO: {
+    area: "ORCAMENTO",
+    nivel: "INFO",
+    visivelFornecedor: false,
+    somenteAdmin: true,
+  },
+  REPASSE_ANTECIPADO_REVOGADO: {
+    area: "ORCAMENTO",
+    nivel: "INFO",
+    visivelFornecedor: false,
+    somenteAdmin: true,
+  },
   ORCAMENTO_CANCELADO: {
     area: "ORCAMENTO",
     nivel: "WARN",

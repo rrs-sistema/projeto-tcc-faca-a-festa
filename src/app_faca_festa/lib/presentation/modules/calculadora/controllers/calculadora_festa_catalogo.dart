@@ -53,6 +53,17 @@ extension CalculadoraFestaCatalogo on CalculadoraFestaController {
                     'Catálogo fora do ar. Contingência com versões já consultadas: ${anterior.referencias.map((r) => r.chave).join(', ')}. Novas versões exigem atualização e revisão.');
       }
     } finally {
+      if (atual() && repo is CatalogoContextualRepository) {
+        final catalogo = catalogoContextual.value;
+        origemItensCalculadora.value = switch (catalogo.estado) {
+          'indisponivel' => OrigemItensCalculadora.indisponivel,
+          'vazio' => OrigemItensCalculadora.semConfiguracao,
+          _ => OrigemItensCalculadora.firestore,
+        };
+        itensOrigemRemota.value = catalogo.estado == 'disponivel';
+        erroItensBase.value =
+            catalogo.estado == 'indisponivel' ? catalogo.aviso : '';
+      }
       if (consulta == _consultaCatalogo) carregandoCatalogo.value = false;
     }
   }

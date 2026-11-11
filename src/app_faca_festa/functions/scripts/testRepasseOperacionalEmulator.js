@@ -54,7 +54,17 @@ async function main() {
       politica_aplicada: { percentual_bps: 500, pagador: 'fornecedor' }, status: 'a_vencer' });
     await db.doc(`plataforma_alocacoes/${id}`).set({ id_evento: 'e', id_orcamento: id, valor_centavos: 10000 });
   }
+  const { listarAcompanhamentoOrganizador } = require('../lib/services/financeiro/acompanhamentoPersistenciaService');
+  const lerContrato = async () => (await listarAcompanhamentoOrganizador(db, {
+    uid: 'org', idEvento: 'e',
+  })).linhas.find(linha => linha.idOrcamento === 'c');
+  assert.match((await lerContrato()).statusRepassePermitido, /pendente de configuração/);
   await db.doc('plataforma_liberacao_repasses/p').set({ ativa: true, permite_repasse_parcial: true });
+  assert.equal((await lerContrato()).statusRepassePermitido, 'Ainda sem repasse ao fornecedor');
+  const duplicada = db.doc('plataforma_liberacao_repasses/duplicada');
+  await duplicada.set({ ativa: true });
+  assert.match((await lerContrato()).statusRepassePermitido, /pendente de configuração/);
+  await duplicada.delete();
   const pedido = (key, id = 'c') => ({ idContrato: id, idOrcamento: id, idFornecedor: 'forn',
     valorCentavos: 9500, percentualBps: 0, valorContratadoCentavos: 99999999,
     chaveIdempotencia: key, autorId: 'admin', forcarAutorizacaoSeElegivel: true });
@@ -63,7 +73,53 @@ async function main() {
 
   await recusado(() => prepararOuAutorizarRepasse(db, pedido('antes')));
   await recusado(() => autorizacao('intruso'));
-  await autorizacao('org');
+  await Promise.all([autorizacao('org'), autorizacao('org')]);
+  const auditoria = db.collection('plataforma_intermediacao_auditoria').where('id_orcamento', '==', 'c');
+  const registros = await auditoria.get();
+  assert.equal(registros.size, 1, 'Solicitações iguais não duplicam auditoria ou push.');
+  const log = registros.docs[0];
+  assert.equal(log.data().acao, 'organizador_autorizou_repasse');
+  assert.equal(log.data().autor_id, 'org');
+  assert.equal(log.data().id_fornecedor, 'forn');
+  assert.equal(log.data().id_contrato, 'c');
+  assert.equal(log.data().ativa_anterior, null);
+  assert.equal(log.data().motivo, 'Autorização expressa para este contrato.');
+  assert.ok(log.data().criado_em.toMillis() > 0);
+  assert.equal(log.data().push.estado, 'pendente');
+
+  await db.doc('usuarios/org/dispositivos_push/a').set({ token: 'token-organizador' });
+  await db.doc('usuarios/forn/dispositivos_push/a').set({ token: 'token-fornecedor-1' });
+  await db.doc('usuarios/forn/dispositivos_push/b').set({ token: 'token-fornecedor-2' });
+  const { enviarPushAutorizacaoRepasse, notificarAutorizacaoRepasse } =
+    require('../lib/functions/financeiro/notificarAutorizacaoRepasse');
+  const pushes = [];
+  const messaging = { sendEachForMulticast: async payload => {
+    pushes.push(payload);
+    return { responses: pushes.length === 1
+      ? [{ success: true }, { success: false, error: { code: 'messaging/server-unavailable' } }]
+      : [{ success: true }] };
+  } };
+  await assert.rejects(() => enviarPushAutorizacaoRepasse(db, messaging, log.id));
+  await enviarPushAutorizacaoRepasse(db, messaging, log.id);
+  await enviarPushAutorizacaoRepasse(db, messaging, log.id);
+  assert.equal(pushes.length, 2, 'Reprocessar envio concluído não dispara outro push.');
+  assert.deepEqual(pushes[0].tokens, ['token-fornecedor-1', 'token-fornecedor-2']);
+  assert.deepEqual(pushes[1].tokens, ['token-fornecedor-2']);
+  assert.deepEqual(pushes[0].data, {
+    screen: 'autorizacao_repasse', id_destinatario: 'forn', id_orcamento: 'c',
+  });
+  assert.ok(!JSON.stringify(pushes).includes(log.data().motivo));
+  assert.equal((await log.ref.get()).data().push.estado, 'enviado');
+
+  const evento = { id: 'teste-autorizacao-c', data: await log.ref.get(), params: { idAuditoria: log.id } };
+  await notificarAutorizacaoRepasse.run(evento);
+  await notificarAutorizacaoRepasse.run(evento);
+  const geral = await db.collection('auditoria_eventos').where('acao', '==', 'REPASSE_ANTECIPADO_AUTORIZADO').get();
+  assert.equal(geral.size, 1);
+  assert.equal(geral.docs[0].data().ator_uid, 'org');
+  assert.equal(geral.docs[0].data().id_orcamento, 'c');
+  assert.equal(geral.docs[0].data().visivel_fornecedor, false);
+
   let extrato = await consultarExtratoIntermediacao(db, 'e');
   assert.equal(extrato.contratos.find(c => c.id_orcamento === 'c').elegivel_centavos, 9500);
   assert.equal(extrato.contratos.find(c => c.id_orcamento === 'sem-comissao').elegivel_centavos, 0);
@@ -78,6 +134,9 @@ async function main() {
   assert.equal(salvo.divisao_contrato.direitoFornecedorCentavos, 9500);
   const confirmar = () => confirmarRepasseManual(db, { idRepasse: repasse.id, autorId: 'admin', evidencias: 'PIX referência teste-123' });
   await autorizacao('org', false);
+  const revogacao = (await auditoria.get()).docs.find(d => d.data().acao === 'organizador_revogou_autorizacao');
+  assert.equal(revogacao.data().ativa_anterior, true);
+  assert.equal(revogacao.data().push, undefined);
   await recusado(confirmar);
   await autorizacao('org');
   await db.doc('plataforma_liberacao_repasses/p').update({ ativa: false });
@@ -138,6 +197,8 @@ async function main() {
     await assertSucceeds(org.doc('plataforma_autorizacoes_repasses/c').get());
     await assertFails(forn.doc('plataforma_autorizacoes_repasses/c').get());
     await assertFails(org.doc('plataforma_autorizacoes_repasses/c').update({ ativa: true }));
+    await assertSucceeds(adm.doc(log.ref.path).get());
+    await assertFails(forn.doc(log.ref.path).get());
     await assertFails(forn.doc('orcamento/c').update({ estado_execucao: 'aceito_cliente' }));
     await assertFails(org.doc('orcamento/c').update({ contrato_financeiro: { estado_execucao: 'aceito_cliente' } }));
     await assertFails(adm.doc('orcamento/c').update({ valor_contratado_centavos: 1 }));

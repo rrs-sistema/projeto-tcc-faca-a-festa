@@ -53,6 +53,7 @@ import 'package:app_faca_festa/presentation/modules/usuario/controllers/usuario_
 import 'package:app_faca_festa/presentation/modules/admin/pages/admin_dashboard_screen.dart';
 import 'package:app_faca_festa/presentation/modules/admin/pages/auditoria_admin_screen.dart';
 import 'package:app_faca_festa/presentation/modules/admin/pages/auditoria_dashboard_screen.dart';
+import 'package:app_faca_festa/presentation/modules/admin/pages/fornecedor_decisoes_page.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/pages/convidado_page.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/pages/convite_nao_encontrado_screen.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/pages/convite_redirect_page.dart';
@@ -138,6 +139,25 @@ class AppRoutes {
       );
 
   static List<GetPage<dynamic>> get pages => [
+        GetPage(
+          name: '/admin/prioridades-fornecedores',
+          page: () => const FornecedorDecisoesPage(
+              visao: VisaoDecisoesFornecedor.fila),
+          middlewares: [PapelMiddleware(tiposPermitidos: const ['A'])],
+        ),
+        GetPage(
+          name: '/admin/fornecedor-desempenho',
+          page: () => FornecedorDecisoesPage(
+              visao: VisaoDecisoesFornecedor.ficha,
+              idFornecedor: Get.arguments as String?),
+          middlewares: [PapelMiddleware(tiposPermitidos: const ['A'])],
+        ),
+        GetPage(
+          name: '/fornecedor/comunicados-operacao',
+          page: () => const FornecedorDecisoesPage(
+              visao: VisaoDecisoesFornecedor.comunicado),
+          middlewares: [PapelMiddleware(tiposPermitidos: const ['F'])],
+        ),
         GetPage(
           name: '/fornecedor/reputacao',
           page: () {
@@ -425,6 +445,7 @@ GetPage(name:'/fornecedor/planejamento',page:()=>PlanejamentoFinanceiroPage(idOb
               controller: Get.find<CentralMediacaoController>(tag: tag),
               themeController: Get.find<EventThemeController>(),
               idOrcamento: idOrcamento,
+              abrirMediacao: args is Map && args['abrirMediacao'] == true,
             );
           },
           middlewares: [

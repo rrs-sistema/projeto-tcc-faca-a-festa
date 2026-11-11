@@ -630,99 +630,106 @@ class _FinanceiroFornecedorPageState extends State<FinanceiroFornecedorPage> {
       child: Column(
         children: [
           for (var i = 0; i < lista.length && i < 8; i++) ...[
-            InkWell(
-              onTap: () => Get.toNamed(
-                '/acompanhamento-fornecedor',
-                arguments: {'idFornecedor': c.idFornecedor},
-              ),
-              borderRadius: BorderRadius.circular(12),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            (lista[i].nomeServico ??
-                                    lista[i].categoria ??
-                                    'Serviço')
-                                .trim(),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.poppins(
-                              fontSize: 13.5,
-                              fontWeight: FontWeight.w700,
-                              color: FornecedorPremiumPalette.text,
-                            ),
-                          ),
-                          Text(
-                            _rotuloSituacaoContrato(lista[i]),
-                            style: GoogleFonts.poppins(
-                              fontSize: 11.5,
-                              color: FornecedorPremiumPalette.muted,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Flexible(
-                      flex: 2,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            'Líquido ${_reais(lista[i].liquidoPrevisto)}',
-                            style: GoogleFonts.poppins(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w800,
-                              color: FornecedorPremiumPalette.text,
-                            ),
-                          ),
-                          Text('Bruto ${_reais(lista[i].valorContratado)}',
-                              style: const TextStyle(fontSize: 11)),
-                          Text('Comissão ${_reais(lista[i].comissao)}',
-                              style: const TextStyle(fontSize: 11)),
-                          const Text('Outras deduções registradas: nenhuma',
-                              style: TextStyle(fontSize: 10)),
-                          Text(
-                              'Autorizado ${_reais(lista[i].repasseAutorizado)}',
-                              style: const TextStyle(fontSize: 11)),
-                          Text(
-                              'Repasse confirmado ${_reais(lista[i].repasseConfirmado)}',
-                              style: const TextStyle(fontSize: 11)),
-                          if (lista[i].recebimentoProprioDeclarado > 0)
-                            Text(
-                                'Próprio declarado ${_reais(lista[i].recebimentoProprioDeclarado)}',
-                                style: const TextStyle(fontSize: 11)),
-                          if (lista[i].aReceber < -0.009)
-                            Text(
-                                'Crédito excedente ${_reais(-lista[i].aReceber)}',
-                                style: const TextStyle(fontSize: 11)),
-                          if (lista[i].aReceber > 0.009)
-                            Text(
-                              'A receber ${_reais(lista[i].aReceber)}',
-                              style: GoogleFonts.poppins(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: FornecedorPremiumPalette.amber,
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    const Icon(Icons.chevron_right_rounded,
-                        color: FornecedorPremiumPalette.softMuted),
-                  ],
-                ),
-              ),
-            ),
-            if (i < lista.length - 1 && i < 7)
-              const Divider(height: 1, color: FornecedorPremiumPalette.border),
+            if (i > 0) const SizedBox(height: 10),
+            _cartaoContrato(c, lista[i]),
           ],
         ],
+      ),
+    );
+  }
+
+  Widget _cartaoContrato(
+      FinanceiroFornecedorController c, VendaFornecedorFato v) {
+    const recebido = Color(0xFF047857);
+    const pendente = Color(0xFF92400E);
+    final titulo = (v.nomeServico ?? v.categoria ?? '').trim();
+    final idOrcamento = v.idOrcamento?.trim() ?? '';
+    final situacao = _rotuloSituacaoContrato(v);
+    final cancelado = v.situacao?.toLowerCase() == 'cancelado';
+    final saldo = v.aReceber;
+    final corSituacao = cancelado
+        ? FornecedorPremiumPalette.muted
+        : saldo < -0.009
+            ? FornecedorPremiumPalette.primary
+            : saldo > 0.009
+                ? pendente
+                : recebido;
+    final tema = Theme.of(context).textTheme;
+
+    return Material(
+      color: FornecedorPremiumPalette.surfaceAlt,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: const BorderSide(color: FornecedorPremiumPalette.border),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => Get.toNamed(
+          '/acompanhamento-fornecedor',
+          arguments: {
+            'idFornecedor': c.idFornecedor,
+            if (idOrcamento.isNotEmpty) 'idOrcamento': idOrcamento,
+          },
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(titulo.isEmpty ? 'Serviço' : titulo,
+                        style: tema.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: FornecedorPremiumPalette.text)),
+                  ),
+                  const SizedBox(width: 8),
+                  const Icon(Icons.chevron_right_rounded,
+                      color: FornecedorPremiumPalette.muted),
+                ],
+              ),
+              const SizedBox(height: 5),
+              Text(situacao,
+                  style: tema.labelMedium?.copyWith(
+                      color: corSituacao, fontWeight: FontWeight.w700)),
+              const Divider(height: 22, color: FornecedorPremiumPalette.border),
+              ResponsiveWrapGrid(
+                minTileWidth: 124,
+                maxColumns: 4,
+                children: [
+                  if (v.recebidoConfirmado > 0)
+                    _miniMetrica(
+                      v.repasseConfirmado == v.recebidoConfirmado
+                          ? 'Repasse recebido'
+                          : 'Já recebido',
+                      _reais(v.recebidoConfirmado),
+                      corValor: recebido,
+                    ),
+                  if (saldo > 0.009)
+                    _miniMetrica('A receber', _reais(saldo),
+                        corValor: pendente),
+                  if (saldo < -0.009)
+                    _miniMetrica('Crédito excedente', _reais(-saldo)),
+                  _miniMetrica('Valor líquido', _reais(v.liquidoPrevisto)),
+                  _miniMetrica('Valor bruto', _reais(v.valorContratado)),
+                  if (v.comissao != null)
+                    _miniMetrica('Comissão', _reais(v.comissao)),
+                  if (v.repasseAutorizado > 0)
+                    _miniMetrica(
+                        'Repasse autorizado', _reais(v.repasseAutorizado)),
+                  if (v.repasseConfirmado > 0 &&
+                      v.repasseConfirmado != v.recebidoConfirmado)
+                    _miniMetrica(
+                        'Repasse recebido', _reais(v.repasseConfirmado)),
+                  if (v.recebimentoProprioDeclarado > 0)
+                    _miniMetrica('Recebimento próprio declarado',
+                        _reais(v.recebimentoProprioDeclarado)),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -731,7 +738,9 @@ class _FinanceiroFornecedorPageState extends State<FinanceiroFornecedorPage> {
     final s = (v.situacao ?? '').toLowerCase();
     if (s == 'cancelado') return 'Cancelado — histórico preservado';
     if (v.aReceber < -0.009) return 'Crédito excedente — conciliar destinação';
-    if (s == 'recebido' || v.aReceber <= 0.009) return 'Repasse quitado';
+    if (s == 'recebido' || v.aReceber <= 0.009) {
+      return v.repasseConfirmado > 0 ? 'Repasse quitado' : 'Saldo quitado';
+    }
     if (s == 'parcial' || v.recebidoConfirmado > 0) {
       return 'Repasse parcial';
     }
@@ -845,7 +854,6 @@ class _FinanceiroFornecedorPageState extends State<FinanceiroFornecedorPage> {
       ('Comissão contratada', _reais(r.comissaoContratada)),
       ('Valor após descontos', _reais(r.liquidoPrevisto)),
       ('Repasse liberado', _reais(r.repasseAutorizado)),
-      ('Já recebido', _reais(r.recebido)),
       ('Seus custos', _reais(r.custoDiretoPrevisto)),
       ('Recebido acima do previsto', _reais(r.creditoExcedente)),
       ('Recebido sem contrato definido', _reais(r.recebimentoNaoAlocado)),
@@ -864,7 +872,18 @@ class _FinanceiroFornecedorPageState extends State<FinanceiroFornecedorPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _blocoAReceber(r, vencido, loading: loading),
+          ResponsiveWrapGrid(
+            minTileWidth: 230,
+            maxColumns: 2,
+            spacing: 16,
+            children: [
+              _blocoAReceber(r, vencido, loading: loading),
+              _miniMetrica('Já recebido', _reais(r.recebido),
+                  loading: loading,
+                  corValor: const Color(0xFF047857),
+                  tamanhoValor: 22),
+            ],
+          ),
           const SizedBox(height: 12),
           LayoutBuilder(builder: (context, box) {
             final colunas = box.maxWidth >= 720 ? 3 : 2;
@@ -982,7 +1001,13 @@ class _FinanceiroFornecedorPageState extends State<FinanceiroFornecedorPage> {
     );
   }
 
-  Widget _miniMetrica(String rotulo, String valor, {bool loading = false}) {
+  Widget _miniMetrica(
+    String rotulo,
+    String valor, {
+    bool loading = false,
+    Color? corValor,
+    double tamanhoValor = 15,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Column(
@@ -1004,12 +1029,10 @@ class _FinanceiroFornecedorPageState extends State<FinanceiroFornecedorPage> {
           else
             Text(
               valor,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
               style: GoogleFonts.poppins(
-                fontSize: 15,
+                fontSize: tamanhoValor,
                 fontWeight: FontWeight.w800,
-                color: FornecedorPremiumPalette.text,
+                color: corValor ?? FornecedorPremiumPalette.text,
               ),
             ),
         ],

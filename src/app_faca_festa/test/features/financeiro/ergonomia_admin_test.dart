@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
@@ -42,6 +43,7 @@ final _contrato = {
 class _Remote extends Fake implements CentralMediacaoRemote {
   String? ultimoFiltro;
   String estadoDetalhe = 'oportunidade';
+  Completer<void>? esperaConsulta;
   @override
   Future<Map<String, dynamic>> consultarCentral(
       {String? busca,
@@ -56,6 +58,7 @@ class _Remote extends Fake implements CentralMediacaoRemote {
       int offset = 0,
       int limite = 50}) async {
     ultimoFiltro = estadoComercial;
+    if (esperaConsulta != null) await esperaConsulta!.future;
     final linhas = [_oportunidade, _contrato]
         .where((m) =>
             estadoComercial == null ||
@@ -295,7 +298,8 @@ void main() {
     }
   }
 
-  testWidgets('filtro explícito solicita apenas contratos', (tester) async {
+  testWidgets('troca de filtro mostra carregamento até receber os contratos',
+      (tester) async {
     final remote = _Remote();
     final controller = CentralMediacaoController(remote: remote);
     await _abrir(
@@ -304,8 +308,17 @@ void main() {
             controller: controller, themeController: EventThemeController()),
         const Size(1366, 1000),
         1);
+    expect(find.text('Ver oportunidade'), findsOneWidget);
+    final espera = remote.esperaConsulta = Completer<void>();
     await tester.tap(find.text('Contratos'));
+    await tester.pump();
+    expect(find.text('Carregando...'), findsOneWidget);
+    expect(find.text('Ver oportunidade'), findsNothing);
+    expect(find.text('Ver contratação'), findsNothing);
+    espera.complete();
     await tester.pumpAndSettle();
+    expect(find.text('Carregando...'), findsNothing);
+    expect(find.text('Ver contratação'), findsOneWidget);
     expect(remote.ultimoFiltro, 'contratado');
     expect(controller.linhas.length, 1);
     expect(controller.linhas.single.estadoComercial, 'contratado');

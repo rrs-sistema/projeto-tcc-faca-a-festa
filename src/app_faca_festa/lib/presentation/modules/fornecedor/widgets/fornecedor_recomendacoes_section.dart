@@ -186,23 +186,35 @@ class _FornecedorRecomendacoesSectionState
               onRefresh: _atualizar,
             ),
             const SizedBox(height: 12),
-            SizedBox(
-              height: 272,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: lista.length,
-                itemBuilder: (_, index) {
-                  final item = lista[index];
-
-                  return FornecedorRecomendadoCard(
-                    recomendacao: item,
-                    onTap: () => _visualizar(item),
-                    onPedirOrcamento: () => _pedirOrcamento(item),
-                    onReservar: () => _reservar(item),
-                    onDispensar: () => _dispensar(item),
-                  );
-                },
-              ),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final largura = lista.length == 1
+                    ? constraints.maxWidth
+                    : constraints.maxWidth * 0.94;
+                return SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      for (final (index, item) in lista.indexed) ...[
+                        if (index > 0) const SizedBox(width: 12),
+                        SizedBox(
+                          width: largura,
+                          child: FornecedorRecomendadoCard(
+                            key: ValueKey(item.id),
+                            recomendacao: item,
+                            onTap: () => _visualizar(item),
+                            onPedirOrcamento: () => _pedirOrcamento(item),
+                            onReservar: () => _reservar(item),
+                            onDispensar: () => _dispensar(item),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                );
+              },
             ),
           ],
         );
@@ -235,6 +247,7 @@ class _SectionHeader extends StatelessWidget {
     final cidadeTexto = cidade?.trim() ?? '';
     final evento = tipoEventoTexto.isNotEmpty ? tipoEventoTexto : 'seu evento';
     final local = cidadeTexto.isNotEmpty ? ' • $cidadeTexto' : '';
+    final quantidade = total == 1 ? '1 sugestão' : '$total sugestões';
 
     return Row(
       children: [
@@ -254,8 +267,6 @@ class _SectionHeader extends StatelessWidget {
             children: [
               Text(
                 'Fornecedores ideais para seu evento',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.poppins(
                   fontSize: 15.5,
                   fontWeight: FontWeight.w800,
@@ -263,9 +274,7 @@ class _SectionHeader extends StatelessWidget {
               ),
               const SizedBox(height: 2),
               Text(
-                '$total sugestão${total == 1 ? '' : 'ões'} para $evento$local',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+                '$quantidade para $evento$local',
                 style: GoogleFonts.poppins(
                   fontSize: 11.5,
                   color:

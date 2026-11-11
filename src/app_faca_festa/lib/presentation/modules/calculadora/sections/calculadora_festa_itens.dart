@@ -1,18 +1,70 @@
 part of '../pages/calculadora_festa_screen.dart';
 
 extension _CalculadoraFestaItens on _CalculadoraFestaScreenState {
+  Future<void> _escolherReferencia(
+      List<ReferenciaContextual> referencias) async {
+    final sessao = calculadoraController.sessaoPlanejador;
+    final referencia = await showDialog<ReferenciaContextual>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: const Text('Referências de porção publicadas'),
+        children: [
+          for (final ref in referencias)
+            ListTile(
+              title: Text(ref.nome),
+              subtitle: Text(ref.dados['contexto'] as String),
+              onTap: () => Navigator.pop(context, ref),
+            ),
+        ],
+      ),
+    );
+    if (referencia != null &&
+        mounted &&
+        sessao == calculadoraController.sessaoPlanejador) {
+      await _editarRegra(referencia: referencia);
+    }
+  }
+
   Widget _buildResultadoCard(Color primary) {
-    final itens = calculadoraController.itensCalculados;
+    final c = calculadoraController;
+    final itens = c.itensCalculados;
+    final revisando = c.revisarCardapio.value;
+    final carregando =
+        c.carregandoItensBase.value || c.carregandoCatalogo.value;
+    final pessoas = c.convidadosEquivalentes.totalInformado;
+    final calculaveis = c.itensParaCalculo;
+    final podeAdicionar =
+        !revisando || (c.cardapioDisponivel.value && c.itensCardapio.isEmpty);
+    final referencias = c.usandoContextoHistorico.value
+        ? <ReferenciaContextual>[]
+        : c.catalogoContextual.value.referencias
+            .where((r) => r.tipo == 'porcao')
+            .toList()
+      ..sort((a, b) => a.nome.compareTo(b.nome));
+
+    final mensagemVazia = switch ((carregando, pessoas > 0, revisando)) {
+      (true, _, _) => 'Carregando as referências de consumo…',
+      (_, false, _) => 'Informe quantas pessoas vêm para ver as sugestões.',
+      (_, _, true) when !c.cardapioDisponivel.value =>
+        'Selecione um cardápio para calcular as quantidades.',
+      (_, _, true) when c.itensCardapio.isNotEmpty =>
+        'Revise o público e as porções dos itens do cardápio.',
+      _ when calculaveis.isNotEmpty && !calculaveis.any((i) => i.selecionado) =>
+        'Selecione pelo menos um item em Editar itens.',
+      _ when calculaveis.isNotEmpty =>
+        'Revise o público e as porções dos itens selecionados.',
+      _ when c.baseCalculadoraIndisponivel => c.mensagemOrigemItensCalculadora,
+      _ => 'Adicione o que pretende servir para calcular as quantidades.',
+    };
 
     return _SectionCard(
       title: 'Sugestões',
       icon: Icons.insights_rounded,
       primary: primary,
-      trailing: calculadoraController.revisarCardapio.value
+      trailing: revisando
           ? null
           : TextButton.icon(
-              onPressed: calculadoraController.revisarCardapio.value ||
-                      calculadoraController.itensParaCalculo.isEmpty
+              onPressed: calculaveis.isEmpty
                   ? null
                   : () => showModalBottomSheet<void>(
                         context: context,
@@ -54,29 +106,26 @@ extension _CalculadoraFestaItens on _CalculadoraFestaScreenState {
           ? Column(children: [
               _EmptyMessage(
                 icon: Icons.calculate_outlined,
-                text: calculadoraController.carregandoItensBase.value
-                    ? 'Carregando os itens da festa...'
-                    : calculadoraController.totalConvidados <= 0
-                        ? 'Informe quantas pessoas vêm para ver as sugestões.'
-                        : calculadoraController.revisarCardapio.value
-                            ? (!calculadoraController.cardapioDisponivel.value
-                                ? 'Selecione um cardápio e aguarde o carregamento dos itens.'
-                                : calculadoraController.itensCardapio.isEmpty
-                                    ? 'Este cardápio está vazio. Adicione os itens que pretende servir.'
-                                    : 'Configure o consumo dos itens do cardápio para calcular.')
-                            : calculadoraController
-                                        .regrasDisponiveis.isNotEmpty &&
-                                    calculadoraController.totalConvidados > 0
-                                ? 'Selecione pelo menos um item em Editar itens.'
-                                : calculadoraController
-                                        .baseCalculadoraIndisponivel
-                                    ? calculadoraController
-                                        .mensagemOrigemItensCalculadora
-                                    : 'Informe quantas pessoas vêm para ver as sugestões.',
+                text: mensagemVazia,
                 iconColor: primary,
               ),
-              if (calculadoraController.podeTentarCarregarBase &&
-                  !calculadoraController.carregandoItensBase.value)
+              if (!carregando &&
+                  pessoas > 0 &&
+                  podeAdicionar &&
+                  calculaveis.isEmpty &&
+                  referencias.isNotEmpty)
+                TextButton.icon(
+                  onPressed: () => _escolherReferencia(referencias),
+                  icon: const Icon(Icons.menu_book_outlined),
+                  label: const Text('Escolher item do catálogo'),
+                ),
+              if (!carregando && pessoas > 0 && revisando && podeAdicionar)
+                TextButton.icon(
+                  onPressed: () => _editarRegra(),
+                  icon: const Icon(Icons.add),
+                  label: const Text('Adicionar item manual'),
+                ),
+              if (c.podeTentarCarregarBase && !carregando)
                 TextButton.icon(
                   onPressed: () =>
                       calculadoraController.carregarItensBasePorTipoEvento(),

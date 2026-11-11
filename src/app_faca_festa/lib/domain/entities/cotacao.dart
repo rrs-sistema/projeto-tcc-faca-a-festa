@@ -32,7 +32,7 @@ enum StatusCotacao {
       case StatusCotacao.pendente:
         return 'O fornecedor ainda está preparando o preço.';
       case StatusCotacao.respondida:
-        return 'Preço chegou. Você (organizador) fecha o negócio em Ver detalhes → Contratar este.';
+        return 'Preço chegou. Abra Ver detalhes → Revisar proposta.';
       case StatusCotacao.parcial:
         return 'Já há preço. Abra Ver detalhes para comparar e contratar, ou aguarde mais respostas.';
       case StatusCotacao.concluida:

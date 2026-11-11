@@ -308,92 +308,172 @@ class _OrcamentosAdminListScreenState extends State<OrcamentosAdminListScreen> {
         ]),
       );
 
-  Widget _evento(GrupoOrcamentosAdmin g, List<OrcamentoAdmin> visiveis) =>
-      Obx(() {
-        final aberto = c.detalhesVisiveis[g.chave] ?? false;
-        final e = g.evento;
-        return Container(
-          key: ValueKey(g.chave),
-          margin: const EdgeInsets.only(bottom: 16),
-          padding: const EdgeInsets.all(20),
-          decoration: adminCardDecoration(),
-          child:
-              Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            LayoutBuilder(builder: (context, box) {
-              final identidade = Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _evento(GrupoOrcamentosAdmin g, List<OrcamentoAdmin> visiveis) {
+    final e = g.evento;
+    return Container(
+      key: ValueKey(g.chave),
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(20),
+      decoration: adminCardDecoration(),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        LayoutBuilder(builder: (context, box) {
+          final identidade =
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(e.eventoNome,
+                style:
+                    const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 6),
+            Text(_identificacaoEvento(e),
+                style:
+                    const TextStyle(fontSize: 13, color: AdminPalette.muted)),
+            const SizedBox(height: 6),
+            Text(_contagemItens(visiveis.length, g.itens.length),
+                style:
+                    const TextStyle(fontSize: 13, color: AdminPalette.muted)),
+          ]);
+          final botao = OutlinedButton.icon(
+              key: ValueKey('ver-itens-${g.chave}'),
+              onPressed: () => _abrirItens(context, g, visiveis),
+              icon: const Icon(Icons.list_alt_rounded),
+              label: const Text('Ver itens'));
+          if (box.maxWidth < 650 ||
+              MediaQuery.textScalerOf(context).scale(1) > 1.3) {
+            return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [identidade, const SizedBox(height: 12), botao]);
+          }
+          return Row(children: [
+            Expanded(child: identidade),
+            const SizedBox(width: 16),
+            botao
+          ]);
+        }),
+        if (e.idEvento.isEmpty ||
+            e.eventoNome == 'Evento não identificado') ...[
+          const SizedBox(height: 12),
+          const Text(
+              'Identificação incompleta: confira o vínculo com o evento. Este grupo não foi unido a outros eventos pelo nome.',
+              style: TextStyle(color: AdminPalette.warning, fontSize: 13)),
+        ],
+        const SizedBox(height: 20),
+        _grade([
+          _valor(
+              'Planejamento do evento',
+              g.planejadoCentavos > 0
+                  ? _moeda(g.planejadoCentavos)
+                  : 'Não definido'),
+          _valor('Estimativa dos itens ativos', _moeda(g.estimadoCentavos)),
+          _valor('Saldo previsto dos itens', _moeda(g.saldoCentavos)),
+        ]),
+        const SizedBox(height: 16),
+        _planejamento(g),
+      ]),
+    );
+  }
+
+  String _identificacaoEvento(OrcamentoAdmin evento) => [
+        evento.tipoEvento,
+        evento.cidade,
+        evento.dataEvento == null
+            ? 'Data não informada'
+            : DateFormat('dd/MM/yyyy').format(evento.dataEvento!),
+      ].where((v) => v.isNotEmpty && v != '-').join(' · ');
+
+  String _contagemItens(int visiveis, int total) => visiveis == total
+      ? _contagem(total, 'item', 'itens')
+      : '$visiveis de ${_contagem(total, 'item', 'itens')} · filtros ativos';
+
+  Future<void> _abrirItens(BuildContext context, GrupoOrcamentosAdmin grupo,
+          List<OrcamentoAdmin> itens) =>
+      showDialog<void>(
+        context: context,
+        builder: (ctx) {
+          final compacto = MediaQuery.sizeOf(ctx).width < 600;
+          final margem = compacto ? 12.0 : 24.0;
+          final espacamento = compacto ? 16.0 : 24.0;
+          return Dialog(
+            backgroundColor: AdminPalette.card,
+            surfaceTintColor: Colors.transparent,
+            insetPadding: EdgeInsets.all(margem),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 760),
+              child: SizedBox(
+                width: 1280,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text(e.eventoNome,
-                        style: const TextStyle(
-                            fontSize: 20, fontWeight: FontWeight.w700)),
-                    const SizedBox(height: 6),
-                    Text(
-                        [
-                          e.tipoEvento,
-                          e.cidade,
-                          e.dataEvento == null
-                              ? 'Data não informada'
-                              : DateFormat('dd/MM/yyyy').format(e.dataEvento!)
-                        ].where((v) => v.isNotEmpty && v != '-').join(' · '),
-                        style: const TextStyle(
-                            fontSize: 13, color: AdminPalette.muted)),
-                    const SizedBox(height: 6),
-                    Text(
-                        '${visiveis.length} de ${_contagem(g.itens.length, 'item', 'itens')} ${g.itens.length == 1 ? 'exibido' : 'exibidos'}',
-                        style: const TextStyle(
-                            fontSize: 13, color: AdminPalette.muted)),
-                  ]);
-              final botao = OutlinedButton.icon(
-                  key: ValueKey('expandir-${g.chave}'),
-                  onPressed: () => c.detalhesVisiveis[g.chave] = !aberto,
-                  icon: Icon(aberto
-                      ? Icons.expand_less_rounded
-                      : Icons.expand_more_rounded),
-                  label: Text(aberto ? 'Ocultar itens' : 'Ver itens'));
-              if (box.maxWidth < 650 ||
-                  MediaQuery.textScalerOf(context).scale(1) > 1.3) {
-                return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [identidade, const SizedBox(height: 12), botao]);
-              }
-              return Row(children: [
-                Expanded(child: identidade),
-                const SizedBox(width: 16),
-                botao
-              ]);
-            }),
-            if (e.idEvento.isEmpty ||
-                e.eventoNome == 'Evento não identificado') ...[
-              const SizedBox(height: 12),
-              const Text(
-                  'Identificação incompleta: confira o vínculo com o evento. Este grupo não foi unido a outros eventos pelo nome.',
-                  style: TextStyle(color: AdminPalette.warning, fontSize: 13)),
-            ],
-            const SizedBox(height: 20),
-            _grade([
-              _valor(
-                  'Planejamento do evento',
-                  g.planejadoCentavos > 0
-                      ? _moeda(g.planejadoCentavos)
-                      : 'Não definido'),
-              _valor('Estimativa dos itens ativos', _moeda(g.estimadoCentavos)),
-              _valor('Saldo previsto dos itens', _moeda(g.saldoCentavos)),
-            ]),
-            const SizedBox(height: 16),
-            _planejamento(g),
-            if (aberto) ...[
-              const SizedBox(height: 20),
-              const Divider(),
-              const SizedBox(height: 12),
-              LayoutBuilder(
-                  builder: (context, box) => box.maxWidth >= 1150 &&
-                          MediaQuery.textScalerOf(context).scale(1) <= 1.3
-                      ? _tabela(visiveis)
-                      : Column(children: visiveis.map(_item).toList())),
-            ],
-          ]),
-        );
-      });
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(espacamento, 8, 8, 8),
+                      child: Row(children: [
+                        Expanded(
+                          child: Semantics(
+                            header: true,
+                            child: const Text('Itens do orçamento',
+                                style: TextStyle(
+                                    fontSize: 20, fontWeight: FontWeight.w700)),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          tooltip: 'Fechar itens do orçamento',
+                          onPressed: () => Navigator.pop(ctx),
+                          icon: const Icon(Icons.close_rounded),
+                        ),
+                      ]),
+                    ),
+                    const Divider(height: 1),
+                    Flexible(
+                      child: LayoutBuilder(builder: (context, box) {
+                        final usarTabela = box.maxWidth - 2 * espacamento >=
+                                1150 &&
+                            MediaQuery.textScalerOf(context).scale(1) <= 1.3;
+                        return CustomScrollView(
+                          primary: false,
+                          shrinkWrap: true,
+                          slivers: [
+                            SliverPadding(
+                              padding: EdgeInsets.all(espacamento),
+                              sliver: SliverToBoxAdapter(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(grupo.evento.eventoNome,
+                                        style: const TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w700)),
+                                    const SizedBox(height: 4),
+                                    Text(_identificacaoEvento(grupo.evento),
+                                        style: const TextStyle(
+                                            color: AdminPalette.muted)),
+                                    const SizedBox(height: 8),
+                                    Text(_contagemItens(
+                                        itens.length, grupo.itens.length)),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            SliverPadding(
+                              padding: EdgeInsets.fromLTRB(
+                                  espacamento, 0, espacamento, espacamento),
+                              sliver: usarTabela
+                                  ? SliverToBoxAdapter(child: _tabela(itens))
+                                  : SliverList.builder(
+                                      itemCount: itens.length,
+                                      itemBuilder: (_, i) => _item(itens[i]),
+                                    ),
+                            ),
+                          ],
+                        );
+                      }),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      );
 
   Widget _planejamento(GrupoOrcamentosAdmin g) {
     final percentual = g.percentualPlanejado;
@@ -511,7 +591,7 @@ class _OrcamentosAdminListScreenState extends State<OrcamentosAdminListScreen> {
               child: TextButton.icon(
                   onPressed: () => _detalhe(o),
                   icon: const Icon(Icons.arrow_forward_rounded),
-                  label: const Text('Ver orçamento'))),
+                  label: const Text('Ver detalhes'))),
         ]),
       );
 
@@ -522,8 +602,8 @@ class _OrcamentosAdminListScreenState extends State<OrcamentosAdminListScreen> {
             fontSize: 13,
             color: AdminPalette.muted,
             fontWeight: FontWeight.w600),
-        dataRowMinHeight: 88,
-        dataRowMaxHeight: 140,
+        dataRowMinHeight: 64,
+        dataRowMaxHeight: 88,
         columns: const [
           DataColumn(label: Text('Item / descrição')),
           DataColumn(label: Text('Estimativa'), numeric: true),
@@ -537,6 +617,8 @@ class _OrcamentosAdminListScreenState extends State<OrcamentosAdminListScreen> {
                   DataCell(SizedBox(
                       width: 220,
                       child: Text(o.categoria,
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                               fontSize: 14, fontWeight: FontWeight.w600)))),
                   DataCell(Text(_moeda(o.estimadoCentavos))),
@@ -546,7 +628,7 @@ class _OrcamentosAdminListScreenState extends State<OrcamentosAdminListScreen> {
                   DataCell(SizedBox(width: 200, child: _situacao(o))),
                   DataCell(TextButton(
                       onPressed: () => _detalhe(o),
-                      child: const Text('Ver orçamento'))),
+                      child: const Text('Ver detalhes'))),
                 ]))
             .toList(),
       );
@@ -558,16 +640,18 @@ class _OrcamentosAdminListScreenState extends State<OrcamentosAdminListScreen> {
           child: AlertDialog(
             backgroundColor: Colors.white,
             surfaceTintColor: Colors.transparent,
+            insetPadding:
+                const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            scrollable: true,
             title: Text(o.categoria,
                 style: const TextStyle(
                     fontSize: 20, height: 1.25, fontWeight: FontWeight.w700)),
             content: SizedBox(
                 width: 520,
-                child: SingleChildScrollView(
-                    child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
                       Text(o.eventoNome,
                           style: const TextStyle(
                               fontSize: 15, color: AdminPalette.muted)),
@@ -594,14 +678,15 @@ class _OrcamentosAdminListScreenState extends State<OrcamentosAdminListScreen> {
                             if (o.idEvento.isNotEmpty)
                               SelectableText('Evento: ${o.idEvento}')
                           ]),
-                    ]))),
+                    ])),
             actions: [
               TextButton(
                   onPressed: () => Clipboard.setData(ClipboardData(text: o.id)),
                   child: const Text('Copiar referência')),
               FilledButton(
                   onPressed: () => Navigator.pop(ctx),
-                  child: const Text('Fechar'))
+                  child: const Text('Voltar aos itens',
+                      textAlign: TextAlign.center))
             ],
           )));
 }

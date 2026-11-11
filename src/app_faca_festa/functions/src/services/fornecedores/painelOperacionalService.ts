@@ -10,9 +10,36 @@ import { registrosConfiaveis } from '../avaliacoes/avaliacaoVerificadaService';
 type M=Record<string,any>;
 const iso=(v:any):string|null=>{const d=v?.toDate?.()||(typeof v==='string'?new Date(v):null);return d&&Number.isFinite(d.getTime())?d.toISOString():null;};
 const entre=(s:string|null,de:string,ate:string)=>s!=null&&s>=de&&s<ate;
+export function primeiraRespostaHoras(atendimento: M, uid: string, agora: string): number | null {
+  const eventos = [
+    ...(atendimento.mensagens || []).filter((m: M) => m.id_usuario === uid && m.sistema !== true).map((m: M) => iso(m.enviado_em)),
+    ...(atendimento.propostas || []).filter((p: M) => p.autor_id === uid).map((p: M) => iso(p.criado_em)),
+  ].filter((data: string | null) => data != null && data >= atendimento.envio && data <= agora).sort();
+  return eventos.length ? (Date.parse(eventos[0]) - Date.parse(atendimento.envio)) / 3600000 : null;
+}
+
+export async function lerAtendimentosFornecedor(db: Firestore, uid: string, limite?: number) {
+  const consulta = db.collectionGroup('fornecedores').where('id_fornecedor', '==', uid);
+  const participacoes = await (limite ? consulta.limit(limite + 1) : consulta).get();
+  const itens: M[] = [];
+  for (const p of participacoes.docs.slice(0, limite ?? participacoes.size)) {
+    if (!/^cotacao\/[^/]+\/fornecedores\/[^/]+$/.test(p.ref.path) || p.id !== uid) continue;
+    const [q, mensagens, propostas] = await Promise.all([
+      p.ref.parent.parent!.get(), p.ref.collection('mensagens').get(), p.ref.collection('propostas').get(),
+    ]);
+    if (!q.exists) continue;
+    const x = p.data(), c = q.data()!;
+    itens.push({ id: q.id, envio: iso(x.data_envio) || iso(c.data_envio), comercial: comercialLegado(x),
+      respondido: x.respondido === true, mensagens: mensagens.docs.map(m => m.data()),
+      propostas: propostas.docs.map(m => m.data()), responsavel: x.responsavel_retorno || null,
+      prazo: iso(x.prazo_retorno) || iso(c.data_limite_resposta), prazoInicial: iso(c.data_limite_resposta),
+      categoria: c.categoria_nome || 'Atendimento', parentCancelada: c.status === 'cancelada' });
+  }
+  return { itens, parcial: limite !== undefined && participacoes.size > limite };
+}
 export function metricasAtendimentos(atendimentos:M[],contratos:M[],uid:string,de:string,ate:string,agora:string){
  const coorte=atendimentos.filter(a=>entre(a.envio,de,ate)),semData=atendimentos.filter(a=>!a.envio).length;let semResposta=0,semEvidencia=0;const horas:number[]=[];const resultados={ganhas:0,perdidas:0,recusadas:0,canceladas:0,abertas:0,ganhasSemVinculo:0};
- for(const a of coorte){const eventos=[...(a.mensagens||[]).filter((m:M)=>m.id_usuario===uid&&m.sistema!==true).map((m:M)=>iso(m.enviado_em)),...(a.propostas||[]).filter((p:M)=>p.autor_id===uid).map((p:M)=>iso(p.criado_em))].filter((s:string|null)=>s!=null&&s>=a.envio&&s<=agora).sort();if(eventos.length)horas.push((Date.parse(eventos[0])-Date.parse(a.envio))/3600000);else if(a.respondido||a.comercial==='proposta_enviada'||a.comercial==='ganho')semEvidencia++;else semResposta++;
+ for(const a of coorte){const resposta=primeiraRespostaHoras(a,uid,agora);if(resposta!==null)horas.push(resposta);else if(a.respondido||a.comercial==='proposta_enviada'||a.comercial==='ganho')semEvidencia++;else semResposta++;
  const vinculados=contratos.filter(c=>c.idCotacao===a.id);if(a.comercial==='ganho'){if(!vinculados.length)resultados.ganhasSemVinculo++;else if(vinculados.every(c=>c.cancelado))resultados.canceladas++;else resultados.ganhas++;}else if(a.comercial==='perdido')resultados.perdidas++;else if(a.comercial==='recusado')resultados.recusadas++;else if(a.comercial==='cancelado')resultados.canceladas++;else resultados.abertas++;
  }
  const unicos=new Map<string,M>();for(const c of contratos){const k=c.identidade;const prev=unicos.get(k);if(prev&&(prev.cancelado!==c.cancelado||prev.execucao!==c.execucao))throw new HttpsError('failed-precondition','Espelhos contratuais divergentes.');if(!prev||c.idOrcamento===k)unicos.set(k,c);}

@@ -77,6 +77,33 @@ require('firebase/compat/firestore');
  await no(env.unauthenticatedContext().firestore().doc(path+'/s').get());
  await ok(f.collectionGroup('fornecedores').where('id_fornecedor','==','fa').get());
  await no(db('fb').collectionGroup('fornecedores').where('id_fornecedor','==','fa').get());
+
+ const caminhoAoVivo = path + '/ao-vivo';
+ let pararEscuta, timeout;
+ try {
+   await new Promise((resolve, reject) => {
+     timeout = setTimeout(() => reject(new Error('Escuta do chat não recebeu o envio e a leitura.')), 10000);
+     let fase = 'aguardando';
+     pararEscuta = f.collection(path).onSnapshot({includeMetadataChanges: true}, snapshot => {
+       if (snapshot.metadata.fromCache || snapshot.metadata.hasPendingWrites) return;
+       const mensagem = snapshot.docs.find(doc => doc.id === 'ao-vivo')?.data();
+       if (fase === 'aguardando' && !mensagem) {
+         fase = 'enviado';
+         a.doc(caminhoAoVivo).set(msg('ca')).catch(reject);
+       } else if (fase === 'enviado' && mensagem?.id_usuario === 'ca' && mensagem.lido === false) {
+         fase = 'lido';
+         f.doc(caminhoAoVivo).update({lido: true}).catch(reject);
+       } else if (fase === 'lido' && mensagem?.lido === true) {
+         resolve();
+       }
+     }, reject);
+   });
+   checks++;
+ } finally {
+   clearTimeout(timeout);
+   pararEscuta?.();
+ }
+
  for (const status of ['cancelada','recusado','perdeuCotacao']) {
  await env.withSecurityRulesDisabled(c=>c.firestore().doc('cotacao/a/fornecedores/fa').update({status}));
  await no(a.collection(path).add(msg('ca'))); await no(f.collection(path).add(msg('fa')));

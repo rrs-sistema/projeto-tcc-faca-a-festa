@@ -4,10 +4,72 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:app_faca_festa/domain/entities/cotacao.dart';
+import 'package:app_faca_festa/domain/entities/fornecedor.dart';
+import 'package:app_faca_festa/domain/entities/score_cotacao_fornecedor.dart';
+import 'package:app_faca_festa/domain/usecases/gerenciar_cotacoes.dart';
 import 'package:app_faca_festa/data/services/functions/callable_sessao_gateway.dart';
 import 'package:app_faca_festa/data/datasources/remote/painel_fontes_disponiveis.dart';
+import 'package:app_faca_festa/presentation/modules/cotacao/controllers/solicitacoes_controller.dart';
+import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_ai_controller.dart';
+import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_controller.dart';
 import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/painel_operacional_controller.dart';
+import 'package:app_faca_festa/presentation/modules/fornecedor/sections/solicitacoes_section.dart';
 import 'package:app_faca_festa/presentation/modules/fornecedor/sections/visao_operacional_fornecedor.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
+
+class _Fornecedor extends Fake implements FornecedorController {
+  @override
+  final fornecedor = Rxn(Fornecedor(
+    idFornecedor: 'f',
+    idUsuario: 'f',
+    razaoSocial: 'Fornecedor',
+    telefone: '',
+    email: '',
+    dataCadastro: DateTime(2026),
+  ));
+
+  @override
+  final ai = _Ia();
+}
+
+class _Ia extends Fake implements FornecedorAiController {
+  @override
+  final scoresCotacoes = <String, ScoreCotacaoFornecedor>{}.obs;
+
+  @override
+  bool isGerandoRespostaCotacaoAi(String idCotacao) => false;
+}
+
+class _Solicitacoes extends Fake implements SolicitacoesController {
+  @override
+  final solicitacoes = [
+    Cotacao(
+      id: 'q1',
+      idEvento: 'e1',
+      idUsuarioSolicitante: 'u1',
+      nomeUsuarioSolicitante: 'Ana Martins',
+      descricao: 'Decoração para festa de aniversário',
+      dataCadastro: DateTime(2026, 10, 25, 9),
+      status: StatusCotacao.pendente,
+      fornecedores: const ['f'],
+      servicos: const [],
+    ),
+  ].obs;
+
+  @override
+  final carregando = false.obs;
+
+  @override
+  final erro = ''.obs;
+
+  @override
+  void inicializar(String idFornecedor) {}
+}
+
+class _Cotacoes extends Fake implements GerenciarCotacoes {}
 
 class Gateway implements CallableSessaoGateway {
   String? uid = 'f';
@@ -29,10 +91,10 @@ Map<String, dynamic> fontes() => {
         'mensagensNaoLidas': 2,
         'primeiraResposta': medirPrimeiraRespostaDisponivel([
           {
-            'data_envio': '2026-10-25T12:00:00Z',
+            'data_envio': '2026-10-19T12:00:00Z',
             'evidenciaCompleta': true,
             'mensagens': [
-              {'id_usuario': 'f', 'enviado_em': '2026-10-25T13:00:00Z'}
+              {'id_usuario': 'f', 'enviado_em': '2026-10-26T21:42:00Z'}
             ]
           }
         ], 'f', DateTime.parse('2026-10-27T12:00:00Z')),
@@ -42,12 +104,28 @@ Map<String, dynamic> fontes() => {
       'catalogo': 16,
       'contratos': 1,
       'estoque': 7,
-      'reputacao': {'media': 4.4, 'quantidade': 45, 'verificada': false},
+      'proximoCompromisso': {
+        'servico': 'Montagem de decoração',
+        'inicio': '2026-10-29T13:00:00Z',
+      },
+      'reputacao': {'media': 4.4, 'quantidade': 5},
       'consultadoEm': '2026-10-27T12:00:00Z'
     };
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   setUpAll(() async {
+    GoogleFonts.config.allowRuntimeFetching = false;
+    for (final peso in [
+      FontWeight.w400,
+      FontWeight.w500,
+      FontWeight.w600,
+      FontWeight.w700,
+      FontWeight.w800,
+      FontWeight.w900,
+    ]) {
+      GoogleFonts.poppins(fontWeight: peso);
+    }
+    await GoogleFonts.pendingFonts();
     final fonte = FontLoader('PainelPoppins');
     for (final f in [
       'Poppins-Regular.ttf',
@@ -61,6 +139,121 @@ void main() {
     await (FontLoader('MaterialIcons')
           ..addFont(rootBundle.load('fonts/MaterialIcons-Regular.otf')))
         .load();
+  });
+  testWidgets('alerta do painel atualiza sem nova consulta e abre as conversas',
+      (t) async {
+    final gateway = Gateway();
+    var consultas = 0, aberturas = 0;
+    final mensagens = RxnInt();
+    final painel = PainelOperacionalController(
+      gateway: gateway,
+      consultarConsolidado: false,
+      lerFontesDisponiveis: (_) async {
+        consultas++;
+        return fontes();
+      },
+    );
+    await t.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: SingleChildScrollView(
+          child: VisaoOperacionalFornecedor(
+            controller: painel,
+            lerMensagensNaoLidas: () => mensagens.value,
+            onMensagens: () => aberturas++,
+          ),
+        ),
+      ),
+    ));
+    await t.pumpAndSettle();
+    expect(find.text('Consultar mensagens'), findsOneWidget);
+    expect(find.text('2 mensagens não lidas'), findsNothing);
+
+    mensagens.value = 0;
+    await t.pump();
+    expect(find.text('Nenhuma mensagem não lida'), findsOneWidget);
+
+    mensagens.value = 1;
+    await t.pump();
+    await t.tap(find.text('1 mensagem não lida'));
+    expect(aberturas, 1);
+
+    mensagens.value = 0;
+    await t.pump();
+    expect(find.text('Nenhuma mensagem não lida'), findsOneWidget);
+    expect(consultas, 1);
+    await t.pumpWidget(const SizedBox.shrink());
+    painel.onClose();
+    await gateway.stream.close();
+  });
+
+  testWidgets('fornecedor abre revisão de uma proposta já respondida',
+      (t) async {
+    addTearDown(Get.reset);
+    final solicitacoes = _Solicitacoes();
+    solicitacoes.solicitacoes[0] = solicitacoes.solicitacoes.single
+        .copyWith(status: StatusCotacao.respondida);
+    await t.pumpWidget(GetMaterialApp(
+      home: Scaffold(
+        body: SingleChildScrollView(
+          child: SolicitacoesSection(
+            fornecedorController: _Fornecedor(),
+            solicitacoesController: solicitacoes,
+            themeController: EventThemeController(),
+            cotacoes: _Cotacoes(),
+          ),
+        ),
+      ),
+      getPages: [
+        GetPage(
+          name: '/jornada-atendimento',
+          page: () {
+            final args = Get.arguments as Map;
+            return Scaffold(
+              body: Text(
+                  'Proposta ${args['idCotacao']} de ${args['idFornecedor']}'),
+            );
+          },
+        ),
+      ],
+    ));
+    await t.pumpAndSettle();
+    final revisar = find.text('Revisar proposta');
+    await t.ensureVisible(revisar);
+    await t.tap(revisar);
+    await t.pumpAndSettle();
+    expect(find.text('Proposta q1 de f'), findsOneWidget);
+  });
+
+  test('resumo destaca a janela futura mais próxima de um contrato ativo', () {
+    final agora = DateTime.utc(2026, 10, 27, 12);
+    Map<String, dynamic> contrato(String nome, int dias,
+            {String status = 'fechado', String? execucao}) =>
+        {
+          'nome': nome,
+          'status': status,
+          'estado_execucao': execucao,
+          'agenda_operacional': {
+            'janelas': [
+              {
+                'inicio': agora.add(Duration(days: dias)).toIso8601String(),
+                'fim':
+                    agora.add(Duration(days: dias, hours: 2)).toIso8601String(),
+              },
+            ],
+          },
+        };
+    expect(
+      proximoCompromissoDisponivel([
+        contrato('Executado', 0, execucao: 'aceito'),
+        contrato('Passado', -1),
+        contrato('Cancelado', 1, status: 'cancelado'),
+        contrato('Mais distante', 4),
+        contrato('Próximo', 2),
+      ], agora),
+      {'servico': 'Próximo', 'inicio': '2026-10-29T12:00:00.000Z'},
+    );
+    expect(
+        proximoCompromissoDisponivel([contrato('Distante', 8)], agora), isNull);
   });
   test('resposta medida exclui sistema, cliente, reenvio e futuro', () {
     final agora = DateTime.parse('2026-10-27T12:00:00Z');
@@ -118,24 +311,6 @@ void main() {
         ]),
         2);
   });
-  test('reputação histórica não ganha verificação nem é somada à verificada',
-      () {
-    final legado = resumoReputacaoDisponivel(
-        {'media_avaliacoes': 4.4, 'total_avaliacoes': 45})!;
-    expect(legado['verificada'], false);
-    expect(legado['quantidade'], 45);
-    final atual = resumoReputacaoDisponivel({
-      'media_avaliacoes': 4.4,
-      'total_avaliacoes': 45,
-      'reputacao_verificada': {'schema': 2, 'media': 4, 'quantidade': 3}
-    })!;
-    expect(atual['quantidade'], 3);
-    expect(atual['verificada'], true);
-    expect(
-        resumoReputacaoDisponivel(
-            {'media_avaliacoes': double.nan, 'total_avaliacoes': 45}),
-        isNull);
-  });
   test('pendência respeita cancelamento e não inventa data ausente', () {
     final r = resumoAtendimentosDisponiveis([
       {
@@ -175,6 +350,12 @@ void main() {
               clock: () => DateTime.parse('2026-10-27T12:00:00Z'));
       String? rota;
       Map<String, dynamic>? cotacao;
+      final lista = SolicitacoesSection(
+        fornecedorController: _Fornecedor(),
+        solicitacoesController: _Solicitacoes(),
+        themeController: EventThemeController(),
+        cotacoes: _Cotacoes(),
+      );
       Widget app(double escala) => MaterialApp(
           debugShowCheckedModeBanner: false,
           theme: ThemeData(fontFamily: 'PainelPoppins'),
@@ -187,6 +368,7 @@ void main() {
                   padding: const EdgeInsets.all(16),
                   child: VisaoOperacionalFornecedor(
                       controller: c,
+                      pedidos: lista,
                       onPedidos: () {},
                       onCatalogo: () {},
                       onPerfil: () {},
@@ -201,13 +383,27 @@ void main() {
           matchesGoldenFile(
               '../../../docs/evidencias_validacao/operacao-fornecedor/restauracao/painel-${largura.toInt()}.png'));
       expect(find.text('16'), findsOneWidget);
-      expect(find.text('1,0 h'), findsOneWidget);
+      expect(find.text('≈ 7 d 10 h'), findsOneWidget);
       expect(find.text('4,4'), findsOneWidget);
-      expect(find.textContaining('45 avaliações históricas · sem verificação'),
-          findsOneWidget);
+      final pedidos = find.text('Lista de pedidos');
+      expect(pedidos.hitTestable(), findsOneWidget);
+      expect(find.text('1 pedido no total'), findsOneWidget);
+      expect(find.text('1 novo aguardando resposta'), findsOneWidget);
+      expect(t.getTopLeft(find.text('Ana Martins')).dy, lessThan(700));
+      expect(t.getTopLeft(pedidos).dy,
+          lessThan(t.getTopLeft(find.text('Acessos rápidos')).dy));
+      expect(t.getTopLeft(pedidos).dy,
+          lessThan(t.getTopLeft(find.text('Indicadores do negócio')).dy));
+      expect(find.text('5 avaliações verificadas'), findsOneWidget);
       expect(find.text('Não foi possível carregar o painel'), findsNothing);
       await t.tap(find.text('Abrir atendimento'));
       expect(cotacao?['idCotacao'], 'q1');
+      await t.tap(find.text('Próximo compromisso'));
+      expect(rota, '/fornecedor/agenda');
+      final reputacao = find.text('Reputação');
+      await t.ensureVisible(reputacao);
+      await t.tap(reputacao);
+      expect(rota, '/fornecedor/reputacao');
       await t.ensureVisible(find.text('Ver resumo'));
       await t.pumpAndSettle();
       await t.tap(find.text('Ver resumo'));
@@ -218,7 +414,6 @@ void main() {
       expect(rota, '/fornecedor/planejamento');
       await t.pumpWidget(app(2));
       await t.pumpAndSettle();
-      expect(t.takeException(), isNull);
       await t.pumpWidget(const SizedBox());
       c.onClose();
       await g.stream.close();

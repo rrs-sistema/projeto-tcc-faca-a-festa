@@ -33,8 +33,10 @@ class OrcamentoGastoModel extends OrcamentoGasto {
     return OrcamentoGastoModel(
       idGasto: map['id_gasto'] ?? '',
       idOrcamento: map['id_orcamento'] ?? '',
-      idServicoContratado: map['id_servico'] ?? '',
-      nomeServicoContratado: map['nome_servico'] ?? '',
+      idServicoContratado:
+          map['id_servico_contratado'] ?? map['id_servico'] ?? '',
+      nomeServicoContratado:
+          map['nome_servico_contratado'] ?? map['nome_servico'] ?? '',
       nome: map['nome'] ?? '',
       custo: (map['custo'] ?? 0).toDouble(),
       pago: (map['pago'] ?? 0).toDouble(),

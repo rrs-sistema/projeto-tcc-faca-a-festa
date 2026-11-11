@@ -115,6 +115,12 @@ class HeaderSection extends StatelessWidget {
               children: [
                 _StatusChip(text: status, color: statusColor),
                 _InfoChip(text: categoria, icon: Icons.category_outlined),
+                ActionChip(
+                  avatar: const Icon(Icons.gavel_outlined, size: 16),
+                  label: const Text('Comunicados de operação'),
+                  onPressed: () =>
+                      Get.toNamed('/fornecedor/comunicados-operacao'),
+                ),
               ],
             );
 

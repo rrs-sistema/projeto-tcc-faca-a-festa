@@ -1,5 +1,6 @@
 export { buscarCepGoogle } from "./address/buscarCepGoogle";
 export { notificarMensagemChat } from "./functions/cotacao/notificarMensagemChat";
+export { notificarAutorizacaoRepasse } from "./functions/financeiro/notificarAutorizacaoRepasse";
 export { obterEstatisticasPublicas } from "./functions/publico/obterEstatisticasPublicas";
 export { exportarDossieTitular } from "./functions/lgpd/exportarDossieTitular";
 export { atenderSolicitacaoLgpd } from "./functions/lgpd/atenderSolicitacaoLgpd";
@@ -159,3 +160,5 @@ export { consultarAgendaFornecedorFn, configurarCapacidadeFornecedorFn, confirma
 export { consultarPlanejamentoFornecedorFn, comandarPlanejamentoFornecedorFn } from "./services/financeiro/planejamentoFornecedorService";
 
 export { consultarPainelFornecedorFn } from "./services/fornecedores/painelOperacionalService";
+export { consultarFilaFornecedorAdminFn, consultarFornecedorAdminFn, consultarTriagemFornecedoresAdminFn } from "./services/fornecedores/consultaFornecedorAdminService";
+export { registrarMedidaFornecedorFn, consultarComunicadoFornecedorFn, registrarRecursoFornecedorFn } from "./services/fornecedores/decisoesFornecedorService";

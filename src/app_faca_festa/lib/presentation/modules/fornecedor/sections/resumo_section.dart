@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'visao_operacional_fornecedor.dart';
 import 'perfil_section.dart';
 import '../pages/chat/chat_mensagens_page.dart';
+import '../pages/chat/fornecedor_mensagens_page.dart';
 import '../controllers/painel_operacional_controller.dart';
 
 import 'package:app_faca_festa/domain/usecases/gerenciar_cotacoes.dart';
@@ -28,6 +29,7 @@ class ResumoSection extends StatelessWidget {
     required this.categoriaController,
     required this.subcategoriaController,
     required this.avaliacaoController,
+    required this.pedidos,
     this.onAbrirPedidos,
     this.onAbrirPerfil,
     this.onController,
@@ -42,13 +44,28 @@ class ResumoSection extends StatelessWidget {
   final CategoriaServicoController categoriaController;
   final SubcategoriaServicoController subcategoriaController;
   final AvaliacaoServicoController avaliacaoController;
+  final Widget pedidos;
   final VoidCallback? onAbrirPedidos, onAbrirPerfil;
   final ValueChanged<PainelOperacionalController>? onController;
 
   @override
   Widget build(BuildContext context) => VisaoOperacionalFornecedor(
+      pedidos: pedidos,
       onController: onController,
       onPedidos: onAbrirPedidos,
+      lerMensagensNaoLidas: () => controller.mensagensNaoLidas.value,
+      onMensagens: () => Get.to(() => Obx(() {
+            final usuario = appController.usuarioLogado.value;
+            if (usuario == null || usuario.tipo != 'F') {
+              return const SizedBox.shrink();
+            }
+            return FornecedorMensagensPage(
+              usuario: usuario,
+              mensagensNaoLidas: controller.mensagensNaoLidas.value,
+              theme: themeController,
+              cotacoes: cotacoes,
+            );
+          })),
       perfilCompleto: () => controller.fornecedor.value?.idFornecedor ==
               appController.usuarioLogado.value?.idUsuario
           ? PerfilSection.calcularScoreCatalogo(controller)

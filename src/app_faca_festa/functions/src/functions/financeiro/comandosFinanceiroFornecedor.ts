@@ -4,8 +4,8 @@ import { FieldValue } from "firebase-admin/firestore";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { randomUUID } from "crypto";
 import { admin } from "../../shared/firebaseAdmin";
-import { exigirUsuarioAutenticado } from "../../shared/auth";
-import { exigirAcessoFinanceiroFornecedor } from "../../services/financeiro/autorizacaoFornecedorFinanceiro";
+import { exigirUidAutenticado, exigirUsuarioAutenticado } from "../../shared/auth";
+import { exigirAcessoFinanceiroFornecedor, exigirVinculoFinanceiroFornecedor } from "../../services/financeiro/autorizacaoFornecedorFinanceiro";
 import { dinheiro, reaisParaCentavosArredondado } from "../../services/financeiro/dinheiro";
 import { registrarOperacaoRecebimento, normalizarRecebimento, assinaturaRecebimento, operacaoRecebimentoCompleta } from "../../services/financeiro/recebimentoFornecedorService";
 import { calcularResumoFornecedor, projetarCaixaRecebimentos } from "../../services/financeiro/resumoFornecedorService";
@@ -123,15 +123,11 @@ export const consultarOperacaoRecebimentoFornecedor = onCall(
 export const consultarResumoFinanceiroFornecedor = onCall(
   { region: REGION, timeoutSeconds: 60, cors: true },
   async (request) => {
-    const perfil = await exigirUsuarioAutenticado(request.auth?.uid);
+    const uid = exigirUidAutenticado(request.auth?.uid);
     const data = (request.data ?? {}) as Record<string, unknown>;
     const idFornecedor = texto(data.idFornecedor ?? data.id_fornecedor);
     const idEvento = texto(data.idEvento ?? data.id_evento) || null;
-    await exigirAcessoFinanceiroFornecedor(
-      admin.firestore(),
-      perfil,
-      idFornecedor,
-    );
+    exigirVinculoFinanceiroFornecedor(uid, idFornecedor);
 
     const db = admin.firestore();
     const {planejamento,visoes,recebimentos,custos:custosSnap,movimentos:movimentosSnap} =

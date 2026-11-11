@@ -10,6 +10,7 @@ import 'package:app_faca_festa/presentation/modules/tema/admin_theme.dart';
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import 'package:app_faca_festa/presentation/widgets/admin/admin_kit.dart';
 import 'package:app_faca_festa/presentation/widgets/festa_app_bar.dart';
+import 'package:app_faca_festa/presentation/widgets/operacao/operacao_skeleton.dart';
 
 /// Central administrativa: contratações + mediação (Prompt 03).
 class CentralMediacaoPage extends StatefulWidget {
@@ -90,15 +91,20 @@ class _CentralMediacaoPageState extends State<CentralMediacaoPage> {
   }
 
   Future<void> _abrirDetalhe(LinhaCentralContratacao l) async {
-    c.scrollOffsetLista.value = _scrollCtrl.hasClients ? _scrollCtrl.offset : 0;
+    final offset = _scrollCtrl.hasClients ? _scrollCtrl.offset : 0.0;
+    c.scrollOffsetLista.value = offset;
     await Get.toNamed(
       '/admin/contratacoes-mediacao/detalhe',
       arguments: {'idOrcamento': l.idOrcamento},
     );
-    if (mounted && _scrollCtrl.hasClients) {
-      _scrollCtrl.jumpTo(c.scrollOffsetLista.value);
-    }
+    if (!mounted) return;
     await c.carregarLista();
+    if (!mounted) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_scrollCtrl.hasClients || c.carregando.value) return;
+      final limite = _scrollCtrl.position.maxScrollExtent;
+      _scrollCtrl.jumpTo(offset.clamp(0.0, limite).toDouble());
+    });
   }
 
   Future<void> _abrirIntermediacao(LinhaCentralContratacao l) async {
@@ -113,6 +119,7 @@ class _CentralMediacaoPageState extends State<CentralMediacaoPage> {
   }
 
   void _aplicarFiltros() {
+    if (c.carregando.value) return;
     c.busca.value = _buscaCtrl.text.trim();
     c.offset.value = 0;
     c.carregarLista();
@@ -167,10 +174,10 @@ class _CentralMediacaoPageState extends State<CentralMediacaoPage> {
                       _banner(aviso, AdminPalette.warning),
                     ],
                     const SizedBox(height: 16),
-                    if (busy && linhas.isEmpty)
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 48),
-                        child: Center(child: CircularProgressIndicator()),
+                    if (busy)
+                      const OperacaoSkeleton(
+                        titulo: 'Contratações e oportunidades',
+                        icon: Icons.handshake_outlined,
                       )
                     else if (linhas.isEmpty)
                       AdminEmptyState(
@@ -182,11 +189,11 @@ class _CentralMediacaoPageState extends State<CentralMediacaoPage> {
                     else ...[
                       _resumoLista(linhas),
                       const SizedBox(height: 12),
-                      ...linhas.map((l) => _linhaCard(l,
-                          compacto: w < 1080 ||
-                              MediaQuery.textScalerOf(context).scale(1) > 1.3)),
-                      const SizedBox(height: 8),
-                      _paginacao(busy),
+                      ...linhas.map(_linhaCard),
+                      if (c.temPaginaAnterior || c.temProximaPagina) ...[
+                        const SizedBox(height: 8),
+                        _paginacao(busy),
+                      ],
                     ],
                   ],
                 ),
@@ -253,7 +260,8 @@ class _CentralMediacaoPageState extends State<CentralMediacaoPage> {
         if (casos > 0)
           _badgeContagem('$casos com mediação', AdminPalette.danger),
         if (aReceber > 0)
-          _badgeContagem('$aReceber contratos a receber nesta página',
+          _badgeContagem(
+              '$aReceber ${aReceber == 1 ? 'contrato' : 'contratos'} com saldo do cliente',
               AdminPalette.primary),
       ],
     );
@@ -423,157 +431,141 @@ class _CentralMediacaoPageState extends State<CentralMediacaoPage> {
     );
   }
 
-  Widget _linhaCard(LinhaCentralContratacao l, {required bool compacto}) {
+  Widget _linhaCard(LinhaCentralContratacao l) {
     final contratado = l.estadoComercial.trim().toLowerCase() == 'contratado';
-    final chips = <Widget>[
-      _statusChip(_rotuloComercial(l.estadoComercial), AdminPalette.primary),
-      _statusChip(_rotuloExecucao(l.estadoExecucao), AdminPalette.muted),
+    final chips = Wrap(spacing: 6, runSpacing: 6, children: [
+      _statusChip(
+        _rotuloComercial(l.estadoComercial),
+        contratado ? AdminPalette.success : AdminPalette.primary,
+      ),
+      if (contratado && l.estadoExecucao.trim().isNotEmpty)
+        _statusChip(_rotuloExecucao(l.estadoExecucao), AdminPalette.muted),
       if (l.casoAberto) _statusChip('Caso aberto', AdminPalette.danger),
       if (l.identidadeIncompleta)
         _statusChip('Identificação pendente', AdminPalette.warning),
       if (contratado && l.aReceberClienteCentavos > 0)
         _statusChip('Cliente a pagar', AdminPalette.warning),
-    ];
-
-    final valores = Wrap(spacing: 28, runSpacing: 12, children: [
+    ]);
+    final identidade = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(l.rotuloServico,
+            style: GoogleFonts.poppins(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: AdminPalette.ink)),
+        const SizedBox(height: 2),
+        Text(l.rotuloEvento,
+            style:
+                GoogleFonts.poppins(fontSize: 13, color: AdminPalette.muted)),
+        const SizedBox(height: 8),
+        chips,
+      ],
+    );
+    final acoes = Wrap(spacing: 8, runSpacing: 6, children: [
+      FilledButton.icon(
+        onPressed: () => _abrirDetalhe(l),
+        icon: const Icon(Icons.arrow_forward_rounded, size: 18),
+        label: Text(contratado ? 'Ver contratação' : 'Ver oportunidade'),
+      ),
+      if (contratado)
+        OutlinedButton.icon(
+          onPressed: () => _abrirIntermediacao(l),
+          icon: const Icon(Icons.swap_horiz, size: 18),
+          label: const Text('Recebimentos e repasses'),
+        ),
+    ]);
+    final valores = Wrap(spacing: 20, runSpacing: 8, children: [
       _valorBloco(contratado ? 'Valor contratado' : 'Valor estimado',
           _reais(l.valorContratadoCentavos)),
       if (contratado) ...[
         _valorBloco('Recebido do cliente', _reais(l.recebidoClienteCentavos)),
         _valorBloco('Pago ao fornecedor', _reais(l.repassadoCentavos)),
+        _valorBloco(
+            'Comissão da plataforma',
+            l.comissaoCentavos == null
+                ? 'A conferir'
+                : _reais(l.comissaoCentavos!)),
+        _valorBloco(
+            'Valor previsto ao fornecedor',
+            l.liquidoFornecedorCentavos == null
+                ? 'A conferir'
+                : _reais(l.liquidoFornecedorCentavos!)),
       ],
     ]);
-
-    final acoes = compacto
-        ? Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              FilledButton.icon(
-                onPressed: () => _abrirDetalhe(l),
-                icon: const Icon(Icons.folder_open_outlined, size: 18),
-                label:
-                    Text(contratado ? 'Ver contratação' : 'Ver oportunidade'),
-              ),
-              const SizedBox(height: 6),
-              if (contratado)
-                OutlinedButton.icon(
-                  onPressed: () => _abrirIntermediacao(l),
-                  icon: const Icon(Icons.swap_horiz, size: 18),
-                  label: const Text('Recebimentos e repasses'),
-                ),
-            ],
-          )
-        : Row(
-            children: [
-              FilledButton.icon(
-                onPressed: () => _abrirDetalhe(l),
-                icon: const Icon(Icons.folder_open_outlined, size: 18),
-                label:
-                    Text(contratado ? 'Ver contratação' : 'Ver oportunidade'),
-              ),
-              const SizedBox(width: 8),
-              if (contratado)
-                OutlinedButton.icon(
-                  onPressed: () => _abrirIntermediacao(l),
-                  icon: const Icon(Icons.swap_horiz, size: 18),
-                  label: const Text('Recebimentos e repasses'),
-                ),
-            ],
-          );
+    final regra = contratado ? l.regraRepasse?.trim() ?? '' : '';
 
     return Padding(
       key: ValueKey('contratacao-${l.idOrcamento}'),
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 10),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           onTap: () => _abrirDetalhe(l),
           child: Ink(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+            padding: const EdgeInsets.all(14),
             decoration: adminCardDecoration(),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Column(
+            child: LayoutBuilder(builder: (context, limites) {
+              final emLinha = limites.maxWidth >= 760 &&
+                  MediaQuery.textScalerOf(context).scale(1) <= 1.3;
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (emLinha)
+                    Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            l.rotuloEvento,
-                            style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 15.5,
-                              color: AdminPalette.ink,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            l.rotuloServico,
-                            style: GoogleFonts.poppins(
-                              fontSize: 13.5,
-                              fontWeight: FontWeight.w500,
-                              color: AdminPalette.ink,
-                            ),
-                          ),
-                        ],
+                          Expanded(child: identidade),
+                          const SizedBox(width: 16),
+                          acoes,
+                        ])
+                  else
+                    identidade,
+                  const SizedBox(height: 8),
+                  DefaultTextStyle.merge(
+                    style: const TextStyle(
+                        fontSize: 12, color: AdminPalette.muted),
+                    child: Wrap(
+                      spacing: 18,
+                      runSpacing: 4,
+                      children: [
+                        Text('Cliente · ${l.rotuloContratante}'),
+                        Text('Fornecedor · ${l.rotuloFornecedor}'),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: AdminPalette.surface,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: valores,
+                  ),
+                  if (l.casoAberto || regra.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      l.casoAberto
+                          ? 'Mediação em aberto. Consulte a análise antes de pagar.'
+                          : regra,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: l.casoAberto
+                            ? AdminPalette.danger
+                            : AdminPalette.muted,
                       ),
                     ),
-                    if (!compacto) acoes,
                   ],
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  'Cliente  ${l.rotuloContratante}',
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    color: AdminPalette.muted,
-                  ),
-                ),
-                Text(
-                  'Fornecedor  ${l.rotuloFornecedor}',
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    color: AdminPalette.muted,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                valores,
-                const SizedBox(height: 10),
-                if (contratado)
-                  Wrap(spacing: 24, runSpacing: 8, children: [
-                    _valorBloco(
-                        'Comissão da plataforma',
-                        l.comissaoCentavos == null
-                            ? 'A conferir'
-                            : _reais(l.comissaoCentavos!)),
-                    _valorBloco(
-                        'Valor previsto ao fornecedor',
-                        l.liquidoFornecedorCentavos == null
-                            ? 'A conferir'
-                            : _reais(l.liquidoFornecedorCentavos!)),
-                  ]),
-                const SizedBox(height: 8),
-                Text(
-                    !contratado
-                        ? 'Aguardando contratação. Comissão e repasse serão definidos após a confirmação.'
-                        : l.casoAberto
-                            ? 'Mediação em aberto: consulte a análise antes de pagar.'
-                            : l.regraRepasse ??
-                                'Confira o saldo e as condições em Recebimentos e repasses.',
-                    style: GoogleFonts.poppins(
-                        fontSize: 12, color: AdminPalette.muted)),
-                const SizedBox(height: 10),
-                Wrap(spacing: 6, runSpacing: 6, children: chips),
-                if (compacto) ...[
-                  const SizedBox(height: 12),
-                  acoes,
+                  if (!emLinha) ...[
+                    const SizedBox(height: 8),
+                    acoes,
+                  ],
                 ],
-              ],
-            ),
+              );
+            }),
           ),
         ),
       ),

@@ -43,6 +43,7 @@ import 'package:app_faca_festa/domain/entities/calculadora_festa.dart';
 import 'package:app_faca_festa/domain/entities/calculadora_festa_item.dart';
 import 'package:app_faca_festa/domain/entities/perfil_festa.dart';
 import 'package:app_faca_festa/domain/entities/estimativa_financeira.dart';
+import 'package:app_faca_festa/domain/entities/referencia_contextual.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/components/cadastro_cardapio_bottom_sheet.dart';
 import 'package:app_faca_festa/presentation/modules/calculadora/controllers/calculadora_festa_controller.dart';
 import 'package:app_faca_festa/presentation/modules/calculadora/controllers/fornecedor_migracao_admin_controller.dart';
@@ -138,6 +139,7 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen>
   bool _permitirSaida = false;
   final _erroSalvarRascunho = ''.obs;
   final _estadoRascunho = ''.obs;
+  static const _guardandoRascunho = 'Guardando estimativa neste aparelho…';
   int _versaoGravacaoRascunho = 0;
   Future<void> _guardarRascunho() async {
     _rascunhoTimer?.cancel();
@@ -150,7 +152,7 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen>
     }
     final sessao = calculadoraController.sessaoPlanejador;
     final versao = ++_versaoGravacaoRascunho;
-    _estadoRascunho.value = 'Guardando estimativa neste aparelho…';
+    _estadoRascunho.value = _guardandoRascunho;
     try {
       await widget.persistirRascunho!(calculadoraController
           .capturarRascunho(widget.idRascunho!, criadoEm: _criadoEmRascunho));
@@ -657,12 +659,21 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen>
   }
 
   Future<void> _salvarCalculo() async {
+    if (calculadoraController.modoEstimativaManualSemEvento &&
+        widget.persistirRascunho != null) {
+      try {
+        await _guardarRascunho();
+      } catch (_) {
+        // A tela já exibe o erro de armazenamento com a opção de tentar de novo.
+      }
+      return;
+    }
     if (!calculadoraController.contextoEvento.estimarQuantidades) {
       Get.snackbar(
           'Dados pendentes', 'Atualize as fontes antes de salvar a simulação.');
       return;
     }
-    if (calculadoraController.totalConvidados <= 0) {
+    if (calculadoraController.convidadosEquivalentes.totalInformado <= 0) {
       Get.snackbar(
         'Atenção',
         'Informe pelo menos um convidado para salvar o cálculo.',

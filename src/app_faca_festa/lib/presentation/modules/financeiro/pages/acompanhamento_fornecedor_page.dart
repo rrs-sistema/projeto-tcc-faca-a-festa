@@ -1,4 +1,5 @@
 import 'package:app_faca_festa/presentation/widgets/operacao/operacao_skeleton.dart';
+import 'package:app_faca_festa/presentation/modules/financeiro/widgets/ajuda_fluxo_financeiro.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
@@ -100,6 +101,7 @@ class _AcompanhamentoFornecedorPageState
       l.idOrcamento,
       pedido.motivo,
       descricao: pedido.descricao,
+      categoria: pedido.categoria,
     );
     EasyLoading.dismiss();
     if (!mounted) return;
@@ -157,13 +159,11 @@ class _AcompanhamentoFornecedorPageState
                     32,
                   ),
                   children: [
-                    const _InfoBanner(
-                      icon: Icons.account_balance_outlined,
-                      color: FornecedorPremiumPalette.indigo,
-                      title: 'Como funciona o repasse',
-                      body:
-                          'O cliente paga à plataforma. Isso não entra no seu caixa. '
-                          'Você recebe pelo repasse da Faça a Festa — sem botão “Sacar”.',
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: AjudaFluxoFinanceiro(
+                        perfil: PerfilAjudaFinanceira.fornecedor,
+                      ),
                     ),
                     if (aviso.isNotEmpty && !_avisoRedundante(aviso)) ...[
                       const SizedBox(height: 10),
@@ -457,6 +457,20 @@ class _AcompanhamentoFornecedorPageState
             child: _ProximoPassoBlock(
               rotulo: l.proximoPasso.rotulo,
               configuracaoPendente: l.proximoPasso.ehPendenciaConfiguracao,
+              ajuda: AjudaFluxoFinanceiro(
+                perfil: PerfilAjudaFinanceira.fornecedor,
+                rotulo: 'Entenda este repasse',
+                contrato: (
+                  contrato: servico,
+                  situacao: l.alocadoPlataformaCentavos == 0 &&
+                          l.repasseAutorizadoCentavos == 0 &&
+                          l.repasseConfirmadoCentavos == 0
+                      ? 'Aguardando recebimento confirmado pela plataforma'
+                      : 'Repasse autorizado ${_reais(l.repasseAutorizadoCentavos)} · Confirmado ${_reais(l.repasseConfirmadoCentavos)}',
+                  proximoPasso: l.proximoPasso.rotulo,
+                  responsavel: l.proximoPasso.responsavel,
+                ),
+              ),
             ),
           ),
           const SizedBox(height: 14),
@@ -791,10 +805,12 @@ class _ProximoPassoBlock extends StatelessWidget {
   const _ProximoPassoBlock({
     required this.rotulo,
     required this.configuracaoPendente,
+    required this.ajuda,
   });
 
   final String rotulo;
   final bool configuracaoPendente;
+  final Widget ajuda;
 
   @override
   Widget build(BuildContext context) {
@@ -840,6 +856,8 @@ class _ProximoPassoBlock extends StatelessWidget {
               ),
             ),
           ],
+          const SizedBox(height: 8),
+          ajuda,
         ],
       ),
     );

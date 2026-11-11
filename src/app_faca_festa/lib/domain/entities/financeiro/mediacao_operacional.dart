@@ -1,6 +1,12 @@
 /// Mediação operacional por contratação (Prompt 03).
 library;
 
+const tiposIncidenteFornecedor = {
+  'cancelamento_fornecedor': 'Fornecedor cancelou',
+  'nao_comparecimento': 'Fornecedor não compareceu',
+  'risco_seguranca': 'Risco à segurança',
+};
+
 enum EstadoCasoMediacao {
   aberto,
   emAnalise,

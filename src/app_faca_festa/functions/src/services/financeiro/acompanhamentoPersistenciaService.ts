@@ -21,10 +21,19 @@ import {
 } from "./acompanhamentoPartesService";
 import {
   COL_ALOCACOES,
+  COL_LIBERACAO,
   COL_RECEBIMENTOS,
   COL_REPASSES,
 } from "./intermediacaoPersistenciaService";
 import { parseEstadoExecucao } from "./contratacaoIdentidadeService";
+
+async function politicaLiberacaoAtiva(db: Firestore): Promise<boolean> {
+  const politicas = await db.collection(COL_LIBERACAO)
+    .where("ativa", "==", true)
+    .limit(2)
+    .get();
+  return politicas.size === 1;
+}
 
 function texto(v: unknown): string {
   return typeof v === "string" ? v.trim() : "";
@@ -166,6 +175,7 @@ export async function listarAcompanhamentoOrganizador(
     null;
 
   const linhas: VisaoContratoOrganizador[] = [];
+  const politicaAtiva = await politicaLiberacaoAtiva(db);
   for (const doc of orcSnap.docs) {
     const d = doc.data();
     const solicitante = texto(d.id_solicitante);
@@ -209,7 +219,7 @@ export async function listarAcompanhamentoOrganizador(
         estadoRepasse: agg.estadoRepasse as "sem_repasse",
         estadoExecucao: exec,
         parcelasConhecidas: true,
-        politicaLiberacaoAtiva: false,
+        politicaLiberacaoAtiva: politicaAtiva,
       }),
     );
   }
@@ -240,7 +250,7 @@ export async function listarAcompanhamentoFornecedor(
   const aliases=new Map<string,string>();
   for(const v of visoes) {aliases.set(v.idContrato,v.idContrato);for(const a of v.aliases) aliases.set(a,v.idContrato);}
   const caixa=projetarCaixaRecebimentos(privado[0].docs.map(d=>({id:d.id,data:d.data()})),privado[1].docs.map(d=>({id:d.id,data:d.data()})),aliases);
-  const politica = await db.collection("plataforma_liberacao_repasses").where("ativa", "==", true).limit(1).get();
+  const politicaAtiva = await politicaLiberacaoAtiva(db);
   const linhas: VisaoContratoFornecedor[] = [];
   for (const v of visoes) {
     if (!v.ativo) continue;
@@ -282,7 +292,7 @@ export async function listarAcompanhamentoFornecedor(
         alocadoPlataformaCentavos: agg.alocado,
         repasseAutorizadoCentavos: v.repasseAutorizadoCentavos,
         repasseConfirmadoCentavos: v.repasseConfirmadoCentavos,
-        politicaLiberacaoAtiva: !politica.empty,
+        politicaLiberacaoAtiva: politicaAtiva,
         estadoExecucao: exec,
         divisaoAplicada: {comissaoPrevistaCentavos:v.comissaoCentavos!, direitoFornecedorPrevistoCentavos:v.liquidoCentavos!},
         revisao:v.revisao,

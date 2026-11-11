@@ -15,7 +15,7 @@ import 'package:app_faca_festa/presentation/modules/cotacao/controllers/cotacao_
 import 'package:app_faca_festa/presentation/modules/fornecedor/pages/chat/chat_mensagens_page.dart';
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 
-/// Registro após validar a sessão/MFA, compartilhado entre organizador e fornecedor.
+/// Registro de push após validar a sessão/MFA.
 class ChatNotificationsController extends GetxService {
   ChatNotificationsController(this.messaging);
   final FirebaseMessaging messaging;
@@ -34,14 +34,21 @@ class ChatNotificationsController extends GetxService {
     if (!_push.suportaTokenPush || !await messaging.isSupported()) return;
     _mensagemSub = FirebaseMessaging.onMessage.listen((m) {
       if (!_destinadoAoUsuario(m)) return;
+      final repasse = m.data['screen'] == 'autorizacao_repasse';
       Get.snackbar(
-        m.notification?.title ?? 'Nova mensagem no chat',
-        m.notification?.body ?? 'Você recebeu uma mensagem.',
+        m.notification?.title ??
+            (repasse
+                ? 'Autorização de pagamento antecipado'
+                : 'Nova mensagem no chat'),
+        m.notification?.body ??
+            (repasse
+                ? 'O organizador registrou a autorização.'
+                : 'Você recebeu uma mensagem.'),
         snackPosition: SnackPosition.TOP,
         duration: const Duration(seconds: 6),
         mainButton: TextButton(
           onPressed: () => unawaited(_abrir(m)),
-          child: const Text('Abrir conversa'),
+          child: Text(repasse ? 'Ver contrato' : 'Abrir conversa'),
         ),
       );
     });
@@ -50,22 +57,27 @@ class ChatNotificationsController extends GetxService {
       abrirPendente();
     });
     _pendente = await messaging.getInitialMessage();
-    if (PlataformaApp.ehWeb &&
-        Uri.base.queryParameters['push_screen'] == 'chat_cotacao') {
+    if (PlataformaApp.ehWeb) {
       final params = Uri.base.queryParameters;
-      _pendente = RemoteMessage(data: {
-        'screen': 'chat_cotacao',
-        'id_cotacao': params['push_cotacao'] ?? '',
-        'id_fornecedor': params['push_fornecedor'] ?? '',
-        'id_destinatario': params['push_destinatario'] ?? '',
-      });
+      final screen = params['push_screen'];
+      if (screen == 'chat_cotacao' || screen == 'autorizacao_repasse') {
+        _pendente = RemoteMessage(data: {
+          'screen': screen,
+          'id_cotacao': params['push_cotacao'] ?? '',
+          'id_fornecedor': params['push_fornecedor'] ?? '',
+          'id_orcamento': params['push_orcamento'] ?? '',
+          'id_destinatario': params['push_destinatario'] ?? '',
+        });
+      }
     }
   }
 
   bool _destinadoAoUsuario(RemoteMessage m) =>
       _usuario != null &&
       FirebaseAuth.instance.currentUser?.uid == _usuario!.idUsuario &&
-      m.data['screen'] == 'chat_cotacao' &&
+      (m.data['screen'] == 'chat_cotacao' ||
+          (m.data['screen'] == 'autorizacao_repasse' &&
+              _usuario!.tipo == 'F')) &&
       m.data['id_destinatario'] == _usuario!.idUsuario;
 
   Future<void> iniciar(Usuario usuario) async {
@@ -152,6 +164,17 @@ class ChatNotificationsController extends GetxService {
   Future<void> _abrir(RemoteMessage m) async {
     if (!_destinadoAoUsuario(m)) return;
     final usuario = _usuario!;
+    if (m.data['screen'] == 'autorizacao_repasse') {
+      final idOrcamento = m.data['id_orcamento']?.toString() ?? '';
+      if (idOrcamento.isEmpty || idOrcamento.contains('/')) return;
+      await Get.toNamed('/acompanhamento-fornecedor',
+          arguments: {
+            'idFornecedor': usuario.idUsuario,
+            'idOrcamento': idOrcamento,
+          },
+          preventDuplicates: false);
+      return;
+    }
     final idCotacao = m.data['id_cotacao']?.toString() ?? '';
     final idFornecedor = m.data['id_fornecedor']?.toString() ?? '';
     if (idCotacao.isEmpty ||
@@ -174,18 +197,21 @@ class ChatNotificationsController extends GetxService {
           .doc(idFornecedor)
           .get();
       if (!fornecedor.exists || !_destinadoAoUsuario(m)) return;
-      final data = cotacao.data()?['data_envio'];
+      final dadosCotacao = cotacao.data();
+      final data = dadosCotacao?['data_envio'] ?? fornecedor.data()?['data_envio'];
       await Get.to(() => ChatMensagensPage(
             idCotacao: idCotacao,
             idFornecedor: idFornecedor,
             nomeFornecedor: usuario.idUsuario == idFornecedor
-                ? (cotacao.data()?['nome_usuario_solicitante']?.toString() ??
+                ? (dadosCotacao?['nome_usuario_solicitante']?.toString() ??
                     'Cliente')
                 : (fornecedor.data()?['nome_fornecedor']?.toString() ??
                     'Fornecedor'),
-            dataSolicitacao: data is Timestamp
-                ? data.toDate()
-                : (m.sentTime ?? DateTime.now()),
+            dataSolicitacao: data is Timestamp ? data.toDate() : null,
+            categoriaPedido: dadosCotacao?['categoria_nome']?.toString(),
+            observacaoPedido:
+                (dadosCotacao?['observacao'] ?? dadosCotacao?['descricao'])
+                    ?.toString(),
             cotacoes: Get.find<CotacaoController>().gerenciarCotacoes,
             theme: Get.find<EventThemeController>(),
             usuario: usuario,

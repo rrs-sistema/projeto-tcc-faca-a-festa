@@ -10,8 +10,6 @@ import 'package:app_faca_festa/domain/repositories/cotacao_repository.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_cotacoes.dart';
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
 import 'package:app_faca_festa/presentation/modules/cotacao/controllers/cotacao_controller.dart';
-import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_controller.dart';
-import 'package:app_faca_festa/presentation/modules/orcamento/controllers/orcamento_controller.dart';
 
 abstract final class CotacaoBootstrap {
   static void register() {
@@ -55,20 +53,6 @@ abstract final class CotacaoBootstrap {
           appControllerResolver: () => Get.isRegistered<AppController>()
               ? Get.find<AppController>()
               : null,
-          fornecedorController: Get.isRegistered<FornecedorController>()
-              ? Get.find<FornecedorController>()
-              : null,
-          fornecedorControllerResolver: () =>
-              Get.isRegistered<FornecedorController>()
-                  ? Get.find<FornecedorController>()
-                  : null,
-          orcamentoController: Get.isRegistered<OrcamentoController>()
-              ? Get.find<OrcamentoController>()
-              : null,
-          orcamentoControllerResolver: () =>
-              Get.isRegistered<OrcamentoController>()
-                  ? Get.find<OrcamentoController>()
-                  : null,
         ),
         permanent: true,
       );

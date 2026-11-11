@@ -2,7 +2,7 @@ name: app_faca_festa
 description: "Faça a Festa — planeje eventos, convites e fornecedores."
 publish_to: 'none'
 
-version: 1.0.17+19
+version: 1.0.23+25
 
 environment:
   sdk: ^3.6.1

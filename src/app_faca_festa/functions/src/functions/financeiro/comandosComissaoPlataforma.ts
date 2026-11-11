@@ -531,26 +531,24 @@ export const consultarExtratoComissao = onCall(
     const filtroPagador = texto(data.idPagador ?? data.id_pagador) || null;
     const acesso = exigirLeituraExtratoComissao(perfil, filtroPagador);
 
-    let query: FirebaseFirestore.Query = admin.firestore().collection(COL_OBRIGACOES);
+    const db = admin.firestore();
+    let query: FirebaseFirestore.Query = db.collection(COL_OBRIGACOES);
     if (acesso.modo === "pagador") {
       query = query.where("id_pagador", "==", acesso.idPagador);
     }
     const idEvento = texto(data.idEvento ?? data.id_evento);
     if (idEvento) query = query.where("id_evento", "==", idEvento);
 
-    const snap = await query.limit(100).get();
-    const politicas =
-      acesso.modo === "admin"
-        ? (await admin.firestore().collection(COL_POLITICAS).limit(20).get()).docs.map(
-            (d) => ({ id: d.id, ...d.data() }),
-          )
-        : [];
+    const [snap, politicas] = await Promise.all([
+      query.limit(100).get(),
+      acesso.modo === "admin" ? db.collection(COL_POLITICAS).limit(20).get() : null,
+    ]);
 
     return {
       ok: true,
       modo: acesso.modo,
       obrigacoes: snap.docs.map((d) => ({ id: d.id, ...d.data(), revisaoComissao:d.updateTime.toDate().toISOString() })),
-      politicas,
+      politicas: politicas?.docs.map(d => ({ id: d.id, ...d.data() })) ?? [],
     };
   },
 );

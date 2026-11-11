@@ -25,12 +25,6 @@ extension _OrcamentoListaSection on _OrcamentoScreenState {
                 ? 'Pago'
                 : 'Pago ${_reais(totalPago)}';
 
-    final bool podeAvaliar = servicoContratado &&
-        orcamento.status == StatusOrcamento.fechado &&
-        totalPago >= custo &&
-        orcamento.idServicoFornecido != null &&
-        orcamento.idServicoFornecido!.isNotEmpty;
-
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
@@ -261,26 +255,6 @@ extension _OrcamentoListaSection on _OrcamentoScreenState {
                   ),
                 ],
               ),
-              if (!podeAvaliar && servicoContratado)
-                Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Icon(Icons.info_outline_rounded,
-                          size: 14, color: Colors.grey.shade500),
-                      const SizedBox(width: 4),
-                      Text(
-                        _mensagemMotivoNaoAvaliar(orcamento, totalPago),
-                        style: GoogleFonts.poppins(
-                          color: Colors.grey.shade500,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
             ],
           ),
         ),
@@ -290,23 +264,18 @@ extension _OrcamentoListaSection on _OrcamentoScreenState {
 
   Widget _gastoItem(
     BuildContext context, {
+    required Orcamento orcamento,
     String? idOrcamento,
     required String? idServico,
-    required String idFornecedor,
     required String? idGasto,
     required String nome,
     required double custo,
     required double pago,
     required EventThemeController themeController,
-    required AppController appController,
-    required EventoController eventoController,
-    required AvaliacaoServicoController avaliacaoController,
     required OrcamentoGastoController? gastoController,
   }) {
     final restante = (custo - pago).clamp(0.0, custo);
     final percentPago = (custo > 0) ? (pago / custo).clamp(0.0, 1.0) : 0.0;
-
-    final podeAvaliar = restante == 0 && idGasto != null && idOrcamento != null;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
@@ -440,37 +409,7 @@ extension _OrcamentoListaSection on _OrcamentoScreenState {
               ),
             ],
           ),
-          if (podeAvaliar)
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton.icon(
-                style: TextButton.styleFrom(
-                  minimumSize: const Size(0, 24),
-                  padding: EdgeInsets.zero,
-                ),
-                onPressed: () {
-                  _abrirDialogAvaliacaoServico(
-                    idServico: idServico ?? '',
-                    idFornecedor: idFornecedor,
-                    idOrcamento: idOrcamento,
-                    nomeServico: nome,
-                    appController: appController,
-                    eventoController: eventoController,
-                    avaliacaoController: avaliacaoController,
-                    themeController: themeController,
-                  );
-                },
-                icon: const Icon(Icons.star_rate_rounded,
-                    color: Colors.amber, size: 16),
-                label: Text(
-                  "Avaliar",
-                  style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 11,
-                      color: Colors.amber.shade700),
-                ),
-              ),
-            ),
+          _avaliacaoDoServico(orcamento, idServico),
         ],
       ),
     );

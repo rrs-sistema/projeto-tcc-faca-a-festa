@@ -85,17 +85,19 @@ export async function carregarContextoRepasse(db: Firestore, tx: Transaction, id
   const orcamento = snap.data()!;
   if (!orcamento.id_evento) throw new HttpsError("failed-precondition", "Contrato sem evento.");
   const idContrato = orcamento.contrato_financeiro?.id_contrato || idOrcamento;
-  const eventoSnap = await tx.get(db.collection("evento").doc(orcamento.id_evento));
+  const [eventoSnap, obrigacoes, casos, autorizacao] = await Promise.all([
+    tx.get(db.collection("evento").doc(orcamento.id_evento)),
+    tx.get(db.collection("plataforma_comissao_obrigacoes").where("id_contrato", "==", idContrato)),
+    tx.get(db.collection("plataforma_mediacao_casos").where("id_orcamento", "==", idOrcamento)),
+    tx.get(db.collection(COL_AUTORIZACOES).doc(idOrcamento)),
+  ]);
   if (!eventoSnap.exists) throw new HttpsError("not-found", "Evento não encontrado.");
   const evento = eventoSnap.data()!;
-  const obrigacoes = await tx.get(db.collection("plataforma_comissao_obrigacoes").where("id_contrato", "==", idContrato));
-  const casos = await tx.get(db.collection("plataforma_mediacao_casos").where("id_orcamento", "==", idOrcamento));
-  const autorizacao = await tx.get(db.collection(COL_AUTORIZACOES).doc(idOrcamento));
   const divisao = divisaoContrato(orcamento, obrigacoes.docs.map(d => ({ id_obrigacao: d.id, ...d.data() })));
   const assinatura = assinaturaContrato(idOrcamento, orcamento, divisao);
   const motivo = !divisao ? "Comissão do contrato ausente ou inconsistente: confira a política e a obrigação."
     : impedimentoRepasse({ orcamento, evento, casos: casos.docs.map(d => d.data()),
       autorizacao: autorizacao.data(), assinatura });
-  return { ref, orcamento, evento, divisao, assinatura, motivo, idContrato,
+  return { ref, orcamento, evento, divisao, assinatura, motivo, idContrato, autorizacao: autorizacao.data(),
     casos: casos.docs.map(d => ({ ...d.data(), id: d.id })) };
 }

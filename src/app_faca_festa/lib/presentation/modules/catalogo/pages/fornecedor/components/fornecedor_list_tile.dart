@@ -9,6 +9,7 @@ import 'package:get/get.dart';
 import 'package:app_faca_festa/core/utils/biblioteca.dart';
 import 'package:app_faca_festa/core/utils/no_sqflite_cache_manager.dart';
 import 'package:app_faca_festa/domain/entities/fornecedor.dart';
+import 'package:app_faca_festa/domain/entities/triagem_fornecedor_admin.dart';
 import 'package:app_faca_festa/presentation/modules/admin/controllers/admin_territorio_controller.dart';
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
 import 'package:app_faca_festa/presentation/modules/avaliacao/controllers/avaliacao_servico_controller.dart';
@@ -19,9 +20,22 @@ import 'package:app_faca_festa/presentation/modules/catalogo/controllers/subcate
 import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_controller.dart';
 import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_localizacao_controller.dart';
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/admin_theme.dart';
+import 'package:app_faca_festa/presentation/widgets/admin/admin_kit.dart';
 import './../../servico/servico_produto_list_screen.dart';
 import './territorio_atendimento_screen.dart';
 import './editar_fornecedor_cadastro_page.dart';
+
+enum _AcaoFornecedor {
+  editar,
+  whatsapp,
+  servicos,
+  territorio,
+  aprovar,
+  reprovar,
+  ativar,
+  desativar
+}
 
 class FornecedorListTile extends StatelessWidget {
   final Fornecedor fornecedor;
@@ -37,6 +51,9 @@ class FornecedorListTile extends StatelessWidget {
   final ServicoFotoController servicoFotoController;
   final bool isCelular;
   final Color primary;
+  final TriagemFornecedorAdmin? triagem;
+  final bool carregandoTriagem;
+  final VoidCallback? aoVoltarDaFicha;
 
   const FornecedorListTile({
     super.key,
@@ -53,44 +70,68 @@ class FornecedorListTile extends StatelessWidget {
     required this.servicoFotoController,
     required this.isCelular,
     required this.primary,
+    this.triagem,
+    this.carregandoTriagem = false,
+    this.aoVoltarDaFicha,
   });
 
   @override
   Widget build(BuildContext context) {
-    final ativo = fornecedor.ativo;
-    final aprovado = fornecedor.aptoParaOperar;
-    final telefoneLimpo = fornecedor.telefone.replaceAll(RegExp(r'[^0-9]'), '');
-    final linkWhatsapp =
-        'https://wa.me/55$telefoneLimpo?text=Olá, ${fornecedor.razaoSocial}! 👋\n'
-        'Sou administrador do Faça a Festa e gostaria de conversar sobre seus serviços.';
-
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 250),
-      margin: const EdgeInsets.only(bottom: 14),
-      decoration: BoxDecoration(
-        color: ativo ? Colors.white : Colors.grey.shade200,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          if (ativo)
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 3),
-            ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(8),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildBanner(),
-            const SizedBox(width: 14),
-            Expanded(
-              child: _buildInfo(context, linkWhatsapp, aprovado, ativo),
-            ),
-          ],
-        ),
+    final pendencias = TriagemFornecedorAdmin.pendenciasDe(
+        fornecedor, controller.servicosDoFornecedor(fornecedor));
+    final identidade =
+        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      _buildBanner(),
+      const SizedBox(width: 14),
+      Expanded(child: _buildInfo()),
+    ]);
+    final sinais = _buildSinais(pendencias);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: AdminCard(
+        padding: const EdgeInsets.all(14),
+        child:
+            Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          LayoutBuilder(builder: (context, constraints) {
+            if (constraints.maxWidth < 790 ||
+                MediaQuery.textScalerOf(context).scale(1) > 1.35) {
+              return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  spacing: 12,
+                  children: [identidade, sinais]);
+            }
+            return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                spacing: 20,
+                children: [
+                  Expanded(flex: 6, child: identidade),
+                  Expanded(flex: 5, child: sinais),
+                ]);
+          }),
+          const SizedBox(height: 10),
+          const Divider(color: AdminPalette.border),
+          Wrap(
+            spacing: 10,
+            runSpacing: 6,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              FilledButton.icon(
+                style: FilledButton.styleFrom(
+                    backgroundColor: primary, minimumSize: const Size(44, 44)),
+                onPressed: _idDocumento.isEmpty
+                    ? null
+                    : () async {
+                        await Get.toNamed('/admin/fornecedor-desempenho',
+                            arguments: _idDocumento);
+                        if (context.mounted) aoVoltarDaFicha?.call();
+                      },
+                icon: const Icon(Icons.analytics_outlined, size: 18),
+                label: const Text('Ver desempenho e histórico'),
+              ),
+              _menuAcoes(context),
+            ],
+          ),
+        ]),
       ),
     );
   }
@@ -129,298 +170,332 @@ class FornecedorListTile extends StatelessWidget {
         child: const Icon(Icons.image_rounded, color: Colors.white54, size: 32),
       );
 
-  Widget _buildInfo(
-      BuildContext context, String linkWhatsapp, bool aprovado, bool ativo) {
+  String get _nome => fornecedor.razaoSocial.trim().isEmpty
+      ? 'Fornecedor sem nome'
+      : fornecedor.razaoSocial.trim();
+
+  Widget _buildInfo() {
+    final ativo = fornecedor.ativo;
+    final aprovado = fornecedor.aptoParaOperar;
+    final cidade = controller.cidadeDoFornecedor(fornecedor);
+    final categorias = controller.nomesCategoriasDoFornecedor(fornecedor);
+    final descricao = fornecedor.descricao?.trim() ?? '';
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // 🔹 Nome e status
-        Text(
-          fornecedor.razaoSocial,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.w600,
-            fontSize: 16,
-            color: ativo ? Colors.black87 : Colors.grey.shade600,
-          ),
-        ),
-        const SizedBox(height: 6),
-        if (!ativo)
+        crossAxisAlignment: CrossAxisAlignment.start,
+        spacing: 6,
+        children: [
+          Text(_nome,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: AdminPalette.ink)),
           _statusChip(
-            label: 'Desativado',
-            color: Colors.red.shade700,
-            background: Colors.red.shade50,
-            icon: Icons.block_rounded,
-          )
-        else if (aprovado)
-          _statusChip(
-            label: 'Apto para operar',
-            color: Colors.green.shade700,
-            background: Colors.green.shade50,
-            icon: Icons.verified_rounded,
-          )
-        else
-          _statusChip(
-            label: 'Aguardando aprovação',
-            color: Colors.orange.shade800,
-            background: Colors.orange.shade50,
-            icon: Icons.pending_actions_rounded,
+            label: !ativo
+                ? 'Desativado'
+                : aprovado
+                    ? 'Apto para operar'
+                    : 'Aguardando aprovação',
+            color: !ativo
+                ? AdminPalette.danger
+                : aprovado
+                    ? AdminPalette.success
+                    : AdminPalette.warning,
+            icon: !ativo
+                ? Icons.block_rounded
+                : aprovado
+                    ? Icons.verified_outlined
+                    : Icons.pending_actions_outlined,
           ),
-        const SizedBox(height: 6),
+          Wrap(spacing: 6, runSpacing: 6, children: [
+            if (cidade.isNotEmpty)
+              _miniChip(Icons.location_on_outlined, cidade),
+            _miniChip(Icons.design_services_outlined,
+                '${controller.servicosDoFornecedor(fornecedor)} serviços ativos'),
+            _miniChip(Icons.calendar_today_outlined,
+                DateFormat('dd/MM/yyyy').format(fornecedor.dataCadastro)),
+            for (final categoria in categorias.take(3))
+              _miniChip(Icons.category_outlined, categoria),
+          ]),
+          if (descricao.isNotEmpty)
+            Text(descricao,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style:
+                    const TextStyle(fontSize: 13, color: AdminPalette.muted)),
+          if (fornecedor.email.trim().isNotEmpty)
+            _infoLine(Icons.email_outlined, fornecedor.email),
+          if (fornecedor.telefone.trim().isNotEmpty)
+            _infoLine(Icons.phone_outlined, fornecedor.telefone),
+        ]);
+  }
 
-        Wrap(
-          spacing: 8,
-          runSpacing: 6,
-          children: [
-            if (controller.cidadeDoFornecedor(fornecedor).isNotEmpty)
-              _miniChip(Icons.location_on_outlined,
-                  controller.cidadeDoFornecedor(fornecedor)),
-            _miniChip(
-              Icons.design_services_outlined,
-              '${controller.servicosDoFornecedor(fornecedor)} serviços',
-            ),
-            if (fornecedor.totalAvaliacoes > 0)
-              _miniChip(
-                Icons.star_rounded,
-                '${fornecedor.mediaAvaliacoes.toStringAsFixed(1)} (${fornecedor.totalAvaliacoes})',
-              ),
-            _miniChip(
-              Icons.calendar_today_outlined,
-              DateFormat('dd/MM/yyyy').format(fornecedor.dataCadastro),
-            ),
-            ...controller.nomesCategoriasDoFornecedor(fornecedor).take(3).map(
-                  (nome) => _miniChip(Icons.category_outlined, nome),
-                ),
-          ],
-        ),
-        const SizedBox(height: 6),
+  Widget _buildSinais(List<String> pendencias) {
+    final sinais = triagem;
+    final nota =
+        fornecedor.mediaAvaliacoes.toStringAsFixed(1).replaceAll('.', ',');
+    final total = fornecedor.totalAvaliacoes;
+    final casos = sinais?.casosAbertos ?? 0;
+    final vencidas = sinais?.cotacoesVencidas ?? 0;
+    final data = sinais?.eventoProximoEm;
+    final ate = sinais?.restricaoAte;
+    final medida = switch (sinais?.medida) {
+      'suspender' => 'Suspensão comercial',
+      'descredenciar' => 'Descredenciamento comercial',
+      _ => 'Restrição comercial',
+    };
 
-        // 🔹 Descrição
-        Text(
-          fornecedor.descricao?.isNotEmpty == true
-              ? fornecedor.descricao!
-              : 'Sem descrição',
-          style: GoogleFonts.poppins(
-            fontSize: 13,
-            color: Colors.grey.shade700,
-            height: 1.3,
-          ),
-        ),
-        const SizedBox(height: 6),
-
-        // 🔹 Contato
-        _infoLine(Icons.email_outlined, fornecedor.email),
-        const SizedBox(height: 4),
-        _infoLine(Icons.phone, fornecedor.telefone),
-        const SizedBox(height: 8),
-
-        if (!aprovado && ativo)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () => _confirmarAprovar(context),
-                icon: const Icon(Icons.check_circle_outline, size: 18),
-                label: Text(
-                  'Aprovar para operar',
-                  style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
-                ),
-                style: ElevatedButton.styleFrom(
-                  elevation: 0,
-                  backgroundColor: Colors.green.shade700,
-                  foregroundColor: Colors.white,
-                  iconColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                ),
-              ),
-            ),
-          ),
-
-        // 🔹 Ações
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Row(
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: AdminPalette.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AdminPalette.border),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            spacing: 7,
             children: [
-              const SizedBox(width: 8), // margem inicial opcional
+              const Text('Sinais para análise',
+                  style: TextStyle(
+                      fontWeight: FontWeight.w700, color: AdminPalette.ink)),
+              if (sinais?.comRestricao == true)
+                _sinal(
+                    Icons.shield_outlined,
+                    [
+                      medida,
+                      sinais?.servicoAfetado ?? 'Fornecedor inteiro',
+                      if (ate != null)
+                        'até ${DateFormat('dd/MM/yyyy HH:mm').format(ate.toLocal())}'
+                      else
+                        'prazo indeterminado',
+                    ].join(' · '),
+                    cor: AdminPalette.danger),
+              if (sinais != null) ...[
+                if (!sinais.comRestricao)
+                  _sinal(
+                      Icons.shield_outlined, 'Sem restrição comercial vigente'),
+                _sinal(
+                    Icons.fact_check_outlined,
+                    casos == 0 && !sinais.casosParciais
+                        ? 'Nenhum caso aberto'
+                        : [
+                            casos == 1
+                                ? '1 caso aberto'
+                                : '$casos casos abertos',
+                            if (sinais.casosCriticos > 0)
+                              '${sinais.casosCriticos} ${sinais.casosCriticos == 1 ? 'crítico' : 'críticos'}',
+                            if (sinais.semResponsavel > 0)
+                              '${sinais.semResponsavel} sem responsável',
+                            if (sinais.casosParciais) 'cobertura parcial',
+                          ].join(' · '),
+                    cor: sinais.casosCriticos > 0
+                        ? AdminPalette.danger
+                        : casos > 0
+                            ? AdminPalette.warning
+                            : AdminPalette.muted),
+                if (sinais.casoPrioritarioAtribuido)
+                  _sinal(
+                      Icons.person_outline,
+                      sinais.responsavel == null
+                          ? 'Responsável do caso prioritário atribuído'
+                          : 'Caso prioritário com ${sinais.responsavel}'),
+                if (data != null)
+                  _sinal(Icons.event_outlined,
+                      'Evento afetado em ${DateFormat('dd/MM/yyyy HH:mm').format(data.toLocal())}',
+                      cor: AdminPalette.warning),
+                _sinal(
+                    Icons.schedule_outlined,
+                    vencidas == 0 && !sinais.cotacoesParciais
+                        ? 'Nenhuma cotação vencida'
+                        : [
+                            vencidas == 1
+                                ? '1 cotação vencida aguardando fornecedor'
+                                : '$vencidas cotações vencidas aguardando fornecedor',
+                            if (sinais.cotacoesParciais) 'cobertura parcial',
+                          ].join(' · '),
+                    cor: vencidas > 0
+                        ? AdminPalette.warning
+                        : AdminPalette.muted),
+              ] else
+                _sinal(
+                    Icons.sync_rounded,
+                    carregandoTriagem
+                        ? 'Carregando casos, restrições e cotações…'
+                        : 'Dados operacionais indisponíveis'),
+              _sinal(
+                  Icons.star_outline_rounded,
+                  total > 0
+                      ? '$nota/5 · $total ${total == 1 ? 'avaliação verificada' : 'avaliações verificadas'}'
+                      : 'Sem avaliações verificadas'),
+              if (pendencias.isNotEmpty)
+                _sinal(Icons.info_outline, pendencias.join(' · '),
+                    cor: AdminPalette.warning),
+            ]),
+      ),
+    );
+  }
 
-              Obx(() => controller.podeEditarDadosFornecedor
-                  ? Padding(
-                      padding: const EdgeInsets.only(right: 10),
-                      child: OutlinedButton.icon(
-                        onPressed: () async {
-                          final salvo = await mostrarEditarFornecedorAdmin(
-                            context: context,
-                            idFornecedor: _idDocumento,
-                            controller: controller,
-                            categorias: categoriaController,
-                            subcategorias: subcategoriaController,
-                            servicos: servicoProdutoController,
-                          );
-                          if (salvo == true &&
-                              context.mounted &&
-                              controller.podeEditarDadosFornecedor) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                  content:
-                                      Text('Dados do fornecedor atualizados.')),
-                            );
-                          }
-                        },
-                        style: OutlinedButton.styleFrom(
-                            foregroundColor: primary,
-                            iconColor: primary,
-                            minimumSize: const Size(48, 48)),
-                        icon: const Icon(Icons.edit_outlined, size: 18),
-                        label: const Text('Editar dados'),
-                      ),
-                    )
-                  : const SizedBox.shrink()),
+  Widget _sinal(IconData icone, String texto,
+          {Color cor = AdminPalette.muted}) =>
+      Row(crossAxisAlignment: CrossAxisAlignment.start, spacing: 8, children: [
+        Icon(icone, size: 16, color: cor),
+        Expanded(
+            child: Text(texto,
+                style: TextStyle(
+                  fontSize: 12,
+                  height: 1.4,
+                  color: cor,
+                  fontWeight: cor == AdminPalette.muted
+                      ? FontWeight.w500
+                      : FontWeight.w600,
+                ))),
+      ]);
 
-              _actionButton(
-                icon: FontAwesomeIcons.whatsapp,
-                label: 'WhatsApp',
-                color: Colors.green.shade600,
-                bgColor: Colors.green.shade50,
-                borderColor: Colors.green.shade400,
-                onTap: () async {
-                  final uri = Uri.parse(linkWhatsapp);
-                  if (await canLaunchUrl(uri)) {
-                    await launchUrl(uri, mode: LaunchMode.externalApplication);
-                  } else {
-                    Get.snackbar(
-                      'Ops!',
-                      'Não foi possível abrir o WhatsApp.',
-                      backgroundColor: Colors.orange.shade400,
-                      colorText: Colors.white,
-                      snackPosition: SnackPosition.TOP,
-                    );
-                  }
-                },
-              ),
-              const SizedBox(width: 10),
-              _actionButton(
-                icon: Icons.design_services_outlined,
-                label: 'Serviços',
-                color: Colors.indigo.shade700,
-                bgColor: Colors.indigo.shade50,
-                borderColor: Colors.indigo.shade300,
-                onTap: () async {
-                  final servicoProdutoController =
-                      this.servicoProdutoController;
-                  await servicoProdutoController.toggleListenerFornecedor(
-                      idFornecedor: fornecedor.idFornecedor);
-
-                  Get.to(() => ServicoProdutoListScreen(
-                        fornecedorId: fornecedor.idFornecedor,
-                        servicoController: servicoProdutoController,
-                        fotoController: servicoFotoController,
-                        fornecedorController: controller,
-                        appController: appController,
-                        categoriaController: categoriaController,
-                        subcategoriaController: subcategoriaController,
-                        avaliacaoController: avaliacaoController,
-                        theme: themeController,
-                      ));
-                },
-              ),
-
-              const SizedBox(width: 10),
-
-              if (aprovado) ...[
-                _actionButton(
-                  icon: Icons.cancel_outlined,
-                  label: 'Reprovar',
-                  color: Colors.deepOrange,
-                  bgColor: Colors.orange.shade50,
-                  borderColor: Colors.orange.shade300,
-                  onTap: () => _confirmarReprovar(context),
-                ),
-                const SizedBox(width: 10),
-              ],
-
-              if (ativo)
-                _actionButton(
-                  icon: Icons.lock_outline,
-                  label: 'Desativar',
-                  color: Colors.redAccent,
-                  bgColor: Colors.red.shade50,
-                  borderColor: Colors.red.shade300,
-                  onTap: () => Biblioteca.showConfirmDialog(
-                    context,
-                    title: 'Desativar fornecedor!',
-                    message:
-                        'Tem certeza que deseja desativar ${fornecedor.razaoSocial}?',
-                    confirmLabel: 'Desativar',
-                    color: Colors.red,
-                    onConfirm: () async {
-                      await controller
-                          .desativarFornecedor(fornecedor.idFornecedor);
-                      Get.snackbar('Fornecedor desativado',
-                          'O fornecedor foi desativado com sucesso.',
-                          backgroundColor: Colors.redAccent,
-                          colorText: Colors.white);
-                      return true;
-                    },
-                  ),
-                )
-              else
-                _actionButton(
-                  icon: Icons.lock_open_outlined,
-                  label: 'Ativar',
-                  color: Colors.green.shade800,
-                  bgColor: Colors.green.shade50,
-                  borderColor: Colors.green.shade400,
-                  onTap: () => Biblioteca.showConfirmDialog(
-                    context,
-                    title: 'Ativar fornecedor!',
-                    message:
-                        'Deseja reativar o fornecedor ${fornecedor.razaoSocial}?',
-                    confirmLabel: 'Ativar',
-                    color: Colors.green,
-                    onConfirm: () async {
-                      await controller
-                          .ativarFornecedor(fornecedor.idFornecedor);
-                      Get.snackbar('Fornecedor ativado',
-                          'O fornecedor foi reativado com sucesso.',
-                          backgroundColor: Colors.green.shade700,
-                          colorText: Colors.white);
-                      return true;
-                    },
-                  ),
-                ),
-              const SizedBox(width: 8),
-
-              // 🔹 Adicionar Território
-              _actionButton(
-                icon: Icons.map_outlined,
-                label: 'Território',
-                color: Colors.teal.shade700,
-                bgColor: Colors.teal.shade50,
-                borderColor: Colors.teal.shade300,
-                onTap: () async {
-                  final territorio = localizacaoController
-                      .territoriosFornecedores
-                      .firstWhereOrNull(
-                          (t) => t.idFornecedor == fornecedor.idFornecedor);
-                  await showAddTerritorioBottomSheet(
-                    context,
-                    fornecedor.idFornecedor,
-                    theme: themeController,
-                    controller: adminTerritorioController,
-                    existente: territorio,
-                  );
-                },
-              ),
-              const SizedBox(width: 8),
-            ],
+  Widget _menuAcoes(BuildContext context) => Obx(() {
+        final podeEditar = controller.podeEditarDadosFornecedor;
+        return PopupMenuButton<_AcaoFornecedor>(
+          tooltip: 'Mais ações',
+          onSelected: (acao) => _executarAcao(context, acao),
+          itemBuilder: (_) => [
+            if (podeEditar)
+              _itemMenu(
+                  _AcaoFornecedor.editar, 'Editar dados', Icons.edit_outlined),
+            if (fornecedor.telefone
+                .replaceAll(RegExp(r'[^0-9]'), '')
+                .isNotEmpty)
+              _itemMenu(_AcaoFornecedor.whatsapp, 'WhatsApp',
+                  FontAwesomeIcons.whatsapp),
+            _itemMenu(_AcaoFornecedor.servicos, 'Serviços',
+                Icons.design_services_outlined),
+            _itemMenu(
+                _AcaoFornecedor.territorio, 'Território', Icons.map_outlined),
+            const PopupMenuDivider(),
+            if (fornecedor.ativo && !fornecedor.aptoParaOperar)
+              _itemMenu(_AcaoFornecedor.aprovar, 'Aprovar para operar',
+                  Icons.verified_outlined),
+            if (fornecedor.aptoParaOperar)
+              _itemMenu(
+                  _AcaoFornecedor.reprovar, 'Reprovar', Icons.cancel_outlined),
+            _itemMenu(
+                fornecedor.ativo
+                    ? _AcaoFornecedor.desativar
+                    : _AcaoFornecedor.ativar,
+                fornecedor.ativo ? 'Desativar' : 'Ativar',
+                fornecedor.ativo
+                    ? Icons.lock_outline
+                    : Icons.lock_open_outlined),
+          ],
+          child: const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+            child: Row(mainAxisSize: MainAxisSize.min, spacing: 6, children: [
+              Icon(Icons.more_horiz_rounded,
+                  size: 20, color: AdminPalette.primary),
+              Text('Mais ações',
+                  style: TextStyle(
+                      color: AdminPalette.primary,
+                      fontWeight: FontWeight.w600)),
+            ]),
           ),
-        ),
-      ],
+        );
+      });
+
+  PopupMenuItem<_AcaoFornecedor> _itemMenu(
+          _AcaoFornecedor acao, String texto, IconData icone) =>
+      PopupMenuItem(
+          value: acao,
+          child: Row(spacing: 10, children: [
+            Icon(icone, size: 18, color: primary),
+            Expanded(child: Text(texto)),
+          ]));
+
+  Future<void> _executarAcao(BuildContext context, _AcaoFornecedor acao) async {
+    switch (acao) {
+      case _AcaoFornecedor.editar:
+        if (!controller.podeEditarDadosFornecedor) return;
+        final salvo = await mostrarEditarFornecedorAdmin(
+          context: context,
+          idFornecedor: _idDocumento,
+          controller: controller,
+          categorias: categoriaController,
+          subcategorias: subcategoriaController,
+          servicos: servicoProdutoController,
+        );
+        if (salvo == true &&
+            context.mounted &&
+            controller.podeEditarDadosFornecedor) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Dados do fornecedor atualizados.')),
+          );
+        }
+      case _AcaoFornecedor.whatsapp:
+        final telefone = fornecedor.telefone.replaceAll(RegExp(r'[^0-9]'), '');
+        final uri = Uri.https('wa.me', '/55$telefone', {
+          'text':
+              'Olá, $_nome! Sou administrador do Faça a Festa e gostaria de conversar sobre seus serviços.',
+        });
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+        } else {
+          Get.snackbar(
+              'WhatsApp indisponível', 'Não foi possível abrir o WhatsApp.');
+        }
+      case _AcaoFornecedor.servicos:
+        await servicoProdutoController.toggleListenerFornecedor(
+            idFornecedor: _idDocumento);
+        if (!context.mounted) return;
+        await Get.to(() => ServicoProdutoListScreen(
+              fornecedorId: _idDocumento,
+              servicoController: servicoProdutoController,
+              fotoController: servicoFotoController,
+              fornecedorController: controller,
+              appController: appController,
+              categoriaController: categoriaController,
+              subcategoriaController: subcategoriaController,
+              avaliacaoController: avaliacaoController,
+              theme: themeController,
+            ));
+      case _AcaoFornecedor.territorio:
+        final territorio = localizacaoController.territoriosFornecedores
+            .firstWhereOrNull((t) => t.idFornecedor == _idDocumento);
+        await showAddTerritorioBottomSheet(context, _idDocumento,
+            theme: themeController,
+            controller: adminTerritorioController,
+            existente: territorio);
+      case _AcaoFornecedor.aprovar:
+        await _confirmarAprovar(context);
+      case _AcaoFornecedor.reprovar:
+        await _confirmarReprovar(context);
+      case _AcaoFornecedor.desativar:
+        await _confirmarAtividade(context, false);
+      case _AcaoFornecedor.ativar:
+        await _confirmarAtividade(context, true);
+    }
+  }
+
+  Future<void> _confirmarAtividade(BuildContext context, bool ativar) {
+    final acao = ativar ? 'Ativar' : 'Desativar';
+    return Biblioteca.showConfirmDialog(
+      context,
+      title: '$acao fornecedor',
+      message: 'Deseja ${acao.toLowerCase()} $_nome?',
+      confirmLabel: acao,
+      color: ativar ? AdminPalette.success : AdminPalette.danger,
+      onConfirm: () async {
+        if (ativar) {
+          await controller.ativarFornecedor(_idDocumento);
+        } else {
+          await controller.desativarFornecedor(_idDocumento);
+        }
+        Get.snackbar('Fornecedor ${ativar ? 'ativado' : 'desativado'}',
+            'Situação cadastral atualizada.',
+            backgroundColor:
+                ativar ? AdminPalette.success : AdminPalette.danger,
+            colorText: Colors.white);
+        return true;
+      },
     );
   }
 
@@ -437,11 +512,12 @@ class FornecedorListTile extends StatelessWidget {
         children: [
           Icon(icon, size: 12, color: primary),
           const SizedBox(width: 4),
-          Text(
+          Flexible(
+              child: Text(
             text,
             style:
                 GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w600),
-          ),
+          )),
         ],
       ),
     );
@@ -467,13 +543,12 @@ class FornecedorListTile extends StatelessWidget {
   Widget _statusChip({
     required String label,
     required Color color,
-    required Color background,
     required IconData icon,
   }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: background,
+        color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(999),
         border: Border.all(color: color.withValues(alpha: 0.25)),
       ),
@@ -482,14 +557,15 @@ class FornecedorListTile extends StatelessWidget {
         children: [
           Icon(icon, color: color, size: 14),
           const SizedBox(width: 4),
-          Text(
+          Flexible(
+              child: Text(
             label,
             style: GoogleFonts.poppins(
               fontSize: 11,
               fontWeight: FontWeight.w700,
               color: color,
             ),
-          ),
+          )),
         ],
       ),
     );
@@ -555,49 +631,5 @@ class FornecedorListTile extends StatelessWidget {
     );
   }
 
-  String get _idDocumento {
-    final idFornecedor = fornecedor.idFornecedor.trim();
-    if (idFornecedor.isNotEmpty) return idFornecedor;
-    return fornecedor.idUsuario.trim();
-  }
-
-  Widget _actionButton({
-    required IconData icon,
-    required String label,
-    required Color color,
-    required Color bgColor,
-    required Color borderColor,
-    required VoidCallback onTap,
-  }) {
-    return Tooltip(
-      message: label,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(30),
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          decoration: BoxDecoration(
-            color: bgColor,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: borderColor, width: 1),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, color: color, size: 16),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  color: color,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+  String get _idDocumento => TriagemFornecedorAdmin.idDe(fornecedor);
 }

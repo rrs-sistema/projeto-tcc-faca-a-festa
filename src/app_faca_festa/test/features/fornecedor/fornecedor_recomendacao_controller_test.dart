@@ -1,10 +1,14 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_recomendacao_controller.dart';
 import 'package:app_faca_festa/domain/entities/fornecedor_recomendacao.dart';
 import 'package:app_faca_festa/domain/repositories/fornecedor_recomendacao_repository.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_fornecedor_recomendacoes.dart';
+import 'package:app_faca_festa/presentation/modules/fornecedor/widgets/fornecedor_recomendado_card.dart';
+import 'package:app_faca_festa/presentation/modules/fornecedor/widgets/fornecedor_recomendacoes_section.dart';
 
 void main() {
   late _FornecedorRecomendacaoRepositoryFake repository;
@@ -21,6 +25,95 @@ void main() {
   tearDown(() {
     Get.reset();
   });
+
+  for (final escala in [1.0, 2.0]) {
+    testWidgets(
+        'ações das recomendações cabem em 320 px com texto a ${escala}x',
+        (tester) async {
+      final carregarFontes = GoogleFonts.config.allowRuntimeFetching;
+      GoogleFonts.config.allowRuntimeFetching = false;
+      addTearDown(
+          () => GoogleFonts.config.allowRuntimeFetching = carregarFontes);
+      await tester.binding.setSurfaceSize(const Size(320, 568));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      repository.salvas = [
+        _recomendacao(id: 'rec-1', score: 93).copyWith(
+          nomeFornecedor: 'Som e Luz MegaMix',
+          mediaAvaliacoes: 0,
+          totalAvaliacoes: 0,
+          distanciaKm: 2.5,
+          motivoPrincipal:
+              'Atende eventos do tipo selecionado com estrutura de som e iluminação',
+          motivos: const [
+            'Possui catálogo com opções de iluminação para vários espaços',
+            'Atende a região do evento',
+          ],
+        ),
+        _recomendacao(id: 'rec-2', idFornecedor: 'fornecedor-2'),
+      ];
+      final acoes = <String>[];
+      await tester.pumpWidget(MaterialApp(
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context)
+              .copyWith(textScaler: TextScaler.linear(escala)),
+          child: child!,
+        ),
+        home: Scaffold(
+          body: ListView(
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            children: [
+              FornecedorRecomendacoesSection(
+                idEvento: 'evento-1',
+                idUsuario: 'usuario-1',
+                tipoEventoNome: 'Aniversário',
+                cidade: 'Curitiba',
+                controller: controller,
+                margin: EdgeInsets.zero,
+                onPedirOrcamento: (item) => acoes.add('orçamento ${item.id}'),
+                onReservar: (item) => acoes.add('reserva ${item.id}'),
+              ),
+              const Text('Seus pedidos'),
+            ],
+          ),
+        ),
+      ));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+
+      final cartoes = find.byType(FornecedorRecomendadoCard);
+      final segundoFornecedor = find.text('Fornecedor fornecedor-2');
+      expect(segundoFornecedor.hitTestable(), findsNothing);
+      await tester.dragFrom(
+        tester.getTopLeft(cartoes.first) + const Offset(100, 30),
+        const Offset(-280, 0),
+      );
+      await tester.pumpAndSettle();
+      expect(segundoFornecedor.hitTestable(), findsOneWidget);
+
+      for (final acao in ['Orçamento', 'Reservar']) {
+        final botao =
+            find.descendant(of: cartoes.first, matching: find.text(acao));
+        await tester.ensureVisible(botao);
+        await tester.pumpAndSettle();
+        expect(botao.hitTestable(), findsOneWidget);
+        await tester.tap(botao);
+        await tester.pumpAndSettle();
+      }
+      final dispensar = find.descendant(
+        of: cartoes.first,
+        matching: find.byTooltip('Não recomendar'),
+      );
+      await tester.ensureVisible(dispensar);
+      await tester.pumpAndSettle();
+      await tester.tap(dispensar);
+      await tester.pumpAndSettle();
+      expect(acoes, ['orçamento rec-1', 'reserva rec-1']);
+      expect(repository.interacoes.last.acao, 'dispensou');
+      expect(cartoes, findsOneWidget);
+      expect(segundoFornecedor, findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  }
 
   test('loads saved recommendations through the use case', () async {
     repository.salvas = [

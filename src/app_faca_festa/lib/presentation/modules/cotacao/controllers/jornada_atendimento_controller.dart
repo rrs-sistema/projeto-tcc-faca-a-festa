@@ -104,6 +104,7 @@ class JornadaAtendimentoController extends GetxController {
       {int? sessao}) async {
     if ((sessao != null && !ativa(sessao)) ||
         dados.value == null ||
+        carregando.value ||
         enviando.value ||
         pendente.value != null) {
       erro.value =
@@ -159,7 +160,11 @@ class JornadaAtendimentoController extends GetxController {
           'Abra o atendimento original para reconciliar o envio pendente.';
       return false;
     }
-    if (op == null || _uid == null || enviando.value || !ativa(_g)) {
+    if (op == null ||
+        _uid == null ||
+        carregando.value ||
+        enviando.value ||
+        !ativa(_g)) {
       return false;
     }
     final g = _g, uid = _uid!;
@@ -172,23 +177,27 @@ class JornadaAtendimentoController extends GetxController {
   }
 
   Future<bool> _executar(Map<String, dynamic> op, String uid, int g) async {
+    String? funcao;
     try {
       final p = Map<String, dynamic>.from(op['pedido'] as Map);
+      funcao = p['funcao'] as String;
       if (![
         'responderCotacao',
         'fecharCotacao',
         'movimentarComercialJornadaFn',
         'executarJornadaAtendimentoFn',
         'abrirCasoMediacaoParte'
-      ].contains(p['funcao'])) {
+      ].contains(funcao)) {
         throw StateError('Comando inválido.');
       }
       await gateway.chamar(
-          p['funcao'] as String, Map<String, dynamic>.from(p['dados'] as Map));
+          funcao, Map<String, dynamic>.from(p['dados'] as Map));
       await store.limpar(uid, chave: op['chave'] as String);
       if (!ativa(g)) return false;
       pendente.value = null;
-      mensagem.value = 'Ação registrada com histórico.';
+      mensagem.value = funcao == 'fecharCotacao'
+          ? 'Contrato criado. Acesse o financeiro deste contrato para declarar o pagamento.'
+          : 'Ação registrada com histórico.';
       await carregar();
       return true;
     } catch (e) {
@@ -205,6 +214,12 @@ class JornadaAtendimentoController extends GetxController {
       if (definitivo) await store.limpar(uid, chave: op['chave'] as String);
       if (ativa(g)) {
         if (definitivo) pendente.value = null;
+        if (funcao == 'fecharCotacao' &&
+            e is FirebaseFunctionsException &&
+            ['aborted', 'failed-precondition'].contains(e.code)) {
+          await carregar();
+          if (!ativa(g) || dados.value == null) return false;
+        }
         erro.value = definitivo
             ? (e.message ?? 'Recarregue antes de confirmar.')
             : 'Resultado desconhecido; retome o mesmo envio antes de criar outro.';

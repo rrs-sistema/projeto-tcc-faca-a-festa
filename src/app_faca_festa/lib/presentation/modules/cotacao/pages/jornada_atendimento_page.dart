@@ -11,6 +11,7 @@ import 'package:intl/intl.dart';
 import 'package:app_faca_festa/core/utils/numeric_input.dart';
 import 'package:app_faca_festa/data/datasources/remote/jornada_atendimento_remote.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_cotacoes.dart';
+import 'package:app_faca_festa/domain/entities/financeiro/mediacao_operacional.dart';
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import 'package:app_faca_festa/presentation/modules/fornecedor/pages/chat/chat_mensagens_page.dart';
@@ -91,6 +92,11 @@ class _JornadaAtendimentoPageState extends State<JornadaAtendimentoPage> {
                         final fechado = d != null &&
                             ['ganho', 'perdido', 'cancelado', 'recusado']
                                 .contains(d['estadoComercial']);
+                        final propostaExpirada =
+                            !fechado && p != null && c.propostaExpirada;
+                        final propostaSemVersao = p == null &&
+                            ['proposta_enviada', 'negociacao']
+                                .contains(d?['estadoComercial']);
                         return Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
@@ -108,7 +114,8 @@ class _JornadaAtendimentoPageState extends State<JornadaAtendimentoPage> {
                                     Align(
                                         alignment: Alignment.centerLeft,
                                         child: OutlinedButton.icon(
-                                            onPressed: carregando
+                                            onPressed:
+                                                carregando || c.enviando.value
                                                 ? null
                                                 : () => c.carregar(),
                                             icon: const Icon(
@@ -160,7 +167,8 @@ class _JornadaAtendimentoPageState extends State<JornadaAtendimentoPage> {
                                           const Text(
                                               'Envio pendente. Retomar reconcilia a operação original, sem criar outra.'),
                                           TextButton(
-                                              onPressed: c.enviando.value
+                                              onPressed: c.enviando.value ||
+                                                      carregando
                                                   ? null
                                                   : () {
                                                       if (c
@@ -187,7 +195,20 @@ class _JornadaAtendimentoPageState extends State<JornadaAtendimentoPage> {
                               if (c.enviando.value)
                                 const LinearProgressIndicator(),
                               if (d != null) ...[
-                                _proximoPasso(d),
+                                if (propostaExpirada || propostaSemVersao)
+                                  Padding(
+                                    padding: const EdgeInsets.only(bottom: 16),
+                                    child: OperacaoAviso(
+                                      titulo: propostaExpirada
+                                          ? 'Proposta expirada'
+                                          : 'Proposta sem versão para aceite',
+                                      texto: c.fornecedor
+                                          ? 'Revise as condições e envie uma nova proposta com validade futura.'
+                                          : 'Combine a atualização pelo chat com o fornecedor. Quando ele enviar a nova versão, toque em Atualizar jornada.',
+                                    ),
+                                  )
+                                else
+                                  _proximoPasso(d),
                                 Wrap(spacing: 8, runSpacing: 8, children: [
                                   _botao(
                                       d['chatAberto'] == true
@@ -209,10 +230,10 @@ class _JornadaAtendimentoPageState extends State<JornadaAtendimentoPage> {
                                   if (!fechado &&
                                       !c.fornecedor &&
                                       p != null &&
-                                      !c.propostaExpirada)
+                                      !propostaExpirada)
                                     _botao(
                                         'Revisar e contratar versão ${p['versao']}',
-                                        () => _contratar(p)),
+                                        () => _contratar(p, d['evento'] as Map)),
                                   if (!fechado && c.fornecedor)
                                     _botao('Registrar perda/recusa',
                                         () => _encerrar()),
@@ -254,13 +275,12 @@ class _JornadaAtendimentoPageState extends State<JornadaAtendimentoPage> {
                                       _botao('Contestar entrega',
                                           () => _executar('contestar'))
                                     ],
-                                    _botao('Solicitar alteração/cancelamento',
+                                    _botao('Relatar problema ou pedir alteração',
                                         () => _mediar()),
                                   ],
                                 ]),
                                 const SizedBox(height: 16),
                                 _bloco('Etapa do atendimento', [
-                                  const SizedBox(height: 8),
                                   Wrap(spacing: 10, runSpacing: 10, children: [
                                     _etapa(
                                         Icons.handshake_outlined,
@@ -272,76 +292,16 @@ class _JornadaAtendimentoPageState extends State<JornadaAtendimentoPage> {
                                             d['estadoExecucao'], c.contratada),
                                         const Key('estado-execucao')),
                                   ]),
-                                  if (!c.contratada)
-                                    const Text(
-                                        'A prestação do serviço começa após a contratação.'),
-                                  if (d['aviso'] != null)
+                                  if (d['aviso'] != null) ...[
+                                    const SizedBox(height: 8),
                                     Text(d['aviso'] as String),
+                                  ],
                                 ]),
-                                _bloco('Sobre o pedido', [
-                                  _detalhe(
-                                      Icons.person_outline,
-                                      'Cliente',
-                                      (d['cliente'] as Map)['nome']
-                                              ?.toString() ??
-                                          'Nome não informado'),
-                                  _detalhe(
-                                      Icons.calendar_today_outlined,
-                                      'Data do evento',
-                                      _data((d['evento'] as Map)['data'])),
-                                  _detalhe(
-                                      Icons.place_outlined,
-                                      'Local',
-                                      (d['evento'] as Map)['local']
-                                              ?.toString() ??
-                                          'A combinar'),
-                                  _detalhe(
-                                      Icons.description_outlined,
-                                      'O que o cliente precisa',
-                                      d['escopo']?.toString() ??
-                                          'Não informado'),
-                                  if (d['prazoAgendado'] != null)
-                                    _detalhe(
-                                        Icons.schedule,
-                                        'Preparação combinada',
-                                        _data(d['prazoAgendado'])),
-                                  if (d['motivo'] != null)
-                                    Text(
-                                        'Motivo de encerramento: ${_rotulo((d['motivo'] as Map)['codigo'])} · ${(d['motivo'] as Map)['descricao']}'),
-                                ]),
-                                if (p != null)
-                                  _bloco('Proposta versão ${p['versao']}', [
-                                    Text(
-                                        'Bruto: ${_reais(p['brutoCentavos'])} · Desconto: ${_reais(p['descontoCentavos'])}'),
-                                    Text(
-                                        'Preço proposto: ${_reais(p['liquidoCentavos'])}'),
-                                    Text('Validade: ${_data(p['validade'])}'),
-                                    Text(
-                                        'Prazo de entrega: ${_data(p['prazoEntrega'])}'),
-                                    Text('Condições: ${p['condicoes']}'),
-                                    Text('Escopo desta versão: ${p['escopo']}'),
-                                    Text(p['agenda'] == null
-                                        ? 'Sem intervalo: agenda pendente de definição'
-                                        : 'Intervalo da proposta (${p['agenda']['fuso']}): ${p['agenda']['janelas']}'),
-                                    for (final item
-                                        in p['itens'] as List? ?? [])
-                                      Text(
-                                          'Serviço: ${(item as Map)['nome']} · quantidade ${item['quantidade']}'),
-                                    if (c.propostaExpirada && !c.contratada)
-                                      const Text(
-                                          'Proposta expirada. O fornecedor deve emitir nova versão.'),
-                                  ]),
+                                _resumoPedido(d),
+                                if (p != null) _resumoProposta(p, d['escopo']),
                                 if (d['condicoesAceitas'] is Map)
-                                  _bloco('Condições aceitas e preservadas', [
-                                    Text(
-                                        'Versão ${(d['condicoesAceitas'] as Map)['versao']} · Preço ${_reais((d['condicoesAceitas'] as Map)['liquidoCentavos'])}'),
-                                    Text((d['condicoesAceitas']
-                                                as Map)['condicoes']
-                                            ?.toString() ??
-                                        ''),
-                                    const Text(
-                                        'Revisão após aceite exige solicitação explícita à mediação. O contrato e seus repasses não são reescritos pela conversa.'),
-                                  ]),
+                                  _condicoesContratadas(
+                                      d['condicoesAceitas'] as Map),
                                 if ((d['mediacoes'] as List).isNotEmpty)
                                   _bloco('Mediação existente', [
                                     for (final m in d['mediacoes'] as List)
@@ -349,27 +309,10 @@ class _JornadaAtendimentoPageState extends State<JornadaAtendimentoPage> {
                                           '${(m as Map)['id']} · ${m['estado']}')
                                   ]),
                                 const SizedBox(height: 16),
-                                ExpansionTile(
-                                    title: const Text('Versões da proposta'),
-                                    children: [
-                                      for (final raw in d['propostas'] as List)
-                                        ListTile(
-                                            title: Text(
-                                                'Versão ${(raw as Map)['versao']} · ${_reais(raw['liquidoCentavos'])}'),
-                                            subtitle: Text(
-                                                '${raw['escopo']}\n${raw['condicoes']} · válida até ${_data(raw['validade'])}'))
-                                    ]),
-                                ExpansionTile(
-                                    title: const Text(
-                                        'Histórico do atendimento e execução'),
-                                    children: [
-                                      for (final raw in d['historico'] as List)
-                                        ListTile(
-                                            title: Text(
-                                                '${_rotulo((raw as Map)['acao'])} → ${_rotulo(raw['estado'])}'),
-                                            subtitle: Text(
-                                                '${_data(raw['data'])} · autor ${raw['autorId']}'))
-                                    ]),
+                                _versoes(d),
+                                const SizedBox(height: 12),
+                                _historico(d),
+                                const SizedBox(height: 12),
                                 const ExpansionTile(
                                     title: Text('Entenda as etapas'),
                                     children: [
@@ -391,9 +334,309 @@ class _JornadaAtendimentoPageState extends State<JornadaAtendimentoPage> {
                               ],
                             ]);
                       }))))));
+
+  Widget _resumoPedido(Map dados) {
+    final evento = dados['evento'] as Map;
+    final cliente = dados['cliente'] as Map;
+    final motivo = dados['motivo'] as Map?;
+    final codigoMotivo = motivo?['codigo'];
+    final descricaoMotivo = motivo?['descricao']?.toString().trim() ?? '';
+    return _bloco('Sobre o pedido', [
+      _gradeResumo([
+        _detalhe(Icons.person_outline, 'Cliente',
+            cliente['nome']?.toString() ?? 'Nome não informado'),
+        _detalhe(Icons.calendar_today_outlined, 'Data do evento',
+            _data(evento['data'])),
+        _detalhe(Icons.place_outlined, 'Local',
+            evento['local']?.toString() ?? 'A combinar'),
+        if (dados['prazoAgendado'] != null)
+          _detalhe(Icons.schedule, 'Preparação combinada',
+              _data(dados['prazoAgendado'])),
+      ]),
+      const SizedBox(height: 12),
+      _detalhe(Icons.description_outlined, 'O que o cliente precisa',
+          dados['escopo']?.toString() ?? 'Não informado'),
+      if (motivo != null) ...[
+        const SizedBox(height: 12),
+        _campo('Motivo de encerramento', [
+          motivosJornada[codigoMotivo] ?? _rotulo(codigoMotivo),
+          if (descricaoMotivo.isNotEmpty) descricaoMotivo,
+        ].join(' · ')),
+      ],
+    ]);
+  }
+
+  Widget _resumoProposta(Map proposta, Object? escopoPedido) {
+    final tema = Theme.of(context);
+    final cor = tema.colorScheme.primary;
+    final desconto = proposta['descontoCentavos'] as num? ?? 0;
+    final escopo = proposta['escopo']?.toString().trim() ?? '';
+    final itens =
+        (proposta['itens'] as List?)?.whereType<Map>() ?? const <Map>[];
+    final agenda = proposta['agenda'] as Map?;
+    final janelas =
+        (agenda?['janelas'] as List?)?.whereType<Map>().toList() ?? [];
+    final fuso = agenda?['fuso']?.toString();
+    final tz.Location? localAgenda;
+    if (janelas.isNotEmpty && fuso != null) {
+      if (tz.timeZoneDatabase.locations.isEmpty) tzdata.initializeTimeZones();
+      localAgenda = tz.timeZoneDatabase.locations[fuso];
+    } else {
+      localAgenda = null;
+    }
+    String horario(Object? valor) {
+      final data = DateTime.tryParse(valor?.toString() ?? '');
+      if (data == null) return 'Não informado';
+      return DateFormat('dd/MM/yyyy HH:mm').format(localAgenda == null
+          ? data.toLocal()
+          : tz.TZDateTime.from(data, localAgenda));
+    }
+
+    return _bloco('Proposta versão ${proposta['versao']}', [
+      Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: cor.withValues(alpha: .06),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: _gradeResumo([
+          _campo('Preço proposto', _reais(proposta['liquidoCentavos']),
+              estiloValor: tema.textTheme.titleLarge
+                  ?.copyWith(color: cor, fontWeight: FontWeight.w700)),
+          _campo('Validade', _data(proposta['validade'])),
+          _campo('Condições',
+              proposta['condicoes']?.toString() ?? 'Não informadas'),
+          if (desconto > 0) ...[
+            _campo('Valor bruto', _reais(proposta['brutoCentavos'])),
+            _campo('Desconto', _reais(desconto)),
+          ],
+          if (proposta['prazoEntrega'] != null)
+            _campo('Prazo de entrega', _data(proposta['prazoEntrega'])),
+        ]),
+      ),
+      if (escopo.isNotEmpty && escopo != escopoPedido?.toString().trim()) ...[
+        const SizedBox(height: 12),
+        _campo('Escopo desta versão', escopo),
+      ],
+      if (itens.isNotEmpty) ...[
+        const SizedBox(height: 12),
+        Text('Serviços incluídos', style: tema.textTheme.titleSmall),
+        const SizedBox(height: 4),
+        for (final item in itens)
+          Text('${item['quantidade'] ?? 1} × ${item['nome'] ?? 'Serviço'}'),
+      ],
+      const SizedBox(height: 12),
+      if (janelas.isEmpty)
+        Text('Agenda a definir', style: tema.textTheme.bodySmall)
+      else ...[
+        Text(
+            localAgenda == null
+                ? 'Agenda da proposta · horário local'
+                : 'Agenda da proposta · ${fuso!.split('/').last.replaceAll('_', ' ')}',
+            style: tema.textTheme.titleSmall),
+        const SizedBox(height: 4),
+        for (final janela in janelas)
+          Text('${const {
+                'montagem': 'Montagem',
+                'execucao': 'Execução',
+                'retirada': 'Retirada',
+              }[janela['tipo']] ?? 'Horário combinado'} · ${horario(janela['inicio'])} até ${horario(janela['fim'])}'),
+      ],
+    ]);
+  }
+
+  Widget _gradeResumo(List<Widget> campos) => LayoutBuilder(
+        builder: (context, limites) {
+          const espaco = 12.0;
+          final escala = MediaQuery.textScalerOf(context).scale(14) / 14;
+          final colunas =
+              (limites.maxWidth / (150 * escala)).floor().clamp(1, 3);
+          final largura = (limites.maxWidth - espaco * (colunas - 1)) / colunas;
+          return Wrap(
+            spacing: espaco,
+            runSpacing: espaco,
+            children: [
+              for (final campo in campos)
+                SizedBox(width: largura, child: campo),
+            ],
+          );
+        },
+      );
+
+  Widget _condicoesContratadas(Map proposta) =>
+      _bloco('Condições contratadas', [
+        Wrap(spacing: 24, runSpacing: 12, children: [
+          _campo('Proposta', 'Versão ${proposta['versao']}'),
+          _campo('Valor contratado', _reais(proposta['liquidoCentavos'])),
+          _campo('Condições',
+              proposta['condicoes']?.toString() ?? 'Não informadas'),
+        ]),
+        const SizedBox(height: 12),
+        const Text(
+            'Para solicitar uma alteração após a contratação, abra uma mediação.'),
+      ]);
+
+  Widget _campo(String titulo, String valor, {TextStyle? estiloValor}) {
+    final tema = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(titulo,
+            style: tema.textTheme.labelMedium
+                ?.copyWith(color: tema.colorScheme.onSurfaceVariant)),
+        const SizedBox(height: 4),
+        Text(valor, style: estiloValor ?? tema.textTheme.bodyMedium),
+      ],
+    );
+  }
+
+  Widget _secaoRecolhivel(String titulo, IconData icone, List<Widget> itens) {
+    final tema = Theme.of(context);
+    return OperacaoSurface(
+      padding: 0,
+      child: ExpansionTile(
+        leading: Icon(icone, color: tema.colorScheme.primary),
+        title: Text(titulo,
+            style: tema.textTheme.titleMedium
+                ?.copyWith(fontWeight: FontWeight.w700)),
+        shape: const Border(),
+        collapsedShape: const Border(),
+        tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        childrenPadding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+        expandedCrossAxisAlignment: CrossAxisAlignment.stretch,
+        children: itens,
+      ),
+    );
+  }
+
+  Widget _versoes(Map dados) {
+    final versoes = (dados['propostas'] as List).cast<Map>();
+    final atual = (dados['proposta'] as Map?)?['versao'];
+    final contratada = (dados['condicoesAceitas'] as Map?)?['versao'];
+    return _secaoRecolhivel('Versões da proposta', Icons.description_outlined, [
+      if (versoes.isEmpty) const Text('Nenhuma versão registrada.'),
+      for (final proposta in versoes.reversed)
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: _versao(proposta, atual: atual, contratada: contratada),
+        ),
+    ]);
+  }
+
+  Widget _versao(Map proposta,
+      {required Object? atual, required Object? contratada}) {
+    final tema = Theme.of(context);
+    final numero = proposta['versao'];
+    final destaque =
+        numero != null && (numero == atual || numero == contratada);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: destaque
+            ? tema.colorScheme.primary.withValues(alpha: .05)
+            : tema.colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: destaque
+              ? tema.colorScheme.primary.withValues(alpha: .3)
+              : tema.colorScheme.outlineVariant,
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Wrap(
+              spacing: 12,
+              runSpacing: 4,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                Text('Versão $numero',
+                    style: tema.textTheme.titleMedium
+                        ?.copyWith(fontWeight: FontWeight.w700)),
+                if (destaque)
+                  Text(numero == contratada ? 'Contratada' : 'Mais recente',
+                      style: tema.textTheme.labelMedium?.copyWith(
+                          color: tema.colorScheme.primary,
+                          fontWeight: FontWeight.w700)),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(_reais(proposta['liquidoCentavos']),
+                style: tema.textTheme.titleLarge
+                    ?.copyWith(fontWeight: FontWeight.w700)),
+            const SizedBox(height: 12),
+            Wrap(spacing: 24, runSpacing: 12, children: [
+              _campo('Validade', _data(proposta['validade'])),
+              _campo('Condições',
+                  proposta['condicoes']?.toString() ?? 'Não informadas'),
+            ]),
+            if (proposta['escopo']?.toString().trim().isNotEmpty == true) ...[
+              const Divider(height: 24),
+              _campo('Escopo', proposta['escopo'].toString()),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _historico(Map dados) {
+    final registros = (dados['historico'] as List).cast<Map>().reversed;
+    final idCliente = (dados['cliente'] as Map)['id'];
+    final tema = Theme.of(context);
+    return _secaoRecolhivel(
+      'Histórico do atendimento e execução',
+      Icons.history_rounded,
+      [
+        if (registros.isEmpty) const Text('Nenhuma movimentação registrada.'),
+        for (final (indice, registro) in registros.indexed) ...[
+          if (indice > 0) const Divider(height: 16),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: Icon(Icons.circle_outlined,
+                size: 16, color: tema.colorScheme.primary),
+            title: Text(
+              switch (registro['acao']) {
+                'emitir_proposta' => 'Proposta enviada',
+                'negociar' => 'Negociação registrada',
+                'contratar' => 'Proposta contratada',
+                'perder' => 'Atendimento encerrado sem contratação',
+                'recusar' => 'Pedido recusado',
+                'cancelar' => 'Pedido cancelado',
+                'agendar' => 'Preparação agendada',
+                'iniciar' => 'Execução iniciada',
+                'informar_entrega' => 'Entrega informada',
+                'aceitar' => 'Entrega confirmada',
+                'contestar' => 'Entrega contestada',
+                'decisao_operador' => 'Decisão sobre a execução',
+                'resolver_mediacao' => 'Decisão da mediação registrada',
+                _ => 'Atualização registrada',
+              },
+              style: tema.textTheme.titleSmall
+                  ?.copyWith(fontWeight: FontWeight.w700),
+            ),
+            subtitle: Wrap(spacing: 12, runSpacing: 4, children: [
+              Text(_data(registro['data'])),
+              if (registro['autorId'] == widget.idFornecedor)
+                const Text('Fornecedor')
+              else if (idCliente != null && registro['autorId'] == idCliente)
+                const Text('Cliente'),
+              if (registro['versao'] != null)
+                Text('Versão ${registro['versao']}'),
+              if (const ['decisao_operador', 'resolver_mediacao']
+                  .contains(registro['acao']))
+                Text(_execucao(registro['estado'], true)),
+            ]),
+          ),
+        ],
+      ],
+    );
+  }
+
   Widget _bloco(String titulo, List<Widget> filhos) => Card(
       child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(16),
           child:
               Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             Text(titulo,
@@ -405,7 +648,7 @@ class _JornadaAtendimentoPageState extends State<JornadaAtendimentoPage> {
             ...filhos
           ])));
   Widget _etapa(IconData icon, String texto, Key key) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.primary.withValues(alpha: .05),
             borderRadius: BorderRadius.circular(12),
@@ -477,21 +720,12 @@ class _JornadaAtendimentoPageState extends State<JornadaAtendimentoPage> {
         ));
   }
 
-  Widget _detalhe(IconData icon, String label, String valor) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
-          const SizedBox(width: 12),
-          Expanded(
-              child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                Text(label, style: Theme.of(context).textTheme.bodySmall),
-                const SizedBox(height: 4),
-                Text(valor, style: Theme.of(context).textTheme.bodyLarge),
-              ])),
-        ]),
-      );
+  Widget _detalhe(IconData icon, String label, String valor) =>
+      Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Icon(icon, size: 18, color: Theme.of(context).colorScheme.primary),
+        const SizedBox(width: 8),
+        Expanded(child: _campo(label, valor)),
+      ]);
 
   Widget _botao(String label, VoidCallback f) {
     final bloqueado =
@@ -570,7 +804,7 @@ class _JornadaAtendimentoPageState extends State<JornadaAtendimentoPage> {
         sessao: g);
   }
 
-  Future<void> _contratar(Map p) async {
+  Future<void> _contratar(Map p, Map evento) async {
     final g = c.sessaoVersao,
         versao = p['versao'],
         assinatura = p['assinatura'];
@@ -583,7 +817,13 @@ class _JornadaAtendimentoPageState extends State<JornadaAtendimentoPage> {
                 title: Text('Aceitar exatamente a versão $versao?'),
                 content: SingleChildScrollView(
                     child: Text(
-                        'Preço: ${_reais(p['liquidoCentavos'])}\nEscopo: ${p['escopo']}\nCondições: ${p['condicoes']}\nValidade: ${_data(p['validade'])}\nAgenda desta versão: ${p['agenda'] ?? 'Sem intervalo; capacidade não reservada'}\nContratar não confirma entrega ou recebimento do fornecedor.')),
+                        'Data do evento: ${_data(evento['data'])}\n'
+                        'Preço: ${_reais(p['liquidoCentavos'])}\n'
+                        'Escopo: ${p['escopo']}\n'
+                        'Condições: ${p['condicoes']}\n'
+                        'Validade: ${_data(p['validade'])}\n'
+                        'Agenda desta versão: ${p['agenda'] ?? 'Sem intervalo; capacidade não reservada'}\n'
+                        'A entrega e o pagamento são registrados em etapas próprias.')),
                 actions: [
                   TextButton(
                       onPressed: () => Navigator.pop(ctx, false),
@@ -699,8 +939,12 @@ class _JornadaAtendimentoPageState extends State<JornadaAtendimentoPage> {
     await Get.to(() => ChatMensagensPage(
         idCotacao: widget.idCotacao,
         idFornecedor: widget.idFornecedor,
-        nomeFornecedor: conversa.nomeSolicitante,
+        nomeFornecedor: usuario.idUsuario == widget.idFornecedor
+            ? conversa.nomeSolicitante
+            : 'Fornecedor',
         dataSolicitacao: conversa.dataSolicitacao,
+        categoriaPedido: conversa.categoria,
+        observacaoPedido: conversa.observacaoPedido,
         cotacoes: cotacoes,
         theme: Get.find<EventThemeController>(),
         usuario: usuario));
@@ -1079,19 +1323,22 @@ class _JornadaFormState extends State<_JornadaForm> {
                                   'Solicitação formal à mediação existente. Não altera preço, contrato, comissão ou repasses automaticamente.'),
                               DropdownButtonFormField<String>(
                                   value: categoria,
+                                  isExpanded: true,
                                   decoration: const InputDecoration(
                                       labelText: 'Categoria'),
-                                  items: const [
-                                    DropdownMenuItem(
+                                  items: [
+                                    const DropdownMenuItem(
                                         value: 'outro',
                                         child: Text(
                                             'Alteração de escopo/condições')),
-                                    DropdownMenuItem(
+                                    const DropdownMenuItem(
                                         value: 'cancelamento_solicitado',
                                         child: Text('Cancelamento solicitado')),
-                                    DropdownMenuItem(
+                                    const DropdownMenuItem(
                                         value: 'divergencia_servico',
-                                        child: Text('Divergência na entrega'))
+                                        child: Text('Divergência na entrega')),
+                                    for (final item in tiposIncidenteFornecedor.entries)
+                                      DropdownMenuItem(value: item.key, child: Text(item.value)),
                                   ],
                                   onChanged: (v) =>
                                       setState(() => categoria = v!)),

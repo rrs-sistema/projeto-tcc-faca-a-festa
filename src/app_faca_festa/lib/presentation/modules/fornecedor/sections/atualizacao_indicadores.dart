@@ -21,9 +21,13 @@ class AtualizacaoIndicadores extends StatelessWidget {
       {super.key,
       this.dados,
       this.periodo,
+      this.onRefresh,
+      this.carregando = false,
       this.complementoIndisponivel = false});
   final Map<String, dynamic>? dados;
   final Map? periodo;
+  final VoidCallback? onRefresh;
+  final bool carregando;
   final bool complementoIndisponivel;
   static const nomes = {
     'atendimentos': 'Atendimentos',
@@ -55,7 +59,7 @@ class AtualizacaoIndicadores extends StatelessWidget {
             .where((e) => e.value is Map && e.value['codigo'] != null)
             .toList()
         : [];
-    return Container(
+    final detalhes = Container(
         decoration: BoxDecoration(
             color: tema.colorScheme.onSurface.withValues(alpha: .02),
             borderRadius: BorderRadius.circular(16),
@@ -184,5 +188,19 @@ class AtualizacaoIndicadores extends StatelessWidget {
                           ])
                   ])
             ]));
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(child: detalhes),
+        if (onRefresh != null) ...[
+          const SizedBox(width: 4),
+          IconButton(
+            tooltip: 'Atualizar indicadores',
+            onPressed: carregando ? null : onRefresh,
+            icon: const Icon(Icons.refresh_rounded),
+          ),
+        ],
+      ],
+    );
   }
 }

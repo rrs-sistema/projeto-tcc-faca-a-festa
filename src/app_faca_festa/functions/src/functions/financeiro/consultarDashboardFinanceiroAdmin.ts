@@ -1,6 +1,7 @@
 import { onCall } from "firebase-functions/v2/https";
 import { admin } from "../../shared/firebaseAdmin";
 import { exigirUsuarioAutenticado, exigirTipo } from "../../shared/auth";
+import { carregarMapaDocs } from "../../shared/carregarMapaDocs";
 import {
   agregarDashboardAdmin,
   centavosDeOrcamento,
@@ -33,28 +34,6 @@ function parseData(v: unknown): string | null {
   return null;
 }
 
-async function carregarMapaDocs(
-  db: FirebaseFirestore.Firestore,
-  colecao: string,
-  ids: Set<string>,
-): Promise<Map<string, Record<string, unknown>>> {
-  const mapa = new Map<string, Record<string, unknown>>();
-  const lista = [...ids].filter(Boolean);
-  const chunk = 100;
-  for (let i = 0; i < lista.length; i += chunk) {
-    const fatia = lista.slice(i, i + chunk);
-    await Promise.all(
-      fatia.map(async (id) => {
-        const snap = await db.collection(colecao).doc(id).get();
-        if (snap.exists) {
-          mapa.set(id, (snap.data() ?? {}) as Record<string, unknown>);
-        }
-      }),
-    );
-  }
-  return mapa;
-}
-
 /**
  * Agregado seguro para admin. Não lê custos_internos / margens de fornecedor.
  * Prompt 01: enriquece identidades em lote e lista contratações por fornecedor.
@@ -75,7 +54,17 @@ export const consultarDashboardFinanceiroAdmin = onCall(
 
     const db = admin.firestore();
 
-    const orcSnap = await db.collection("orcamento").limit(LIMITE_ORCAMENTOS).get();
+    let orcamentos: FirebaseFirestore.Query = db.collection("orcamento");
+    if (idFornecedorFiltro) {
+      orcamentos = orcamentos.where("id_fornecedor", "==", idFornecedorFiltro);
+    }
+    const [orcSnap, polSnap, comSnap] = await Promise.all([
+      orcamentos.limit(LIMITE_ORCAMENTOS).get(),
+      db.collection("plataforma_comissao_politicas").where("ativa", "==", true).limit(1).select().get(),
+      db.collection("plataforma_comissao_obrigacoes").limit(500)
+        .select("status", "valor_original.centavos", "valor_ajustes_centavos",
+          "valor_liquidado.centavos", "vencimento_em", "id_evento").get(),
+    ]);
     const truncado = orcSnap.size >= LIMITE_ORCAMENTOS;
 
     type OrcItem = {
@@ -92,10 +81,6 @@ export const consultarDashboardFinanceiroAdmin = onCall(
       const d = doc.data() as Record<string, unknown>;
       const idEvento = texto(d.id_evento);
       if (!idEvento) continue;
-      if (idFornecedorFiltro && texto(d.id_fornecedor) !== idFornecedorFiltro) {
-        continue;
-      }
-
       const status = texto(d.status).toLowerCase();
       const contratoMap =
         d.contrato_financeiro && typeof d.contrato_financeiro === "object"
@@ -146,16 +131,19 @@ export const consultarDashboardFinanceiroAdmin = onCall(
       if (idSol) idsUsuario.add(idSol);
     }
 
-    const eventos = await carregarMapaDocs(db, "evento", idsEvento);
-    for (const ev of eventos.values()) {
-      const uid = texto(ev.id_usuario) || texto(ev.idUsuario);
-      if (uid) idsUsuario.add(uid);
-    }
-
-    const [fornecedores, usuarios] = await Promise.all([
+    const [eventos, fornecedores, usuarios] = await Promise.all([
+      carregarMapaDocs(db, "evento", idsEvento),
       carregarMapaDocs(db, "fornecedor", idsFornecedor),
       carregarMapaDocs(db, "usuarios", idsUsuario),
     ]);
+    const organizadoresRestantes = new Set<string>();
+    for (const ev of eventos.values()) {
+      const uid = texto(ev.id_usuario) || texto(ev.idUsuario);
+      if (uid && !idsUsuario.has(uid)) organizadoresRestantes.add(uid);
+    }
+    for (const [uid, usuario] of await carregarMapaDocs(db, "usuarios", organizadoresRestantes)) {
+      usuarios.set(uid, usuario);
+    }
 
     const fatos: FatoComercial[] = [];
     const linhasContratacao: LinhaContratacaoAdmin[] = [];
@@ -280,15 +268,6 @@ export const consultarDashboardFinanceiroAdmin = onCall(
         }
       }),
     );
-
-    const [polSnap, comSnap] = await Promise.all([
-      db
-        .collection("plataforma_comissao_politicas")
-        .where("ativa", "==", true)
-        .limit(1)
-        .get(),
-      db.collection("plataforma_comissao_obrigacoes").limit(500).get(),
-    ]);
 
     const comissoes: FatoComissao[] = comSnap.docs.map((d) => {
       const x = d.data();

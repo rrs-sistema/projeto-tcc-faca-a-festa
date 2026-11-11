@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'package:app_faca_festa/data/services/functions/callable_sessao_gateway.dart';
+import 'package:app_faca_festa/domain/entities/fornecedor.dart';
+import 'package:app_faca_festa/domain/entities/triagem_fornecedor_admin.dart';
 import 'package:app_faca_festa/presentation/modules/admin/controllers/admin_territorio_controller.dart';
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
 import 'package:app_faca_festa/presentation/modules/avaliacao/controllers/avaliacao_servico_controller.dart';
@@ -17,6 +20,8 @@ import 'package:app_faca_festa/core/utils/biblioteca.dart';
 import 'package:app_faca_festa/presentation/widgets/admin/admin_kit.dart';
 import './components/fornecedor_list_tile.dart';
 
+enum _FiltroTriagem { todos, atencao, restricao, cadastro }
+
 class FornecedoresAdminListScreen extends StatefulWidget {
   final FornecedorController controller;
   final FornecedorLocalizacaoController localizacaoController;
@@ -28,6 +33,7 @@ class FornecedoresAdminListScreen extends StatefulWidget {
   final EventThemeController theme;
   final ServicoProdutoController servicoProdutoController;
   final ServicoFotoController servicoFotoController;
+  final CallableSessaoGateway? gatewayTriagem;
 
   const FornecedoresAdminListScreen({
     super.key,
@@ -41,6 +47,7 @@ class FornecedoresAdminListScreen extends StatefulWidget {
     required this.theme,
     required this.servicoProdutoController,
     required this.servicoFotoController,
+    this.gatewayTriagem,
   });
 
   @override
@@ -58,6 +65,13 @@ class _FornecedoresAdminListScreenState
   late final SubcategoriaServicoController subcategoriaController;
   late final AvaliacaoServicoController avaliacaoController;
   final buscaCtrl = TextEditingController();
+  late final _gateway =
+      widget.gatewayTriagem ?? FirebaseCallableSessaoGateway();
+  Map<String, TriagemFornecedorAdmin> _triagem = {};
+  _FiltroTriagem _filtroTriagem = _FiltroTriagem.todos;
+  bool _carregandoTriagem = true;
+  bool _falhaTriagem = false;
+  int _geracaoTriagem = 0;
 
   @override
   void initState() {
@@ -70,7 +84,84 @@ class _FornecedoresAdminListScreenState
     subcategoriaController = widget.subcategoriaController;
     avaliacaoController = widget.avaliacaoController;
     buscaCtrl.text = controller.filtroNome.value;
-    controller.carregarTodosFornecedores();
+    _atualizarLista();
+  }
+
+  Future<void> _atualizarLista() async {
+    await controller.carregarTodosFornecedores();
+    if (mounted) await _carregarTriagem();
+  }
+
+  Future<void> _carregarTriagem() async {
+    final geracao = ++_geracaoTriagem;
+    final ids = controller.fornecedores
+        .map(TriagemFornecedorAdmin.idDe)
+        .where((id) => id.isNotEmpty && !id.contains('/'))
+        .toSet()
+        .toList();
+    setState(() {
+      _carregandoTriagem = true;
+      _falhaTriagem = false;
+    });
+    try {
+      final dados = <String, TriagemFornecedorAdmin>{};
+      for (var inicio = 0; inicio < ids.length; inicio += 120) {
+        final lote = ids.skip(inicio).take(120).toList();
+        final resposta = await _gateway
+            .chamar('consultarTriagemFornecedoresAdminFn', {'ids': lote});
+        for (final item in resposta['fornecedores'] as List) {
+          final registro = Map<String, dynamic>.from(item as Map);
+          dados[registro['idFornecedor'] as String] =
+              TriagemFornecedorAdmin.fromMap(registro);
+        }
+        if (!mounted || geracao != _geracaoTriagem) return;
+      }
+      setState(() => _triagem = dados);
+    } catch (_) {
+      if (!mounted || geracao != _geracaoTriagem) return;
+      setState(() {
+        _triagem = {};
+        _falhaTriagem = true;
+      });
+    } finally {
+      if (mounted && geracao == _geracaoTriagem) {
+        setState(() => _carregandoTriagem = false);
+      }
+    }
+  }
+
+  TriagemFornecedorAdmin? _sinais(Fornecedor f) =>
+      _triagem[TriagemFornecedorAdmin.idDe(f)];
+
+  bool _correspondeTriagem(Fornecedor f) {
+    final sinais = _sinais(f);
+    final cadastroIncompleto = TriagemFornecedorAdmin.pendenciasDe(
+            f, controller.servicosDoFornecedor(f))
+        .isNotEmpty;
+    return switch (_filtroTriagem) {
+      _FiltroTriagem.todos => true,
+      _FiltroTriagem.atencao =>
+        sinais?.precisaAtencao == true || (f.ativo && cadastroIncompleto),
+      _FiltroTriagem.restricao => sinais?.comRestricao == true,
+      _FiltroTriagem.cadastro => cadastroIncompleto,
+    };
+  }
+
+  int _compararUrgencia(Fornecedor a, Fornecedor b) {
+    final x = _sinais(a), y = _sinais(b);
+    final nivel = (y?.nivelUrgencia ?? 0).compareTo(x?.nivelUrgencia ?? 0);
+    if (nivel != 0) return nivel;
+    if ((x?.eventoProximoEm == null) != (y?.eventoProximoEm == null)) {
+      return x?.eventoProximoEm == null ? 1 : -1;
+    }
+    if (x?.eventoProximoEm != null && y?.eventoProximoEm != null) {
+      final data = x!.eventoProximoEm!.compareTo(y!.eventoProximoEm!);
+      if (data != 0) return data;
+    }
+    final atraso =
+        (y?.cotacoesVencidas ?? 0).compareTo(x?.cotacoesVencidas ?? 0);
+    if (atraso != 0) return atraso;
+    return a.razaoSocial.toLowerCase().compareTo(b.razaoSocial.toLowerCase());
   }
 
   @override
@@ -90,12 +181,12 @@ class _FornecedoresAdminListScreenState
         backgroundColor: AdminPalette.surface,
         appBar: AdminBackAppBar(
           title: 'Gestão de Fornecedores',
-          subtitle: 'Aprovação, catálogo e cobertura',
+          subtitle: 'Triagem, cadastro e cobertura',
           actions: [
             IconButton(
               icon: const Icon(Icons.refresh_rounded, color: Colors.white),
               tooltip: 'Atualizar lista',
-              onPressed: controller.carregarTodosFornecedores,
+              onPressed: _atualizarLista,
             ),
             IconButton(
               icon: const Icon(Icons.filter_alt_outlined, color: Colors.white),
@@ -131,6 +222,8 @@ class _FornecedoresAdminListScreenState
                             color: AdminPalette.primary,
                             icon: Icons.storefront_rounded,
                             onTap: () {
+                              setState(
+                                  () => _filtroTriagem = _FiltroTriagem.todos);
                               controller.filtroAprovado.value = null;
                               controller.filtroAtivo.value = null;
                             },
@@ -172,6 +265,40 @@ class _FornecedoresAdminListScreenState
                       ),
                     );
                   }),
+                  const SizedBox(height: 8),
+                  Wrap(spacing: 8, runSpacing: 4, children: [
+                    for (final entrada in const {
+                      _FiltroTriagem.todos: 'Todos',
+                      _FiltroTriagem.atencao: 'Precisa de atenção',
+                      _FiltroTriagem.restricao: 'Com restrição',
+                      _FiltroTriagem.cadastro: 'Cadastro incompleto',
+                    }.entries)
+                      ChoiceChip(
+                        label: Text(entrada.value),
+                        selected: _filtroTriagem == entrada.key,
+                        onSelected: (_) =>
+                            setState(() => _filtroTriagem = entrada.key),
+                      ),
+                  ]),
+                  if (_carregandoTriagem) ...[
+                    const SizedBox(height: 6),
+                    const LinearProgressIndicator(
+                        semanticsLabel: 'Carregando triagem'),
+                  ],
+                  if (_falhaTriagem)
+                    Wrap(
+                        spacing: 8,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          const Text('Indicadores operacionais indisponíveis.'),
+                          TextButton(
+                              onPressed: _carregarTriagem,
+                              child: const Text('Tentar novamente')),
+                        ]),
+                  if (_triagem.values
+                      .any((s) => s.casosParciais || s.cotacoesParciais))
+                    const Text(
+                        'Parte dos casos ou cotações está fora da amostra consultada.'),
                   const SizedBox(height: 12),
                   Obx(() {
                     return Row(
@@ -204,6 +331,10 @@ class _FornecedoresAdminListScreenState
                                   DropdownMenuItem(
                                     value: 'status',
                                     child: Text('Status (aprovados primeiro)'),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'urgencia',
+                                    child: Text('Urgência operacional'),
                                   ),
                                   DropdownMenuItem(
                                       value: 'nome', child: Text('Nome A-Z')),
@@ -239,12 +370,25 @@ class _FornecedoresAdminListScreenState
                     title: 'Falha ao carregar fornecedores',
                     message: controller.erro.value,
                     actionLabel: 'Tentar de novo',
-                    onAction: controller.carregarTodosFornecedores,
+                    onAction: _atualizarLista,
                   );
                 }
 
-                final fornecedores = controller.fornecedoresFiltrados;
+                final fornecedores = controller.fornecedoresFiltrados
+                    .where(_correspondeTriagem)
+                    .toList();
+                if (controller.ordenacaoSelecionada.value == 'urgencia') {
+                  fornecedores.sort(_compararUrgencia);
+                }
                 if (fornecedores.isEmpty) {
+                  if (_triagem.isEmpty &&
+                      (_filtroTriagem == _FiltroTriagem.restricao ||
+                          _filtroTriagem == _FiltroTriagem.atencao)) {
+                    return Center(
+                        child: Text(_carregandoTriagem
+                            ? 'Consultando sinais operacionais…'
+                            : 'A triagem precisa ser carregada para aplicar este filtro.'));
+                  }
                   return AdminEmptyState(
                     icon: Icons.store_mall_directory_outlined,
                     title: controller.fornecedores.isEmpty
@@ -256,13 +400,14 @@ class _FornecedoresAdminListScreenState
                     onAction: () {
                       buscaCtrl.clear();
                       controller.limparFiltros();
+                      setState(() => _filtroTriagem = _FiltroTriagem.todos);
                     },
                   );
                 }
 
                 return RefreshIndicator(
                   color: AdminPalette.primary,
-                  onRefresh: controller.carregarTodosFornecedores,
+                  onRefresh: _atualizarLista,
                   child: ListView.builder(
                     padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
                     itemCount: fornecedores.length,
@@ -270,6 +415,9 @@ class _FornecedoresAdminListScreenState
                       final f = fornecedores[i];
                       return FornecedorListTile(
                         fornecedor: f,
+                        triagem: _sinais(f),
+                        carregandoTriagem: _carregandoTriagem,
+                        aoVoltarDaFicha: _carregarTriagem,
                         controller: controller,
                         localizacaoController: localizacaoController,
                         adminTerritorioController: adminTerritorioController,

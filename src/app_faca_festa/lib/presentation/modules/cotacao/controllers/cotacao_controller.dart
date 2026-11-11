@@ -1,39 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
 import 'dart:async';
 
 import 'package:app_faca_festa/domain/entities/cotacao.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_cotacoes.dart';
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
-import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_controller.dart';
-import 'package:app_faca_festa/presentation/modules/orcamento/controllers/orcamento_controller.dart';
 
 class CotacaoController extends GetxController {
   CotacaoController({
     required GerenciarCotacoes gerenciarCotacoes,
     AppController? appController,
     AppController? Function()? appControllerResolver,
-    FornecedorController? fornecedorController,
-    FornecedorController? Function()? fornecedorControllerResolver,
-    OrcamentoController? orcamentoController,
-    OrcamentoController? Function()? orcamentoControllerResolver,
   })  : _gerenciarCotacoes = gerenciarCotacoes,
         _appController = appController,
-        _fornecedorController = fornecedorController,
-        _orcamentoController = orcamentoController,
-        _appControllerResolver = appControllerResolver,
-        _fornecedorControllerResolver = fornecedorControllerResolver,
-        _orcamentoControllerResolver = orcamentoControllerResolver;
+        _appControllerResolver = appControllerResolver;
 
   final GerenciarCotacoes _gerenciarCotacoes;
   final AppController? _appController;
-  final FornecedorController? _fornecedorController;
-  final OrcamentoController? _orcamentoController;
   final AppController? Function()? _appControllerResolver;
-  final FornecedorController? Function()? _fornecedorControllerResolver;
-  final OrcamentoController? Function()? _orcamentoControllerResolver;
   final cotacoes = <Cotacao>[].obs;
   final carregando = false.obs;
   final erroEscuta = ''.obs;
@@ -135,62 +119,18 @@ class CotacaoController extends GetxController {
     _subStreams[idCotacao] = stream;
   }
 
-  Future<void> confirmarFornecedorEscolhido(
+  Future<void> abrirRevisaoProposta(
       String idFornecedor, String idCotacao) async {
-    final fornecedorController = _resolverFornecedorController();
-    final appController = _resolverAppController();
-    if (fornecedorController == null || appController == null) {
-      Get.snackbar(
-        'Erro',
-        'Não foi possível carregar os dados para fechar o negócio.',
-        backgroundColor: Colors.redAccent,
-        colorText: Colors.white,
-      );
-      return;
-    }
-    final fornecedor = fornecedorController.fornecedores
-        .firstWhere((f) => f.idFornecedor == idFornecedor);
-
     try {
-      final resultado = await Get.toNamed<Map<String, dynamic>>(
-              '/jornada-atendimento',
-              arguments: {
-                'idCotacao': idCotacao,
-                'idFornecedor': idFornecedor,
-                'nomeFornecedor': fornecedor.razaoSocial,
-                'nomeSolicitante':
-                    appController.usuarioLogado.value?.nome ?? '',
-              }) ??
-          <String, dynamic>{};
-      if (resultado['idOrcamento'] == null) return;
-      final idEvento = (resultado['idEvento'] ?? '').toString();
-
-      EasyLoading.dismiss();
-      HapticFeedback.mediumImpact();
-
-      Get.snackbar(
-        'Negócio fechado',
-        'Contrato criado. Declare o pagamento pela plataforma para a administração conferir.',
-        backgroundColor: Colors.green.shade600,
-        colorText: Colors.white,
-        icon: const Icon(Icons.check_circle, color: Colors.white),
-        snackPosition: SnackPosition.BOTTOM,
-        duration: const Duration(seconds: 4),
+      await Get.toNamed(
+        '/jornada-atendimento',
+        arguments: {'idCotacao': idCotacao, 'idFornecedor': idFornecedor},
       );
-
-      ouvirMinhasCotacoes();
-      if (idEvento.isNotEmpty) {
-        _resolverOrcamentoController()?.carregarOrcamentosDoEvento(idEvento);
-        await Get.toNamed(
-          '/acompanhamento-organizador',
-          arguments: {'idEvento': idEvento},
-        );
-      }
-    } catch (e) {
-      EasyLoading.dismiss();
+    } catch (e, s) {
+      debugPrint('Erro ao abrir a revisão da proposta: $e\n$s');
       Get.snackbar(
         'Erro',
-        'Não foi possível fechar o negócio.',
+        'Não foi possível abrir a proposta. Tente novamente.',
         backgroundColor: Colors.redAccent,
         colorText: Colors.white,
       );
@@ -200,16 +140,6 @@ class CotacaoController extends GetxController {
   AppController? _resolverAppController() {
     if (_appController != null) return _appController;
     return _appControllerResolver?.call();
-  }
-
-  FornecedorController? _resolverFornecedorController() {
-    if (_fornecedorController != null) return _fornecedorController;
-    return _fornecedorControllerResolver?.call();
-  }
-
-  OrcamentoController? _resolverOrcamentoController() {
-    if (_orcamentoController != null) return _orcamentoController;
-    return _orcamentoControllerResolver?.call();
   }
 
   void _cancelarSubStreams() {

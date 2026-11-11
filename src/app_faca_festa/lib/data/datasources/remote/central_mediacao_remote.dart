@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 
@@ -103,9 +105,22 @@ class CentralMediacaoRemote {
   }) async {
     late final FinanceiroCallableException falha;
     try {
-      return await _gateway.call('consultarDetalheContratacao', {
+      final resposta = await _gateway.call('consultarDetalheContratacao', {
         'idOrcamento': idOrcamento,
+        'incluirRegistros': true,
       });
+      final historico = resposta['historico_mediacao'];
+      if (historico is! Map || historico['consulta_caso'] is! Map) {
+        return resposta;
+      }
+      return {
+        ...resposta,
+        'historico_mediacao': {
+          ...historico,
+          'consulta_caso': await _identificarResponsaveis(
+              Map<String, dynamic>.from(historico['consulta_caso'] as Map)),
+        },
+      };
     } on FinanceiroCallableException catch (e) {
       if (!e.podeUsarFallbackLocal || _db == null) rethrow;
       falha = e;
@@ -246,13 +261,96 @@ class CentralMediacaoRemote {
     required String idCaso,
     String? papelConsulta,
     String? idFornecedorOperador,
-  }) {
-    return _gateway.call('consultarCasoMediacao', {
+  }) async {
+    final resposta = await _gateway.call('consultarCasoMediacao', {
       'idCaso': idCaso,
       if (papelConsulta != null) 'papelConsulta': papelConsulta,
       if (idFornecedorOperador != null)
         'idFornecedorOperador': idFornecedorOperador,
     });
+    return resposta['papel_consulta'] == 'admin'
+        ? _identificarResponsaveis(resposta)
+        : resposta;
+  }
+
+  static final _atribuicaoLegada =
+      RegExp(r'^Responsável atribuído:\s*([^\s/]+)\s*$');
+
+  Future<Map<String, dynamic>> _identificarResponsaveis(
+      Map<String, dynamic> resposta) async {
+    final caso = resposta['caso'];
+    final registros = resposta['registros'];
+    final atual = caso is Map
+        ? (caso['idResponsavel'] ?? caso['id_responsavel'] ?? '')
+            .toString()
+            .trim()
+        : '';
+    final atribuicoes = <int, String>{};
+    if (registros is List) {
+      for (var i = 0; i < registros.length; i++) {
+        final registro = registros[i];
+        if (registro is! Map || registro['tipo'] != 'atribuicao') continue;
+        // O autor pode ser diferente da pessoa indicada neste registro.
+        final id = _atribuicaoLegada
+            .firstMatch((registro['texto'] ?? '').toString().trim())
+            ?.group(1);
+        if (id != null) atribuicoes[i] = id;
+      }
+    }
+
+    final ids = {
+      if (atual.isNotEmpty && !atual.contains('/')) atual,
+      ...atribuicoes.values
+    };
+    if (ids.isEmpty) return resposta;
+    final nomes = Map.fromEntries(await Future.wait(ids.map(
+      (id) async => MapEntry(id, await _consultarNomeResponsavel(id)),
+    )));
+    return {
+      ...resposta,
+      if (caso is Map && nomes[atual] != null)
+        'caso': {...caso, 'nomeResponsavel': nomes[atual]},
+      if (registros is List && atribuicoes.isNotEmpty)
+        'registros': [
+          for (var i = 0; i < registros.length; i++)
+            if (atribuicoes.containsKey(i))
+              {
+                ...(registros[i] as Map),
+                'texto': nomes[atribuicoes[i]] == null
+                    ? 'Responsável atribuído (nome indisponível)'
+                    : 'Responsável atribuído: ${nomes[atribuicoes[i]]}',
+              }
+            else
+              registros[i],
+        ],
+    };
+  }
+
+  Future<String?> _consultarNomeResponsavel(String id) async {
+    final db = _db;
+    if (db == null) return null;
+    try {
+      final doc = await db
+          .collection('usuarios')
+          .doc(id)
+          .get()
+          .timeout(const Duration(seconds: 4));
+      final dados = doc.data();
+      for (final campo in [
+        'nome',
+        'nome_completo',
+        'nomeCompleto',
+        'display_name'
+      ]) {
+        final nome = dados?[campo];
+        if (nome is String && nome.trim().isNotEmpty) return nome.trim();
+      }
+    } on FirebaseException {
+      return null;
+    } on TimeoutException {
+      return null;
+    }
+    return null;
   }
 
   static bool _pareceIndisponivel(Object e) {

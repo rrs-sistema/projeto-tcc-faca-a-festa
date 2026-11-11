@@ -40,6 +40,15 @@ class _OperationsPanel extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               _PriorityTile(
+                icon: Icons.assignment_late_outlined,
+                title: 'Acompanhar fornecedores',
+                value: 'Ver',
+                detail: 'Eventos em risco, casos e recursos',
+                color: AdminPalette.warning,
+                onTap: () => Get.toNamed('/admin/prioridades-fornecedores'),
+              ),
+              const SizedBox(height: 10),
+              _PriorityTile(
                 icon: Icons.request_quote_rounded,
                 title: 'Acompanhar orçamentos',
                 value: '${stats.orcamentosAbertos}',

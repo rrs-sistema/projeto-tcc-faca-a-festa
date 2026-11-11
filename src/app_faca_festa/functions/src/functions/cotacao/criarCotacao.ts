@@ -1,10 +1,11 @@
-import { FieldValue, Timestamp } from "firebase-admin/firestore";
+import { DocumentData, DocumentReference, FieldValue, Timestamp } from "firebase-admin/firestore";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { logger } from "firebase-functions";
 
 import { admin } from "../../shared/firebaseAdmin";
 import { exigirTipo, exigirUsuarioAutenticado } from "../../shared/auth";
 import { gravarMensagemSistemaParaFornecedores } from "./mensagensSistemaCotacao";
+import { exigirNovosNegociosPermitidos } from "../../services/fornecedores/restricaoComercial";
 
 const REGION = "southamerica-east1";
 const MAX_OBS = 2000;
@@ -94,9 +95,11 @@ export const criarCotacao = onCall(
 
     const db = admin.firestore();
     const cotacaoRef = db.collection("cotacao").doc();
-    const batch = db.batch();
+    const documentos = new Map<string, [DocumentReference, DocumentData]>();
+    const preparar = (ref: DocumentReference, dados: DocumentData) =>
+      documentos.set(ref.path, [ref, dados]);
 
-    batch.set(cotacaoRef, {
+    preparar(cotacaoRef, {
       id_evento: idEvento,
       id_usuario_solicitante: perfil.uid,
       nome_usuario_solicitante: nomeUsuario,
@@ -122,7 +125,7 @@ export const criarCotacao = onCall(
 
       // Sem email/telefone no subdoc: evita contato direto org↔fornecedor
       // fora do chat mediado (regra de mediação da plataforma).
-      batch.set(fornecedorRef, {
+      preparar(fornecedorRef, {
         id_fornecedor: idFornecedor,
         nome_fornecedor: texto(fornecedor.razao_social) || "Fornecedor",
         status: "aguardando",
@@ -172,7 +175,7 @@ export const criarCotacao = onCall(
           "Serviço";
 
         const servicoRef = fornecedorRef.collection("servicos").doc(item.idProdutoServico);
-        batch.set(servicoRef, {
+        preparar(servicoRef, {
           id_produto_servico: item.idProdutoServico,
           nome_produto_servico: nomeServico,
           quantidade: item.quantidade,
@@ -185,8 +188,15 @@ export const criarCotacao = onCall(
     }
 
     try {
-      await batch.commit();
+      await db.runTransaction(async tx => {
+        for (const id of [...fornecedoresIds].sort()) {
+          await exigirNovosNegociosPermitidos(db, tx, id,
+            servicos.filter(s => s.idFornecedor === id).map(s => s.idProdutoServico));
+        }
+        for (const [ref, dados] of documentos.values()) tx.create(ref, dados);
+      });
     } catch (error) {
+      if (error instanceof HttpsError) throw error;
       logger.error("Falha ao gravar cotação", {
         uid: perfil.uid,
         idEvento,

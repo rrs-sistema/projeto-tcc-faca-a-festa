@@ -74,9 +74,9 @@ class AppSessaoFornecedor {
   }
 
   Future<void> iniciarPainel(Fornecedor fornecedor) async {
+    _fornecedorController.ouvirMensagensNaoLidas(fornecedor.idUsuario);
     await atualizarFcmToken(fornecedor.idUsuario);
 
-    _fornecedorController.ouvirMensagensNaoLidas(fornecedor.idUsuario);
     _fornecedorController.iniciarListenerFornecedor(fornecedor.idUsuario);
     _fornecedorController.escutarSolicitacoesPendentes(fornecedor.idUsuario);
 

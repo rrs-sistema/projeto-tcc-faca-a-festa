@@ -1,12 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../services/functions/callable_sessao_gateway.dart';
 
 /// Somente leituras já autorizadas ao próprio fornecedor. Não calcula dinheiro.
 class PainelFontesDisponiveis {
-  PainelFontesDisponiveis({required this.db, required this.usuario});
+  PainelFontesDisponiveis({required this.db, required this.gateway});
   final FirebaseFirestore db;
-  final String? Function() usuario;
+  final CallableSessaoGateway gateway;
   Future<Map<String, dynamic>> carregar(String uid) async {
-    if (usuario() != uid) throw StateError('Sessão alterada.');
+    if (gateway.usuario != uid) throw StateError('Sessão alterada.');
     final resultado = <String, dynamic>{'fontes': <String, dynamic>{}};
     Future<void> fonte(String nome, Future<dynamic> Function() ler) async {
       try {
@@ -87,21 +88,27 @@ class PainelFontesDisponiveis {
                   .count()
                   .get())
               .count),
-      fonte(
-          'contratos',
-          () async => contarContratosDisponiveis((await db
-                  .collection('orcamento')
-                  .where('id_fornecedor', isEqualTo: uid)
-                  .get(const GetOptions(source: Source.server)))
-              .docs
-              .map((d) => {...d.data(), 'id': d.id})
-              .toList())),
-      fonte('reputacao', () async {
-        final d = (await db
-                .doc('fornecedor/$uid')
+      fonte('contratos', () async {
+        final documentos = (await db
+                .collection('orcamento')
+                .where('id_fornecedor', isEqualTo: uid)
                 .get(const GetOptions(source: Source.server)))
-            .data();
-        return resumoReputacaoDisponivel(d ?? {});
+            .docs
+            .map((d) => {...d.data(), 'id': d.id})
+            .toList();
+        return (
+          total: contarContratosDisponiveis(documentos),
+          proximo: proximoCompromissoDisponivel(documentos, DateTime.now()),
+        );
+      }),
+      fonte('reputacao', () async {
+        final consulta = await gateway.chamar('consultarGestaoReputacaoFn', {
+          'idFornecedor': uid,
+          'tipo': 'fornecedor',
+          'limite': 1,
+        });
+        final resumo = consulta['resumo'] as Map;
+        return (resumo['quantidade'] as num) > 0 ? resumo : null;
       }),
       fonte(
           'estoque',
@@ -111,7 +118,11 @@ class PainelFontesDisponiveis {
                   .get())
               .count),
     ]);
-    if (usuario() != uid) throw StateError('Sessão alterada.');
+    if (gateway.usuario != uid) throw StateError('Sessão alterada.');
+    final contratos =
+        resultado['contratos'] as ({int total, Map<String, String>? proximo})?;
+    resultado['contratos'] = contratos?.total;
+    resultado['proximoCompromisso'] = contratos?.proximo;
     resultado['consultadoEm'] = DateTime.now().toUtc().toIso8601String();
     return resultado;
   }
@@ -152,6 +163,50 @@ Map<String, dynamic> resumoAtendimentosDisponiveis(
   };
 }
 
+Map<String, String>? proximoCompromissoDisponivel(
+    List<Map<String, dynamic>> documentos, DateTime agora) {
+  final limite = agora.add(const Duration(days: 7));
+  DateTime? proximoInicio;
+  String? servico;
+  for (final d in documentos) {
+    final cf = d['contrato_financeiro'] as Map?;
+    final execucao = cf?['estado_execucao'] ?? d['estado_execucao'];
+    if (['cancelado', 'cancelada', 'estornado'].contains(d['status']) ||
+        cf?['estado_comercial'] == 'cancelado' ||
+        ['aceito', 'cancelado_execucao'].contains(execucao) ||
+        (cf?['estado_comercial'] != 'contratado' && d['status'] != 'fechado')) {
+      continue;
+    }
+    final agenda = d['agenda_operacional'];
+    final janelas = agenda is Map ? agenda['janelas'] : null;
+    if (janelas is! List) continue;
+    for (final janela in janelas.whereType<Map>()) {
+      final inicio = instantePainel(janela['inicio']);
+      final fim = instantePainel(janela['fim']);
+      if (inicio == null ||
+          fim == null ||
+          !fim.isAfter(inicio) ||
+          inicio.isBefore(agora) ||
+          inicio.isAfter(limite) ||
+          (proximoInicio != null && !inicio.isBefore(proximoInicio))) {
+        continue;
+      }
+      proximoInicio = inicio;
+      servico = (d['nome'] ??
+              d['nome_servico_contratado'] ??
+              d['escopo'] ??
+              'Serviço contratado')
+          .toString();
+    }
+  }
+  return proximoInicio == null
+      ? null
+      : {
+          'servico': servico!,
+          'inicio': proximoInicio.toUtc().toIso8601String()
+        };
+}
+
 int contarContratosDisponiveis(List<Map<String, dynamic>> documentos) {
   final identidades = <String>{};
   for (final d in documentos) {
@@ -171,44 +226,6 @@ int contarContratosDisponiveis(List<Map<String, dynamic>> documentos) {
         .toString());
   }
   return identidades.length;
-}
-
-Map<String, dynamic>? resumoReputacaoDisponivel(Map d) {
-  final r = d['reputacao_verificada'];
-  if (r is Map && r['schema'] == 2) {
-    final n = r['quantidade'], m = r['media'];
-    if (n is num &&
-        n.isFinite &&
-        n % 1 == 0 &&
-        n > 0 &&
-        m is num &&
-        m.isFinite &&
-        m >= 1 &&
-        m <= 5) {
-      return {
-        'quantidade': n.toInt(),
-        'media': m.toDouble(),
-        'verificada': true
-      };
-    }
-  }
-  final n = d['total_avaliacoes'] ?? d['totalAvaliacoes'],
-      m = d['media_avaliacoes'] ?? d['mediaAvaliacoes'];
-  if (n is num &&
-      n.isFinite &&
-      n % 1 == 0 &&
-      n > 0 &&
-      m is num &&
-      m.isFinite &&
-      m >= 1 &&
-      m <= 5) {
-    return {
-      'quantidade': n.toInt(),
-      'media': m.toDouble(),
-      'verificada': false
-    };
-  }
-  return null;
 }
 
 Map<String, dynamic>? medirPrimeiraRespostaDisponivel(

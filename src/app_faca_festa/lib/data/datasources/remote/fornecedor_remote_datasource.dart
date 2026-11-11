@@ -450,7 +450,7 @@ class FirebaseFornecedorRemoteDatasource implements FornecedorRemoteDatasource {
     }
 
     void emitirTotal() {
-      if (!controller.isClosed) {
+      if (!controller.isClosed && contadores.length == mensagemSubs.length) {
         controller.add(contadores.values.fold<int>(0, (t, v) => t + v));
       }
     }
@@ -467,7 +467,9 @@ class FirebaseFornecedorRemoteDatasource implements FornecedorRemoteDatasource {
 
           for (final f in fornecedorSnap.docs) {
             final cotacaoRef = f.reference.parent.parent;
-            if (cotacaoRef == null || cotacaoRef.parent.id != 'cotacao') {
+            if (f.id != id ||
+                cotacaoRef == null ||
+                cotacaoRef.parent.id != 'cotacao') {
               continue;
             }
 
@@ -475,25 +477,29 @@ class FirebaseFornecedorRemoteDatasource implements FornecedorRemoteDatasource {
             cotacoesAtuais.add(idCotacao);
             if (mensagemSubs.containsKey(idCotacao)) continue;
 
-            contadores[idCotacao] = 0;
-            mensagemSubs[idCotacao] = cotacaoRef
-                .collection('fornecedores')
-                .doc(id)
+            mensagemSubs[idCotacao] = f.reference
                 .collection('mensagens')
                 .snapshots(includeMetadataChanges: true)
                 .where((snapshot) => !snapshot.metadata.isFromCache)
                 .listen((msgSnap) {
-              contadores[idCotacao] = msgSnap.docs
-                  .where((m) =>
-                      m.data()['lido'] != true &&
-                      m.data()['id_usuario'] != id &&
-                      m.data()['id_usuario'] != 'sistema')
-                  .length;
+              contadores[idCotacao] = msgSnap.docs.where((m) {
+                final dados = m.data();
+                final autor = dados['id_usuario'];
+                return dados['lido'] != true &&
+                    dados['sistema'] != true &&
+                    autor is String &&
+                    autor.isNotEmpty &&
+                    autor != id &&
+                    autor != 'sistema';
+              }).length;
               emitirTotal();
-            }, onError: controller.addError);
+            }, onError: (Object erro, StackTrace stack) {
+              contadores.remove(idCotacao);
+              controller.addError(erro, stack);
+            });
           }
 
-          final removidas = contadores.keys
+          final removidas = mensagemSubs.keys
               .where((idCotacao) => !cotacoesAtuais.contains(idCotacao))
               .toList();
           for (final idCotacao in removidas) {

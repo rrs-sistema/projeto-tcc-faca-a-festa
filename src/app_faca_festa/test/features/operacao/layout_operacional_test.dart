@@ -94,6 +94,10 @@ void main() {
     await c.carregar();
     await t.pumpAndSettle();
     expect(find.text('Data inválida'), findsOneWidget);
+    final filtro = find.text('Filtrar por evento e período');
+    await t.ensureVisible(filtro);
+    await t.tap(filtro);
+    await t.pumpAndSettle();
     expect(find.byKey(const Key('filtro-evento')), findsOneWidget);
     await t.scrollUntilVisible(find.text('Limpar filtros'), 200,
         scrollable: find.byType(Scrollable).first);

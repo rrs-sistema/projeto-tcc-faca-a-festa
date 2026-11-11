@@ -232,13 +232,19 @@ export const abrirCasoMediacaoParteFn = onCall(
     }
     if (perfil.tipo === "A") exigirTipo(perfil, ["A"]);
 
+    const categoria = (texto(data.categoria) || "divergencia_servico") as CategoriaCaso;
+    const incidentes = ["cancelamento_fornecedor", "nao_comparecimento", "risco_seguranca"];
+    if (incidentes.includes(categoria) && !d.contrato_financeiro?.id_contrato) {
+      throw new HttpsError("failed-precondition", "Relate o incidente a partir de uma contratação confirmada.");
+    }
     return abrirCasoMediacao(admin.firestore(), {
       idEvento,
       idContrato: texto((d.contrato_financeiro as { id_contrato?: string })?.id_contrato) || idOrcamento,
       idOrcamento,
       idFornecedor: idFornecedor || null,
       idContratante: idContratante || null,
-      categoria: (texto(data.categoria) || "divergencia_servico") as CategoriaCaso,
+      categoria,
+      prioridade: categoria === "risco_seguranca" ? "critica" : incidentes.includes(categoria) ? "alta" : "normal",
       motivo: texto(data.motivo),
       descricao: texto(data.descricao),
       chaveIdempotencia: texto(

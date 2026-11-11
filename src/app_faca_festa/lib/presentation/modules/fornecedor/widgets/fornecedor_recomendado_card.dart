@@ -26,73 +26,65 @@ class FornecedorRecomendadoCard extends StatelessWidget {
     final scoreColor = _scoreColor();
     final motivos = recomendacao.motivosVisiveis;
 
-    return Align(
-      alignment: Alignment.topLeft,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(20),
-        onTap: onTap,
-        child: Container(
-          width: MediaQuery.of(context).size.width * 0.88,
-          margin: const EdgeInsets.only(right: 14, bottom: 10),
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: theme.cardColor,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: scoreColor.withValues(alpha: 0.18)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.06),
-                blurRadius: 16,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _Header(
-                recomendacao: recomendacao,
-                scoreColor: scoreColor,
-              ),
-              const SizedBox(height: 10),
-              _CompatibilidadeBar(
-                value: recomendacao.compatibilidadeNumero,
-                color: scoreColor,
-              ),
-              const SizedBox(height: 10),
-              _MetaRow(
-                recomendacao: recomendacao,
-                primary: primary,
-                scoreColor: scoreColor,
-              ),
-              const SizedBox(height: 10),
-              _MotivoPrincipal(
-                motivo: recomendacao.motivoPrincipalSeguro,
-                color: scoreColor,
-              ),
+    return InkWell(
+      borderRadius: BorderRadius.circular(20),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: theme.cardColor,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: scoreColor.withValues(alpha: 0.18)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 16,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _Header(
+              recomendacao: recomendacao,
+              scoreColor: scoreColor,
+            ),
+            const SizedBox(height: 10),
+            _CompatibilidadeBar(
+              value: recomendacao.compatibilidadeNumero,
+              color: scoreColor,
+            ),
+            const SizedBox(height: 10),
+            _MetaRow(
+              recomendacao: recomendacao,
+              primary: primary,
+              scoreColor: scoreColor,
+            ),
+            const SizedBox(height: 10),
+            _MotivoPrincipal(
+              motivo: recomendacao.motivoPrincipalSeguro,
+              color: scoreColor,
+            ),
+            if (motivos.length > 1) ...[
               const SizedBox(height: 8),
-              SizedBox(
-                height: 25,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: motivos.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 6),
-                  itemBuilder: (_, index) {
-                    return _ReasonChip(
-                      text: motivos[index],
-                      color: index == 0 ? scoreColor : primary,
-                    );
-                  },
-                ),
-              ),
-              const Spacer(),
-              _Actions(
-                onPedirOrcamento: onPedirOrcamento,
-                onReservar: onReservar,
-                onDispensar: onDispensar,
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  for (final motivo in motivos.skip(1))
+                    _ReasonChip(text: motivo, color: primary),
+                ],
               ),
             ],
-          ),
+            const SizedBox(height: 12),
+            _Actions(
+              onPedirOrcamento: onPedirOrcamento,
+              onReservar: onReservar,
+              onDispensar: onDispensar,
+            ),
+          ],
         ),
       ),
     );
@@ -308,8 +300,6 @@ class _MotivoPrincipal extends StatelessWidget {
           Expanded(
             child: Text(
               motivo,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
               style: GoogleFonts.poppins(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
@@ -336,54 +326,44 @@ class _Actions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Wrap(
+      spacing: 8,
+      runSpacing: 6,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        Expanded(
-          child: OutlinedButton.icon(
-            onPressed: onPedirOrcamento,
-            icon: const Icon(Icons.request_quote_rounded, size: 15),
-            label: Text(
-              'Orçamento',
-              style: GoogleFonts.poppins(
-                  fontSize: 11.3, fontWeight: FontWeight.w700),
-            ),
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              visualDensity: VisualDensity.compact,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
-            ),
+        OutlinedButton.icon(
+          onPressed: onPedirOrcamento,
+          icon: const Icon(Icons.request_quote_rounded, size: 15),
+          label: Text(
+            'Orçamento',
+            style: GoogleFonts.poppins(
+                fontSize: 11.3, fontWeight: FontWeight.w700),
+          ),
+          style: OutlinedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
         ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: ElevatedButton.icon(
-            onPressed: onReservar,
-            icon: const Icon(Icons.bookmark_add_rounded, size: 15),
-            label: Text(
-              'Reservar',
-              style: GoogleFonts.poppins(
-                  fontSize: 11.3, fontWeight: FontWeight.w800),
-            ),
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              visualDensity: VisualDensity.compact,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
-            ),
+        ElevatedButton.icon(
+          onPressed: onReservar,
+          icon: const Icon(Icons.bookmark_add_rounded, size: 15),
+          label: Text(
+            'Reservar',
+            style: GoogleFonts.poppins(
+                fontSize: 11.3, fontWeight: FontWeight.w800),
+          ),
+          style: ElevatedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            elevation: 0,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
         ),
-        const SizedBox(width: 6),
-        SizedBox(
-          width: 36,
-          height: 36,
-          child: IconButton.filledTonal(
-            padding: EdgeInsets.zero,
-            tooltip: 'Não recomendar',
-            onPressed: onDispensar,
-            icon: const Icon(Icons.close_rounded, size: 18),
-          ),
+        IconButton.filledTonal(
+          tooltip: 'Não recomendar',
+          onPressed: onDispensar,
+          icon: const Icon(Icons.close_rounded, size: 18),
         ),
       ],
     );
@@ -414,12 +394,14 @@ class _InfoPill extends StatelessWidget {
         children: [
           Icon(icon, size: 12.5, color: color),
           const SizedBox(width: 4),
-          Text(
-            label,
-            style: GoogleFonts.poppins(
-              fontSize: 10.2,
-              color: color,
-              fontWeight: FontWeight.w700,
+          Flexible(
+            child: Text(
+              label,
+              style: GoogleFonts.poppins(
+                fontSize: 10.2,
+                color: color,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ],
@@ -451,12 +433,9 @@ class _ReasonChip extends StatelessWidget {
         children: [
           Icon(Icons.check_circle_rounded, size: 12, color: color),
           const SizedBox(width: 4),
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 180),
+          Flexible(
             child: Text(
               text,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
               style: GoogleFonts.poppins(
                 fontSize: 10.2,
                 color: color,

@@ -1,6 +1,7 @@
-import 'package:app_faca_festa/core/services/update_operations.dart';
 import 'dart:convert';
+import 'dart:developer';
 
+import 'package:app_faca_festa/core/services/update_operations.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:http/http.dart' as http;
@@ -49,7 +50,15 @@ class CallableHttpsClient {
         );
       }
 
-      final token = await usuario.getIdToken();
+      final autenticacao = TimelineTask()
+        ..start('Firebase callable: token',
+            arguments: {'function': nomeFunction});
+      final String? token;
+      try {
+        token = await usuario.getIdToken();
+      } finally {
+        autenticacao.finish();
+      }
       if (token == null || token.isEmpty) {
         throw const CallableHttpsException(
           'unauthenticated',
@@ -59,18 +68,28 @@ class CallableHttpsClient {
 
       final uri = _functionUri(nomeFunction);
 
-      final response = await _client
-          .post(
-            uri,
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': 'Bearer $token',
-            },
-            body: jsonEncode({'data': data ?? <String, dynamic>{}}),
-          )
-          .timeout(timeout ?? _timeout);
-
-      return _interpretarResposta(response);
+      final transporte = TimelineTask()
+        ..start('Firebase callable: HTTPS',
+            arguments: {'function': nomeFunction});
+      final http.Response response;
+      try {
+        response = await _client
+            .post(
+              uri,
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer $token',
+              },
+              body: jsonEncode({'data': data ?? <String, dynamic>{}}),
+            )
+            .timeout(timeout ?? _timeout);
+      } finally {
+        transporte.finish();
+      }
+      return Timeline.timeSync(
+        'Firebase callable: decodificar resposta',
+        () => _interpretarResposta(response),
+      );
     });
   }
 

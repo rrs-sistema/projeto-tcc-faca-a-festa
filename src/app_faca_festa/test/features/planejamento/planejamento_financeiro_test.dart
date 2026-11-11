@@ -317,14 +317,42 @@ void main() {
     await t.pumpAndSettle();
     await t.tap(find.text('Festa de aniversário').last);
     await t.pumpAndSettle();
-    await t.enterText(find.widgetWithText(TextField, 'De'), '01/10/2026');
-    await t.enterText(find.widgetWithText(TextField, 'Até'), '31/10/2026');
+    final dataInicial = find.widgetWithText(TextField, 'Data inicial');
+    final dataFinal = find.widgetWithText(TextField, 'Data final');
+    await t.enterText(dataInicial, '01/10/2026');
+    await t.enterText(dataFinal, '30/09/2026');
     await t.ensureVisible(find.text('Aplicar filtros'));
     await t.tap(find.text('Aplicar filtros'));
+    await t.pumpAndSettle();
+    expect(
+        find.text('A data final deve ser igual ou posterior à inicial.'),
+        findsOneWidget);
+    expect(g.chamadas, hasLength(1));
+
+    await t.enterText(dataFinal, '31/10/2026');
+    await t.pumpAndSettle();
+    final leitura = Completer<Map<String, dynamic>>();
+    g.leitura = leitura;
+    await t.ensureVisible(find.text('Aplicar filtros'));
+    await t.tap(find.text('Aplicar filtros'));
+    await t.pump();
+    expect(c.carregando.value, isTrue);
+    expect(find.text('Atualizando…'), findsOneWidget);
+    expect(find.byKey(const Key('filtro-evento')), findsOneWidget);
+    leitura.complete(fixture());
     await t.pumpAndSettle();
     expect(g.chamadas.last['dados']['idEvento'], 'e');
     expect(g.chamadas.last['dados']['inicio'], '2026-10-01');
     expect(g.chamadas.last['dados']['fim'], '2026-10-31');
+    expect(
+        find.text('Festa de aniversário · 01/10/2026 a 31/10/2026'),
+        findsOneWidget);
+
+    await t.ensureVisible(find.text('Limpar filtros'));
+    await t.tap(find.text('Limpar filtros'));
+    await t.pumpAndSettle();
+    expect(g.chamadas.last['dados'], isEmpty);
+    expect(find.text('Todos os eventos · Todo o período'), findsOneWidget);
     await t.pumpWidget(const SizedBox());
     c.onClose();
     await g.stream.close();
@@ -442,6 +470,60 @@ void main() {
       await t.tap(find.text('Histórico e identificação'));
       await t.pumpAndSettle();
       expect(find.textContaining('contrato-interno'), findsOneWidget);
+      expect(
+          find.textContaining('Evento: Festa de aniversário'), findsOneWidget);
+
+      g.payload = {
+        ...fixture(),
+        'resultados': [],
+        'contas': [
+          {
+            'tipo': 'receber',
+            'id': 'ct-quitado',
+            'idEvento': 'evento-interno',
+            'nomeEvento': 'Evento com recebimento quitado',
+            'descricao': 'Serviço quitado',
+            'situacao': 'paga',
+            'origem': 'contrato_sem_canal_definido',
+            'originalCentavos': 17765,
+            'baixadoCentavos': 17765,
+            'saldoCentavos': 0,
+            'confirmadoCentavos': 17765,
+          }
+        ],
+      };
+      await c.carregar();
+      await t.pumpAndSettle();
+      final titulo = find.text('Serviço quitado');
+      await t.scrollUntilVisible(titulo, 200,
+          scrollable: find.byType(Scrollable).first);
+      expect(find.text('Quitada'), findsOneWidget);
+      expect(find.text('Já recebido'), findsOneWidget);
+      expect(find.text('Definir data e forma de recebimento'), findsNothing);
+      expect(find.text('Falta definir como você vai receber'), findsNothing);
+      final historico = find.text('Histórico e identificação');
+      await t.ensureVisible(historico);
+      await t.pumpAndSettle();
+      await t.tap(historico);
+      await t.pumpAndSettle();
+      expect(find.textContaining('Evento: Evento com recebimento quitado'),
+          findsOneWidget);
+      expect(find.textContaining('evento-interno'), findsNothing);
+      t.state<ScrollableState>(find.byType(Scrollable).first).position.jumpTo(0);
+      await t.pumpAndSettle();
+      await t.tap(find.text('Filtrar por evento e período'));
+      await t.pumpAndSettle();
+      final evento = find.byKey(const Key('filtro-evento'));
+      final inicio = find.widgetWithText(TextField, 'Data inicial');
+      final fim = find.widgetWithText(TextField, 'Data final');
+      expect(evento, findsOneWidget);
+      expect(inicio, findsOneWidget);
+      expect(fim, findsOneWidget);
+      if (size.width < 500) {
+        expect(t.getTopLeft(fim).dy, greaterThan(t.getTopLeft(inicio).dy));
+      } else {
+        expect(t.getTopLeft(fim).dy, t.getTopLeft(evento).dy);
+      }
       expect(t.takeException(), isNull);
       await t.pumpWidget(const SizedBox());
       c.onClose();

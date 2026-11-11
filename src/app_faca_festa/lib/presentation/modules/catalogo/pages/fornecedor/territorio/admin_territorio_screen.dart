@@ -323,10 +323,10 @@ class AdminTerritorioScreen extends StatelessWidget {
 
   Widget _buildMapa() {
     return Obx(() {
-      controller.idTerritorioSelecionado.value;
-      final selecionadoId = controller.idTerritorioSelecionado.value;
+      final selecionado = controller.territorioSelecionado;
+      final selecionadoId = selecionado?.idTerritorio;
       final ativos = controller.territorios.where((t) => t.ativo).toList();
-      final temSelecao = selecionadoId != null;
+      final territoriosVisiveis = selecionado == null ? ativos : [selecionado];
 
       return Stack(
         children: [
@@ -335,8 +335,10 @@ class AdminTerritorioScreen extends StatelessWidget {
             options: MapOptions(
               initialCenter: AdminTerritorioController.centroBrasil,
               initialZoom: 4.3,
+              minZoom: 0,
+              maxZoom: 19,
               onMapReady: () {
-                if (temSelecao) {
+                if (selecionado != null) {
                   controller.ajustarMapaParaSelecionado();
                 } else {
                   controller.ajustarMapaParaTerritorios();
@@ -350,7 +352,7 @@ class AdminTerritorioScreen extends StatelessWidget {
                 userAgentPackageName: 'app_faca_festa',
               ),
               CircleLayer(
-                circles: ativos
+                circles: territoriosVisiveis
                     .where((t) =>
                         t.tipoCobertura == 'raio' &&
                         t.latitude != null &&
@@ -370,7 +372,7 @@ class AdminTerritorioScreen extends StatelessWidget {
                 }).toList(),
               ),
               PolygonLayer(
-                polygons: ativos
+                polygons: territoriosVisiveis
                     .where((t) =>
                         t.tipoCobertura == 'regiao' &&
                         t.regioes != null &&
@@ -394,7 +396,7 @@ class AdminTerritorioScreen extends StatelessWidget {
                 }).toList(),
               ),
               MarkerLayer(
-                markers: ativos
+                markers: territoriosVisiveis
                     .where((t) => t.latitude != null && t.longitude != null)
                     .map((t) {
                   final sel = t.idTerritorio == selecionadoId;
@@ -419,6 +421,11 @@ class AdminTerritorioScreen extends StatelessWidget {
                     ),
                   );
                 }).toList(),
+              ),
+              Positioned(
+                right: 16,
+                bottom: 84,
+                child: Builder(builder: _buildControlesZoom),
               ),
             ],
           ),
@@ -445,8 +452,8 @@ class AdminTerritorioScreen extends StatelessWidget {
                       ],
                     ),
                     child: Text(
-                      temSelecao
-                          ? 'Focado: ${_getNomeFornecedor(controller.territorioSelecionado?.idFornecedor ?? '')}'
+                      selecionado != null
+                          ? 'Focado: ${_getNomeFornecedor(selecionado.idFornecedor)}'
                           : '${ativos.length} cobertura${ativos.length == 1 ? '' : 's'} ativa${ativos.length == 1 ? '' : 's'} no mapa',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -458,7 +465,7 @@ class AdminTerritorioScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-                if (temSelecao) ...[
+                if (selecionado != null) ...[
                   const SizedBox(width: 8),
                   Material(
                     color: Colors.white,
@@ -497,6 +504,39 @@ class AdminTerritorioScreen extends StatelessWidget {
         ],
       );
     });
+  }
+
+  Widget _buildControlesZoom(BuildContext context) {
+    final camera = MapCamera.of(context);
+    final zoomMais = camera.clampZoom(camera.zoom + 1);
+    final zoomMenos = camera.clampZoom(camera.zoom - 1);
+
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(12),
+      elevation: 2,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            tooltip: 'Aproximar mapa',
+            icon: const Icon(Icons.add_rounded),
+            color: AdminPalette.primary,
+            onPressed: zoomMais == camera.zoom
+                ? null
+                : () => controller.mapController.move(camera.center, zoomMais),
+          ),
+          IconButton(
+            tooltip: 'Afastar mapa',
+            icon: const Icon(Icons.remove_rounded),
+            color: AdminPalette.primary,
+            onPressed: zoomMenos == camera.zoom
+                ? null
+                : () => controller.mapController.move(camera.center, zoomMenos),
+          ),
+        ],
+      ),
+    );
   }
 
   void _abrirDialogTerritorio(BuildContext context, {Territorio? existente}) {

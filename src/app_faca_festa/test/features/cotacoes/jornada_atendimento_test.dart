@@ -14,8 +14,12 @@ import 'package:app_faca_festa/data/datasources/remote/jornada_atendimento_remot
 import 'package:app_faca_festa/data/local/recebimento_pendente_store.dart';
 import 'package:app_faca_festa/domain/entities/cotacao.dart';
 import 'package:app_faca_festa/domain/entities/jornada_atendimento.dart';
+import 'package:app_faca_festa/domain/usecases/gerenciar_cotacoes.dart';
+import 'package:app_faca_festa/presentation/modules/cotacao/controllers/cotacao_controller.dart';
 import 'package:app_faca_festa/presentation/modules/cotacao/controllers/jornada_atendimento_controller.dart';
 import 'package:app_faca_festa/presentation/modules/cotacao/pages/jornada_atendimento_page.dart';
+
+class _Cotacoes extends Fake implements GerenciarCotacoes {}
 
 class _Store implements RecebimentoPendenteStore {
   final ops = <String, Map<String, dynamic>>{};
@@ -376,7 +380,90 @@ void main() {
             .lastWhere((d) => d['funcao'] == 'fecharCotacao')['versaoProposta'],
         1);
     expect(find.text('A versão vigente mudou.'), findsOneWidget);
+    expect(find.text('Revisar e contratar versão 2'), findsOneWidget);
     expect(g.estado['idContrato'], isNull);
+  });
+
+  testWidgets('cotação abre jornada, aceita proposta renovada e abre o contrato',
+      (t) async {
+    final gateway = _Gateway()
+      ..propor()
+      ..usuario = 'c';
+    gateway.estado['proposta']['validade'] = '2026-10-01T00:00:00Z';
+    final jornada = _controller(gateway, _Store());
+    final cotacao = CotacaoController(gerenciarCotacoes: _Cotacoes());
+    await t.pumpWidget(GetMaterialApp(
+      home: Scaffold(
+        body: TextButton(
+          onPressed: () => Get.bottomSheet(
+            Material(
+              child: TextButton(
+                onPressed: () => cotacao.abrirRevisaoProposta('f', 'q'),
+                child: const Text('Revisar proposta'),
+              ),
+            ),
+          ),
+          child: const Text('Ver detalhes'),
+        ),
+      ),
+      getPages: [
+        GetPage(
+          name: '/jornada-atendimento',
+          page: () {
+            final args = Get.arguments as Map;
+            return JornadaAtendimentoPage(
+              idCotacao: args['idCotacao'] as String,
+              idFornecedor: args['idFornecedor'] as String,
+              controller: jornada,
+            );
+          },
+        ),
+        GetPage(
+          name: '/acompanhamento-organizador',
+          page: () {
+            final args = Get.arguments as Map;
+            return Scaffold(
+              body: Text(
+                  'Contrato ${args['idOrcamento']} do evento ${args['idEvento']}'),
+            );
+          },
+        ),
+      ],
+    ));
+    await t.pumpAndSettle();
+    await t.tap(find.text('Ver detalhes'));
+    await t.pumpAndSettle();
+    await t.tap(find.text('Revisar proposta'));
+    await t.pumpAndSettle();
+    final pagina = t.widget<JornadaAtendimentoPage>(
+        find.byType(JornadaAtendimentoPage));
+    expect(pagina.idCotacao, 'q');
+    expect(pagina.idFornecedor, 'f');
+    expect(find.text('Proposta expirada'), findsOneWidget);
+    expect(find.textContaining('Revisar e contratar versão'), findsNothing);
+
+    gateway.propor(versao: 2);
+    await t.tap(find.text('Atualizar jornada'));
+    await t.pumpAndSettle();
+    final revisar = find.text('Revisar e contratar versão 2');
+    await t.ensureVisible(revisar);
+    await t.tap(revisar);
+    await t.pumpAndSettle();
+    expect(find.textContaining('Data do evento: 01/11/2026'), findsOneWidget);
+    await t.tap(find.text('Confirmar contratação desta versão'));
+    await t.pumpAndSettle();
+    final aceite = gateway.pedidos.singleWhere(
+        (pedido) => pedido['funcao'] == 'fecharCotacao');
+    expect(aceite['versaoProposta'], 2);
+    expect(aceite['assinaturaProposta'], 'assinatura-2');
+    expect(find.textContaining('Contrato criado.'), findsOneWidget);
+
+    final financeiro = find.text('Financeiro deste contrato');
+    await t.ensureVisible(financeiro);
+    await t.tap(financeiro);
+    await t.pumpAndSettle();
+    expect(find.text('Contrato orc-estavel do evento ev'), findsOneWidget);
+    expect(t.takeException(), isNull);
   });
   testWidgets(
       'proposta expirada não oferece aceite e perda não mostra compromisso',
@@ -395,15 +482,15 @@ void main() {
     await c.carregar();
     await t.pumpAndSettle();
     expect(find.text('Financeiro deste contrato'), findsNothing);
-    expect(
-        find.textContaining('Motivo de encerramento: preco'), findsOneWidget);
+    expect(find.text('Motivo de encerramento'), findsOneWidget);
+    expect(find.text('Preço · Motivo registrado'), findsOneWidget);
   });
   testWidgets('pós-aceite abre mediação existente sem editar preço contratado',
       (t) async {
     final g = _Gateway()..contratar(), s = _Store(), c = _controller(g, s);
     await _montar(t, c);
     expect(find.text('Revisar proposta'), findsNothing);
-    await _manifestar(t, 'Solicitar alteração/cancelamento');
+    await _manifestar(t, 'Relatar problema ou pedir alteração');
     final p =
         g.pedidos.lastWhere((d) => d['funcao'] == 'abrirCasoMediacaoParte');
     expect(p['idOrcamento'], 'orc-estavel');
@@ -496,7 +583,8 @@ void main() {
       addTearDown(t.view.resetPhysicalSize);
       addTearDown(t.view.resetDevicePixelRatio);
       addTearDown(() => t.binding.setSurfaceSize(null));
-      final c = _controller(_Gateway(), _Store());
+      final gateway = _Gateway();
+      final c = _controller(gateway, _Store());
       await t.pumpWidget(GetMaterialApp(
         theme: ThemeData(
             fontFamily: 'JornadaPoppins',
@@ -522,6 +610,9 @@ void main() {
           findsOneWidget);
       expect(find.text('Estados independentes'), findsNothing);
       expect(find.textContaining('Contrato: q'), findsNothing);
+      final clienteY = t.getTopLeft(find.text('Cliente')).dy;
+      final dataY = t.getTopLeft(find.text('Data do evento')).dy;
+      expect(dataY, size.width < 500 ? greaterThan(clienteY) : clienteY);
       await expectLater(
           find.byKey(const Key('visual-jornada')),
           matchesGoldenFile(
@@ -529,6 +620,85 @@ void main() {
       await t.ensureVisible(find.text('O que o cliente precisa'));
       await t.pumpAndSettle();
       expect(find.text('Escopo inicial'), findsOneWidget);
+
+      final primeira = {
+        'versao': 1,
+        'liquidoCentavos': 17000,
+        'condicoes': 'À vista',
+        'escopo': 'Decoração do salão',
+        'validade': '2026-11-02T15:00:00Z',
+      };
+      final contratada = {
+        ...primeira,
+        'versao': 2,
+        'brutoCentavos': 20000,
+        'descontoCentavos': 1300,
+        'liquidoCentavos': 18700,
+        'escopo': 'Decoração do salão com montagem e retirada',
+        'itens': [
+          {'nome': 'Arranjo de mesa', 'quantidade': 2},
+        ],
+        'agenda': {
+          'fuso': 'America/Sao_Paulo',
+          'janelas': [
+            {
+              'tipo': 'execucao',
+              'inicio': '2026-11-02T15:00:00Z',
+              'fim': '2026-11-02T18:00:00Z',
+            },
+          ],
+        },
+      };
+      gateway.estado.addAll({
+        'estadoComercial': 'ganho',
+        'estadoExecucao': 'aceito',
+        'proposta': contratada,
+        'propostas': [primeira, contratada],
+        'condicoesAceitas': contratada,
+        'historico': [
+          {
+            'acao': 'emitir_proposta',
+            'autorId': 'f',
+            'versao': 1,
+            'data': '2026-11-01T13:00:00Z',
+          },
+          {
+            'acao': 'aceitar',
+            'autorId': 'c',
+            'data': '2026-11-02T13:00:00Z',
+          },
+        ],
+      });
+      await c.carregar();
+      await t.pumpAndSettle();
+      expect(find.text('Preço proposto'), findsOneWidget);
+      expect(find.text('R\$ 13,00'), findsOneWidget);
+      expect(find.text('2 × Arranjo de mesa'), findsOneWidget);
+      expect(
+          find.text('Execução · 02/11/2026 12:00 até 02/11/2026 15:00'),
+          findsOneWidget);
+      expect(t.takeException(), isNull);
+      final versoes = find.text('Versões da proposta');
+      await t.ensureVisible(versoes);
+      await t.tap(versoes);
+      await t.pumpAndSettle();
+      expect(find.text('Contratada'), findsOneWidget);
+      expect(t.getTopLeft(find.text('Contratada')).dy,
+          lessThan(t.getTopLeft(find.text('Versão 1')).dy));
+      expect(find.text('R\$ 170,00'), findsOneWidget);
+      final historico = find.text('Histórico do atendimento e execução');
+      await t.ensureVisible(historico);
+      await t.tap(historico);
+      await t.pumpAndSettle();
+      final aceite = find.descendant(
+        of: find.byType(ListTile),
+        matching: find.text('Entrega confirmada'),
+      );
+      expect(aceite, findsOneWidget);
+      expect(t.getTopLeft(aceite).dy,
+          lessThan(t.getTopLeft(find.text('Proposta enviada')).dy));
+      expect(find.text('Fornecedor'), findsOneWidget);
+      expect(find.textContaining('autor '), findsNothing);
       expect(t.takeException(), isNull);
       await t.pumpWidget(const SizedBox());
     });

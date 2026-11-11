@@ -13,7 +13,6 @@ class OrcamentosAdminController extends GetxController {
   final CarregarOrcamentosAdmin _carregarOrcamentos;
 
   final orcamentos = <OrcamentoAdmin>[].obs;
-  final detalhesVisiveis = <String, bool>{}.obs;
   final busca = ''.obs;
   final carregando = false.obs;
   final erro = ''.obs;

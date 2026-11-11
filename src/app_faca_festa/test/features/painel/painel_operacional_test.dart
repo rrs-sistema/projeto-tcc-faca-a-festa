@@ -47,6 +47,11 @@ class Gateway implements CallableSessaoGateway {
 
 class Usecase extends Fake implements GerenciarFornecedores {
   final espera = Completer<FornecedorEstatisticas>();
+  final mensagens = StreamController<int>.broadcast(sync: true);
+
+  @override
+  Stream<int> observarMensagensNaoLidas(String uid) => mensagens.stream;
+
   @override
   Future<FornecedorEstatisticas> carregarEstatisticas(String uid) =>
       espera.future;
@@ -162,7 +167,7 @@ void main() {
         fornecedor: fornecedor,
         aptoParaOperar: false.obs,
         solicitacoesPendentes: pendentes,
-        mensagensNaoLidas: 0.obs,
+        mensagensNaoLidas: RxnInt(),
         avaliacaoMedia: media,
         servicosFornecedor: <FornecedorProdutoServico>[].obs,
         erro: ''.obs,
@@ -182,6 +187,60 @@ void main() {
     expect(pendentes.value, 0);
     expect(media.value, 0);
     await p.cancelarEscutas();
+    await u.mensagens.close();
+  });
+
+  test('contador recebe mensagens e leituras sem aceitar consulta antiga',
+      () async {
+    String usuario = 'f';
+    final u = Usecase();
+    final mensagens = RxnInt();
+    final painel = FornecedorPainelAoVivo(
+      fornecedor: Rx<Fornecedor?>(Fornecedor(
+        idFornecedor: 'f',
+        idUsuario: 'f',
+        razaoSocial: 'Fornecedor',
+        telefone: '',
+        email: '',
+        dataCadastro: DateTime(2026),
+      )),
+      aptoParaOperar: true.obs,
+      solicitacoesPendentes: 0.obs,
+      mensagensNaoLidas: mensagens,
+      avaliacaoMedia: 0.0.obs,
+      servicosFornecedor: <FornecedorProdutoServico>[].obs,
+      erro: ''.obs,
+      usecase: () => u,
+      usuarioEhFornecedor: () => true,
+      usuarioAtual: () => usuario,
+      aoAtualizar: (_) {},
+      aoLimpar: () {},
+    );
+    await painel.ouvirMensagensNaoLidas('f');
+    expect(mensagens.value, isNull);
+    u.mensagens.add(0);
+    final consulta = painel.atualizarEstatisticas();
+    u.mensagens.add(2);
+    u.espera.complete(const FornecedorEstatisticas(
+      solicitacoesPendentes: 0,
+      servicosAtivos: [],
+      mensagensNaoLidas: 0,
+      avaliacaoMedia: 0,
+    ));
+    await consulta;
+    expect(mensagens.value, 2);
+    u.mensagens.add(1);
+    expect(mensagens.value, 1);
+    u.mensagens.addError(StateError('Consulta indisponível'));
+    expect(mensagens.value, isNull);
+    u.mensagens.add(0);
+    expect(mensagens.value, 0);
+    usuario = 'g';
+    u.mensagens.add(5);
+    expect(mensagens.value, 0);
+    await painel.cancelarEscutas();
+    expect(mensagens.value, isNull);
+    await u.mensagens.close();
   });
   testWidgets(
       'média com amostra convive com espera de 64h e clique/teclado abre registro certo',

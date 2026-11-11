@@ -874,6 +874,7 @@ class FinanceiroFornecedorController extends GetxController {
           final m = Map<String, dynamic>.from(item);
           return VendaFornecedorFato(
             id: (m['id'] ?? '').toString(),
+            idOrcamento: (m['idOrcamento'] ?? m['id_orcamento'])?.toString(),
             idEvento: (m['idEvento'] ?? m['id_evento'] ?? '').toString(),
             nomeServico: (m['nomeServico'] ?? m['nome_servico'])?.toString(),
             valorContratado:

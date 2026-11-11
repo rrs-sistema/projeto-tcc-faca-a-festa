@@ -272,6 +272,15 @@ extension _CalculadoraFestaLayout on _CalculadoraFestaScreenState {
     return Obx(() {
       final salvando = calculadoraController.salvando.value;
       final enviando = calculadoraController.enviandoParaCardapio.value;
+      final rascunho = calculadoraController.modoEstimativaManualSemEvento &&
+          widget.persistirRascunho != null;
+      final podeSalvar = rascunho
+          ? _preparada &&
+              _estadoRascunho.value !=
+                  _CalculadoraFestaScreenState._guardandoRascunho
+          : calculadoraController.possuiResultado &&
+              calculadoraController.possuiEventoVinculado &&
+              !calculadoraController.carregandoItensBase.value;
 
       return Column(
         children: [
@@ -291,12 +300,7 @@ extension _CalculadoraFestaLayout on _CalculadoraFestaScreenState {
                   disabledForegroundColor: const Color(0xFF475569),
                   disabledBackgroundColor: const Color(0xFFE2E8F0),
                 ),
-                onPressed: salvando ||
-                        !calculadoraController.possuiResultado ||
-                        !calculadoraController.possuiEventoVinculado ||
-                        calculadoraController.carregandoItensBase.value
-                    ? null
-                    : _salvarCalculo,
+                onPressed: salvando || !podeSalvar ? null : _salvarCalculo,
                 icon: salvando
                     ? const SizedBox(
                         width: 14,
@@ -305,7 +309,11 @@ extension _CalculadoraFestaLayout on _CalculadoraFestaScreenState {
                             strokeWidth: 2, color: Colors.white))
                     : const Icon(Icons.save_rounded, size: 20),
                 label: Text(
-                  salvando ? 'Salvando...' : 'Salvar histórico',
+                  salvando
+                      ? 'Salvando...'
+                      : rascunho
+                          ? 'Guardar estimativa neste aparelho'
+                          : 'Salvar histórico',
                   style: GoogleFonts.poppins(
                       fontWeight: FontWeight.w700, fontSize: 14),
                 ),

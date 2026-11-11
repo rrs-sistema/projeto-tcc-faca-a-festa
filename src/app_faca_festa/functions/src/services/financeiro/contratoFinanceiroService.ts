@@ -1,4 +1,5 @@
 import { prepararLiberacaoAgenda } from "../agenda/agendaFornecedorService";
+import { exigirNovosNegociosPermitidos } from "../fornecedores/restricaoComercial";
 import { FieldValue, Firestore, Timestamp } from "firebase-admin/firestore";
 import { HttpsError } from "firebase-functions/v2/https";
 import { dinheiro, deMapa, deReaisLegado, Dinheiro, reaisParaCentavosArredondado } from "./dinheiro";
@@ -71,6 +72,13 @@ export async function registrarOuAtualizarContrato(
     // Leituras auxiliares na mesma transação (evento/fornecedor/usuário).
     const idFornecedor =
       typeof data.id_fornecedor === "string" ? data.id_fornecedor.trim() : "";
+    const estavaConfirmado = anterior.estado_comercial === "contratado" ||
+      (anterior.estado_comercial == null && !["cancelado", "cancelada", "estornado"].includes(data.status) &&
+        (data.orcamento_fechado === true || ["fechado", "contratado"].includes(data.status)));
+    if (idFornecedor && !estavaConfirmado) {
+      await exigirNovosNegociosPermitidos(db, tx, idFornecedor,
+        [data.id_produto_servico, data.id_servico, data.id_servico_fornecido]);
+    }
     const idSolicitante =
       typeof data.id_solicitante === "string" ? data.id_solicitante.trim() : "";
     const eventoRef = db.collection("evento").doc(entrada.idEvento);

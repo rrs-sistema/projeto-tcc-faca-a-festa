@@ -69,8 +69,7 @@ class _SolicitacoesSectionState extends State<SolicitacoesSection> {
   List<Cotacao> _filtrar(List<Cotacao> lista) => lista
       .where((c) => switch (_filtro) {
             _FiltroPedidos.todos => true,
-            _FiltroPedidos.aguardando =>
-              estadoComercialCotacao(c) == 'nova_solicitacao',
+            _FiltroPedidos.aguardando => _pedidoNovo(c),
             _FiltroPedidos.respondidas =>
               estadoComercialCotacao(c) == 'proposta_enviada',
             _FiltroPedidos.negociacao =>
@@ -81,6 +80,9 @@ class _SolicitacoesSectionState extends State<SolicitacoesSection> {
                 .contains(estadoComercialCotacao(c)),
           })
       .toList();
+
+  bool _pedidoNovo(Cotacao c) =>
+      estadoComercialCotacao(c) == 'nova_solicitacao';
 
   @override
   Widget build(BuildContext context) {
@@ -110,8 +112,7 @@ class _SolicitacoesSectionState extends State<SolicitacoesSection> {
 
       final todas = solicitacoesController.solicitacoes.toList();
       final lista = _filtrar(todas);
-      final aguardando =
-          todas.where((c) => c.status == StatusCotacao.pendente).length;
+      final aguardando = todas.where(_pedidoNovo).length;
       final finalizadas = todas
           .where((c) => ['perdido', 'recusado', 'cancelado']
               .contains(estadoComercialCotacao(c)))
@@ -131,65 +132,57 @@ class _SolicitacoesSectionState extends State<SolicitacoesSection> {
                 .carregarAiDasSolicitacoesPendentes(forceRefresh: true),
         filtro: _filtro,
         onFiltro: (f) => setState(() => _filtro = f),
-        child: Column(children: [
-          Align(
-              alignment: Alignment.centerLeft,
-              child: OutlinedButton.icon(
-                  onPressed: () => Get.toNamed('/fornecedor/agenda'),
-                  icon: const Icon(Icons.calendar_month),
-                  label: const Text('Agenda e capacidade'))),
-          lista.isEmpty
-              ? _MensagemEstado(
-                  icon: Icons.inbox_outlined,
-                  title: todas.isEmpty
-                      ? 'Nenhum pedido de preço'
-                      : 'Nenhum pedido neste filtro',
-                  message: todas.isEmpty
-                      ? 'Quando um organizador pedir preço, as oportunidades aparecem aqui.'
-                      : 'Troque o filtro acima para ver outros pedidos.',
-                  color: const Color(0xFF6366F1),
-                )
-              : LayoutBuilder(
-                  builder: (context, constraints) {
-                    final usarDuasColunas = constraints.maxWidth >= 860;
+        child: lista.isEmpty
+            ? _MensagemEstado(
+                icon: Icons.inbox_outlined,
+                title: todas.isEmpty
+                    ? 'Nenhum pedido de preço'
+                    : 'Nenhum pedido neste filtro',
+                message: todas.isEmpty
+                    ? 'Quando um organizador pedir preço, as oportunidades aparecem aqui.'
+                    : 'Troque o filtro acima para ver outros pedidos.',
+                color: const Color(0xFF6366F1),
+              )
+            : LayoutBuilder(
+                builder: (context, constraints) {
+                  final usarDuasColunas = constraints.maxWidth >= 860;
 
-                    if (!usarDuasColunas) {
-                      return ListView.separated(
-                        itemCount: lista.length,
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        separatorBuilder: (_, __) => const SizedBox(height: 9),
-                        itemBuilder: (context, index) =>
-                            _buildCotacaoCard(context, lista[index], index),
-                      );
-                    }
-
-                    // Grid 2 colunas com altura mínima comum (sem IntrinsicHeight:
-                    // LayoutBuilder no card não calcula intrínseco).
-                    const gap = 12.0;
-                    final itemWidth = (constraints.maxWidth - gap) / 2;
-                    return Wrap(
-                      spacing: gap,
-                      runSpacing: gap,
-                      alignment: WrapAlignment.start,
-                      crossAxisAlignment: WrapCrossAlignment.start,
-                      children: List.generate(lista.length, (index) {
-                        return SizedBox(
-                          width: itemWidth,
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(minHeight: 168),
-                            child: _buildCotacaoCard(
-                              context,
-                              lista[index],
-                              index,
-                            ),
-                          ),
-                        );
-                      }),
+                  if (!usarDuasColunas) {
+                    return ListView.separated(
+                      itemCount: lista.length,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      separatorBuilder: (_, __) => const SizedBox(height: 9),
+                      itemBuilder: (context, index) =>
+                          _buildCotacaoCard(context, lista[index], index),
                     );
-                  },
-                ),
-        ]),
+                  }
+
+                  // Grid 2 colunas com altura mínima comum (sem IntrinsicHeight:
+                  // LayoutBuilder no card não calcula intrínseco).
+                  const gap = 12.0;
+                  final itemWidth = (constraints.maxWidth - gap) / 2;
+                  return Wrap(
+                    spacing: gap,
+                    runSpacing: gap,
+                    alignment: WrapAlignment.start,
+                    crossAxisAlignment: WrapCrossAlignment.start,
+                    children: List.generate(lista.length, (index) {
+                      return SizedBox(
+                        width: itemWidth,
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(minHeight: 168),
+                          child: _buildCotacaoCard(
+                            context,
+                            lista[index],
+                            index,
+                          ),
+                        ),
+                      );
+                    }),
+                  );
+                },
+              ),
       );
     });
   }
@@ -201,6 +194,14 @@ class _SolicitacoesSectionState extends State<SolicitacoesSection> {
         fornecedorController.ai.isGerandoRespostaCotacaoAi(idCotacao);
 
     final podeResponder = item.status == StatusCotacao.pendente;
+    final estadoComercial = estadoComercialCotacao(item);
+    final idFornecedor = fornecedorController.fornecedor.value?.idFornecedor;
+    final acaoJornada = switch (estadoComercial) {
+      'ganho' => 'Jornada e execução',
+      'proposta_enviada' => 'Revisar proposta',
+      'negociacao' => 'Abrir negociação',
+      _ => null,
+    };
 
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       AcessoAtendimento(
@@ -230,7 +231,7 @@ class _SolicitacoesSectionState extends State<SolicitacoesSection> {
               : null,
         ),
       ),
-      if (estadoComercialCotacao(item) == 'ganho')
+      if (estadoComercial == 'ganho')
         Padding(
             padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
             child: Text(
@@ -251,15 +252,14 @@ class _SolicitacoesSectionState extends State<SolicitacoesSection> {
       Wrap(
         alignment: WrapAlignment.end,
         children: [
-          if (estadoComercialCotacao(item) == 'ganho')
+          if (acaoJornada != null && idFornecedor != null)
             TextButton.icon(
               onPressed: () => Get.toNamed('/jornada-atendimento', arguments: {
                 'idCotacao': item.id,
-                'idFornecedor':
-                    fornecedorController.fornecedor.value?.idFornecedor,
+                'idFornecedor': idFornecedor,
               }),
               icon: const Icon(Icons.route_outlined),
-              label: const Text('Jornada e execução'),
+              label: Text(acaoJornada),
             ),
           TextButton.icon(
             onPressed: () => _abrirAtendimento(item),
@@ -923,12 +923,16 @@ class _CotacoesShell extends StatelessWidget {
                 children: [
                   if (total != null)
                     _Chip(
-                        text: '$total pedido${total == 1 ? '' : 's'}',
+                        text: '$total pedido${total == 1 ? '' : 's'} no total',
                         color: const Color(0xFF4F46E5)),
-                  if (aguardando > 0)
+                  if (total != null)
                     _Chip(
-                        text: '$aguardando aguardando',
-                        color: const Color(0xFFF59E0B)),
+                        text: aguardando == 0
+                            ? 'Nenhum pedido novo aguardando resposta'
+                            : '$aguardando ${aguardando == 1 ? 'novo' : 'novos'} aguardando resposta',
+                        color: aguardando == 0
+                            ? const Color(0xFF475569)
+                            : const Color(0xFF92400E)),
                   if (finalizadas > 0)
                     _Chip(
                         text:
@@ -979,7 +983,10 @@ class _CotacoesShell extends StatelessWidget {
                 children: [
                   Expanded(child: header),
                   const SizedBox(width: 12),
-                  chips
+                  Flexible(
+                    child:
+                        Align(alignment: Alignment.centerRight, child: chips),
+                  ),
                 ],
               );
             },
@@ -1163,21 +1170,22 @@ class _CotacaoInteligenteCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
+                    Wrap(
+                      alignment: WrapAlignment.spaceBetween,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 6,
+                      runSpacing: 4,
                       children: [
-                        Expanded(
-                          child: Text(
-                            categoria,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.poppins(
-                              fontSize: 13.5,
-                              fontWeight: FontWeight.w900,
-                              color: const Color(0xFF111827),
-                            ),
+                        Text(
+                          categoria,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.poppins(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w900,
+                            color: const Color(0xFF111827),
                           ),
                         ),
-                        const SizedBox(width: 6),
                         Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 7, vertical: 3),
@@ -1637,15 +1645,14 @@ class _Chip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 30,
-      padding: const EdgeInsets.symmetric(horizontal: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(999),
       ),
-      alignment: Alignment.center,
       child: Text(
         text,
+        textAlign: TextAlign.center,
         style: GoogleFonts.poppins(
           fontSize: 10.5,
           fontWeight: FontWeight.w900,

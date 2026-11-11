@@ -27,17 +27,23 @@ extension CalculadoraFestaHistorico on CalculadoraFestaController {
 
     try {
       salvando.value = true;
+      final sessao = sessaoPlanejador;
       await salvarAjustesManuais();
+      if (sessao != sessaoPlanejador) return;
+      final atual = calculoAtual.value;
+      if (atual == null || !possuiResultado) {
+        throw StateError('Revise as quantidades antes de salvar a simulação.');
+      }
       final versao = _versaoAnaliseIA.value;
 
-      final calculoParaSalvar = (calculoAtual.value ?? calculo).copyWith(
+      final calculoParaSalvar = atual.copyWith(
         contextoPlanejamento: snapshotPlanejamento,
         orcamentoDisponivel: orcamentoDisponivel.value,
         limparOrcamentoDisponivel: orcamentoDisponivel.value == null,
         analiseIA: analiseIA.value,
         limparAnaliseIA: analiseIA.value == null,
         dataAtualizacao: DateTime.now(),
-        idUsuario: calculo.idUsuario ?? _uidAtual,
+        idUsuario: atual.idUsuario ?? _uidAtual,
       );
 
       await _repository.salvarSimulacao(

@@ -9,6 +9,7 @@ class CotacaoConversa {
     required this.ultimaMensagem,
     required this.ultimaMensagemEm,
     required this.naoLidas,
+    this.observacaoPedido,
   });
 
   final String idCotacao;
@@ -16,7 +17,8 @@ class CotacaoConversa {
   final String categoria;
   final String idEvento;
   final String nomeSolicitante;
-  final DateTime dataSolicitacao;
+  final DateTime? dataSolicitacao;
+  final String? observacaoPedido;
   final String ultimaMensagem;
   final DateTime? ultimaMensagemEm;
   final int naoLidas;
@@ -63,9 +65,11 @@ class CotacaoFornecedorResumo {
     required this.condicaoPagamento,
     required this.servicos,
     this.valorCotado,
+    this.nomeFornecedor,
   });
 
   final String idFornecedor;
+  final String? nomeFornecedor;
   final String status;
   final String observacaoFornecedor;
   final DateTime? prazoEntrega;

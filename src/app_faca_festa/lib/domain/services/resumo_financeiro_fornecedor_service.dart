@@ -83,6 +83,7 @@ class ResumoFinanceiroFornecedor {
 class VendaFornecedorFato {
   const VendaFornecedorFato({
     required this.id,
+    this.idOrcamento,
     required this.idEvento,
     required this.valorContratado,
     this.liquidoPrevisto,
@@ -103,6 +104,7 @@ class VendaFornecedorFato {
   });
 
   final String id;
+  final String? idOrcamento;
   final String idEvento;
   final double valorContratado;
   final double? liquidoPrevisto;
