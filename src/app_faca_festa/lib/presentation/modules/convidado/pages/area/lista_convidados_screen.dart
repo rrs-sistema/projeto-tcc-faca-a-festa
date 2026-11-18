@@ -1,5 +1,7 @@
+import 'package:app_faca_festa/presentation/widgets/festa_scroll_area.dart';
 import 'package:app_faca_festa/core/services/update_operations.dart';
 import 'dart:convert';
+import 'dart:math' as math;
 
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/foundation.dart';
@@ -18,6 +20,7 @@ import 'package:app_faca_festa/presentation/modules/convidado/controllers/grupo_
 import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_controller.dart';
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import 'package:app_faca_festa/presentation/widgets/festa_empty_state.dart';
+import 'package:app_faca_festa/presentation/widgets/festa_leitura.dart';
 
 class ListaConvidadosScreen extends StatefulWidget {
   final EventThemeController themeController;
@@ -242,79 +245,88 @@ class _ListaConvidadosScreenState extends State<ListaConvidadosScreen> {
 
       return RefreshIndicator(
         color: primary,
-        onRefresh: () async =>
-            _carregarConvidadosDoEventoAtual(mostrarSnack: true),
-        child: CustomScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-          slivers: [
-            SliverToBoxAdapter(
-              child: _buildResumo(convidadoController, primary),
-            ),
-            SliverToBoxAdapter(
-              child: _buildSearchAndFilter(convidadoController, primary),
-            ),
-            if (carregando)
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 48),
-                  child: Center(
-                    child: CircularProgressIndicator(color: primary),
-                  ),
+        onRefresh: () async {
+          if (!FestaLeitura.pincando(context)) {
+            _carregarConvidadosDoEventoAtual(mostrarSnack: true);
+          }
+        },
+        child: FestaScrollArea(
+            color: primary,
+            maxWidth: 1200,
+            child: CustomScrollView(
+              primary: true,
+              physics: FestaLeitura.physics(
+                  context, const AlwaysScrollableScrollPhysics()),
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              slivers: [
+                SliverToBoxAdapter(
+                  child: _buildResumo(convidadoController, primary),
                 ),
-              )
-            else if (lista.isEmpty)
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(8, 8, 8, 96),
-                  child: _buildEstadoListaVazia(primary),
+                SliverToBoxAdapter(
+                  child: _buildSearchAndFilter(convidadoController, primary),
                 ),
-              )
-            else
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(
-                    8, 0, 8, 80), // Margens ainda menores
-                sliver: SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      if (index.isOdd) {
-                        return const SizedBox(
-                            height: 6); // Menos espaço entre cards
-                      }
+                if (carregando)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 48),
+                      child: Center(
+                        child: CircularProgressIndicator(color: primary),
+                      ),
+                    ),
+                  )
+                else if (lista.isEmpty)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(8, 8, 8, 96),
+                      child: _buildEstadoListaVazia(primary),
+                    ),
+                  )
+                else
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(
+                        8, 0, 8, 80), // Margens ainda menores
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          if (index.isOdd) {
+                            return const SizedBox(
+                                height: 6); // Menos espaço entre cards
+                          }
 
-                      final itemIndex = index ~/ 2;
-                      final convidado = lista[itemIndex];
+                          final itemIndex = index ~/ 2;
+                          final convidado = lista[itemIndex];
 
-                      return Obx(() {
-                        final modoSelecao = _modoSelecao.value;
-                        final selecionado = _isSelecionado(convidado);
-                        return _GuestCard(
-                          convidado: convidado,
-                          primary: primary,
-                          modoSelecao: modoSelecao,
-                          selecionado: selecionado,
-                          onToggleSelecao: () => _toggleSelecionado(convidado),
-                          onLongPress: () => _entrarSelecao(convidado),
-                          onEdit: () => _abrirAdicionarConvidado(
-                            primary,
-                            convidado: convidado,
-                          ),
-                          onConfirm: () => _atualizarStatus(
-                              convidado, StatusConvidado.confirmado),
-                          onPending: () => _atualizarStatus(
-                              convidado, StatusConvidado.pendente),
-                          onRefuse: () => _atualizarStatus(
-                              convidado, StatusConvidado.recusado),
-                          onDelete: () => _confirmarExclusao(convidado),
-                        );
-                      });
-                    },
-                    childCount: lista.isEmpty ? 0 : (lista.length * 2) - 1,
+                          return Obx(() {
+                            final modoSelecao = _modoSelecao.value;
+                            final selecionado = _isSelecionado(convidado);
+                            return _GuestCard(
+                              convidado: convidado,
+                              primary: primary,
+                              modoSelecao: modoSelecao,
+                              selecionado: selecionado,
+                              onToggleSelecao: () =>
+                                  _toggleSelecionado(convidado),
+                              onLongPress: () => _entrarSelecao(convidado),
+                              onEdit: () => _abrirAdicionarConvidado(
+                                primary,
+                                convidado: convidado,
+                              ),
+                              onConfirm: () => _atualizarStatus(
+                                  convidado, StatusConvidado.confirmado),
+                              onPending: () => _atualizarStatus(
+                                  convidado, StatusConvidado.pendente),
+                              onRefuse: () => _atualizarStatus(
+                                  convidado, StatusConvidado.recusado),
+                              onDelete: () => _confirmarExclusao(convidado),
+                            );
+                          });
+                        },
+                        childCount: lista.isEmpty ? 0 : (lista.length * 2) - 1,
+                      ),
+                    ),
                   ),
-                ),
-              ),
-          ],
-        ),
+              ],
+            )),
       );
     });
   }
@@ -411,7 +423,7 @@ class _ListaConvidadosScreenState extends State<ListaConvidadosScreen> {
       child: Column(
         children: [
           Container(
-            height: 40, // Altura reduzida para barra de pesquisa
+            constraints: const BoxConstraints(minHeight: 48),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(12),
@@ -448,7 +460,7 @@ class _ListaConvidadosScreenState extends State<ListaConvidadosScreen> {
                 filled: true,
                 fillColor: Colors.white,
                 contentPadding:
-                    const EdgeInsets.symmetric(vertical: 0, horizontal: 10),
+                    const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
                 border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none),
@@ -457,7 +469,8 @@ class _ListaConvidadosScreenState extends State<ListaConvidadosScreen> {
           ),
           const SizedBox(height: 8),
           SizedBox(
-            height: 30, // Botões de filtro extremamente finos
+            height:
+                math.max(48, MediaQuery.textScalerOf(context).scale(11) + 28),
             child: Obx(() {
               return ListView(
                 scrollDirection: Axis.horizontal,
@@ -979,12 +992,21 @@ class _GuestCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
+                      Flex(
+                        direction:
+                            MediaQuery.textScalerOf(context).scale(13) > 18
+                                ? Axis.vertical
+                                : Axis.horizontal,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Expanded(
+                          Flexible(
+                            fit: MediaQuery.textScalerOf(context).scale(13) > 18
+                                ? FlexFit.loose
+                                : FlexFit.tight,
                             child: Text(
                               convidado.nome,
-                              maxLines: 1,
+                              maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                               style: GoogleFonts.poppins(
                                   fontWeight: FontWeight.w800,
@@ -1048,9 +1070,8 @@ class _GuestCard extends StatelessWidget {
                   )
                 else
                   SizedBox(
-                    height:
-                        24, // Limita altura da área do popup para alinhar perfeitamente
-                    width: 24,
+                    height: 48,
+                    width: 48,
                     child: PopupMenuButton<String>(
                       padding: EdgeInsets.zero,
                       color: Colors.white,
@@ -1128,7 +1149,7 @@ class _InfoLine extends StatelessWidget {
         const SizedBox(width: 4),
         Expanded(
           child: Text(text,
-              maxLines: 1,
+              maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: GoogleFonts.poppins(
                   fontSize: 11,
@@ -1193,7 +1214,7 @@ class _ResumoMiniCard extends StatelessWidget {
               style: GoogleFonts.poppins(
                   color: color, fontSize: 12, fontWeight: FontWeight.w900)),
           Text(label,
-              maxLines: 1,
+              maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: GoogleFonts.poppins(
                   color: const Color(0xFF4B5563),

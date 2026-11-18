@@ -1,5 +1,7 @@
+import 'package:app_faca_festa/presentation/widgets/festa_scroll_area.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:app_faca_festa/presentation/widgets/festa_leitura.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -37,65 +39,70 @@ class GruposTab extends StatelessWidget {
 
       return ColoredBox(
         color: const Color(0xFFF8FAFC),
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(14, 12, 14, 96),
-          children: [
-            _GruposHero(
-              primary: primary,
-              totalGrupos: grupoController.totalGrupos,
-              totalConvidados: grupoController.totalConvidados,
-            ),
-            const SizedBox(height: 12),
-            _ResumoGrupos(
-              totalGrupos: grupoController.totalGrupos,
-              gruposComConvidados: grupoController.gruposComConvidados,
-              totalConvidados: grupoController.totalConvidados,
-              gruposVazios: grupoController.gruposVazios,
-              primary: primary,
-            ),
-            const SizedBox(height: 18),
-            if (grupos.isEmpty)
-              _EmptyGroupsState(primary: primary)
-            else ...[
-              _SectionTitle(
-                icon: Icons.folder_shared_rounded,
-                title: 'Grupos',
-                subtitle:
-                    'Toque para ver os convidados. Use o menu para editar.',
-                color: primary,
-              ),
-              const SizedBox(height: 10),
-              ...grupos.map((grupo) {
-                final convidados =
-                    grupoController.convidadosDoGrupo(grupo.idGrupo);
-                return _GrupoCard(
-                  grupo: grupo,
-                  color: fromHex(grupo.corHex ?? '#FF7BAC'),
-                  icon: _iconFromKey(grupo.icone),
-                  convidados: convidados,
-                  podeGerenciar: podeGerenciar,
-                  onEditar: () => _abrirEditarGrupo(
-                    context,
-                    grupo,
-                    grupoController,
-                    themeController,
+        child: FestaScrollArea(
+            color: primary,
+            maxWidth: 1200,
+            child: ListView(
+              primary: true,
+              physics: FestaLeitura.physics(context),
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 96),
+              children: [
+                _GruposHero(
+                  primary: primary,
+                  totalGrupos: grupoController.totalGrupos,
+                  totalConvidados: grupoController.totalConvidados,
+                ),
+                const SizedBox(height: 12),
+                _ResumoGrupos(
+                  totalGrupos: grupoController.totalGrupos,
+                  gruposComConvidados: grupoController.gruposComConvidados,
+                  totalConvidados: grupoController.totalConvidados,
+                  gruposVazios: grupoController.gruposVazios,
+                  primary: primary,
+                ),
+                const SizedBox(height: 18),
+                if (grupos.isEmpty)
+                  _EmptyGroupsState(primary: primary)
+                else ...[
+                  _SectionTitle(
+                    icon: Icons.folder_shared_rounded,
+                    title: 'Grupos',
+                    subtitle:
+                        'Toque para ver os convidados. Use o menu para editar.',
+                    color: primary,
                   ),
-                  onExcluir: () => _confirmarExcluirGrupo(
-                    grupo: grupo,
-                    quantidade: convidados.length,
+                  const SizedBox(height: 10),
+                  ...grupos.map((grupo) {
+                    final convidados =
+                        grupoController.convidadosDoGrupo(grupo.idGrupo);
+                    return _GrupoCard(
+                      grupo: grupo,
+                      color: fromHex(grupo.corHex ?? '#FF7BAC'),
+                      icon: _iconFromKey(grupo.icone),
+                      convidados: convidados,
+                      podeGerenciar: podeGerenciar,
+                      onEditar: () => _abrirEditarGrupo(
+                        context,
+                        grupo,
+                        grupoController,
+                        themeController,
+                      ),
+                      onExcluir: () => _confirmarExcluirGrupo(
+                        grupo: grupo,
+                        quantidade: convidados.length,
+                        controller: grupoController,
+                      ),
+                    );
+                  }),
+                  const SizedBox(height: 8),
+                  _GraficoGrupos(
+                    grupos: grupos,
                     controller: grupoController,
+                    primary: primary,
                   ),
-                );
-              }),
-              const SizedBox(height: 8),
-              _GraficoGrupos(
-                grupos: grupos,
-                controller: grupoController,
-                primary: primary,
-              ),
-            ],
-          ],
-        ),
+                ],
+              ],
+            )),
       );
     });
   }

@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/presentation/widgets/festa_scroll_area.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -73,7 +74,6 @@ class _FinanceiroGerenteDetalhePageState
 
       final w = MediaQuery.sizeOf(context).width;
       final pad = w >= 1100 ? 28.0 : (w >= 720 ? 20.0 : 16.0);
-      final maxW = w >= 1280 ? 1400.0 : w;
 
       return Scaffold(
         backgroundColor: surface.withValues(alpha: 0.35),
@@ -81,12 +81,12 @@ class _FinanceiroGerenteDetalhePageState
           titulo: p.nomeEvento,
           themeController: widget.themeController,
         ),
-        body: Align(
-          alignment: Alignment.topCenter,
-          child: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: maxW),
+        body: FestaScrollArea(
+            color: primary,
             child: ListView(
-              padding: EdgeInsets.fromLTRB(pad, FestaPageInsets.belowAppBar, pad, 32),
+              primary: true,
+              padding: EdgeInsets.fromLTRB(
+                  pad, FestaPageInsets.belowAppBar, pad, 32),
               children: [
                 _cabecalhoEvento(p, primary),
                 const SizedBox(height: 12),
@@ -153,14 +153,9 @@ class _FinanceiroGerenteDetalhePageState
                   ),
                 ),
                 const SizedBox(height: 8),
-                if (w >= 768)
-                  _tabelaLinhas(primary)
-                else
-                  _listaLinhas(primary),
+                if (w >= 768) _tabelaLinhas(primary) else _listaLinhas(primary),
               ],
-            ),
-          ),
-        ),
+            )),
       );
     });
   }
@@ -235,7 +230,8 @@ class _FinanceiroGerenteDetalhePageState
               _reais(p.folgaAntesReserva),
             ),
           if (p.reservaContingencia > 0)
-            _metricLine('Reserva de contingência', _reais(p.reservaContingencia)),
+            _metricLine(
+                'Reserva de contingência', _reais(p.reservaContingencia)),
           if (p.folgaAposReserva != null)
             _metricLine('Folga após reserva', _reais(p.folgaAposReserva)),
           const SizedBox(height: 8),
@@ -435,7 +431,8 @@ class _FinanceiroGerenteDetalhePageState
         children: [
           Text(
             'Hipótese de orçamento',
-            style: GoogleFonts.poppins(fontWeight: FontWeight.w800, fontSize: 14),
+            style:
+                GoogleFonts.poppins(fontWeight: FontWeight.w800, fontSize: 14),
           ),
           const SizedBox(height: 4),
           Text(
@@ -485,7 +482,8 @@ class _FinanceiroGerenteDetalhePageState
     if (linhas.isEmpty) {
       return Text(
         'Nenhum compromisso neste recorte.',
-        style: GoogleFonts.poppins(fontSize: 13, color: const Color(0xFF64748B)),
+        style:
+            GoogleFonts.poppins(fontSize: 13, color: const Color(0xFF64748B)),
       );
     }
     return Container(
@@ -531,7 +529,8 @@ class _FinanceiroGerenteDetalhePageState
     if (linhas.isEmpty) {
       return Text(
         'Nenhum compromisso neste recorte.',
-        style: GoogleFonts.poppins(fontSize: 13, color: const Color(0xFF64748B)),
+        style:
+            GoogleFonts.poppins(fontSize: 13, color: const Color(0xFF64748B)),
       );
     }
     return Column(

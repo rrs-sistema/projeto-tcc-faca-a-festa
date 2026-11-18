@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
+import '../../core/accessibility/tipografia_festa.dart';
 
 class FestaNavItem {
   const FestaNavItem({
@@ -88,42 +89,20 @@ class FestaBottomBar extends StatelessWidget {
               child: SafeArea(
                 top: false,
                 maintainBottomViewPadding: true,
-                child: MediaQuery.withClampedTextScaling(
-                  maxScaleFactor: 1.15,
-                  child: SizedBox(
-                    height: 64,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 6),
-                      child: LayoutBuilder(
-                        builder: (context, constraints) {
-                          final botoes = Row(
-                            children: [
-                              for (var i = 0; i < items.length; i++)
-                                Expanded(
-                                  child: _FestaNavButton(
-                                    item: items[i],
-                                    selected:
-                                        !items[i].isAction && currentIndex == i,
-                                    primary: primary,
-                                    gradient: gradient,
-                                    onTap: () {
-                                      HapticFeedback.selectionClick();
-                                      onTap(i);
-                                    },
-                                  ),
-                                ),
-                            ],
-                          );
-                          if (constraints.maxWidth < 720) return botoes;
-                          return Align(
-                            alignment: Alignment.center,
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
+                child: FestaTextoNavegacao(
+                  child: MediaQuery.withClampedTextScaling(
+                    maxScaleFactor: 1.15,
+                    child: SizedBox(
+                      height: 64,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 6),
+                        child: LayoutBuilder(
+                          builder: (context, constraints) {
+                            final botoes = Row(
                               children: [
                                 for (var i = 0; i < items.length; i++)
-                                  SizedBox(
-                                    width: 168,
+                                  Expanded(
                                     child: _FestaNavButton(
                                       item: items[i],
                                       selected: !items[i].isAction &&
@@ -137,9 +116,33 @@ class FestaBottomBar extends StatelessWidget {
                                     ),
                                   ),
                               ],
-                            ),
-                          );
-                        },
+                            );
+                            if (constraints.maxWidth < 720) return botoes;
+                            return Align(
+                              alignment: Alignment.center,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  for (var i = 0; i < items.length; i++)
+                                    SizedBox(
+                                      width: 168,
+                                      child: _FestaNavButton(
+                                        item: items[i],
+                                        selected: !items[i].isAction &&
+                                            currentIndex == i,
+                                        primary: primary,
+                                        gradient: gradient,
+                                        onTap: () {
+                                          HapticFeedback.selectionClick();
+                                          onTap(i);
+                                        },
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
                       ),
                     ),
                   ),

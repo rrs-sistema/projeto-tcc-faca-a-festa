@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/presentation/widgets/festa_scroll_area.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
@@ -135,46 +136,50 @@ class _FornecedorLocalizacaoScreenState
                   .buscarServicosPorCategoria(categoriaSelecionada!.id);
             }
           },
-          child: CustomScrollView(
-            physics: const AlwaysScrollableScrollPhysics(
-                parent: BouncingScrollPhysics()),
-            slivers: [
-              SliverToBoxAdapter(
-                child: _buildHeroSection(
-                  primary: primary,
-                  gradient: gradient,
-                  totalFornecedores: fornecedoresFiltrados.length,
-                ),
-              ),
-              SliverToBoxAdapter(
-                child: _buildIACompactaFornecedores(
-                  primary: primary,
-                  gradient: gradient,
-                ),
-              ),
-              SliverPersistentHeader(
-                pinned: true,
-                delegate: _CategoriasHeaderDelegateBuilder(
-                  child: _menuCategorias(primary, gradient),
-                ),
-              ),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: 100),
-                  child: controllerLocalizacao.carregando.value
-                      ? _loadingState(primary)
-                      : _buildConteudo(
-                          primary: primary,
-                          gradient: gradient,
-                          fornecedoresFiltrados: fornecedoresFiltrados,
-                          fornecedoresProximos: fornecedoresProximos,
-                          fornecedoresDestaque: fornecedoresDestaque,
-                          recomendados: recomendados,
-                        ),
-                ),
-              ),
-            ],
-          ),
+          child: FestaScrollArea(
+              color: primary,
+              maxWidth: 1360,
+              child: CustomScrollView(
+                primary: true,
+                physics: const AlwaysScrollableScrollPhysics(
+                    parent: BouncingScrollPhysics()),
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: _buildHeroSection(
+                      primary: primary,
+                      gradient: gradient,
+                      totalFornecedores: fornecedoresFiltrados.length,
+                    ),
+                  ),
+                  SliverToBoxAdapter(
+                    child: _buildIACompactaFornecedores(
+                      primary: primary,
+                      gradient: gradient,
+                    ),
+                  ),
+                  SliverPersistentHeader(
+                    pinned: true,
+                    delegate: _CategoriasHeaderDelegateBuilder(
+                      child: _menuCategorias(primary, gradient),
+                    ),
+                  ),
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 100),
+                      child: controllerLocalizacao.carregando.value
+                          ? _loadingState(primary)
+                          : _buildConteudo(
+                              primary: primary,
+                              gradient: gradient,
+                              fornecedoresFiltrados: fornecedoresFiltrados,
+                              fornecedoresProximos: fornecedoresProximos,
+                              fornecedoresDestaque: fornecedoresDestaque,
+                              recomendados: recomendados,
+                            ),
+                    ),
+                  ),
+                ],
+              )),
         ),
       );
     });
@@ -393,19 +398,23 @@ class _FornecedorLocalizacaoScreenState
           ] else ...[
             const SizedBox(height: 10),
             SizedBox(
-              height: 88,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                physics: const BouncingScrollPhysics(),
-                itemCount: recomendacoes.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 8),
-                itemBuilder: (_, index) => _IACardFornecedorCompacto(
-                  recomendacao: recomendacoes[index],
-                  primary: primary,
-                  onTap: () =>
-                      _abrirFornecedorRecomendadoIA(recomendacoes[index]),
-                ),
-              ),
+              height: 102,
+              child: FestaScrollArea(
+                  color: primary,
+                  scrollDirection: Axis.horizontal,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    primary: true,
+                    physics: const BouncingScrollPhysics(),
+                    itemCount: recomendacoes.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 8),
+                    itemBuilder: (_, index) => _IACardFornecedorCompacto(
+                      recomendacao: recomendacoes[index],
+                      primary: primary,
+                      onTap: () =>
+                          _abrirFornecedorRecomendadoIA(recomendacoes[index]),
+                    ),
+                  )),
             ),
           ],
         ],
@@ -658,41 +667,46 @@ class _FornecedorLocalizacaoScreenState
       height: _CategoriasHeaderDelegateBuilder.extent,
       child: ColoredBox(
         color: const Color(0xFFF8FAFC).withValues(alpha: 0.98),
-        child: ListView.separated(
-          scrollDirection: Axis.horizontal,
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          separatorBuilder: (_, __) => const SizedBox(width: 6),
-          itemCount: categorias.length + 1,
-          itemBuilder: (context, index) {
-            if (index == 0) {
-              return _NeedChip(
-                label: 'Todos',
-                icon: Icons.grid_view_rounded,
-                selected: categoriaSelecionada == null,
-                primary: primary,
-                onTap: () {
-                  setState(() => categoriaSelecionada = null);
-                },
-              );
-            }
-            final c = categorias[index - 1];
-            return _NeedChip(
-              label: c.nome,
-              icon: Biblioteca.iconePorCategoria(c.nome),
-              selected: categoriaSelecionada?.id == c.id,
-              primary: primary,
-              iconColor: Biblioteca.corPorCategoria(c.nome),
-              onTap: () async {
-                setState(() => categoriaSelecionada =
-                    (categoriaSelecionada?.id == c.id) ? null : c);
-                if (categoriaSelecionada != null) {
-                  await controllerLocalizacao.buscarServicosPorCategoria(c.id);
+        child: FestaScrollArea(
+            color: primary,
+            scrollDirection: Axis.horizontal,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              primary: true,
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              separatorBuilder: (_, __) => const SizedBox(width: 6),
+              itemCount: categorias.length + 1,
+              itemBuilder: (context, index) {
+                if (index == 0) {
+                  return _NeedChip(
+                    label: 'Todos',
+                    icon: Icons.grid_view_rounded,
+                    selected: categoriaSelecionada == null,
+                    primary: primary,
+                    onTap: () {
+                      setState(() => categoriaSelecionada = null);
+                    },
+                  );
                 }
+                final c = categorias[index - 1];
+                return _NeedChip(
+                  label: c.nome,
+                  icon: Biblioteca.iconePorCategoria(c.nome),
+                  selected: categoriaSelecionada?.id == c.id,
+                  primary: primary,
+                  iconColor: Biblioteca.corPorCategoria(c.nome),
+                  onTap: () async {
+                    setState(() => categoriaSelecionada =
+                        (categoriaSelecionada?.id == c.id) ? null : c);
+                    if (categoriaSelecionada != null) {
+                      await controllerLocalizacao
+                          .buscarServicosPorCategoria(c.id);
+                    }
+                  },
+                );
               },
-            );
-          },
-        ),
+            )),
       ),
     );
   }
@@ -734,7 +748,7 @@ class _FornecedorLocalizacaoScreenState
           padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Column(
             children: fornecedoresFiltrados
-                .map((f) =>                     _FornecedorListCard(
+                .map((f) => _FornecedorListCard(
                       fornecedorDetalhado: f,
                       media: _mediaFornecedor(f),
                       primary: primary,
@@ -751,24 +765,28 @@ class _FornecedorLocalizacaoScreenState
   Widget _horizontalFornecedores(List<FornecedorDetalhado> fornecedores,
       Color primary, LinearGradient gradient) {
     return SizedBox(
-      height: 185, // Reduzido
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        itemCount: fornecedores.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 10),
-        itemBuilder: (context, index) => SizedBox(
-          width: 175, // Cards mais estreitos
-          child: _FornecedorPremiumCard(
-            fornecedorDetalhado: fornecedores[index],
-            media: _mediaFornecedor(fornecedores[index]),
-            primary: primary,
-            categoriaSelecionada: categoriaSelecionada,
-            onTap: () => _abrirDetalheFornecedor(fornecedores[index]),
-          ),
-        ),
-      ),
+      height: 199, // Inclui espaço para a barra horizontal.
+      child: FestaScrollArea(
+          color: primary,
+          scrollDirection: Axis.horizontal,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            primary: true,
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            itemCount: fornecedores.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 10),
+            itemBuilder: (context, index) => SizedBox(
+              width: 175, // Cards mais estreitos
+              child: _FornecedorPremiumCard(
+                fornecedorDetalhado: fornecedores[index],
+                media: _mediaFornecedor(fornecedores[index]),
+                primary: primary,
+                categoriaSelecionada: categoriaSelecionada,
+                onTap: () => _abrirDetalheFornecedor(fornecedores[index]),
+              ),
+            ),
+          )),
     );
   }
 
@@ -1467,7 +1485,7 @@ class _GlassBadge extends StatelessWidget {
 }
 
 class _CategoriasHeaderDelegateBuilder extends SliverPersistentHeaderDelegate {
-  static const double extent = 48;
+  static const double extent = 62;
 
   final Widget child;
 

@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:app_faca_festa/presentation/widgets/festa_leitura.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
@@ -272,107 +273,111 @@ class _EditorTerritorioState extends State<_EditorTerritorio> {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              FlutterMap(
-                mapController: _mapa,
-                options: MapOptions(
-                  initialCenter: _centroInicial,
-                  initialZoom: 11,
-                  minZoom: 0,
-                  maxZoom: 19,
-                  initialCameraFit: _enquadramentoInicial,
-                  onTap: (_, ponto) => _marcarPonto(ponto),
-                ),
-                children: [
-                  TileLayer(
-                    urlTemplate:
-                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                    userAgentPackageName: 'app_faca_festa',
+              FestaGestosProprios(
+                child: FlutterMap(
+                  mapController: _mapa,
+                  options: MapOptions(
+                    initialCenter: _centroInicial,
+                    initialZoom: 11,
+                    minZoom: 0,
+                    maxZoom: 19,
+                    initialCameraFit: _enquadramentoInicial,
+                    onTap: (_, ponto) => _marcarPonto(ponto),
                   ),
-                  Obx(() => CircleLayer(
+                  children: [
+                    TileLayer(
+                      urlTemplate:
+                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      userAgentPackageName: 'app_faca_festa',
+                    ),
+                    Obx(() => CircleLayer(
+                          circles: [
+                            for (final territorio
+                                in widget.controller.territorios)
+                              if (territorio.idTerritorio !=
+                                      widget.existente?.idTerritorio &&
+                                  territorio.tipoCobertura == 'raio' &&
+                                  territorio.latitude != null &&
+                                  territorio.longitude != null)
+                                CircleMarker(
+                                  point: LatLng(territorio.latitude!,
+                                      territorio.longitude!),
+                                  radius: (territorio.raioKm ?? 10) * 1000,
+                                  color: cor.withValues(alpha: 0.10),
+                                  borderColor: cor.withValues(alpha: 0.34),
+                                  borderStrokeWidth: 1.5,
+                                  useRadiusInMeter: true,
+                                ),
+                          ],
+                        )),
+                    if (_porRaio && centro != null)
+                      CircleLayer(
+                        key: const ValueKey('raioEmEdicao'),
                         circles: [
-                          for (final territorio
-                              in widget.controller.territorios)
-                            if (territorio.idTerritorio !=
-                                    widget.existente?.idTerritorio &&
-                                territorio.tipoCobertura == 'raio' &&
-                                territorio.latitude != null &&
-                                territorio.longitude != null)
-                              CircleMarker(
-                                point: LatLng(territorio.latitude!,
-                                    territorio.longitude!),
-                                radius: (territorio.raioKm ?? 10) * 1000,
-                                color: cor.withValues(alpha: 0.10),
-                                borderColor: cor.withValues(alpha: 0.34),
-                                borderStrokeWidth: 1.5,
-                                useRadiusInMeter: true,
-                              ),
+                          CircleMarker(
+                            point: centro,
+                            radius: _raio * 1000,
+                            color: cor.withValues(alpha: 0.20),
+                            borderColor: cor,
+                            borderStrokeWidth: 3,
+                            useRadiusInMeter: true,
+                          ),
                         ],
-                      )),
-                  if (_porRaio && centro != null)
-                    CircleLayer(
-                      key: const ValueKey('raioEmEdicao'),
-                      circles: [
-                        CircleMarker(
-                          point: centro,
-                          radius: _raio * 1000,
-                          color: cor.withValues(alpha: 0.20),
-                          borderColor: cor,
-                          borderStrokeWidth: 3,
-                          useRadiusInMeter: true,
-                        ),
-                      ],
-                    ),
-                  if (!_porRaio && _vertices.length == 2)
-                    PolylineLayer(
-                      polylines: [
-                        Polyline(
-                            points: [..._vertices], color: cor, strokeWidth: 3),
-                      ],
-                    ),
-                  if (!_porRaio && _vertices.length >= 3)
-                    PolygonLayer(
-                      polygons: [
-                        Polygon(
-                          points: [..._vertices],
-                          color: cor.withValues(alpha: 0.20),
-                          borderColor: cor,
-                          borderStrokeWidth: 3,
-                        ),
-                      ],
-                    ),
-                  MarkerLayer(
-                    markers: [
-                      if (_porRaio && centro != null)
-                        Marker(
-                          point: centro,
-                          width: 40,
-                          height: 40,
-                          child: const Icon(Icons.location_on,
-                              color: Colors.redAccent, size: 34),
-                        ),
-                      if (!_porRaio)
-                        for (final ponto in _vertices)
+                      ),
+                    if (!_porRaio && _vertices.length == 2)
+                      PolylineLayer(
+                        polylines: [
+                          Polyline(
+                              points: [..._vertices],
+                              color: cor,
+                              strokeWidth: 3),
+                        ],
+                      ),
+                    if (!_porRaio && _vertices.length >= 3)
+                      PolygonLayer(
+                        polygons: [
+                          Polygon(
+                            points: [..._vertices],
+                            color: cor.withValues(alpha: 0.20),
+                            borderColor: cor,
+                            borderStrokeWidth: 3,
+                          ),
+                        ],
+                      ),
+                    MarkerLayer(
+                      markers: [
+                        if (_porRaio && centro != null)
                           Marker(
-                            point: ponto,
-                            width: 14,
-                            height: 14,
-                            child: DecoratedBox(
-                              decoration: BoxDecoration(
-                                color: cor,
-                                shape: BoxShape.circle,
-                                border:
-                                    Border.all(color: Colors.white, width: 2),
+                            point: centro,
+                            width: 40,
+                            height: 40,
+                            child: const Icon(Icons.location_on,
+                                color: Colors.redAccent, size: 34),
+                          ),
+                        if (!_porRaio)
+                          for (final ponto in _vertices)
+                            Marker(
+                              point: ponto,
+                              width: 14,
+                              height: 14,
+                              child: DecoratedBox(
+                                decoration: BoxDecoration(
+                                  color: cor,
+                                  shape: BoxShape.circle,
+                                  border:
+                                      Border.all(color: Colors.white, width: 2),
+                                ),
                               ),
                             ),
-                          ),
-                    ],
-                  ),
-                  Positioned(
-                    left: 12,
-                    bottom: 106,
-                    child: TerritorioMapaZoom(cor: cor),
-                  ),
-                ],
+                      ],
+                    ),
+                    Positioned(
+                      left: 12,
+                      bottom: 106,
+                      child: TerritorioMapaZoom(cor: cor),
+                    ),
+                  ],
+                ),
               ),
               Positioned(top: 16, left: 16, right: 16, child: _cabecalho()),
               Positioned(right: 12, bottom: 98, child: _acoesDoMapa()),

@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/presentation/widgets/festa_scroll_area.dart';
 import 'disponibilidade_cardapio_dialog.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
@@ -13,6 +14,7 @@ import './cadastro_cardapio_bottom_sheet.dart';
 import './editar_item_cardapio_bottom_sheet.dart';
 import './editar_cardapio_bottomsheet.dart';
 import './show_cadastro_bottom_sheet.dart';
+import 'package:app_faca_festa/presentation/widgets/festa_leitura.dart';
 
 class CardapiosTab extends StatelessWidget {
   final CardapioController controller;
@@ -40,38 +42,44 @@ class CardapiosTab extends StatelessWidget {
         return RefreshIndicator(
           color: primary,
           onRefresh: () async {
+            if (FestaLeitura.pincando(context)) return;
             await Future<void>.delayed(const Duration(milliseconds: 350));
           },
-          child: ListView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 100),
-            children: [
-              _CardapioHeader(controller: controller, primary: primary),
-              const SizedBox(height: 12),
-              _CardapioQuickStats(controller: controller, primary: primary),
-              const SizedBox(height: 16),
-              _SectionHeader(
-                  icon: Icons.restaurant_menu_rounded,
-                  title: 'Cardápios',
-                  subtitle: 'Organize por categoria.',
-                  color: primary),
-              const SizedBox(height: 10),
-              ...controller.cardapios.map(
-                (cardapio) => _CardapioCategoriaCard(
-                  cardapio: cardapio,
-                  controller: controller,
-                  primary: primary,
-                ),
-              ),
-              const SizedBox(height: 10),
-              _ResumoCardapioResumo(
-                controller: controller,
-                primary: primary,
-              ),
-              const SizedBox(height: 16),
-              _GraficoCardapio(controller: controller, primary: primary),
-            ],
-          ),
+          child: FestaScrollArea(
+              color: primary,
+              maxWidth: 1200,
+              child: ListView(
+                primary: true,
+                physics: FestaLeitura.physics(
+                    context, const AlwaysScrollableScrollPhysics()),
+                padding: const EdgeInsets.fromLTRB(12, 12, 12, 100),
+                children: [
+                  _CardapioHeader(controller: controller, primary: primary),
+                  const SizedBox(height: 12),
+                  _CardapioQuickStats(controller: controller, primary: primary),
+                  const SizedBox(height: 16),
+                  _SectionHeader(
+                      icon: Icons.restaurant_menu_rounded,
+                      title: 'Cardápios',
+                      subtitle: 'Organize por categoria.',
+                      color: primary),
+                  const SizedBox(height: 10),
+                  ...controller.cardapios.map(
+                    (cardapio) => _CardapioCategoriaCard(
+                      cardapio: cardapio,
+                      controller: controller,
+                      primary: primary,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  _ResumoCardapioResumo(
+                    controller: controller,
+                    primary: primary,
+                  ),
+                  const SizedBox(height: 16),
+                  _GraficoCardapio(controller: controller, primary: primary),
+                ],
+              )),
         );
       }),
     );

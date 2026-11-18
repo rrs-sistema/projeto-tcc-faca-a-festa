@@ -26,6 +26,7 @@ import '../widgets/convidados_layout.dart';
 import './area/lista_convidados_screen.dart';
 import './enviar_convites_screen.dart';
 import 'package:app_faca_festa/presentation/widgets/festa_app_bar.dart';
+import 'package:app_faca_festa/presentation/widgets/festa_leitura.dart';
 
 class ConvidadosPage extends StatefulWidget {
   final EventThemeController themeController;
@@ -172,40 +173,42 @@ class _ConvidadosPageState extends State<ConvidadosPage>
               primary: primary,
             ),
           ),
-          body: ConvidadosContent(
-            child: TabBarView(
-              controller: _tabController,
-              physics: const NeverScrollableScrollPhysics(),
-              children: [
-                ListaConvidadosScreen(
-                  themeController: themeController,
-                  convidadoController: convidadoController,
-                  eventoController: eventoController,
-                  grupoController: grupoController,
-                  embedded: true,
-                  buscaFocusNode: _buscaListaFocus,
-                  onModoSelecaoChanged: (emSelecao) =>
-                      listaEmSelecao.value = emSelecao,
-                ),
-                GruposTab(
-                  grupoController: grupoController,
-                  themeController: themeController,
-                  appController: appController,
-                ),
-                CardapiosTab(
-                  controller: cardapioController,
-                  theme: themeController,
-                ),
-                MesasTab(
-                  theme: themeController,
-                  controller: convidadoController,
-                  grupoController: grupoController,
-                ),
-                EstatisticasTab(
-                  convidadoController: convidadoController,
-                  eventTheme: themeController,
-                ),
-              ],
+          body: FestaLeitura(
+            child: ConvidadosContent(
+              child: TabBarView(
+                controller: _tabController,
+                physics: const NeverScrollableScrollPhysics(),
+                children: [
+                  ListaConvidadosScreen(
+                    themeController: themeController,
+                    convidadoController: convidadoController,
+                    eventoController: eventoController,
+                    grupoController: grupoController,
+                    embedded: true,
+                    buscaFocusNode: _buscaListaFocus,
+                    onModoSelecaoChanged: (emSelecao) =>
+                        listaEmSelecao.value = emSelecao,
+                  ),
+                  GruposTab(
+                    grupoController: grupoController,
+                    themeController: themeController,
+                    appController: appController,
+                  ),
+                  CardapiosTab(
+                    controller: cardapioController,
+                    theme: themeController,
+                  ),
+                  MesasTab(
+                    theme: themeController,
+                    controller: convidadoController,
+                    grupoController: grupoController,
+                  ),
+                  EstatisticasTab(
+                    convidadoController: convidadoController,
+                    eventTheme: themeController,
+                  ),
+                ],
+              ),
             ),
           ),
           floatingActionButton: podeGerenciar

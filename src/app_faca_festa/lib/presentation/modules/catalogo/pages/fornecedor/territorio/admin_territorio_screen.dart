@@ -2,6 +2,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:flutter/material.dart';
+import 'package:app_faca_festa/presentation/widgets/festa_leitura.dart';
 import 'package:get/get.dart';
 
 import 'package:app_faca_festa/domain/entities/territorio.dart';
@@ -274,7 +275,8 @@ class AdminTerritorioScreen extends StatelessWidget {
         if (selecionado != null) selecionado,
       ];
 
-      return Stack(
+      return FestaGestosProprios(
+          child: Stack(
         children: [
           FlutterMap(
             mapController: controller.mapController,
@@ -443,7 +445,7 @@ class AdminTerritorioScreen extends StatelessWidget {
             ),
           ),
         ],
-      );
+      ));
     });
   }
 

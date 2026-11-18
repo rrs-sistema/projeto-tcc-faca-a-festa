@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
+import '../../core/accessibility/tipografia_festa.dart';
 
 /// Contraste da barra de status (hora, sinal, bateria).
 /// Android: [SystemUiOverlayStyle.statusBarIconBrightness]
@@ -90,7 +91,12 @@ class FestaAppBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     final controller = themeController;
     if (controller != null) {
-      return Obx(() => _buildBar(context, controller.gradient.value));
+      return FestaTextoNavegacao(
+        child: Builder(
+          builder: (context) =>
+              Obx(() => _buildBar(context, controller.gradient.value)),
+        ),
+      );
     }
 
     final fallbackGradient = gradient ??
@@ -102,7 +108,10 @@ class FestaAppBar extends StatelessWidget implements PreferredSizeWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         );
-    return _buildBar(context, fallbackGradient);
+    return FestaTextoNavegacao(
+      child:
+          Builder(builder: (context) => _buildBar(context, fallbackGradient)),
+    );
   }
 
   Widget _buildBar(BuildContext context, Gradient gradiente) {

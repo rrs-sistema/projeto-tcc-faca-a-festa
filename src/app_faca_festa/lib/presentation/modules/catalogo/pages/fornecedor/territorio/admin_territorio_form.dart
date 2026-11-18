@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:app_faca_festa/presentation/widgets/festa_leitura.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:uuid/uuid.dart';
@@ -528,7 +529,8 @@ class _PreviaMapaState extends State<_PreviaMapa> {
       borderRadius: BorderRadius.circular(10),
       child: SizedBox(
         height: 132,
-        child: FlutterMap(
+        child: FestaGestosProprios(
+            child: FlutterMap(
           key: const ValueKey('mapaPreviaCobertura'),
           mapController: _mapa,
           options: MapOptions(
@@ -563,7 +565,7 @@ class _PreviaMapaState extends State<_PreviaMapa> {
                 ),
               ]),
           ],
-        ),
+        )),
       ),
     );
   }

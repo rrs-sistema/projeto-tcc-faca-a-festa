@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:app_faca_festa/presentation/widgets/festa_leitura.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -839,7 +840,8 @@ class _GaleriaInspiracaoPageState extends State<_GaleriaInspiracaoPage> {
         itemCount: widget.urls.length,
         onPageChanged: (value) => setState(() => _indice = value),
         itemBuilder: (context, index) {
-          return InteractiveViewer(
+          return FestaGestosProprios(
+              child: InteractiveViewer(
             child: Center(
               child: Image.network(
                 widget.urls[index],
@@ -851,7 +853,7 @@ class _GaleriaInspiracaoPageState extends State<_GaleriaInspiracaoPage> {
                 ),
               ),
             ),
-          );
+          ));
         },
       ),
     );

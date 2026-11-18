@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/presentation/widgets/festa_scroll_area.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
@@ -103,40 +104,46 @@ class _EnviarConvitesScreenState extends State<EnviarConvitesScreen> {
           ),
         ],
       ),
-      body: Column(
+      body: FestaContent(
+          child: Column(
         children: [
           _buildInviteHeader(primary),
           _buildSearchBar(primary),
           _buildSelectionActions(primary),
           Expanded(child: _buildGuestList(primary)),
         ],
-      ),
-      bottomNavigationBar: _buildBottomSendBar(primary, gradient),
-      floatingActionButton: Obx(() {
-        if (_selecionados.isNotEmpty) return const SizedBox.shrink();
+      )),
+      bottomNavigationBar:
+          FestaContent(child: _buildBottomSendBar(primary, gradient)),
+      floatingActionButton: Padding(
+          padding: EdgeInsets.only(
+              right:
+                  FestaScrollArea.sideInset(MediaQuery.sizeOf(context).width)),
+          child: Obx(() {
+            if (_selecionados.isNotEmpty) return const SizedBox.shrink();
 
-        return FloatingActionButton.extended(
-          backgroundColor: primary,
-          foregroundColor: Colors.white,
-          elevation: 6,
-          onPressed: () async {
-            FocusManager.instance.primaryFocus?.unfocus();
+            return FloatingActionButton.extended(
+              backgroundColor: primary,
+              foregroundColor: Colors.white,
+              elevation: 6,
+              onPressed: () async {
+                FocusManager.instance.primaryFocus?.unfocus();
 
-            await _abrirAdicionarConvidado(primary);
-          },
-          label: Text(
-            'Novo',
-            style: GoogleFonts.poppins(
-              fontWeight: FontWeight.w700,
-              fontSize: 13,
-            ),
-          ),
-          icon: const Icon(
-            Icons.person_add_alt_1_rounded,
-            size: 18,
-          ),
-        );
-      }),
+                await _abrirAdicionarConvidado(primary);
+              },
+              label: Text(
+                'Novo',
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                ),
+              ),
+              icon: const Icon(
+                Icons.person_add_alt_1_rounded,
+                size: 18,
+              ),
+            );
+          })),
     );
   }
 
@@ -323,33 +330,36 @@ class _EnviarConvitesScreenState extends State<EnviarConvitesScreen> {
         color: primary,
         onRefresh: () async =>
             _carregarConvidadosDoEventoAtual(mostrarSnack: true),
-        child: ListView.builder(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(12, 0, 12, 120),
-          itemCount: lista.length,
-          itemBuilder: (context, index) {
-            final convidado = lista[index];
-            final chave = _chaveConvidado(convidado);
+        child: FestaScrollArea(
+            color: themeController.primaryColor.value,
+            child: ListView.builder(
+              primary: true,
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 120),
+              itemCount: lista.length,
+              itemBuilder: (context, index) {
+                final convidado = lista[index];
+                final chave = _chaveConvidado(convidado);
 
-            return Obx(() {
-              final selecionado = _isSelecionado(convidado);
+                return Obx(() {
+                  final selecionado = _isSelecionado(convidado);
 
-              return Padding(
-                key: ValueKey('invite_guest_$chave'),
-                padding: const EdgeInsets.only(bottom: 8), // 🔹 Compacto
-                child: _InviteGuestCard(
-                  key: ValueKey('invite_guest_card_$chave'),
-                  convidado: convidado,
-                  selected: selecionado,
-                  primary: primary,
-                  onTap: () => _toggleSelecionado(convidado),
-                  onCopiar: () => _copiarLinks([convidado]),
-                  onCompartilhar: () => _compartilharLinks([convidado]),
-                ),
-              );
-            });
-          },
-        ),
+                  return Padding(
+                    key: ValueKey('invite_guest_$chave'),
+                    padding: const EdgeInsets.only(bottom: 8), // 🔹 Compacto
+                    child: _InviteGuestCard(
+                      key: ValueKey('invite_guest_card_$chave'),
+                      convidado: convidado,
+                      selected: selecionado,
+                      primary: primary,
+                      onTap: () => _toggleSelecionado(convidado),
+                      onCopiar: () => _copiarLinks([convidado]),
+                      onCompartilhar: () => _compartilharLinks([convidado]),
+                    ),
+                  );
+                });
+              },
+            )),
       );
     });
   }

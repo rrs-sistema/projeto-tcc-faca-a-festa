@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/presentation/widgets/festa_scroll_area.dart';
 import '../widgets/calculadora_planejador_dialog.dart';
 import '../widgets/calculadora_contexto_card.dart';
 import '../widgets/calculadora_agenda_dialog.dart';
@@ -52,6 +53,7 @@ import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme
 import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_controller.dart';
 import 'package:app_faca_festa/presentation/widgets/cadastro_passos_bar.dart';
 import 'package:app_faca_festa/presentation/widgets/festa_app_bar.dart';
+import 'package:app_faca_festa/presentation/widgets/festa_leitura.dart';
 import 'minhas_simulacoes_calculadora_bottom_sheet.dart';
 import 'calculadora_item_icon_helper.dart';
 
@@ -815,260 +817,317 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen>
                     body: calculadoraController.loading.value
                         ? Center(
                             child: CircularProgressIndicator(color: primary))
-                        : RefreshIndicator(
-                            color: primary,
-                            onRefresh: _atualizarDadosCalculadora,
-                            child: ListView(
-                              key: const Key('rolagem_calculadora'),
-                              padding:
-                                  const EdgeInsets.fromLTRB(16, FestaPageInsets.belowAppBar, 16, 32),
-                              children: [
-                                CalculadoraContextoCard(
-                                  controller: calculadoraController,
-                                  evento: eventoController.eventoAtualEntidade,
-                                  nomeRascunho: widget.nomeRascunho,
-                                  periodoRascunho: widget.periodoRascunho,
-                                  onPublico: _mostrarPessoas,
-                                  onEscolhas: () {
-                                    if (!_podeAlterarPlanejamento()) return;
-                                    showDialog<void>(
-                                        context: context,
-                                        builder: (_) =>
-                                            CalculadoraConfiguracaoDialog(
+                        : FestaLeitura(
+                            child: Builder(
+                              builder: (context) => Obx(() => RefreshIndicator(
+                                    color: primary,
+                                    onRefresh: () async {
+                                      if (!FestaLeitura.pincando(context)) {
+                                        await _atualizarDadosCalculadora();
+                                      }
+                                    },
+                                    child: FestaScrollArea(
+                                        color: primary,
+                                        maxWidth: 1360,
+                                        child: ListView(
+                                          primary: true,
+                                          physics:
+                                              FestaLeitura.physics(context),
+                                          key: const Key('rolagem_calculadora'),
+                                          padding: const EdgeInsets.fromLTRB(
+                                              16,
+                                              FestaPageInsets.belowAppBar,
+                                              16,
+                                              32),
+                                          children: [
+                                            CalculadoraContextoCard(
+                                              controller: calculadoraController,
+                                              evento: eventoController
+                                                  .eventoAtualEntidade,
+                                              nomeRascunho: widget.nomeRascunho,
+                                              periodoRascunho:
+                                                  widget.periodoRascunho,
+                                              onPublico: _mostrarPessoas,
+                                              onEscolhas: () {
+                                                if (!_podeAlterarPlanejamento()) {
+                                                  return;
+                                                }
+                                                showDialog<void>(
+                                                    context: context,
+                                                    builder: (_) =>
+                                                        CalculadoraConfiguracaoDialog(
+                                                            controller:
+                                                                calculadoraController));
+                                              },
+                                              onAtualizar:
+                                                  _atualizarDadosCalculadora,
+                                            ),
+                                            if (_estadoRascunho
+                                                .value.isNotEmpty)
+                                              Semantics(
+                                                  liveRegion: true,
+                                                  child: Text(
+                                                      _estadoRascunho.value)),
+                                            if (_erroSalvarRascunho
+                                                .value.isNotEmpty)
+                                              Card(
+                                                  child: Padding(
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                              12),
+                                                      child: Column(
+                                                          crossAxisAlignment:
+                                                              CrossAxisAlignment
+                                                                  .stretch,
+                                                          children: [
+                                                            Semantics(
+                                                                liveRegion:
+                                                                    true,
+                                                                child: Text(
+                                                                    _erroSalvarRascunho
+                                                                        .value,
+                                                                    style: TextStyle(
+                                                                        color: Theme.of(context)
+                                                                            .colorScheme
+                                                                            .error))),
+                                                            TextButton(
+                                                                onPressed: () =>
+                                                                    unawaited(_guardarRascunho()
+                                                                        .catchError((Object
+                                                                            _) {})),
+                                                                child: const Text(
+                                                                    'Tentar guardar novamente')),
+                                                          ]))),
+                                            if (calculadoraController
+                                                .avisoContexto.value.isNotEmpty)
+                                              Text(calculadoraController
+                                                  .avisoContexto.value),
+                                            if (!calculadoraController
+                                                    .usandoContextoHistorico
+                                                    .value &&
+                                                calculadoraController
+                                                    .contextoEvento
+                                                    .pendencias
+                                                    .isNotEmpty)
+                                              Card(
+                                                  child: Padding(
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                              12),
+                                                      child: Column(
+                                                          crossAxisAlignment:
+                                                              CrossAxisAlignment
+                                                                  .start,
+                                                          children: [
+                                                            const Text(
+                                                                'Planejamento parcial'),
+                                                            Text(calculadoraController
+                                                                    .contextoEvento
+                                                                    .estimarQuantidades
+                                                                ? 'Quantidades disponíveis. Compras e custos dependem das fontes abaixo.'
+                                                                : 'Aguarde as fontes para concluir as quantidades.'),
+                                                            Text(calculadoraController
+                                                                .contextoEvento
+                                                                .pendencias
+                                                                .join('\n')),
+                                                            TextButton(
+                                                                onPressed:
+                                                                    _atualizarDadosCalculadora,
+                                                                child: const Text(
+                                                                    'Atualizar dados da festa')),
+                                                          ]))),
+                                            CadastroPassosBar(
+                                              atual: _passo,
+                                              titulos: _titulosPassos,
+                                              cor: primary,
+                                            ),
+                                            if (_passo == 0) ...[
+                                              _buildHero(primary, gradient),
+                                              const SizedBox(height: 10),
+                                              KeyedSubtree(
+                                                key: _chavePublico,
+                                                child: _buildPublicoCalculoCard(
+                                                    primary),
+                                              ),
+                                            ],
+                                            if (_passo == 1) ...[
+                                              _buildPerfilFestaCard(primary),
+                                              const SizedBox(height: 10),
+                                              _buildDuracaoCard(primary),
+                                            ],
+                                            if (_passo == 2) ...[
+                                              CalculadoraPlanoEventoCard(
                                                 controller:
-                                                    calculadoraController));
-                                  },
-                                  onAtualizar: _atualizarDadosCalculadora,
-                                ),
-                                if (_estadoRascunho.value.isNotEmpty)
-                                  Semantics(
-                                      liveRegion: true,
-                                      child: Text(_estadoRascunho.value)),
-                                if (_erroSalvarRascunho.value.isNotEmpty)
-                                  Card(
-                                      child: Padding(
-                                          padding: const EdgeInsets.all(12),
-                                          child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.stretch,
-                                              children: [
-                                                Semantics(
-                                                    liveRegion: true,
-                                                    child: Text(
-                                                        _erroSalvarRascunho
-                                                            .value,
-                                                        style: TextStyle(
-                                                            color: Theme.of(
-                                                                    context)
-                                                                .colorScheme
-                                                                .error))),
-                                                TextButton(
-                                                    onPressed: () => unawaited(
-                                                        _guardarRascunho()
-                                                            .catchError(
-                                                                (Object _) {})),
-                                                    child: const Text(
-                                                        'Tentar guardar novamente')),
-                                              ]))),
-                                if (calculadoraController
-                                    .avisoContexto.value.isNotEmpty)
-                                  Text(calculadoraController
-                                      .avisoContexto.value),
-                                if (!calculadoraController
-                                        .usandoContextoHistorico.value &&
-                                    calculadoraController
-                                        .contextoEvento.pendencias.isNotEmpty)
-                                  Card(
-                                      child: Padding(
-                                          padding: const EdgeInsets.all(12),
-                                          child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                const Text(
-                                                    'Planejamento parcial'),
-                                                Text(calculadoraController
-                                                        .contextoEvento
-                                                        .estimarQuantidades
-                                                    ? 'Quantidades disponíveis. Compras e custos dependem das fontes abaixo.'
-                                                    : 'Aguarde as fontes para concluir as quantidades.'),
-                                                Text(calculadoraController
-                                                    .contextoEvento.pendencias
-                                                    .join('\n')),
-                                                TextButton(
-                                                    onPressed:
-                                                        _atualizarDadosCalculadora,
-                                                    child: const Text(
-                                                        'Atualizar dados da festa')),
-                                              ]))),
-                                CadastroPassosBar(
-                                  atual: _passo,
-                                  titulos: _titulosPassos,
-                                  cor: primary,
-                                ),
-                                if (_passo == 0) ...[
-                                  _buildHero(primary, gradient),
-                                  const SizedBox(height: 10),
-                                  KeyedSubtree(
-                                    key: _chavePublico,
-                                    child: _buildPublicoCalculoCard(primary),
-                                  ),
-                                ],
-                                if (_passo == 1) ...[
-                                  _buildPerfilFestaCard(primary),
-                                  const SizedBox(height: 10),
-                                  _buildDuracaoCard(primary),
-                                ],
-                                if (_passo == 2) ...[
-                                  CalculadoraPlanoEventoCard(
-                                    controller: calculadoraController,
-                                    cardapios: cardapioController,
-                                    onPublico: _mostrarPessoas,
-                                    onCriarInicial: _criarCardapioInicial,
-                                    onAjustar: (item) {
-                                      idCardapioSelecionado.value =
-                                          item.idCardapio;
-                                      _sincronizarCardapio();
-                                      _editarRegra(item: item);
-                                    },
-                                    onAbrirDestino: (id) {
-                                      idCardapioSelecionado.value = id;
-                                      _sincronizarCardapio();
-                                      showDialog<void>(
-                                          context: context,
-                                          builder: (_) => Theme(
-                                              data:
-                                                  themeController.materialTheme,
-                                              child: CalculadoraPropostaDialog(
-                                                  controller:
-                                                      calculadoraController)));
-                                    },
-                                  ),
-                                  const SizedBox(height: 10),
-                                  if (calculadoraController
-                                      .usandoContextoHistorico.value) ...[
-                                    _SectionCard(
-                                        title: 'Dados da simulação salva',
-                                        icon: Icons.history,
-                                        primary: primary,
-                                        child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              const Text(
-                                                  'Pessoas, cardápio e valores correspondem ao histórico. Atualize para consultar a situação atual da festa.'),
-                                              TextButton(
-                                                  onPressed:
-                                                      _atualizarDadosCalculadora,
-                                                  child: const Text(
-                                                      'Atualizar dados da festa'))
-                                            ])),
-                                    const SizedBox(height: 14),
-                                  ],
-                                  _buildCardapioCard(primary),
-                                  if (!calculadoraController.estimativaSemEvento.value &&
-                                      !calculadoraController
-                                          .usandoContextoHistorico.value &&
-                                      _cardapiosDaFesta.isNotEmpty)
-                                    Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                            vertical: 8),
-                                        child: FilledButton.tonalIcon(
-                                            onPressed: () => showDialog<bool>(
-                                                context: context,
-                                                barrierDismissible: false,
-                                                builder: (_) => Theme(
-                                                    data: themeController
-                                                        .materialTheme,
-                                                    child: CalculadoraExecucaoDialog(
-                                                        controller:
-                                                            calculadoraController))),
-                                            icon: const Icon(
-                                                Icons.playlist_add_check),
-                                            label:
-                                                const Text('Organizar compras e tarefas'))),
-                                  const SizedBox(height: 10),
-                                  _buildDiagnostico(primary),
-                                  const SizedBox(height: 14),
-                                  if (calculadoraController
-                                      .possuiResultado) ...[
-                                    _buildResultadoCard(primary),
-                                    const SizedBox(height: 14),
-                                  ],
-                                  _buildPlanejamentoCard(primary),
-                                  const SizedBox(height: 14),
-                                  if (!calculadoraController
-                                      .possuiResultado) ...[
-                                    _buildResultadoCard(primary),
-                                    const SizedBox(height: 10),
-                                  ],
-                                  if (calculadoraController.possuiResultado ||
-                                      calculadoraController
-                                          .compromissosOrcamento.isNotEmpty)
-                                    _buildProximasAcoes(primary),
-                                  const SizedBox(height: 10),
-                                  if (calculadoraController
-                                          .analisandoIA.value ||
-                                      calculadoraController.analiseIA.value !=
-                                          null ||
-                                      calculadoraController
-                                          .erroAnaliseIA.value.isNotEmpty) ...[
-                                    _buildAssistenteIACard(primary),
-                                    const SizedBox(height: 10),
-                                  ],
-                                  Text(
-                                    calculadoraController.possuiResultado
-                                        ? 'Confira as porções antes de aplicar ao cardápio.'
-                                        : 'Adicione ou selecione um item para liberar as ações.',
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 12,
-                                      height: 1.35,
-                                      fontWeight: FontWeight.w500,
-                                      color: Colors.grey.shade700,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  _buildAcoes(primary),
-                                  const SizedBox(height: 10),
-                                  _buildSimulacoesCard(primary),
-                                ],
-                                const SizedBox(height: 12),
-                                if (_passo < 2)
-                                  CadastroPassosAcoes(
-                                    cor: primary,
-                                    continuarLabel: 'Continuar',
-                                    onContinuar: () => setState(() => _passo++),
-                                    onVoltar: _passo == 0
-                                        ? null
-                                        : () => setState(() => _passo--),
-                                  )
-                                else
-                                  SizedBox(
-                                    width: double.infinity,
-                                    height: 48,
-                                    child: OutlinedButton(
-                                      onPressed: () => setState(() => _passo--),
-                                      style: OutlinedButton.styleFrom(
-                                        foregroundColor: primary,
-                                        iconColor: primary,
-                                        side: BorderSide(
-                                          color:
-                                              primary.withValues(alpha: 0.45),
-                                        ),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(14),
-                                        ),
-                                      ),
-                                      child: Text(
-                                        'Voltar',
-                                        style: GoogleFonts.poppins(
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                              ],
+                                                    calculadoraController,
+                                                cardapios: cardapioController,
+                                                onPublico: _mostrarPessoas,
+                                                onCriarInicial:
+                                                    _criarCardapioInicial,
+                                                onAjustar: (item) {
+                                                  idCardapioSelecionado.value =
+                                                      item.idCardapio;
+                                                  _sincronizarCardapio();
+                                                  _editarRegra(item: item);
+                                                },
+                                                onAbrirDestino: (id) {
+                                                  idCardapioSelecionado.value =
+                                                      id;
+                                                  _sincronizarCardapio();
+                                                  showDialog<void>(
+                                                      context: context,
+                                                      builder: (_) => Theme(
+                                                          data: themeController
+                                                              .materialTheme,
+                                                          child: CalculadoraPropostaDialog(
+                                                              controller:
+                                                                  calculadoraController)));
+                                                },
+                                              ),
+                                              const SizedBox(height: 10),
+                                              if (calculadoraController
+                                                  .usandoContextoHistorico
+                                                  .value) ...[
+                                                _SectionCard(
+                                                    title:
+                                                        'Dados da simulação salva',
+                                                    icon: Icons.history,
+                                                    primary: primary,
+                                                    child: Column(
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .start,
+                                                        children: [
+                                                          const Text(
+                                                              'Pessoas, cardápio e valores correspondem ao histórico. Atualize para consultar a situação atual da festa.'),
+                                                          TextButton(
+                                                              onPressed:
+                                                                  _atualizarDadosCalculadora,
+                                                              child: const Text(
+                                                                  'Atualizar dados da festa'))
+                                                        ])),
+                                                const SizedBox(height: 14),
+                                              ],
+                                              _buildCardapioCard(primary),
+                                              if (!calculadoraController
+                                                      .estimativaSemEvento
+                                                      .value &&
+                                                  !calculadoraController
+                                                      .usandoContextoHistorico
+                                                      .value &&
+                                                  _cardapiosDaFesta.isNotEmpty)
+                                                Padding(
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                            vertical: 8),
+                                                    child: FilledButton.tonalIcon(
+                                                        onPressed: () => showDialog<bool>(
+                                                            context: context,
+                                                            barrierDismissible:
+                                                                false,
+                                                            builder: (_) => Theme(
+                                                                data: themeController
+                                                                    .materialTheme,
+                                                                child: CalculadoraExecucaoDialog(
+                                                                    controller: calculadoraController))),
+                                                        icon: const Icon(Icons.playlist_add_check),
+                                                        label: const Text('Organizar compras e tarefas'))),
+                                              const SizedBox(height: 10),
+                                              _buildDiagnostico(primary),
+                                              const SizedBox(height: 14),
+                                              if (calculadoraController
+                                                  .possuiResultado) ...[
+                                                _buildResultadoCard(primary),
+                                                const SizedBox(height: 14),
+                                              ],
+                                              _buildPlanejamentoCard(primary),
+                                              const SizedBox(height: 14),
+                                              if (!calculadoraController
+                                                  .possuiResultado) ...[
+                                                _buildResultadoCard(primary),
+                                                const SizedBox(height: 10),
+                                              ],
+                                              if (calculadoraController
+                                                      .possuiResultado ||
+                                                  calculadoraController
+                                                      .compromissosOrcamento
+                                                      .isNotEmpty)
+                                                _buildProximasAcoes(primary),
+                                              const SizedBox(height: 10),
+                                              if (calculadoraController
+                                                      .analisandoIA.value ||
+                                                  calculadoraController
+                                                          .analiseIA.value !=
+                                                      null ||
+                                                  calculadoraController
+                                                      .erroAnaliseIA
+                                                      .value
+                                                      .isNotEmpty) ...[
+                                                _buildAssistenteIACard(primary),
+                                                const SizedBox(height: 10),
+                                              ],
+                                              Text(
+                                                calculadoraController
+                                                        .possuiResultado
+                                                    ? 'Confira as porções antes de aplicar ao cardápio.'
+                                                    : 'Adicione ou selecione um item para liberar as ações.',
+                                                style: GoogleFonts.poppins(
+                                                  fontSize: 12,
+                                                  height: 1.35,
+                                                  fontWeight: FontWeight.w500,
+                                                  color: Colors.grey.shade700,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 12),
+                                              _buildAcoes(primary),
+                                              const SizedBox(height: 10),
+                                              _buildSimulacoesCard(primary),
+                                            ],
+                                            const SizedBox(height: 12),
+                                            if (_passo < 2)
+                                              CadastroPassosAcoes(
+                                                cor: primary,
+                                                continuarLabel: 'Continuar',
+                                                onContinuar: () =>
+                                                    setState(() => _passo++),
+                                                onVoltar: _passo == 0
+                                                    ? null
+                                                    : () => setState(
+                                                        () => _passo--),
+                                              )
+                                            else
+                                              SizedBox(
+                                                width: double.infinity,
+                                                height: 48,
+                                                child: OutlinedButton(
+                                                  onPressed: () =>
+                                                      setState(() => _passo--),
+                                                  style:
+                                                      OutlinedButton.styleFrom(
+                                                    foregroundColor: primary,
+                                                    iconColor: primary,
+                                                    side: BorderSide(
+                                                      color: primary.withValues(
+                                                          alpha: 0.45),
+                                                    ),
+                                                    shape:
+                                                        RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              14),
+                                                    ),
+                                                  ),
+                                                  child: Text(
+                                                    'Voltar',
+                                                    style: GoogleFonts.poppins(
+                                                      fontWeight:
+                                                          FontWeight.w700,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                          ],
+                                        )),
+                                  )),
                             ),
                           ),
                   )),

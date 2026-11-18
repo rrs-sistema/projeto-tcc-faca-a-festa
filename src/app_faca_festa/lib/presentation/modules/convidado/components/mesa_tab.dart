@@ -1,6 +1,8 @@
+import 'package:app_faca_festa/presentation/widgets/festa_scroll_area.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:app_faca_festa/presentation/widgets/festa_leitura.dart';
 import 'package:get/get.dart';
 
 import 'package:app_faca_festa/presentation/modules/convidado/controllers/grupo_convidado_controller.dart';
@@ -142,50 +144,56 @@ class MesasTab extends StatelessWidget {
 
       return ColoredBox(
         color: const Color(0xFFF8FAFC),
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(14, 12, 14, 96),
-          children: [
-            _MesasHero(
-              primary: primary,
-              totalMesas: estat.totalMesas,
-              ocupados: estat.ocupados,
-              assentos: estat.assentos,
-            ),
-            const SizedBox(height: 12),
-            _ResumoMesas(estat: estat, primary: primary),
-            const SizedBox(height: 18),
-            _SectionTitle(
-              icon: Icons.table_restaurant_rounded,
-              title: 'Mesas',
-              subtitle: 'Ocupação e convidados por mesa.',
-              color: primary,
-            ),
-            const SizedBox(height: 10),
-            ...grupos.entries.map((entry) {
-              final nome = entry.key;
-              final convidados = entry.value;
-              final ocupados = convidados
-                  .where((c) => c.status == StatusConvidado.confirmado)
-                  .length;
-              final assentos = _resolverAssentosMesa(
-                grupoAtual: _buscarGrupoPorNome(grupoController.grupos, nome),
-                quantidadeConvidados: convidados.length,
-                ocupados: ocupados,
-              );
-              final color = Biblioteca.gerarCorPorChaves([nome]);
-              return _MesaCard(
-                nome: nome,
-                assentos: assentos,
-                ocupados: ocupados,
-                color: color,
-                icon: Icons.chair_rounded,
-                convidados: convidados,
-              );
-            }),
-            const SizedBox(height: 8),
-            _GraficoMesas(estat: estat, primary: primary),
-          ],
-        ),
+        child: FestaScrollArea(
+            color: primary,
+            maxWidth: 1200,
+            child: ListView(
+              primary: true,
+              physics: FestaLeitura.physics(context),
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 96),
+              children: [
+                _MesasHero(
+                  primary: primary,
+                  totalMesas: estat.totalMesas,
+                  ocupados: estat.ocupados,
+                  assentos: estat.assentos,
+                ),
+                const SizedBox(height: 12),
+                _ResumoMesas(estat: estat, primary: primary),
+                const SizedBox(height: 18),
+                _SectionTitle(
+                  icon: Icons.table_restaurant_rounded,
+                  title: 'Mesas',
+                  subtitle: 'Ocupação e convidados por mesa.',
+                  color: primary,
+                ),
+                const SizedBox(height: 10),
+                ...grupos.entries.map((entry) {
+                  final nome = entry.key;
+                  final convidados = entry.value;
+                  final ocupados = convidados
+                      .where((c) => c.status == StatusConvidado.confirmado)
+                      .length;
+                  final assentos = _resolverAssentosMesa(
+                    grupoAtual:
+                        _buscarGrupoPorNome(grupoController.grupos, nome),
+                    quantidadeConvidados: convidados.length,
+                    ocupados: ocupados,
+                  );
+                  final color = Biblioteca.gerarCorPorChaves([nome]);
+                  return _MesaCard(
+                    nome: nome,
+                    assentos: assentos,
+                    ocupados: ocupados,
+                    color: color,
+                    icon: Icons.chair_rounded,
+                    convidados: convidados,
+                  );
+                }),
+                const SizedBox(height: 8),
+                _GraficoMesas(estat: estat, primary: primary),
+              ],
+            )),
       );
     });
   }

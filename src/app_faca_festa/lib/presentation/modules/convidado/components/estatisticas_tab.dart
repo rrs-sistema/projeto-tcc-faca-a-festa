@@ -1,5 +1,7 @@
+import 'package:app_faca_festa/presentation/widgets/festa_scroll_area.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:app_faca_festa/presentation/widgets/festa_leitura.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -62,58 +64,63 @@ class _EstatisticasTabState extends State<EstatisticasTab>
           opacity: _fadeAnimation,
           child: ScaleTransition(
             scale: _scaleAnimation,
-            child: ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding:
-                  const EdgeInsets.fromLTRB(12, 12, 12, 100), // Mais compacto
-              children: [
-                _StatsHeroCard(
-                    primary: primary,
-                    total: total,
-                    confirmados: confirmados,
-                    pendentes: pendentes,
-                    recusados: recusados,
-                    percentConfirmados: percentConfirmados),
-                const SizedBox(height: 12),
-                _StatsOverviewGrid(
-                    primary: primary,
-                    total: total,
-                    confirmados: confirmados,
-                    pendentes: pendentes,
-                    recusados: recusados),
-                const SizedBox(height: 16),
-                if (total == 0) ...[
-                  _EmptyStatsCard(primary: primary),
-                ] else ...[
-                  _ProgressSection(
-                      primary: primary,
-                      percentConfirmados: percentConfirmados,
-                      percentPendentes: percentPendentes,
-                      percentRecusados: percentRecusados,
-                      confirmados: confirmados,
-                      pendentes: pendentes,
-                      recusados: recusados,
-                      total: total),
-                  const SizedBox(height: 16),
-                  _ChartsSection(
-                      primary: primary,
-                      totalAdultos: totalAdultos,
-                      totalCriancas: totalCriancas,
-                      totalBebes: totalBebes,
-                      confirmados: confirmados,
-                      pendentes: pendentes,
-                      recusados: recusados),
-                  const SizedBox(height: 16),
-                  _InsightsCard(
-                      primary: primary,
-                      total: total,
-                      confirmados: confirmados,
-                      pendentes: pendentes,
-                      recusados: recusados),
-                ],
-                _FooterInfo(primary: primary),
-              ],
-            ),
+            child: FestaScrollArea(
+                color: primary,
+                maxWidth: 1200,
+                child: ListView(
+                  primary: true,
+                  physics: FestaLeitura.physics(
+                      context, const AlwaysScrollableScrollPhysics()),
+                  padding: const EdgeInsets.fromLTRB(
+                      12, 12, 12, 100), // Mais compacto
+                  children: [
+                    _StatsHeroCard(
+                        primary: primary,
+                        total: total,
+                        confirmados: confirmados,
+                        pendentes: pendentes,
+                        recusados: recusados,
+                        percentConfirmados: percentConfirmados),
+                    const SizedBox(height: 12),
+                    _StatsOverviewGrid(
+                        primary: primary,
+                        total: total,
+                        confirmados: confirmados,
+                        pendentes: pendentes,
+                        recusados: recusados),
+                    const SizedBox(height: 16),
+                    if (total == 0) ...[
+                      _EmptyStatsCard(primary: primary),
+                    ] else ...[
+                      _ProgressSection(
+                          primary: primary,
+                          percentConfirmados: percentConfirmados,
+                          percentPendentes: percentPendentes,
+                          percentRecusados: percentRecusados,
+                          confirmados: confirmados,
+                          pendentes: pendentes,
+                          recusados: recusados,
+                          total: total),
+                      const SizedBox(height: 16),
+                      _ChartsSection(
+                          primary: primary,
+                          totalAdultos: totalAdultos,
+                          totalCriancas: totalCriancas,
+                          totalBebes: totalBebes,
+                          confirmados: confirmados,
+                          pendentes: pendentes,
+                          recusados: recusados),
+                      const SizedBox(height: 16),
+                      _InsightsCard(
+                          primary: primary,
+                          total: total,
+                          confirmados: confirmados,
+                          pendentes: pendentes,
+                          recusados: recusados),
+                    ],
+                    _FooterInfo(primary: primary),
+                  ],
+                )),
           ),
         );
       }),

@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/presentation/widgets/festa_scroll_area.dart';
 import 'package:app_faca_festa/core/utils/numeric_input.dart';
 // ignore_for_file: use_build_context_synchronously
 import 'package:flutter_easyloading/flutter_easyloading.dart';
@@ -130,136 +131,141 @@ class _OrcamentoScreenState extends State<OrcamentoScreen> {
           final vazio = orcamentos.isEmpty;
           final carregando = orcamentoController.carregando.value && vazio;
 
-          return ListView(
-            padding: const EdgeInsets.fromLTRB(16, FestaPageInsets.belowAppBar, 16, 24),
-            physics: const BouncingScrollPhysics(),
-            children: [
-              resumoCard(
-                gradient,
-                limite: limite,
-                previsto: previsto,
-                pago: pago,
-                cotado: orcamentoController.totalCotado,
-                contratado: orcamentoController.totalContratado,
-                saldoDevido: orcamentoController.saldoDevido,
-                pendente: !resumo.completo ||
-                    orcamentoController.carregandoFinanceiro.value ||
-                    orcamentoController.erroFinanceiro.value.isNotEmpty,
-                onConferir: () => _abrirConferenciaFinanceira(
+          return FestaScrollArea(
+              color: primary,
+              maxWidth: 1360,
+              child: ListView(
+                primary: true,
+                padding: const EdgeInsets.fromLTRB(
+                    16, FestaPageInsets.belowAppBar, 16, 24),
+                physics: const BouncingScrollPhysics(),
+                children: [
+                  resumoCard(
+                    gradient,
+                    limite: limite,
+                    previsto: previsto,
+                    pago: pago,
+                    cotado: orcamentoController.totalCotado,
+                    contratado: orcamentoController.totalContratado,
+                    saldoDevido: orcamentoController.saldoDevido,
+                    pendente: !resumo.completo ||
+                        orcamentoController.carregandoFinanceiro.value ||
+                        orcamentoController.erroFinanceiro.value.isNotEmpty,
+                    onConferir: () => _abrirConferenciaFinanceira(
                       context,
                       orcamentoController: orcamentoController,
                       primary: themeController.primaryColor.value,
                     ),
-              ),
-              const SizedBox(height: 16),
-              if (carregando)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 32),
-                  child: Center(child: CircularProgressIndicator()),
-                )
-              else if (vazio)
-                _listaVazia(primary, () => _novoItem(idEvento))
-              else ...[
-                Text(
-                  'Itens',
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF1F2937),
                   ),
-                ),
-                const SizedBox(height: 8),
-                ...orcamentos.map((orcamento) {
-                  final temFornecedor = orcamento.idServicoFornecido != null &&
-                      orcamento.idServicoFornecido!.isNotEmpty;
+                  const SizedBox(height: 16),
+                  if (carregando)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 32),
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+                  else if (vazio)
+                    _listaVazia(primary, () => _novoItem(idEvento))
+                  else ...[
+                    Text(
+                      'Itens',
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF1F2937),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    ...orcamentos.map((orcamento) {
+                      final temFornecedor =
+                          orcamento.idServicoFornecido != null &&
+                              orcamento.idServicoFornecido!.isNotEmpty;
 
-                  if (!temFornecedor) {
-                    final gastoC = orcamentoController
-                        .gastoController(orcamento.idOrcamento);
+                      if (!temFornecedor) {
+                        final gastoC = orcamentoController
+                            .gastoController(orcamento.idOrcamento);
 
-                    gastoC.escutarGastos(orcamento.idOrcamento);
+                        gastoC.escutarGastos(orcamento.idOrcamento);
 
-                    return Obx(() {
-                      final gastos = gastoC.gastos;
+                        return Obx(() {
+                          final gastos = gastoC.gastos;
 
-                      final gastosWidgets = gastos.isEmpty
-                          ? [
-                              Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 4),
-                                child: Text(
-                                  'Nenhum pagamento neste item.',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 11,
-                                    color: Colors.black54,
-                                    fontStyle: FontStyle.italic,
+                          final gastosWidgets = gastos.isEmpty
+                              ? [
+                                  Padding(
+                                    padding:
+                                        const EdgeInsets.symmetric(vertical: 4),
+                                    child: Text(
+                                      'Nenhum pagamento neste item.',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 11,
+                                        color: Colors.black54,
+                                        fontStyle: FontStyle.italic,
+                                      ),
+                                    ),
                                   ),
-                                ),
-                              ),
-                            ]
-                          : gastos.map((g) {
-                              return _gastoItem(
-                                context,
-                                orcamento: orcamento,
-                                idOrcamento: g.idOrcamento,
-                                idServico: g.idServicoContratado,
-                                idGasto: g.idGasto,
-                                nome: g.nome,
-                                custo: g.custo,
-                                pago: g.pago,
-                                themeController: themeController,
-                                gastoController: gastoC,
-                              );
-                            }).toList();
+                                ]
+                              : gastos.map((g) {
+                                  return _gastoItem(
+                                    context,
+                                    orcamento: orcamento,
+                                    idOrcamento: g.idOrcamento,
+                                    idServico: g.idServicoContratado,
+                                    idGasto: g.idGasto,
+                                    nome: g.nome,
+                                    custo: g.custo,
+                                    pago: g.pago,
+                                    themeController: themeController,
+                                    gastoController: gastoC,
+                                  );
+                                }).toList();
+
+                          return _categoriaCard(
+                            context,
+                            orcamento,
+                            primary,
+                            gastosWidgets,
+                            true,
+                            themeController: themeController,
+                            orcamentoController: orcamentoController,
+                          );
+                        });
+                      }
 
                       return _categoriaCard(
                         context,
                         orcamento,
                         primary,
-                        gastosWidgets,
-                        true,
+                        [
+                          _gastoItem(
+                            context,
+                            orcamento: orcamento,
+                            idOrcamento: orcamento.idOrcamento,
+                            idServico: orcamento.idServicoFornecido,
+                            idGasto: null,
+                            nome: orcamento.nomeFornecedor?.trim().isNotEmpty ==
+                                    true
+                                ? orcamento.nomeFornecedor!.trim()
+                                : orcamento.status.label,
+                            custo: orcamento.custoEstimado ?? 0,
+                            pago: orcamento.isFechado
+                                ? (orcamento.custoEstimado ?? 0)
+                                : 0,
+                            themeController: themeController,
+                            gastoController: null,
+                          ),
+                        ],
+                        false,
                         themeController: themeController,
                         orcamentoController: orcamentoController,
                       );
-                    });
-                  }
-
-                  return _categoriaCard(
-                    context,
-                    orcamento,
-                    primary,
-                    [
-                      _gastoItem(
-                        context,
-                        orcamento: orcamento,
-                        idOrcamento: orcamento.idOrcamento,
-                        idServico: orcamento.idServicoFornecido,
-                        idGasto: null,
-                        nome:
-                            orcamento.nomeFornecedor?.trim().isNotEmpty == true
-                                ? orcamento.nomeFornecedor!.trim()
-                                : orcamento.status.label,
-                        custo: orcamento.custoEstimado ?? 0,
-                        pago: orcamento.isFechado
-                            ? (orcamento.custoEstimado ?? 0)
-                            : 0,
-                        themeController: themeController,
-                        gastoController: null,
-                      ),
-                    ],
-                    false,
-                    themeController: themeController,
-                    orcamentoController: orcamentoController,
-                  );
-                }),
-              ],
-            ],
-          );
+                    }),
+                  ],
+                ],
+              ));
         }),
       );
     });
   }
-
 }
 
 Widget _listaVazia(Color primary, VoidCallback onNovo) {

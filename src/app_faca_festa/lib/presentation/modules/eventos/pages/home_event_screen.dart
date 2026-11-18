@@ -40,6 +40,8 @@ import 'package:app_faca_festa/domain/entities/tipo_evento.dart';
 import 'package:app_faca_festa/presentation/widgets/menu_drawer_faca_festa.dart';
 import 'package:app_faca_festa/presentation/widgets/festa_bottom_bar.dart';
 import 'package:app_faca_festa/presentation/widgets/festa_app_bar.dart';
+import 'package:app_faca_festa/presentation/widgets/festa_leitura.dart';
+import 'package:app_faca_festa/presentation/widgets/festa_scroll_area.dart';
 import 'package:app_faca_festa/domain/entities/convidado.dart';
 import 'package:app_faca_festa/domain/entities/tarefa.dart';
 import 'package:app_faca_festa/presentation/modules/checklist/pages/tarefa_dialog.dart';
@@ -529,16 +531,6 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
     });
   }
 
-  Widget _faixa(Widget sliver, bool telaAmplia) {
-    if (!telaAmplia) return sliver;
-    final sobra = MediaQuery.sizeOf(context).width - _larguraDesktop;
-    if (sobra <= 0) return sliver;
-    return SliverPadding(
-      padding: EdgeInsets.symmetric(horizontal: sobra / 2),
-      sliver: sliver,
-    );
-  }
-
   Widget _buildHome(EventThemeController theme) {
     final larguraJanela = MediaQuery.sizeOf(context).width;
     final telaAmplia = larguraJanela >= 650;
@@ -590,88 +582,87 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
                 onAbrirMenu: _abrirMenu,
               ),
             Expanded(
-              child: CustomScrollView(
+              child: FestaScrollArea(
                 controller: _scrollControllerHome,
-                slivers: [
-                  SliverToBoxAdapter(
-                    child: NudgeCotacaoBanner(
-                      idEvento: eventoModel.idEvento,
-                      idUsuario: eventoModel.idUsuario,
-                      onAbrirFornecedores:
-                          homeEventNavController.irParaFornecedores,
-                    ),
-                  ),
-                  if (!resumoLadoALado)
-                    _faixa(
-                      SliverPersistentHeader(
-                        pinned: true,
-                        floating: false,
-                        delegate: ContadorEventoHeaderDelegate(
-                          scrollController: _scrollControllerHome,
-                          child: _contadorEvento(
-                            eventoModel,
-                            tipoEventoModel,
-                            theme,
+                color: theme.primaryColor.value,
+                maxWidth: _larguraDesktop,
+                child: FestaLeitura(
+                  child: Builder(
+                    builder: (context) => CustomScrollView(
+                      physics: FestaLeitura.physics(context),
+                      controller: _scrollControllerHome,
+                      slivers: [
+                        SliverToBoxAdapter(
+                          child: NudgeCotacaoBanner(
+                            idEvento: eventoModel.idEvento,
+                            idUsuario: eventoModel.idUsuario,
+                            onAbrirFornecedores:
+                                homeEventNavController.irParaFornecedores,
                           ),
                         ),
-                      ),
-                      telaAmplia,
+                        if (!resumoLadoALado)
+                          SliverPersistentHeader(
+                            pinned: true,
+                            floating: false,
+                            delegate: ContadorEventoHeaderDelegate(
+                              scrollController: _scrollControllerHome,
+                              child: _contadorEvento(
+                                eventoModel,
+                                tipoEventoModel,
+                                theme,
+                              ),
+                            ),
+                          ),
+                        if (resumoLadoALado)
+                          _buildPainelDesktop(theme)
+                        else ...[
+                          _buildDashboardOverview(
+                            theme,
+                            agruparIndicadores: telaAmplia,
+                          ),
+                          _buildQuickActions(
+                            theme: theme,
+                            convidadoController: convidadoController,
+                            orcamentoController: orcamentoController,
+                            cotacaoController: cotacaoController,
+                            tarefaController: tarefaController,
+                            eventoController: eventoController,
+                            homeEventNavController: homeEventNavController,
+                            appController: appController,
+                            fornecedorController: fornecedorController,
+                            fornecedorCadastroController:
+                                fornecedorCadastroController,
+                            fornecedorRecomendacaoController:
+                                fornecedorRecomendacaoController,
+                            avaliacaoController: avaliacaoController,
+                            solicitacoesController: solicitacoesController,
+                            grupoConvidadoController: grupoConvidadoController,
+                            cardapioController: cardapioController,
+                            calculadoraController: calculadoraController,
+                            fornecedorMigracaoAdminController:
+                                fornecedorMigracaoAdminController,
+                          ),
+                        ],
+                        if (!resumoLadoALado) ...[
+                          _buildSuppliersCarousel(
+                            fornecedorController,
+                            theme,
+                            cotacaoController: cotacaoController,
+                            fornecedorCadastroController:
+                                fornecedorCadastroController,
+                            avaliacaoController: avaliacaoController,
+                            eventoController: eventoController,
+                            appController: appController,
+                            onVerTodos:
+                                homeEventNavController.irParaFornecedores,
+                          ),
+                          _buildProximasTarefas(theme),
+                        ],
+                        const SliverToBoxAdapter(child: SizedBox(height: 100)),
+                      ],
                     ),
-                  if (resumoLadoALado)
-                    _faixa(_buildPainelDesktop(theme), true)
-                  else ...[
-                    _faixa(
-                      _buildDashboardOverview(
-                        theme,
-                        agruparIndicadores: telaAmplia,
-                      ),
-                      telaAmplia,
-                    ),
-                    _faixa(
-                      _buildQuickActions(
-                        theme: theme,
-                        convidadoController: convidadoController,
-                        orcamentoController: orcamentoController,
-                        cotacaoController: cotacaoController,
-                        tarefaController: tarefaController,
-                        eventoController: eventoController,
-                        homeEventNavController: homeEventNavController,
-                        appController: appController,
-                        fornecedorController: fornecedorController,
-                        fornecedorCadastroController:
-                            fornecedorCadastroController,
-                        fornecedorRecomendacaoController:
-                            fornecedorRecomendacaoController,
-                        avaliacaoController: avaliacaoController,
-                        solicitacoesController: solicitacoesController,
-                        grupoConvidadoController: grupoConvidadoController,
-                        cardapioController: cardapioController,
-                        calculadoraController: calculadoraController,
-                        fornecedorMigracaoAdminController:
-                            fornecedorMigracaoAdminController,
-                      ),
-                      telaAmplia,
-                    ),
-                  ],
-                  if (!resumoLadoALado) ...[
-                    _faixa(
-                      _buildSuppliersCarousel(
-                        fornecedorController,
-                        theme,
-                        cotacaoController: cotacaoController,
-                        fornecedorCadastroController:
-                            fornecedorCadastroController,
-                        avaliacaoController: avaliacaoController,
-                        eventoController: eventoController,
-                        appController: appController,
-                        onVerTodos: homeEventNavController.irParaFornecedores,
-                      ),
-                      telaAmplia,
-                    ),
-                    _faixa(_buildProximasTarefas(theme), telaAmplia),
-                  ],
-                  const SliverToBoxAdapter(child: SizedBox(height: 100)),
-                ],
+                  ),
+                ),
               ),
             ),
           ],

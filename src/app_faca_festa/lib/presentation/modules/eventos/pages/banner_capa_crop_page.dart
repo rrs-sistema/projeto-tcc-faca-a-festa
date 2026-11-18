@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:app_faca_festa/presentation/widgets/festa_leitura.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 /// Proporção do banner da home (largura ÷ altura ≈ 16:9).
@@ -291,7 +292,8 @@ class _BannerCapaCropPageState extends State<BannerCapaCropPage> {
                           height: crop.height,
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(20),
-                            child: GestureDetector(
+                            child: FestaGestosProprios(
+                                child: GestureDetector(
                               onScaleStart: (details) {
                                 _baseScale = _scale;
                                 _baseOffset = _offset;
@@ -362,7 +364,7 @@ class _BannerCapaCropPageState extends State<BannerCapaCropPage> {
                                   ),
                                 ],
                               ),
-                            ),
+                            )),
                           ),
                         ),
                       ),

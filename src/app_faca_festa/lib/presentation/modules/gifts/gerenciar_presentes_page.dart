@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/presentation/widgets/festa_scroll_area.dart';
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:flutter/material.dart';
@@ -83,118 +84,129 @@ class _GerenciarPresentesPageState extends State<GerenciarPresentesPage> {
 
       return Scaffold(
         backgroundColor: const Color(0xFFF6F8FC),
-        floatingActionButton: FloatingActionButton.extended(
-          heroTag: 'novo_presente_${widget.eventoId}',
-          elevation: 0,
-          backgroundColor: primary,
-          foregroundColor: Colors.white,
-          icon: const Icon(Icons.add_rounded, size: 21),
-          label: Text(
-            'Novo presente',
-            style: GoogleFonts.poppins(
-                fontSize: 12.5, fontWeight: FontWeight.w800),
-          ),
-          onPressed: () => abrirDialogCadastrarPresente(
-            context,
-            controller: controller,
-            themeController: themeController,
-          ),
-        ),
-        body: CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            SliverToBoxAdapter(
-              child: _PremiumGiftHeader(
-                gradient: gradient,
-                primary: primary,
-                stats: stats,
-                onBack: () => Get.back(),
-                onAdd: () => abrirDialogCadastrarPresente(
-                  context,
-                  controller: controller,
-                  themeController: themeController,
-                ),
+        floatingActionButton: Padding(
+            padding: EdgeInsets.only(
+                right: FestaScrollArea.sideInset(
+                    MediaQuery.sizeOf(context).width)),
+            child: FloatingActionButton.extended(
+              heroTag: 'novo_presente_${widget.eventoId}',
+              elevation: 0,
+              backgroundColor: primary,
+              foregroundColor: Colors.white,
+              icon: const Icon(Icons.add_rounded, size: 21),
+              label: Text(
+                'Novo presente',
+                style: GoogleFonts.poppins(
+                    fontSize: 12.5, fontWeight: FontWeight.w800),
               ),
-            ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                child: _StatsPanel(primary: primary, stats: stats),
+              onPressed: () => abrirDialogCadastrarPresente(
+                context,
+                controller: controller,
+                themeController: themeController,
               ),
-            ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                child: _FilterPanel(
-                  primary: primary,
-                  busca: _busca,
-                  tipoSelecionado: _tipoFiltro,
-                  statusSelecionado: _statusFiltro,
-                  totalFiltrado: gifts.length,
-                  onSearch: (value) => setState(() => _busca = value),
-                  onTipoChanged: (value) => setState(() => _tipoFiltro = value),
-                  onStatusChanged: (value) =>
-                      setState(() => _statusFiltro = value),
-                  searchController: _searchCtrl,
-                  onClear: _limparFiltros,
-                ),
-              ),
-            ),
-            if (todos.isEmpty)
-              SliverFillRemaining(
-                hasScrollBody: false,
-                child: _PremiumEmptyState(
-                  primary: primary,
-                  title: 'Sua lista de presentes ainda está vazia',
-                  message:
-                      'Cadastre presentes físicos, contribuições por PIX ou presentes coletivos para deixar o espaço dos convidados mais completo.',
-                  actionLabel: 'Cadastrar primeiro presente',
-                  onAction: () => abrirDialogCadastrarPresente(
-                    context,
-                    controller: controller,
-                    themeController: themeController,
+            )),
+        body: FestaScrollArea(
+            color: primary,
+            maxWidth: 1360,
+            child: CustomScrollView(
+              primary: true,
+              physics: const BouncingScrollPhysics(),
+              slivers: [
+                SliverToBoxAdapter(
+                  child: _PremiumGiftHeader(
+                    gradient: gradient,
+                    primary: primary,
+                    stats: stats,
+                    onBack: () => Get.back(),
+                    onAdd: () => abrirDialogCadastrarPresente(
+                      context,
+                      controller: controller,
+                      themeController: themeController,
+                    ),
                   ),
                 ),
-              )
-            else if (gifts.isEmpty)
-              SliverFillRemaining(
-                hasScrollBody: false,
-                child: _PremiumEmptyState(
-                  primary: primary,
-                  title: 'Nenhum presente encontrado',
-                  message:
-                      'Ajuste os filtros ou pesquise por outro nome, loja ou descrição.',
-                  actionLabel: 'Limpar filtros',
-                  onAction: _limparFiltros,
-                ),
-              )
-            else
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 110),
-                sliver: SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      if (index.isOdd) return const SizedBox(height: 12);
-                      final gift = gifts[index ~/ 2];
-                      return _PremiumGiftCard(
-                        gift: gift,
-                        primary: primary,
-                        onEdit: () => abrirDialogCadastrarPresente(
-                          context,
-                          presente: gift,
-                          controller: controller,
-                          themeController: themeController,
-                        ),
-                        onDelete: () =>
-                            _confirmarExclusao(context, gift, primary),
-                      );
-                    },
-                    childCount: gifts.length * 2 - 1,
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                    child: _StatsPanel(primary: primary, stats: stats),
                   ),
                 ),
-              ),
-          ],
-        ),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                    child: _FilterPanel(
+                      primary: primary,
+                      busca: _busca,
+                      tipoSelecionado: _tipoFiltro,
+                      statusSelecionado: _statusFiltro,
+                      totalFiltrado: gifts.length,
+                      onSearch: (value) => setState(() => _busca = value),
+                      onTipoChanged: (value) =>
+                          setState(() => _tipoFiltro = value),
+                      onStatusChanged: (value) =>
+                          setState(() => _statusFiltro = value),
+                      searchController: _searchCtrl,
+                      onClear: _limparFiltros,
+                    ),
+                  ),
+                ),
+                if (todos.isEmpty)
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: _PremiumEmptyState(
+                      primary: primary,
+                      title: 'Sua lista de presentes ainda está vazia',
+                      message:
+                          'Cadastre presentes físicos, contribuições por PIX ou presentes coletivos para deixar o espaço dos convidados mais completo.',
+                      actionLabel: 'Cadastrar primeiro presente',
+                      onAction: () => abrirDialogCadastrarPresente(
+                        context,
+                        controller: controller,
+                        themeController: themeController,
+                      ),
+                    ),
+                  )
+                else if (gifts.isEmpty)
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: _PremiumEmptyState(
+                      primary: primary,
+                      title: 'Nenhum presente encontrado',
+                      message:
+                          'Ajuste os filtros ou pesquise por outro nome, loja ou descrição.',
+                      actionLabel: 'Limpar filtros',
+                      onAction: _limparFiltros,
+                    ),
+                  )
+                else
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 110),
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          if (index.isOdd) {
+                            return const SizedBox(height: 12);
+                          }
+                          final gift = gifts[index ~/ 2];
+                          return _PremiumGiftCard(
+                            gift: gift,
+                            primary: primary,
+                            onEdit: () => abrirDialogCadastrarPresente(
+                              context,
+                              presente: gift,
+                              controller: controller,
+                              themeController: themeController,
+                            ),
+                            onDelete: () =>
+                                _confirmarExclusao(context, gift, primary),
+                          );
+                        },
+                        childCount: gifts.length * 2 - 1,
+                      ),
+                    ),
+                  ),
+              ],
+            )),
       );
     });
   }
@@ -444,7 +456,12 @@ class _StatsPanel extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final crossAxisCount = constraints.maxWidth >= 760 ? 4 : 2;
-        final cardHeight = constraints.maxWidth >= 760 ? 112.0 : 118.0;
+        final texto = MediaQuery.textScalerOf(context);
+        // Título e apoio podem ocupar duas linhas quando o texto é ampliado.
+        final cabecalho =
+            (texto.scale(10.5) * 2.8).clamp(34.0, double.infinity).toDouble();
+        final cardHeight =
+            38 + cabecalho + texto.scale(22) * 1.15 + texto.scale(10.5) * 2.8;
 
         final cards = [
           _StatCard(
@@ -1088,7 +1105,7 @@ class _StatCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   title,
-                  maxLines: 1,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.poppins(
                     color: const Color(0xFF64748B),
@@ -1117,7 +1134,7 @@ class _StatCard extends StatelessWidget {
               const SizedBox(height: 3),
               Text(
                 subtitle,
-                maxLines: 1,
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.poppins(
                   color: const Color(0xFF94A3B8),

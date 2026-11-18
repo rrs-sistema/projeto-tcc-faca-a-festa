@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/presentation/widgets/festa_scroll_area.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -65,8 +66,7 @@ class FornecedorDetalheScreen extends StatelessWidget {
     final gradient = themeController.gradient.value;
     final primary = themeController.primaryColor.value;
     // Contato direto (tel/e-mail) só para admin; organizador fala via chat/cotação.
-    final exibirContatoDireto =
-        appController.usuarioLogado.value?.tipo == 'A';
+    final exibirContatoDireto = appController.usuarioLogado.value?.tipo == 'A';
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final idFornecedor = fornecedorDetalhado.fornecedor.idFornecedor;
@@ -95,12 +95,13 @@ class FornecedorDetalheScreen extends StatelessWidget {
       backgroundColor: const Color(0xFFF6F7FB),
       extendBodyBehindAppBar: true,
       appBar: _buildAppBar(context, fornecedor, gradient),
-      bottomNavigationBar: _buildBottomActionBar(
+      bottomNavigationBar: FestaContent(
+          child: _buildBottomActionBar(
         primary: primary,
         fornecedorController: fornecedorController,
         detalhe: fornecedorDetalhado,
         exibirContatoDireto: exibirContatoDireto,
-      ),
+      )),
       body: Obx(() {
         final fotos = fornecedorController.fotosServico
             .where((f) => f.idFornecedor == fornecedor.idFornecedor)
@@ -114,7 +115,8 @@ class FornecedorDetalheScreen extends StatelessWidget {
             ? fornecedor.bannerUrl!.trim()
             : fotoCapaService;
 
-        return Stack(
+        return FestaContent(
+            child: Stack(
           children: [
             _bannerFornecedor(fotoCapa, gradient),
             Container(
@@ -131,106 +133,110 @@ class FornecedorDetalheScreen extends StatelessWidget {
                 ),
               ),
             ),
-            SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(0, 198, 0, 96),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildFornecedorHeroCard(
-                    fornecedor: fornecedor,
-                    detalhe: fornecedorDetalhado,
-                    avaliacaoController: avaliacaoController,
-                    primary: primary,
-                    distancia: distancia,
-                    territorioDescricao: territorio?.descricao,
+            FestaScrollArea(
+                color: themeController.primaryColor.value,
+                maxWidth: 1360,
+                child: SingleChildScrollView(
+                  primary: true,
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(0, 198, 0, 96),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildFornecedorHeroCard(
+                        fornecedor: fornecedor,
+                        detalhe: fornecedorDetalhado,
+                        avaliacaoController: avaliacaoController,
+                        primary: primary,
+                        distancia: distancia,
+                        territorioDescricao: territorio?.descricao,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildResumoContratacaoCard(
+                              primary: primary,
+                              fornecedor: fornecedor,
+                              detalhe: fornecedorDetalhado,
+                              totalServicos: fornecedorController
+                                  .allServicosFornecedor
+                                  .where((s) =>
+                                      s.idFornecedor == fornecedor.idFornecedor)
+                                  .length,
+                              exibirContatoDireto: exibirContatoDireto,
+                            ),
+                            if (fornecedor.descricao?.trim().isNotEmpty ??
+                                false) ...[
+                              const SizedBox(height: 14),
+                              _buildDescricaoCard(fornecedor.descricao!),
+                            ],
+                            sectionHeader(
+                              titulo: 'Serviço principal',
+                              icon: Icons.workspace_premium_rounded,
+                              iconColor: primary,
+                            ),
+                            _buildServicoPrincipal(
+                              fornecedorDetalhado,
+                              fornecedorController,
+                              fornecedorLocalizacaoController,
+                              primary,
+                              gradient,
+                              context,
+                            ),
+                            sectionHeader(
+                              titulo: 'Outros serviços deste fornecedor',
+                              icon: Icons.design_services_rounded,
+                              iconColor: Colors.blueGrey,
+                            ),
+                            _buildServicosMesmoFornecedor(
+                              fornecedorDetalhado,
+                              fornecedorController,
+                              fornecedorLocalizacaoController,
+                              primary,
+                              gradient,
+                              context,
+                            ),
+                            if (selecionouCategoria) ...[
+                              sectionHeader(
+                                titulo: 'Serviços da mesma categoria',
+                                icon: Icons.category_rounded,
+                                iconColor: Colors.indigo,
+                              ),
+                              _buildServicosMesmaCategoria(
+                                fornecedorDetalhado,
+                                fornecedorController,
+                                fornecedorLocalizacaoController,
+                                primary,
+                                gradient,
+                                context,
+                              ),
+                            ],
+                            sectionHeader(
+                              titulo: exibirContatoDireto
+                                  ? 'Informações de contato'
+                                  : 'Atendimento pela plataforma',
+                              icon: exibirContatoDireto
+                                  ? Icons.contact_phone_rounded
+                                  : Icons.forum_rounded,
+                              iconColor: Colors.teal,
+                            ),
+                            _buildContatoCard(
+                              fornecedor: fornecedor,
+                              territorioDescricao: territorio?.descricao,
+                              distancia: distancia,
+                              primary: primary,
+                              exibirContatoDireto: exibirContatoDireto,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildResumoContratacaoCard(
-                          primary: primary,
-                          fornecedor: fornecedor,
-                          detalhe: fornecedorDetalhado,
-                          totalServicos: fornecedorController
-                              .allServicosFornecedor
-                              .where((s) =>
-                                  s.idFornecedor == fornecedor.idFornecedor)
-                              .length,
-                          exibirContatoDireto: exibirContatoDireto,
-                        ),
-                        if (fornecedor.descricao?.trim().isNotEmpty ??
-                            false) ...[
-                          const SizedBox(height: 14),
-                          _buildDescricaoCard(fornecedor.descricao!),
-                        ],
-                        sectionHeader(
-                          titulo: 'Serviço principal',
-                          icon: Icons.workspace_premium_rounded,
-                          iconColor: primary,
-                        ),
-                        _buildServicoPrincipal(
-                          fornecedorDetalhado,
-                          fornecedorController,
-                          fornecedorLocalizacaoController,
-                          primary,
-                          gradient,
-                          context,
-                        ),
-                        sectionHeader(
-                          titulo: 'Outros serviços deste fornecedor',
-                          icon: Icons.design_services_rounded,
-                          iconColor: Colors.blueGrey,
-                        ),
-                        _buildServicosMesmoFornecedor(
-                          fornecedorDetalhado,
-                          fornecedorController,
-                          fornecedorLocalizacaoController,
-                          primary,
-                          gradient,
-                          context,
-                        ),
-                        if (selecionouCategoria) ...[
-                          sectionHeader(
-                            titulo: 'Serviços da mesma categoria',
-                            icon: Icons.category_rounded,
-                            iconColor: Colors.indigo,
-                          ),
-                          _buildServicosMesmaCategoria(
-                            fornecedorDetalhado,
-                            fornecedorController,
-                            fornecedorLocalizacaoController,
-                            primary,
-                            gradient,
-                            context,
-                          ),
-                        ],
-                        sectionHeader(
-                          titulo: exibirContatoDireto
-                              ? 'Informações de contato'
-                              : 'Atendimento pela plataforma',
-                          icon: exibirContatoDireto
-                              ? Icons.contact_phone_rounded
-                              : Icons.forum_rounded,
-                          iconColor: Colors.teal,
-                        ),
-                        _buildContatoCard(
-                          fornecedor: fornecedor,
-                          territorioDescricao: territorio?.descricao,
-                          distancia: distancia,
-                          primary: primary,
-                          exibirContatoDireto: exibirContatoDireto,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
+                )),
           ],
-        );
+        ));
       }),
     );
   }

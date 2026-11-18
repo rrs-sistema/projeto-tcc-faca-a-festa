@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/presentation/widgets/festa_scroll_area.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -70,10 +71,12 @@ class TarefasScreen extends StatelessWidget {
           titulo: 'Tarefas da festa',
           themeController: themeController,
         ),
-        bottomNavigationBar: SafeArea(
+        bottomNavigationBar: FestaContent(
+            child: SafeArea(
           top: false,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, FestaPageInsets.belowAppBar, 20, 12),
+            padding: const EdgeInsets.fromLTRB(
+                20, FestaPageInsets.belowAppBar, 20, 12),
             child: SizedBox(
                 height: 52,
                 child: FilledButton.icon(
@@ -89,10 +92,11 @@ class TarefasScreen extends StatelessWidget {
                   onPressed: () => _abrirNovaTarefa(context),
                 )),
           ),
-        ),
+        )),
         body: vazia
             ? _buildEmptyState(context, primary)
-            : Column(
+            : FestaContent(
+                child: Column(
                 children: [
                   _ProgressoTarefas(
                     total: tarefaController.total,
@@ -102,40 +106,46 @@ class TarefasScreen extends StatelessWidget {
                     primary: primary,
                   ),
                   Expanded(
-                    child: ListView(
-                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
-                      children: [
-                        if (pendentes.isNotEmpty)
-                          _GrupoTarefas(
-                            titulo: 'Para fazer',
-                            tarefas: pendentes,
-                            agora: agora,
-                            primary: primary,
-                            onToggle: (tarefa, feita) =>
-                                _alternarStatus(context, tarefa, feita),
-                            onEdit: (tarefa) => _abrirEdicao(context, tarefa),
-                            onDelete: (tarefa) =>
-                                _confirmarExclusao(context, tarefa),
-                          ),
-                        if (pendentes.isNotEmpty && concluidas.isNotEmpty)
-                          const SizedBox(height: 22),
-                        if (concluidas.isNotEmpty)
-                          _GrupoTarefas(
-                            titulo: 'Concluídas',
-                            tarefas: concluidas,
-                            agora: agora,
-                            primary: primary,
-                            onToggle: (tarefa, feita) =>
-                                _alternarStatus(context, tarefa, feita),
-                            onEdit: (tarefa) => _abrirEdicao(context, tarefa),
-                            onDelete: (tarefa) =>
-                                _confirmarExclusao(context, tarefa),
-                          ),
-                      ],
-                    ),
+                    child: FestaScrollArea(
+                        color: primary,
+                        maxWidth: 1360,
+                        child: ListView(
+                          primary: true,
+                          padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+                          children: [
+                            if (pendentes.isNotEmpty)
+                              _GrupoTarefas(
+                                titulo: 'Para fazer',
+                                tarefas: pendentes,
+                                agora: agora,
+                                primary: primary,
+                                onToggle: (tarefa, feita) =>
+                                    _alternarStatus(context, tarefa, feita),
+                                onEdit: (tarefa) =>
+                                    _abrirEdicao(context, tarefa),
+                                onDelete: (tarefa) =>
+                                    _confirmarExclusao(context, tarefa),
+                              ),
+                            if (pendentes.isNotEmpty && concluidas.isNotEmpty)
+                              const SizedBox(height: 22),
+                            if (concluidas.isNotEmpty)
+                              _GrupoTarefas(
+                                titulo: 'Concluídas',
+                                tarefas: concluidas,
+                                agora: agora,
+                                primary: primary,
+                                onToggle: (tarefa, feita) =>
+                                    _alternarStatus(context, tarefa, feita),
+                                onEdit: (tarefa) =>
+                                    _abrirEdicao(context, tarefa),
+                                onDelete: (tarefa) =>
+                                    _confirmarExclusao(context, tarefa),
+                              ),
+                          ],
+                        )),
                   ),
                 ],
-              ),
+              )),
       );
     });
   }

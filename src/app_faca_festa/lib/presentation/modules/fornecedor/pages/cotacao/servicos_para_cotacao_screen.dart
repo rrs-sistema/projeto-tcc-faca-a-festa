@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/presentation/widgets/festa_scroll_area.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -105,7 +106,7 @@ class _ServicosParaCotacaoScreenState extends State<ServicosParaCotacaoScreen> {
       ),
 
       // 🔹 Barra Inferior Inteligente
-      bottomNavigationBar: Obx(() {
+      bottomNavigationBar: FestaContent(child: Obx(() {
         if (selecionados.isEmpty) return const SizedBox.shrink();
         return AnimatedContainer(
           duration: const Duration(milliseconds: 300),
@@ -153,95 +154,98 @@ class _ServicosParaCotacaoScreenState extends State<ServicosParaCotacaoScreen> {
             ),
           ),
         );
-      }),
+      })),
 
       body: Obx(() {
         final servicos = fornecedorController.servicosFornecedor;
         if (servicos.isEmpty) return _mensagemVazia();
 
-        return ListView.separated(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
-          itemCount: servicos.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 12),
-          itemBuilder: (_, i) {
-            final s = servicos[i];
-            return Obx(() {
-              final chave = '${s.id}_${s.idFornecedor}';
-              final selecionado = selecionados.contains(chave);
+        return FestaScrollArea(
+            color: themeController.primaryColor.value,
+            child: ListView.separated(
+              primary: true,
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+              itemCount: servicos.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 12),
+              itemBuilder: (_, i) {
+                final s = servicos[i];
+                return Obx(() {
+                  final chave = '${s.id}_${s.idFornecedor}';
+                  final selecionado = selecionados.contains(chave);
 
-              return Dismissible(
-                key: ValueKey(chave),
-                direction: DismissDirection.endToStart,
-                background: Container(
-                  alignment: Alignment.centerRight,
-                  padding: const EdgeInsets.only(right: 20),
-                  decoration: BoxDecoration(
-                    color: Colors.red.shade50,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.red.shade200),
-                  ),
-                  child: Icon(Icons.delete_outline_rounded,
-                      color: Colors.red.shade400, size: 26),
-                ),
-                confirmDismiss: (_) async {
-                  HapticFeedback.selectionClick();
-                  return await Biblioteca.showConfirmDialog(
-                    context,
-                    title: 'Remover serviço?',
-                    message:
-                        'Deseja remover "${s.nomeServico}" da visualização?',
-                    confirmLabel: 'Remover',
-                    color: Colors.red,
-                    onConfirm: () async => Future.value(true),
-                  );
-                },
-                onDismissed: (_) async {
-                  final itemRemovido = s;
-                  final indexRemovido = i;
-
-                  setState(() {
-                    fornecedorController.servicosFornecedor
-                        .removeAt(indexRemovido);
-                    selecionados.remove(chave);
-                    valoresPorChave.remove(chave);
-                  });
-
-                  await Future.delayed(const Duration(milliseconds: 50));
-                  HapticFeedback.lightImpact();
-
-                  Get.snackbar(
-                    'Serviço ocultado',
-                    '${itemRemovido.nomeServico ?? "Item"} removido.',
-                    snackPosition: SnackPosition.BOTTOM,
-                    backgroundColor: const Color(0xFF1F2937),
-                    colorText: Colors.white,
-                    margin: const EdgeInsets.all(12),
-                    borderRadius: 12,
-                    duration: const Duration(seconds: 3),
-                    mainButton: TextButton(
-                      onPressed: () {
-                        setState(() {
-                          fornecedorController.servicosFornecedor
-                              .insert(indexRemovido, itemRemovido);
-                        });
-                      },
-                      child: Text('Desfazer',
-                          style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.w700,
-                              color: Colors.blueAccent.shade100)),
+                  return Dismissible(
+                    key: ValueKey(chave),
+                    direction: DismissDirection.endToStart,
+                    background: Container(
+                      alignment: Alignment.centerRight,
+                      padding: const EdgeInsets.only(right: 20),
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade50,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.red.shade200),
+                      ),
+                      child: Icon(Icons.delete_outline_rounded,
+                          color: Colors.red.shade400, size: 26),
                     ),
+                    confirmDismiss: (_) async {
+                      HapticFeedback.selectionClick();
+                      return await Biblioteca.showConfirmDialog(
+                        context,
+                        title: 'Remover serviço?',
+                        message:
+                            'Deseja remover "${s.nomeServico}" da visualização?',
+                        confirmLabel: 'Remover',
+                        color: Colors.red,
+                        onConfirm: () async => Future.value(true),
+                      );
+                    },
+                    onDismissed: (_) async {
+                      final itemRemovido = s;
+                      final indexRemovido = i;
+
+                      setState(() {
+                        fornecedorController.servicosFornecedor
+                            .removeAt(indexRemovido);
+                        selecionados.remove(chave);
+                        valoresPorChave.remove(chave);
+                      });
+
+                      await Future.delayed(const Duration(milliseconds: 50));
+                      HapticFeedback.lightImpact();
+
+                      Get.snackbar(
+                        'Serviço ocultado',
+                        '${itemRemovido.nomeServico ?? "Item"} removido.',
+                        snackPosition: SnackPosition.BOTTOM,
+                        backgroundColor: const Color(0xFF1F2937),
+                        colorText: Colors.white,
+                        margin: const EdgeInsets.all(12),
+                        borderRadius: 12,
+                        duration: const Duration(seconds: 3),
+                        mainButton: TextButton(
+                          onPressed: () {
+                            setState(() {
+                              fornecedorController.servicosFornecedor
+                                  .insert(indexRemovido, itemRemovido);
+                            });
+                          },
+                          child: Text('Desfazer',
+                              style: GoogleFonts.poppins(
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.blueAccent.shade100)),
+                        ),
+                      );
+                    },
+                    // 🔹 Layout de Lista (Horizontal)
+                    child: _cardServicoLista(s, selecionado, primary)
+                        .animate()
+                        .fadeIn(duration: 300.ms, delay: (i * 50).ms)
+                        .slideX(begin: 0.05, end: 0),
                   );
-                },
-                // 🔹 Layout de Lista (Horizontal)
-                child: _cardServicoLista(s, selecionado, primary)
-                    .animate()
-                    .fadeIn(duration: 300.ms, delay: (i * 50).ms)
-                    .slideX(begin: 0.05, end: 0),
-              );
-            });
-          },
-        );
+                });
+              },
+            ));
       }),
     );
   }

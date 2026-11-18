@@ -2,14 +2,32 @@ import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
+import '../core/accessibility/preferencias_leitura.dart';
+import '../core/accessibility/tipografia_festa.dart';
+import '../presentation/widgets/festa_leitura.dart';
 
 import 'package:app_faca_festa/presentation/modules/legal/widgets/vigia_aceite_politica.dart';
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import 'routes/app_routes.dart';
 import '../presentation/widgets/desktop_update_overlay.dart';
 
-class FacaFestaApp extends StatelessWidget {
+class FacaFestaApp extends StatefulWidget {
   const FacaFestaApp({super.key});
+
+  @override
+  State<FacaFestaApp> createState() => _FacaFestaAppState();
+}
+
+class _FacaFestaAppState extends State<FacaFestaApp> {
+  late final _leitura = PreferenciasLeitura.persistidas(GetStorage());
+
+  @override
+  void dispose() {
+    _leitura.guardar();
+    _leitura.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,8 +51,13 @@ class FacaFestaApp extends StatelessWidget {
       unknownRoute: AppRoutes.unknownRoute,
       getPages: AppRoutes.pages,
       builder: (context, child) {
-        final page = VigiaAceitePolitica(
-          child: child ?? const EntradaAppPage(),
+        final page = FestaTipografia(
+          preferencias: _leitura,
+          child: FestaLeitura(
+            child: VigiaAceitePolitica(
+              child: child ?? const EntradaAppPage(),
+            ),
+          ),
         );
         try {
           return DesktopUpdateOverlay(child: EasyLoading.init()(context, page));
