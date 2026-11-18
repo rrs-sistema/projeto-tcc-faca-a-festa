@@ -76,6 +76,20 @@ class PublicoPlanejado {
       required this.total,
       required this.idades});
   bool get semDistribuicao => total != null && idades == null;
+  double? get proporcaoConfirmada {
+    final totalLista = cadastrados;
+    final totalConfirmados = confirmados;
+    if (totalLista == null || totalConfirmados == null) return null;
+    return totalLista > 0 ? totalConfirmados / totalLista : 0;
+  }
+
+  int? get pendentes {
+    final totalNaoRecusados = naoRecusados;
+    final totalConfirmados = confirmados;
+    if (totalNaoRecusados == null || totalConfirmados == null) return null;
+    return totalNaoRecusados - totalConfirmados;
+  }
+
   String get resumo =>
       '${previsao.total == null ? 'Previsão não informada' : '${previsao.total} previstos'} · '
       '${cadastrados == null ? 'lista ainda indisponível' : 'lista ${completude.label}: $cadastrados ${cadastrados == 1 ? 'cadastrado' : 'cadastrados'}'} · '

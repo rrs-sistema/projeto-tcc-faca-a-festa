@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
 import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_controller.dart';
+import 'package:app_faca_festa/presentation/modules/fornecedor/pages/abrangencia_fornecedor_page.dart';
 import 'package:app_faca_festa/presentation/modules/legal/pages/central_privacidade_screen.dart';
 import 'package:app_faca_festa/presentation/modules/legal/pages/preferencias_notificacao_screen.dart';
 import 'package:app_faca_festa/domain/entities/fornecedor.dart';
@@ -115,6 +116,15 @@ class HeaderSection extends StatelessWidget {
               children: [
                 _StatusChip(text: status, color: statusColor),
                 _InfoChip(text: categoria, icon: Icons.category_outlined),
+                ActionChip(
+                  avatar: const Icon(Icons.map_outlined, size: 16),
+                  label: const Text('Território de atendimento'),
+                  onPressed: () => Navigator.of(context).push<void>(
+                    MaterialPageRoute(
+                      builder: (_) => const AbrangenciaFornecedorPage(),
+                    ),
+                  ),
+                ),
                 ActionChip(
                   avatar: const Icon(Icons.gavel_outlined, size: 16),
                   label: const Text('Comunicados de operação'),

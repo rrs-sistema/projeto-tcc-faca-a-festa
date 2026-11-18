@@ -17,7 +17,10 @@ const chamar = (funcao, data, uid = 'adm') => funcao.run({ auth: { uid }, data }
   gravar('usuarios/adm', { tipo: 'A' });
   gravar('usuarios/org', { tipo: 'C', nome: 'Organizador sintético' });
   gravar('usuarios/terceiro', { tipo: 'C' });
-  gravar('evento/e', { id_usuario: 'org', nome: 'Festa sintética', status: 'planejamento' });
+  gravar('evento/e', {
+    id_usuario: 'org', nome: 'Festa sintética', status: 'planejamento',
+    data: '2026-11-18T01:00:00Z',
+  });
   gravar('fornecedor/f', { razao_social: 'Fornecedor sintético' });
   for (let i = 0; i < 65; i++) {
     const id = `orc-${String(i).padStart(2, '0')}`;
@@ -28,7 +31,13 @@ const chamar = (funcao, data, uid = 'adm') => funcao.run({ auth: { uid }, data }
       status: contratado ? 'fechado' : 'pendente',
       ...(contratado ? {
         valor_contratado_centavos: 315000, pago: 0,
-        contrato_financeiro: { id_contrato: 'canonico', estado_comercial: 'contratado' },
+        data_cadastro: '2026-09-01',
+        data_fechamento: '2026-10-10T23:00:00Z',
+        estado_execucao: 'aceito',
+        contrato_financeiro: {
+          id_contrato: 'canonico', estado_comercial: 'contratado',
+          estado_execucao: 'em_execucao',
+        },
       } : {}),
     });
   }
@@ -94,6 +103,22 @@ const chamar = (funcao, data, uid = 'adm') => funcao.run({ auth: { uid }, data }
   const filtrada = await chamar(consultarCentralContratacoes, { casoAberto: true, idResponsavel: 'adm' });
   assert.equal(filtrada.paginacao.total_filtrado_amostra, 1);
   assert.equal(filtrada.linhas[0].idCasoAberto, 'novo');
+  const execucao = await chamar(consultarCentralContratacoes, { estadoExecucao: 'nao_iniciado' });
+  assert.equal(execucao.paginacao.total_filtrado_amostra, 64);
+  const aceito = await chamar(consultarCentralContratacoes, { estadoExecucao: 'aceito' });
+  assert.deepEqual(aceito.linhas.map(l => l.idOrcamento), ['orc-55']);
+  const porEvento = await chamar(consultarCentralContratacoes, {
+    eixoTemporal: 'data_evento', periodoInicio: '2026-11-17', periodoFim: '2026-11-17',
+  });
+  assert.equal(porEvento.paginacao.total_filtrado_amostra, 65);
+  const porContratacao = await chamar(consultarCentralContratacoes, {
+    eixoTemporal: 'data_contratacao', periodoInicio: '2026-10-10', periodoFim: '2026-10-10',
+  });
+  assert.deepEqual(porContratacao.linhas.map(l => l.idOrcamento), ['orc-55']);
+  const foraDoPeriodo = await chamar(consultarCentralContratacoes, {
+    eixoTemporal: 'data_evento', periodoInicio: '2026-11-18', periodoFim: '2026-11-18',
+  });
+  assert.equal(foraDoPeriodo.linhas.length, 0);
   const painel = await chamar(consultarDashboardFinanceiroAdmin, { idFornecedor: 'f' });
   assert.equal(painel.paginacao.retornados, 1);
   assert.equal(painel.volumeContratadoCentavos, 315000);

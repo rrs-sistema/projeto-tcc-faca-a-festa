@@ -90,8 +90,9 @@ class AppCicloSessao {
   Future<void> Function()? _pararEscutasOpcionais;
 
   StreamSubscription<SessaoUsuario?>? _sessaoSub;
+  bool _loginEmAndamento = false;
   bool _processandoSessao = false;
-  bool _sessaoPendente = false;
+  Completer<void>? _sessaoPendente;
   bool _liberarSaidaSplash = false;
   DateTime? _splashAte;
 
@@ -126,6 +127,17 @@ class AppCicloSessao {
     });
   }
 
+  Future<void> processarLogin(Future<bool> Function() preparar) async {
+    if (_loginEmAndamento) return;
+    _loginEmAndamento = true;
+    try {
+      if (!await preparar()) return;
+    } finally {
+      _loginEmAndamento = false;
+    }
+    await revalidar();
+  }
+
   void reterNaSplash({Duration minimo = const Duration(milliseconds: 4500)}) {
     _liberarSaidaSplash = false;
     _splashAte = DateTime.now().add(minimo);
@@ -149,25 +161,33 @@ class AppCicloSessao {
       monitorar();
     }
 
-    final idUsuario = _autenticacao.idUsuarioAtual;
-    if (idUsuario == null) {
-      unawaited(processar(null));
-      return;
-    }
-
-    unawaited(processar(SessaoUsuario(
-      idUsuario: idUsuario,
-      email: _autenticacao.emailUsuarioAtual,
-    )));
+    unawaited(revalidar());
   }
 
+  Future<void> revalidar() {
+    final idUsuario = _autenticacao.idUsuarioAtual;
+    return processar(idUsuario == null
+        ? null
+        : SessaoUsuario(
+            idUsuario: idUsuario,
+            email: _autenticacao.emailUsuarioAtual,
+          ));
+  }
+
+  // O Firebase pode emitir a sessão antes de o formulário preparar o perfil.
+  bool _podeProcessar(SessaoUsuario? user) =>
+      !_loginEmAndamento &&
+      _encerrandoSessao?.value != true &&
+      user?.idUsuario == _autenticacao.idUsuarioAtual;
+
   Future<void> processar(SessaoUsuario? user) async {
+    if (!_podeProcessar(user)) return;
     if (_processandoSessao) {
-      _sessaoPendente = true;
+      final pendente = _sessaoPendente ??= Completer<void>();
       debugPrint(
         '$_logTag Validação de sessão já em andamento. Nova tentativa será reprocessada.',
       );
-      return;
+      return pendente.future;
     }
     _processandoSessao = true;
 
@@ -177,6 +197,7 @@ class AppCicloSessao {
         return;
       }
       await Future.delayed(const Duration(milliseconds: 300));
+      if (!_podeProcessar(user)) return;
       if (_deveReterSplash()) {
         debugPrint('$_logTag Splash ainda em tela; adiando navegação.');
         return;
@@ -215,33 +236,11 @@ class AppCicloSessao {
         return;
       }
 
-      final rotaAtual = Get.currentRoute;
-      if (!AppRotasSessao.ehConvite(rotaAtual) &&
-          !AppRotasSessao.ehTotp(rotaAtual) &&
-          !AppRotasSessao.destinoEstavel(rotaAtual) &&
-          !AppRotasSessao.usuarioJaNavegando(
-            rotaAtual,
-            temUsuario: _usuarioLogado?.value != null,
-          ) &&
-          (rotaAtual.isEmpty || rotaAtual != '/splash')) {
-        Future.microtask(() {
-          if (AppRotasSessao.ehTotp(Get.currentRoute)) return;
-          if (AppRotasSessao.ehConvite(Get.currentRoute)) return;
-          if (AppRotasSessao.destinoEstavel(Get.currentRoute)) return;
-          if (AppRotasSessao.usuarioJaNavegando(
-            Get.currentRoute,
-            temUsuario: _usuarioLogado?.value != null,
-          )) {
-            return;
-          }
-          Get.offAllNamed('/splash');
-        });
-      }
-
       _carregando?.value = true;
 
       try {
         final perfil = await carregarPerfilComTentativas(user.idUsuario);
+        if (!_podeProcessar(user)) return;
 
         if (perfil == null) {
           throw Exception('Usuário não encontrado no Firestore.');
@@ -249,7 +248,6 @@ class AppCicloSessao {
 
         final usuarioTotp = perfil.usuario;
         if (usuarioTotp.ativo == false) {
-          _carregando?.value = false;
           Get.snackbar(
             'Conta desativada',
             'Entre em contato com o suporte para reativar o acesso.',
@@ -267,16 +265,23 @@ class AppCicloSessao {
             _contaRevisaoPlay(user.email)) {
           _totp.marcarVerificado();
         } else if (_totp.deveExigir()) {
-          _carregando?.value = false;
-          final metodoEmail = usuarioTotp.mfaMetodo == 'email' ||
-              (usuarioTotp.mfaEmailAtivo && !usuarioTotp.mfaTotpAtivo);
-          final rota = (usuarioTotp.mfaTotpAtivo || usuarioTotp.mfaEmailAtivo)
-              ? '/loginTotp'
-              : '/loginTotpSetup';
-          if (Get.currentRoute != rota) {
+          final totpAtivo = usuarioTotp.mfaTotpAtivo;
+          final emailAtivo = usuarioTotp.mfaEmailAtivo;
+          final temMetodo = totpAtivo || emailAtivo;
+          final rota = temMetodo ? '/loginTotp' : '/loginTotpSetup';
+          final rotaAtual = Get.currentRoute;
+          final configurandoMfa =
+              AppRotasSessao.ehTotp(rotaAtual) && Get.isDialogOpen == true;
+          if (rotaAtual != rota && !configurandoMfa) {
             Get.offAllNamed(
               rota,
-              arguments: TotpMfaArgs(metodo: metodoEmail ? 'email' : 'totp'),
+              arguments: temMetodo
+                  ? TotpMfaArgs(
+                      metodo: totpAtivo ? 'totp' : 'email',
+                      totpAtivo: totpAtivo,
+                      emailAtivo: emailAtivo,
+                    )
+                  : null,
             );
           }
           return;
@@ -320,16 +325,12 @@ class AppCicloSessao {
               destino = const AppDestinoRota('/HomeEventScreen');
             } else {
               _contaIncompleta?.value = true;
-              if (Get.currentRoute == '/welcome') {
-                _carregando?.value = false;
-                return;
-              }
               destino = const AppDestinoRota('/welcome');
             }
             break;
         }
 
-        _carregando?.value = false;
+        if (!_podeProcessar(user)) return;
         final rotaDepois = Get.currentRoute;
         if (AppRotasSessao.destinoEstavel(rotaDepois) ||
             AppRotasSessao.usuarioJaNavegando(
@@ -340,7 +341,7 @@ class AppCicloSessao {
         }
         Get.offAllNamed(destino.nome, arguments: destino.argumentos);
       } catch (e, s) {
-        _carregando?.value = false;
+        if (!_podeProcessar(user)) return;
         debugPrint('❌ Erro ao validar sessão: $e\n$s');
         Get.snackbar(
           'Erro de sessão',
@@ -349,21 +350,19 @@ class AppCicloSessao {
           colorText: Colors.white,
         );
         Get.offAllNamed('/role');
+      } finally {
+        _carregando?.value = false;
       }
     } finally {
       _processandoSessao = false;
-      if (_usuarioLogado?.value != null && Get.isRegistered<ChatNotificationsController>()) {
+      if (_usuarioLogado?.value != null &&
+          Get.isRegistered<ChatNotificationsController>()) {
         Get.find<ChatNotificationsController>().abrirPendente();
       }
-      if (_sessaoPendente) {
-        _sessaoPendente = false;
-        final idUsuario = _autenticacao.idUsuarioAtual;
-        unawaited(processar(idUsuario == null
-            ? null
-            : SessaoUsuario(
-                idUsuario: idUsuario,
-                email: _autenticacao.emailUsuarioAtual,
-              )));
+      final pendente = _sessaoPendente;
+      if (pendente != null) {
+        _sessaoPendente = null;
+        pendente.complete(revalidar());
       }
     }
   }

@@ -1,267 +1,154 @@
-import { defineSecret } from "firebase-functions/params";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
-import { exigirLoginComSenha, exigirUsuarioAutenticado } from "../../shared/auth";
 import { admin } from "../../shared/firebaseAdmin";
 import { registrarAuditTrailSeguro } from "../auditoria/auditTrailService";
+import { cifrarTexto, decifrarTexto, gerarSecretTotp, montarOtpauthUrl, verificarTotp } from "../../shared/totp";
 import {
-  cifrarTexto,
-  decifrarTexto,
-  gerarSecretTotp,
-  montarOtpauthUrl,
-  verificarTotp,
-} from "../../shared/totp";
+  chaveMfa, codigoSeisDigitos, confirmarVerificacaoMfa, DadosMfa,
+  exigirAutorizacaoMfa, exigirCadastroPermitido, exigirMetodoAtivo,
+  lerPerfilMfa, obterSessaoMfa, OPCOES_MFA, referenciaPerfilMfa, temMetodo,
+} from "./mfaSessao";
 
-const REGION = "southamerica-east1";
 const ISSUER = "Faça a Festa";
 const MAX_TENTATIVAS = 5;
-const PASSWORD_RESET_SECRET = defineSecret("PASSWORD_RESET_SECRET");
+const JANELA_TENTATIVAS_MS = 5 * 60 * 1000;
+const VALIDADE_CADASTRO_MS = 10 * 60 * 1000;
 
-type CodigoData = {
-  codigo?: unknown;
-};
-
-export const iniciarTotpMfa = onCall(
-  {
-    region: REGION,
-    timeoutSeconds: 30,
-    memory: "256MiB",
-    cors: true,
-    secrets: [PASSWORD_RESET_SECRET],
-  },
-  async (request) => {
-    const perfil = await exigirUsuarioAutenticado(request.auth?.uid);
-    await exigirLoginComSenha(perfil.uid);
-
-    const chave = exigirChaveMestra();
-    const record = await admin.auth().getUser(perfil.uid);
-    const email = (record.email ?? "").trim().toLowerCase();
-    const referencia = referenciaTotp(perfil.uid);
-    const atual = await referencia.get();
-    const dados = atual.data() ?? {};
-    const secretCifrado =
-      typeof dados.secretCifrado === "string" ? dados.secretCifrado : "";
-    const pendente = dados.pendente === true;
-    const ativo = dados.ativo === true;
-
-    // Reusa o secret pendente para o QR/chave não mudarem a cada abertura
-    // da tela (senão o app autenticador fica com código incompatível).
-    let secret = "";
-    if (pendente && !ativo && secretCifrado) {
-      try {
-        secret = decifrarTexto(secretCifrado, chave);
-      } catch (error) {
-        console.error("[totpMfa] Falha ao reutilizar secret pendente:", error);
-        secret = "";
-      }
+export const iniciarTotpMfa = onCall<DadosMfa>(OPCOES_MFA, async (request) => {
+  const sessao = await obterSessaoMfa(request);
+  const { uid } = sessao;
+  const chave = chaveMfa();
+  const record = await admin.auth().getUser(uid);
+  const email = (record.email ?? "").trim().toLowerCase();
+  const { secret, criado } = await admin.firestore().runTransaction(async (tx) => {
+    const perfil = await lerPerfilMfa(tx, uid);
+    const ativo = temMetodo(perfil, "totp");
+    if (ativo) {
+      exigirAutorizacaoMfa(sessao, request.data?.autorizacao);
+    } else {
+      exigirCadastroPermitido(perfil, "totp", sessao, request.data?.autorizacao);
     }
+    const referencia = ativo ? referenciaSubstituicao(uid) : referenciaTotp(uid);
+    const atual = (await tx.get(referencia)).data();
+    if (cadastroPendente(atual, sessao.autenticadaEm)) {
+      return { secret: decifrarTexto(atual.secretCifrado, chave), criado: false };
+    }
+    const secret = gerarSecretTotp();
+    tx.set(referencia, {
+      uid,
+      secretCifrado: cifrarTexto(secret, chave),
+      pendente: true,
+      ativo: false,
+      tentativas: 0,
+      cadastroAuthTime: sessao.autenticadaEm,
+      cadastroExpiraEm: Timestamp.fromMillis(Date.now() + VALIDADE_CADASTRO_MS),
+      atualizadoEm: FieldValue.serverTimestamp(),
+    });
+    return { secret, criado: true };
+  });
 
-    if (!secret) {
-      secret = gerarSecretTotp();
-      await referencia.set(
-        {
-          uid: perfil.uid,
-          secretCifrado: cifrarTexto(secret, chave),
-          pendente: true,
-          ativo: false,
-          tentativas: 0,
-          atualizadoEm: FieldValue.serverTimestamp(),
-        },
-        { merge: true },
-      );
+  if (criado) await auditarTotp(uid, "MFA_TOTP_INICIADO", "configuracao_iniciada");
+  return { ok: true, secret, otpauthUrl: montarOtpauthUrl({ secret, email, issuer: ISSUER }), issuer: ISSUER };
+});
 
-      await registrarAuditTrailSeguro({
-        acao: "MFA_TOTP_INICIADO",
-        operacao: "created",
-        entidadeTipo: "acesso",
-        entidadeId: perfil.uid,
-        entidadeNome: email,
-        actorUid: perfil.uid,
-        actorAuthType: request.auth?.uid ? "unknown" : "unauthenticated",
-        documentPath: `mfa_totp/${perfil.uid}`,
-        after: {
-          fluxo: "mfa_totp",
-          status: "configuracao_iniciada",
-        },
+export const confirmarTotpMfa = onCall<DadosMfa>(OPCOES_MFA, (request) =>
+  conferirTotp(request, true),
+);
+
+export const verificarTotpMfa = onCall<DadosMfa>(OPCOES_MFA, (request) =>
+  conferirTotp(request, false),
+);
+
+async function conferirTotp(
+  request: Parameters<typeof obterSessaoMfa>[0],
+  cadastro: boolean,
+) {
+  const sessao = await obterSessaoMfa(request);
+  const { uid } = sessao;
+  const codigo = codigoSeisDigitos(request.data?.codigo);
+  const perfilRef = referenciaPerfilMfa(uid);
+  const referencia = referenciaTotp(uid);
+  const valido = await admin.firestore().runTransaction(async (tx) => {
+    const perfil = await lerPerfilMfa(tx, uid);
+    const substituindo = cadastro && temMetodo(perfil, "totp");
+    if (substituindo) {
+      exigirAutorizacaoMfa(sessao, request.data?.autorizacao);
+    } else if (cadastro) {
+      exigirCadastroPermitido(perfil, "totp", sessao, request.data?.autorizacao);
+    } else {
+      exigirMetodoAtivo(perfil, "totp");
+    }
+    const origem = substituindo ? referenciaSubstituicao(uid) : referencia;
+    const dados = (await tx.get(origem)).data();
+    if (!dados?.secretCifrado ||
+        (cadastro ? !cadastroPendente(dados, sessao.autenticadaEm) : !dados.ativo)) {
+      throw new HttpsError("failed-precondition", "Configure o autenticador.");
+    }
+    const agora = Date.now();
+    const limite = dados.tentativasAte as Timestamp | undefined;
+    const tentativas = limite && limite.toMillis() > agora ? Number(dados.tentativas ?? 0) : 0;
+    if (tentativas >= MAX_TENTATIVAS) {
+      throw new HttpsError("resource-exhausted", "Muitas tentativas. Aguarde cinco minutos.");
+    }
+    if (!verificarTotp(decifrarTexto(dados.secretCifrado, chaveMfa()), codigo)) {
+      tx.update(origem, {
+        tentativas: tentativas + 1,
+        tentativasAte: tentativas > 0 ? limite : Timestamp.fromMillis(agora + JANELA_TENTATIVAS_MS),
+      });
+      return false;
+    }
+    const agoraServidor = FieldValue.serverTimestamp();
+    if (cadastro) {
+      tx.set(referencia, {
+        uid, secretCifrado: dados.secretCifrado, tentativas: 0, pendente: false,
+        ativo: true, confirmadoEm: agoraServidor, atualizadoEm: agoraServidor,
+      });
+      if (substituindo) tx.delete(origem);
+      tx.update(perfilRef, { mfa_totp_ativo: true, mfa_metodo: "totp" });
+    } else {
+      tx.update(referencia, {
+        tentativas: 0, tentativasAte: FieldValue.delete(), verificadoEm: agoraServidor,
       });
     }
-
-    return {
-      ok: true,
-      secret,
-      otpauthUrl: montarOtpauthUrl({ secret, email, issuer: ISSUER }),
-      issuer: ISSUER,
-    };
-  },
-);
-
-export const confirmarTotpMfa = onCall(
-  {
-    region: REGION,
-    timeoutSeconds: 30,
-    memory: "256MiB",
-    cors: true,
-    secrets: [PASSWORD_RESET_SECRET],
-  },
-  async (request) => {
-    const perfil = await exigirUsuarioAutenticado(request.auth?.uid);
-    await exigirLoginComSenha(perfil.uid);
-    const codigo = normalizarCodigo((request.data as CodigoData).codigo);
-
-    await validarCodigoTotp(perfil.uid, codigo, { exigirPendente: true });
-
-    await referenciaTotp(perfil.uid).set(
-      {
-        pendente: false,
-        ativo: true,
-        tentativas: 0,
-        confirmadoEm: FieldValue.serverTimestamp(),
-        atualizadoEm: FieldValue.serverTimestamp(),
-      },
-      { merge: true },
-    );
-
-    await admin.firestore().collection("usuarios").doc(perfil.uid).set(
-      {
-        mfa_totp_ativo: true,
-        mfa_email_ativo: false,
-        mfa_metodo: "totp",
-      },
-      { merge: true },
-    );
-
-    await registrarAuditTrailSeguro({
-      acao: "MFA_TOTP_CONFIRMADO",
-      operacao: "updated",
-      entidadeTipo: "acesso",
-      entidadeId: perfil.uid,
-      actorUid: perfil.uid,
-      actorAuthType: request.auth?.uid ? "unknown" : "unauthenticated",
-      documentPath: `usuarios/${perfil.uid}`,
-      before: { mfa_metodo: "nenhum" },
-      after: { mfa_metodo: "totp", mfa_totp_ativo: true },
-    });
-
-    return { ok: true };
-  },
-);
-
-export const verificarTotpMfa = onCall(
-  {
-    region: REGION,
-    timeoutSeconds: 30,
-    memory: "256MiB",
-    cors: true,
-    secrets: [PASSWORD_RESET_SECRET],
-  },
-  async (request) => {
-    const perfil = await exigirUsuarioAutenticado(request.auth?.uid);
-    await exigirLoginComSenha(perfil.uid);
-    const codigo = normalizarCodigo((request.data as CodigoData).codigo);
-
-    await validarCodigoTotp(perfil.uid, codigo, { exigirPendente: false });
-
-    await referenciaTotp(perfil.uid).update({
-      tentativas: 0,
-      verificadoEm: FieldValue.serverTimestamp(),
-    });
-
-    await registrarAuditTrailSeguro({
-      acao: "MFA_TOTP_VERIFICADO",
-      operacao: "updated",
-      entidadeTipo: "acesso",
-      entidadeId: perfil.uid,
-      actorUid: perfil.uid,
-      actorAuthType: request.auth?.uid ? "unknown" : "unauthenticated",
-      documentPath: `mfa_totp/${perfil.uid}`,
-      before: { fluxo: "mfa_totp", status: "pendente" },
-      after: { fluxo: "mfa_totp", status: "verificado" },
-    });
-
-    return { ok: true };
-  },
-);
+    return true;
+  });
+  if (!valido) throw new HttpsError("permission-denied", "Código incorreto.");
+  await auditarTotp(uid, cadastro ? "MFA_TOTP_CONFIRMADO" : "MFA_TOTP_VERIFICADO",
+    cadastro ? "configurado" : "verificado");
+  return confirmarVerificacaoMfa(sessao);
+}
 
 function referenciaTotp(uid: string) {
   return admin.firestore().collection("mfa_totp").doc(uid);
 }
 
-async function validarCodigoTotp(
-  uid: string,
-  codigo: string,
-  opcoes: { exigirPendente: boolean },
-): Promise<void> {
-  if (codigo.length !== 6) {
-    throw new HttpsError("invalid-argument", "Informe o código de 6 dígitos.");
+function cadastroPendente(
+  dados: FirebaseFirestore.DocumentData | undefined,
+  autenticadaEm: number,
+): dados is FirebaseFirestore.DocumentData {
+  if (dados?.pendente !== true || typeof dados.secretCifrado !== "string") return false;
+  const expiraEm = dados.cadastroExpiraEm as Timestamp | undefined;
+  if (expiraEm) {
+    return dados.cadastroAuthTime === autenticadaEm && expiraEm.toMillis() > Date.now();
   }
-
-  const referencia = referenciaTotp(uid);
-  const snapshot = await referencia.get();
-  if (!snapshot.exists) {
-    throw new HttpsError("failed-precondition", "Configure o autenticador.");
-  }
-
-  const dados = snapshot.data() ?? {};
-  const ativo = dados.ativo === true;
-  const pendente = dados.pendente === true;
-  const tentativas = Number(dados.tentativas ?? 0);
-  const secretCifrado = typeof dados.secretCifrado === "string"
-    ? dados.secretCifrado
-    : "";
-
-  if (opcoes.exigirPendente && !pendente) {
-    throw new HttpsError(
-      "failed-precondition",
-      "Gere um novo QR Code para continuar.",
-    );
-  }
-
-  if (!opcoes.exigirPendente && !ativo) {
-    throw new HttpsError(
-      "failed-precondition",
-      "O autenticador ainda não foi confirmado.",
-    );
-  }
-
-  if (tentativas >= MAX_TENTATIVAS) {
-    throw new HttpsError(
-      "resource-exhausted",
-      "Muitas tentativas. Aguarde e tente novamente.",
-    );
-  }
-
-  if (!secretCifrado) {
-    throw new HttpsError("failed-precondition", "Configure o autenticador.");
-  }
-
-  let secret = "";
-  try {
-    secret = decifrarTexto(secretCifrado, exigirChaveMestra());
-  } catch (error) {
-    console.error("[totpMfa] Falha ao decifrar segredo:", error);
-    throw new HttpsError("internal", "Não foi possível validar o código.");
-  }
-
-  if (!verificarTotp(secret, codigo)) {
-    await referencia.update({
-      tentativas: FieldValue.increment(1),
-      atualizadoEm: Timestamp.now(),
-    });
-    throw new HttpsError("permission-denied", "Código incorreto.");
-  }
+  // Cadastros iniciais que já estavam em andamento antes da atualização.
+  const atualizadoEm = dados.atualizadoEm as Timestamp | undefined;
+  return atualizadoEm != null && atualizadoEm.toMillis() + VALIDADE_CADASTRO_MS > Date.now();
 }
 
-function exigirChaveMestra(): string {
-  const chave = PASSWORD_RESET_SECRET.value().trim();
-  if (!chave) {
-    throw new HttpsError(
-      "failed-precondition",
-      "Autenticador ainda não configurado no servidor.",
-    );
-  }
-  return chave;
+function referenciaSubstituicao(uid: string) {
+  return referenciaTotp(uid).collection("cadastros").doc("pendente");
 }
 
-function normalizarCodigo(value: unknown): string {
-  return typeof value === "string" ? value.replace(/\D/g, "") : "";
+function auditarTotp(uid: string, acao: string, status: string) {
+  return registrarAuditTrailSeguro({
+    acao,
+    operacao: acao === "MFA_TOTP_INICIADO" ? "created" : "updated",
+    entidadeTipo: "acesso",
+    entidadeId: uid,
+    actorUid: uid,
+    actorAuthType: "unknown",
+    documentPath: "mfa_totp/" + uid,
+    after: { fluxo: "mfa_totp", status },
+  });
 }

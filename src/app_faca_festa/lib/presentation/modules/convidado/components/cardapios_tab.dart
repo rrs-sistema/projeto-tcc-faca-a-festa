@@ -87,7 +87,7 @@ class _CardapioEmptyState extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Container(
-          width: double.infinity,
+          width: 520,
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
               color: Colors.white,
@@ -231,7 +231,8 @@ class _CardapioQuickStats extends StatelessWidget {
     ];
 
     return LayoutBuilder(builder: (context, constraints) {
-      final itemWidth = (constraints.maxWidth - 8) / 2;
+      final columns = constraints.maxWidth >= 760 ? 4 : 2;
+      final itemWidth = (constraints.maxWidth - 8 * (columns - 1)) / columns;
       return Wrap(
           spacing: 8,
           runSpacing: 8,

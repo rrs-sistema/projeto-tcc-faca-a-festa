@@ -2,6 +2,9 @@ import { onCall } from "firebase-functions/v2/https";
 import { admin } from "../../shared/firebaseAdmin";
 import { exigirUsuarioAutenticado, exigirTipo } from "../../shared/auth";
 import { carregarMapaDocs } from "../../shared/carregarMapaDocs";
+import { mapearEmLotes } from "../../shared/mapearEmLotes";
+import { COL_REPASSES } from "../../services/financeiro/intermediacaoPersistenciaService";
+import { divisaoContrato } from "../../services/financeiro/liberacaoRepasseService";
 import {
   agregarDashboardAdmin,
   centavosDeOrcamento,
@@ -16,6 +19,38 @@ import {
 
 const REGION = "southamerica-east1";
 const LIMITE_ORCAMENTOS = 500;
+
+type ValoresContratacao = {
+  liquido_fornecedor_centavos: number | null;
+  comissao_centavos: number | null;
+  comissao_absorvida: boolean;
+  comissao_recebida_centavos: number | null;
+  vencimento_comissao: string | null;
+  repasse_confirmado_centavos: number;
+  ultimo_repasse_confirmado_em: string | null;
+};
+
+async function lerPorContrato(
+  colecao: FirebaseFirestore.CollectionReference,
+  ids: string[],
+  campos: string[],
+) {
+  const lotes: string[][] = [];
+  for (let i = 0; i < ids.length; i += 30) lotes.push(ids.slice(i, i + 30));
+  const consultas = await mapearEmLotes(lotes, (lote) =>
+    colecao.where("id_contrato", "in", lote).select("id_contrato", ...campos).get(),
+  );
+  const porContrato = new Map<string, FirebaseFirestore.DocumentData[]>();
+  for (const consulta of consultas) {
+    for (const doc of consulta.docs) {
+      const dados = doc.data();
+      const lista = porContrato.get(dados.id_contrato) ?? [];
+      lista.push(dados);
+      porContrato.set(dados.id_contrato, lista);
+    }
+  }
+  return porContrato;
+}
 
 function texto(v: unknown): string {
   return typeof v === "string" ? v.trim() : "";
@@ -146,7 +181,10 @@ export const consultarDashboardFinanceiroAdmin = onCall(
     }
 
     const fatos: FatoComercial[] = [];
-    const linhasContratacao: LinhaContratacaoAdmin[] = [];
+    const linhasContratacao: Array<LinhaContratacaoAdmin & {
+      valores_contratacao?: ValoresContratacao;
+    }> = [];
+    const orcamentosContratados = new Map<string, Record<string, unknown>>();
 
     for (const it of itens) {
       const d = it.data;
@@ -195,6 +233,7 @@ export const consultarDashboardFinanceiroAdmin = onCall(
       }
 
       linhasContratacao.push(linha);
+      if (linha.contratado) orcamentosContratados.set(it.id, d);
 
       fatos.push({
         idEvento,
@@ -213,6 +252,53 @@ export const consultarDashboardFinanceiroAdmin = onCall(
         statusEvento: texto(d.status_evento) || texto(d.status) || null,
         consultaPagamentoCompleta: it.vals.pagoCompleto || !it.contratado,
       });
+    }
+
+    const idsContratos = [...new Set(linhasContratacao
+      .filter((linha) => linha.contratado)
+      .map((linha) => linha.id_contrato))];
+    const [obrigacoesPorContrato, repassesPorContrato] = await Promise.all([
+      lerPorContrato(db.collection("plataforma_comissao_obrigacoes"), idsContratos, [
+        "id_evento", "id_fornecedor", "base_elegivel", "status", "politica_aplicada",
+        "valor_original", "valor_ajustes_centavos", "valor_liquidado",
+        "liquidado_por_retencao_repasse_centavos", "vencimento_em",
+      ]),
+      lerPorContrato(db.collection(COL_REPASSES), idsContratos, [
+        "id_evento", "id_fornecedor", "estado", "valor_centavos", "confirmado_em",
+      ]),
+    ]);
+    for (const linha of linhasContratacao) {
+      const orcamento = orcamentosContratados.get(linha.id_orcamento);
+      if (!orcamento) continue;
+      const obrigacoes = obrigacoesPorContrato.get(linha.id_contrato) ?? [];
+      const divisao = divisaoContrato(orcamento, obrigacoes);
+      const obrigacao = divisao ? obrigacoes[0] : null;
+      const absorvida = divisao?.pagadorComissao === "plataforma_absorve";
+      const recebido = obrigacao?.valor_liquidado?.centavos ?? 0;
+      const saldoComissao = (divisao?.comissaoCentavos ?? 0) - recebido;
+      let repasseConfirmado = 0;
+      let ultimoRepasse: string | null = null;
+      for (const repasse of repassesPorContrato.get(linha.id_contrato) ?? []) {
+        if (repasse.estado !== "confirmado" || repasse.id_evento !== linha.id_evento ||
+            repasse.id_fornecedor !== linha.id_fornecedor ||
+            !Number.isSafeInteger(repasse.valor_centavos) || repasse.valor_centavos < 0) continue;
+        repasseConfirmado += repasse.valor_centavos;
+        const confirmadoEm = parseData(repasse.confirmado_em);
+        if (confirmadoEm && (!ultimoRepasse || confirmadoEm > ultimoRepasse)) {
+          ultimoRepasse = confirmadoEm;
+        }
+      }
+      linha.valores_contratacao = {
+        liquido_fornecedor_centavos: divisao?.direitoFornecedorCentavos ?? null,
+        comissao_centavos: divisao?.comissaoCentavos ?? null,
+        comissao_absorvida: absorvida,
+        comissao_recebida_centavos: divisao ? recebido : null,
+        vencimento_comissao: !absorvida && saldoComissao > 0
+          ? parseData(obrigacao?.vencimento_em)
+          : null,
+        repasse_confirmado_centavos: repasseConfirmado,
+        ultimo_repasse_confirmado_em: ultimoRepasse,
+      };
     }
 
     // Concilia pagamentos parciais (amostra limitada).

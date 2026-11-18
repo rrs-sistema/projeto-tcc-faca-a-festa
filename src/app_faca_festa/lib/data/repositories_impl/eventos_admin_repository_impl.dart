@@ -28,4 +28,52 @@ class EventosAdminRepositoryImpl implements EventosAdminRepository {
       return remote.excluirEvento(id);
     });
   }
+
+  @override
+  Future<List<FornecedorSugestaoAdmin>> sugerirFornecedores({
+    required String idEvento,
+    int limite = 5,
+  }) {
+    return UpdateOperations.run(() async {
+      return remote.sugerirFornecedores(idEvento: idEvento, limite: limite);
+    });
+  }
+
+  @override
+  Future<FollowUpComercial> marcarFollowUp({
+    required String idEvento,
+    String nota = '',
+    DateTime? proximoContato,
+  }) {
+    return UpdateOperations.run(() async {
+      return remote.marcarFollowUp(
+        idEvento: idEvento,
+        nota: nota,
+        proximoContato: proximoContato,
+      );
+    });
+  }
+
+  @override
+  Future<void> limparFollowUp(String idEvento) {
+    return UpdateOperations.run(() async {
+      return remote.limparFollowUp(idEvento);
+    });
+  }
+
+  @override
+  Future<({NudgeCotacao nudge, List<FornecedorSugestaoAdmin> recomendacoes})>
+      enviarNudgeOrganizador({
+    required String idEvento,
+    String? mensagem,
+    bool gerarRecomendacoes = true,
+  }) {
+    return UpdateOperations.run(() async {
+      return remote.enviarNudgeOrganizador(
+        idEvento: idEvento,
+        mensagem: mensagem,
+        gerarRecomendacoes: gerarRecomendacoes,
+      );
+    });
+  }
 }

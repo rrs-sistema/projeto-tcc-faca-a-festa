@@ -22,6 +22,10 @@ export {
     confirmarEmailMfa,
     verificarEmailMfa,
 } from "./functions/auth/emailMfa";
+export {
+    gerarCodigosRecuperacaoMfa,
+    verificarCodigoRecuperacaoMfa,
+} from "./functions/auth/recuperacaoMfa";
 export { abrirConvitePorToken } from "./functions/convite/abrirConvitePorToken";
 export { enviarConvitesPorEmail } from "./functions/convite/enviarConvitesPorEmail";
 export {
@@ -162,3 +166,10 @@ export { consultarPlanejamentoFornecedorFn, comandarPlanejamentoFornecedorFn } f
 export { consultarPainelFornecedorFn } from "./services/fornecedores/painelOperacionalService";
 export { consultarFilaFornecedorAdminFn, consultarFornecedorAdminFn, consultarTriagemFornecedoresAdminFn } from "./services/fornecedores/consultaFornecedorAdminService";
 export { registrarMedidaFornecedorFn, consultarComunicadoFornecedorFn, registrarRecursoFornecedorFn } from "./services/fornecedores/decisoesFornecedorService";
+export {
+  consultarAbrangenciaFornecedor,
+  consultarTabelasAbrangenciaAdmin,
+  publicarTabelaAbrangenciaAdmin,
+} from "./functions/fornecedores/abrangencia";
+export { consultarDemandaLatenteFornecedor } from "./functions/fornecedores/consultarDemandaLatenteFornecedor";
+export { gerenciarOportunidadeEventoAdmin } from "./functions/admin/gerenciarOportunidadeEventoAdmin";

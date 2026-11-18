@@ -219,6 +219,9 @@ class AppController extends GetxController {
 
   void iniciarSessao() => _cicloSessao.iniciar();
 
+  Future<void> processarLogin(Future<bool> Function() preparar) =>
+      _cicloSessao.processarLogin(preparar);
+
   void reterNaSplash({Duration minimo = const Duration(milliseconds: 4500)}) =>
       _cicloSessao.reterNaSplash(minimo: minimo);
 
@@ -265,7 +268,15 @@ class AppController extends GetxController {
 
   void marcarLoginComGoogle() => totp.marcarLoginComGoogle();
 
-  void marcarTotpVerificado() => totp.marcarVerificado();
+  Future<void> concluirMfa(String? idUsuario) async {
+    if (idUsuario == null ||
+        idUsuario != autenticacaoRepository.idUsuarioAtual ||
+        encerrandoSessao.value) {
+      return;
+    }
+    totp.marcarVerificado();
+    await _cicloSessao.revalidar();
+  }
 
   void _sincronizarUsuarioController(Usuario usuario) {
     final controller = _resolverUsuarioController();

@@ -2,6 +2,7 @@ import 'package:app_faca_festa/presentation/modules/financeiro/widgets/financeir
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 
 import 'package:app_faca_festa/core/utils/numeric_input.dart';
 import 'package:app_faca_festa/domain/entities/financeiro/mediacao_operacional.dart';
@@ -120,9 +121,31 @@ class _CentralMediacaoPageState extends State<CentralMediacaoPage> {
 
   void _aplicarFiltros() {
     if (c.carregando.value) return;
+    FocusScope.of(context).unfocus();
     c.busca.value = _buscaCtrl.text.trim();
     c.offset.value = 0;
     c.carregarLista();
+  }
+
+  Future<void> _selecionarPeriodo() async {
+    final inicio = DateTime.tryParse(c.periodoInicio.value);
+    final fim = DateTime.tryParse(c.periodoFim.value);
+    final periodo = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(1900),
+      lastDate: DateTime(2100, 12, 31),
+      initialDateRange: inicio != null && fim != null
+          ? DateTimeRange(start: inicio, end: fim)
+          : null,
+      helpText: c.eixoTemporal.value == 'data_evento'
+          ? 'Período pela data do evento'
+          : 'Período pela data da contratação',
+    );
+    if (!mounted || periodo == null || c.carregando.value) return;
+    final formato = DateFormat('yyyy-MM-dd');
+    c.periodoInicio.value = formato.format(periodo.start);
+    c.periodoFim.value = formato.format(periodo.end);
+    _aplicarFiltros();
   }
 
   @override
@@ -179,14 +202,13 @@ class _CentralMediacaoPageState extends State<CentralMediacaoPage> {
                         titulo: 'Contratações e oportunidades',
                         icon: Icons.handshake_outlined,
                       )
-                    else if (linhas.isEmpty)
+                    else if (err.isEmpty && linhas.isEmpty)
                       AdminEmptyState(
                         icon: Icons.handshake_outlined,
                         title: 'Nenhuma contratação no recorte',
-                        message:
-                            'Ajuste busca e filtros, depois toque em Aplicar.',
+                        message: 'Altere os filtros ou faça uma nova busca.',
                       )
-                    else ...[
+                    else if (linhas.isNotEmpty) ...[
                       _resumoLista(linhas),
                       const SizedBox(height: 12),
                       ...linhas.map(_linhaCard),
@@ -298,6 +320,12 @@ class _CentralMediacaoPageState extends State<CentralMediacaoPage> {
   }
 
   Widget _filtros({required bool busy}) {
+    final inicio = DateTime.tryParse(c.periodoInicio.value);
+    final fim = DateTime.tryParse(c.periodoFim.value);
+    final formato = DateFormat('dd/MM/yyyy');
+    final periodo = inicio == null || fim == null
+        ? 'Selecionar período'
+        : '${formato.format(inicio)} a ${formato.format(fim)}';
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: adminCardDecoration(),
@@ -306,6 +334,7 @@ class _CentralMediacaoPageState extends State<CentralMediacaoPage> {
         children: [
           TextField(
             controller: _buscaCtrl,
+            enabled: !busy,
             textInputAction: TextInputAction.search,
             onSubmitted: (_) => _aplicarFiltros(),
             decoration: InputDecoration(
@@ -326,10 +355,12 @@ class _CentralMediacaoPageState extends State<CentralMediacaoPage> {
               FilterChip(
                 label: const Text('Caso aberto'),
                 selected: c.casoAberto.value == true,
-                onSelected: (v) {
-                  c.casoAberto.value = v ? true : null;
-                  c.offset.value = 0;
-                },
+                onSelected: busy
+                    ? null
+                    : (v) {
+                        c.casoAberto.value = v ? true : null;
+                        _aplicarFiltros();
+                      },
               ),
               ChoiceChip(
                 label: Text(
@@ -338,19 +369,47 @@ class _CentralMediacaoPageState extends State<CentralMediacaoPage> {
                       : 'Data do evento',
                 ),
                 selected: true,
-                onSelected: (_) {
-                  c.eixoTemporal.value = c.eixoTemporal.value == 'data_evento'
-                      ? 'data_contratacao'
-                      : 'data_evento';
-                },
+                tooltip: 'Alternar a data usada no filtro de período',
+                onSelected: busy
+                    ? null
+                    : (_) {
+                        c.eixoTemporal.value =
+                            c.eixoTemporal.value == 'data_evento'
+                                ? 'data_contratacao'
+                                : 'data_evento';
+                        _aplicarFiltros();
+                      },
               ),
+              OutlinedButton.icon(
+                onPressed: busy ? null : _selecionarPeriodo,
+                icon: const Icon(Icons.date_range_outlined, size: 18),
+                label: Text(periodo),
+              ),
+              if (inicio != null || fim != null)
+                IconButton(
+                  tooltip: 'Limpar período',
+                  onPressed: busy
+                      ? null
+                      : () {
+                          c.periodoInicio.value = '';
+                          c.periodoFim.value = '';
+                          _aplicarFiltros();
+                        },
+                  icon: const Icon(Icons.close),
+                ),
               TextButton(
                 onPressed: () => setState(() => _maisFiltros = !_maisFiltros),
                 child: Text(_maisFiltros ? 'Menos filtros' : 'Mais filtros'),
               ),
-              FilledButton(
+              FilledButton.icon(
                 onPressed: busy ? null : _aplicarFiltros,
-                child: const Text('Aplicar'),
+                icon: busy
+                    ? const SizedBox.square(
+                        dimension: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.search, size: 18),
+                label: Text(busy ? 'Atualizando…' : 'Aplicar'),
               ),
             ],
           ),
@@ -370,41 +429,47 @@ class _CentralMediacaoPageState extends State<CentralMediacaoPage> {
                       width: campoW,
                       child: DropdownButtonFormField<String>(
                         isExpanded: true,
-                        value: c.estadoComercial.value.isEmpty
-                            ? null
-                            : c.estadoComercial.value,
+                        key: ValueKey(('comercial', c.estadoComercial.value)),
+                        value: c.estadoComercial.value,
                         decoration: const InputDecoration(
                           labelText: 'Estado comercial',
                           border: OutlineInputBorder(),
                           isDense: true,
                         ),
                         items: const [
+                          DropdownMenuItem(value: '', child: Text('Todos')),
                           DropdownMenuItem(
                               value: 'contratado', child: Text('Contratado')),
                           DropdownMenuItem(
                               value: 'oportunidade',
                               child: Text('Oportunidade')),
                         ],
-                        onChanged: (v) => c.estadoComercial.value = v ?? '',
+                        onChanged: busy
+                            ? null
+                            : (v) {
+                                c.estadoComercial.value = v ?? '';
+                                _aplicarFiltros();
+                              },
                       ),
                     ),
                     SizedBox(
                       width: campoW,
                       child: DropdownButtonFormField<String>(
                         isExpanded: true,
-                        value: c.estadoExecucao.value.isEmpty
-                            ? null
-                            : c.estadoExecucao.value,
+                        value: c.estadoExecucao.value,
                         decoration: const InputDecoration(
                           labelText: 'Execução',
                           border: OutlineInputBorder(),
                           isDense: true,
                         ),
                         items: const [
+                          DropdownMenuItem(value: '', child: Text('Todas')),
                           DropdownMenuItem(
                               value: 'nao_iniciado',
                               child: Text('Não iniciado',
                                   overflow: TextOverflow.ellipsis)),
+                          DropdownMenuItem(
+                              value: 'agendado', child: Text('Agendado')),
                           DropdownMenuItem(
                               value: 'em_execucao',
                               child: Text('Em execução',
@@ -417,8 +482,16 @@ class _CentralMediacaoPageState extends State<CentralMediacaoPage> {
                               value: 'aceito', child: Text('Aceito')),
                           DropdownMenuItem(
                               value: 'contestado', child: Text('Contestado')),
+                          DropdownMenuItem(
+                              value: 'cancelado_execucao',
+                              child: Text('Cancelado')),
                         ],
-                        onChanged: (v) => c.estadoExecucao.value = v ?? '',
+                        onChanged: busy
+                            ? null
+                            : (v) {
+                                c.estadoExecucao.value = v ?? '';
+                                _aplicarFiltros();
+                              },
                       ),
                     ),
                   ],

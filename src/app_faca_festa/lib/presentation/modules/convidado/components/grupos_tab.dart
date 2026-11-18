@@ -310,7 +310,8 @@ class _ResumoGrupos extends StatelessWidget {
       ),
     ];
     return LayoutBuilder(builder: (context, constraints) {
-      final width = (constraints.maxWidth - 24) / 4;
+      final columns = constraints.maxWidth >= 600 ? 4 : 2;
+      final width = (constraints.maxWidth - 8 * (columns - 1)) / columns;
       return Wrap(
         spacing: 8,
         runSpacing: 8,

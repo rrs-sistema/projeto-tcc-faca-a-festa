@@ -11,6 +11,7 @@ import 'package:app_faca_festa/presentation/modules/catalogo/controllers/categor
 import 'package:app_faca_festa/presentation/modules/catalogo/controllers/servico_produto_controller.dart';
 import 'package:app_faca_festa/presentation/modules/catalogo/controllers/subcategoria_servico_controller.dart';
 import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_controller.dart';
+import 'package:app_faca_festa/presentation/modules/fornecedor/pages/condicoes_abrangencia_page.dart';
 import 'package:app_faca_festa/core/utils/form_validators.dart';
 import 'package:app_faca_festa/presentation/modules/auth/controllers/register_controller.dart';
 import 'package:app_faca_festa/presentation/modules/auth/widgets/auth_festa_brand.dart';
@@ -449,6 +450,16 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
         ),
         const SizedBox(height: 20),
         _tiposEventoSection(primary),
+        const SizedBox(height: 16),
+        const Text(
+          'A cobertura inicial prevista é de até 20 km a partir do endereço '
+          'de atendimento. O Premium permitirá ampliar esse limite em '
+          'faixas de 5 km, com mensalidade própria.',
+        ),
+        TextButton(
+          onPressed: () => CondicoesAbrangenciaPage.abrir(context),
+          child: const Text('Ver condições de abrangência'),
+        ),
       ];
 
   Widget _uploadBanner(Color color) => GestureDetector(

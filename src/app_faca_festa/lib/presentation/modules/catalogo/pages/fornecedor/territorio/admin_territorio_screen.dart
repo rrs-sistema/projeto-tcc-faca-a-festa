@@ -1,13 +1,14 @@
-import 'package:app_faca_festa/core/utils/numeric_input.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import 'package:app_faca_festa/core/utils/biblioteca.dart';
 import 'package:app_faca_festa/domain/entities/territorio.dart';
 import 'package:app_faca_festa/presentation/modules/admin/controllers/admin_territorio_controller.dart';
+import 'package:app_faca_festa/presentation/modules/admin/pages/tabelas_abrangencia_admin_page.dart';
+import 'package:app_faca_festa/presentation/modules/catalogo/pages/fornecedor/components/territorio_mapa_zoom.dart';
+import 'package:app_faca_festa/presentation/modules/catalogo/pages/fornecedor/territorio/admin_territorio_form.dart';
 import 'package:app_faca_festa/presentation/modules/tema/admin_theme.dart';
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_controller.dart';
@@ -41,76 +42,6 @@ class AdminTerritorioScreen extends StatelessWidget {
         : 'Fornecedor não encontrado';
   }
 
-  /// Itens únicos por `idFornecedor`. Se o território apontar para um ID
-  /// que não está na lista (fornecedor removido/não carregado), inclui um
-  /// item sentinela para o [DropdownButtonFormField] não quebrar.
-  List<DropdownMenuItem<String>> _itensDropdownFornecedor(String idAtual) {
-    final vistos = <String>{};
-    final itens = <DropdownMenuItem<String>>[];
-
-    for (final f in fornecedorController.fornecedores) {
-      final id = f.idFornecedor.trim();
-      if (id.isEmpty || !vistos.add(id)) continue;
-      itens.add(
-        DropdownMenuItem(
-          value: id,
-          child: Text(
-            f.razaoSocial.trim().isEmpty ? id : f.razaoSocial,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-      );
-    }
-
-    if (idAtual.isNotEmpty && vistos.add(idAtual)) {
-      itens.add(
-        DropdownMenuItem(
-          value: idAtual,
-          child: Text(
-            'Fornecedor não encontrado ($idAtual)',
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-      );
-    }
-
-    return itens;
-  }
-
-  InputDecoration _fieldDecoration({String? hint, Color? accent}) {
-    final borderColor = (accent ?? AdminPalette.primary).withValues(alpha: 0.28);
-    return InputDecoration(
-      filled: true,
-      fillColor: AdminPalette.surface,
-      hintText: hint,
-      hintStyle: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade400),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: borderColor),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AdminPalette.border),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: accent ?? AdminPalette.primary, width: 1.4),
-      ),
-    );
-  }
-
-  Widget _labelCampo(String texto) {
-    return Text(
-      texto,
-      style: GoogleFonts.poppins(
-        fontWeight: FontWeight.w600,
-        fontSize: 13,
-        color: AdminPalette.muted,
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Theme(
@@ -121,6 +52,19 @@ class AdminTerritorioScreen extends StatelessWidget {
           title: 'Gerenciar Territórios',
           subtitle: 'Cobertura dos fornecedores',
           actions: [
+            IconButton(
+              icon:
+                  const Icon(Icons.price_change_outlined, color: Colors.white),
+              tooltip: 'Faixas de abrangência',
+              onPressed: () => Navigator.of(context).push<void>(
+                MaterialPageRoute(
+                  builder: (_) => Theme(
+                    data: themeController.adminThemeData,
+                    child: const TabelasAbrangenciaAdminPage(),
+                  ),
+                ),
+              ),
+            ),
             IconButton(
               icon: const Icon(Icons.refresh_rounded, color: Colors.white),
               tooltip: 'Recarregar',
@@ -207,15 +151,15 @@ class AdminTerritorioScreen extends StatelessWidget {
                         label: 'Todos',
                         selected: controller.filtroStatus.value ==
                             FiltroStatusTerritorio.todos,
-                        onTap: () => controller.definirFiltroStatus(
-                            FiltroStatusTerritorio.todos),
+                        onTap: () => controller
+                            .definirFiltroStatus(FiltroStatusTerritorio.todos),
                       ),
                       _filtroChip(
                         label: 'Ativos',
                         selected: controller.filtroStatus.value ==
                             FiltroStatusTerritorio.ativos,
-                        onTap: () => controller.definirFiltroStatus(
-                            FiltroStatusTerritorio.ativos),
+                        onTap: () => controller
+                            .definirFiltroStatus(FiltroStatusTerritorio.ativos),
                       ),
                       _filtroChip(
                         label: 'Inativos',
@@ -242,8 +186,7 @@ class AdminTerritorioScreen extends StatelessWidget {
                 return AdminEmptyState(
                   icon: Icons.map_outlined,
                   title: 'Nenhum território cadastrado',
-                  message:
-                      'Defina a área de cobertura de cada fornecedor.',
+                  message: 'Defina a área de cobertura de cada fornecedor.',
                   actionLabel: 'Novo Território',
                   onAction: () => _abrirDialogTerritorio(context),
                 );
@@ -267,12 +210,10 @@ class AdminTerritorioScreen extends StatelessWidget {
                     territorio: t,
                     nomeFornecedor: _getNomeFornecedor(t.idFornecedor),
                     fornecedorOrfao: !_fornecedorExiste(t.idFornecedor),
-                    selecionado:
-                        controller.idTerritorioSelecionado.value ==
-                            t.idTerritorio,
+                    selecionado: controller.idTerritorioSelecionado.value ==
+                        t.idTerritorio,
                     onSelect: () => controller.selecionarTerritorio(t),
-                    onEdit: () =>
-                        _abrirDialogTerritorio(context, existente: t),
+                    onEdit: () => _abrirDialogTerritorio(context, existente: t),
                     onToggle: (v) => controller.toggleAtivo(t, v),
                   );
                 },
@@ -323,10 +264,15 @@ class AdminTerritorioScreen extends StatelessWidget {
 
   Widget _buildMapa() {
     return Obx(() {
-      final selecionado = controller.territorioSelecionado;
+      final previa = controller.previaCobertura;
+      final selecionado = previa ?? controller.territorioSelecionado;
       final selecionadoId = selecionado?.idTerritorio;
       final ativos = controller.territorios.where((t) => t.ativo).toList();
-      final territoriosVisiveis = selecionado == null ? ativos : [selecionado];
+      final areasVisiveis = [if (selecionado != null) selecionado];
+      final territoriosComMarcador = [
+        ...ativos.where((t) => t.idTerritorio != selecionadoId),
+        if (selecionado != null) selecionado,
+      ];
 
       return Stack(
         children: [
@@ -347,85 +293,78 @@ class AdminTerritorioScreen extends StatelessWidget {
             ),
             children: [
               TileLayer(
-                urlTemplate:
-                    'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                 userAgentPackageName: 'app_faca_festa',
               ),
               CircleLayer(
-                circles: territoriosVisiveis
+                circles: areasVisiveis
                     .where((t) =>
                         t.tipoCobertura == 'raio' &&
                         t.latitude != null &&
                         t.longitude != null)
                     .map((t) {
-                  final sel = t.idTerritorio == selecionadoId;
                   return CircleMarker(
                     point: LatLng(t.latitude!, t.longitude!),
                     radius: (t.raioKm ?? 10) * 1000,
-                    color: (sel ? AdminPalette.primary : Colors.blueAccent)
-                        .withValues(alpha: sel ? 0.28 : 0.12),
-                    borderStrokeWidth: sel ? 2.5 : 1.2,
-                    borderColor:
-                        sel ? AdminPalette.primary : Colors.blueAccent,
+                    color: AdminPalette.primary.withValues(alpha: 0.28),
+                    borderStrokeWidth: 2.5,
+                    borderColor: AdminPalette.primary,
                     useRadiusInMeter: true,
                   );
                 }).toList(),
               ),
               PolygonLayer(
-                polygons: territoriosVisiveis
+                polygons: areasVisiveis
                     .where((t) =>
                         t.tipoCobertura == 'regiao' &&
-                        t.regioes != null &&
-                        t.regioes!.isNotEmpty)
+                        t.regioes?.isNotEmpty == true)
                     .map((t) {
-                  final sel = t.idTerritorio == selecionadoId;
-                  return Polygon(
-                    points: t.regioes!.map((r) {
-                      final parts = r.split(',');
-                      return LatLng(
-                        double.parse(parts[0]),
-                        double.parse(parts[1]),
+                      final pontos = controller.pontosDeCobertura(t);
+                      if (pontos.length < 3) return null;
+                      return Polygon(
+                        points: pontos,
+                        color: AdminPalette.primary.withValues(alpha: 0.28),
+                        borderColor: AdminPalette.primary,
+                        borderStrokeWidth: 2.5,
                       );
-                    }).toList(),
-                    color: (sel ? AdminPalette.primary : Colors.teal)
-                        .withValues(alpha: sel ? 0.28 : 0.12),
-                    borderColor:
-                        sel ? AdminPalette.primary : Colors.teal.shade700,
-                    borderStrokeWidth: sel ? 2.5 : 1.2,
-                  );
-                }).toList(),
+                    })
+                    .whereType<Polygon>()
+                    .toList(),
               ),
               MarkerLayer(
-                markers: territoriosVisiveis
-                    .where((t) => t.latitude != null && t.longitude != null)
+                markers: territoriosComMarcador
                     .map((t) {
-                  final sel = t.idTerritorio == selecionadoId;
-                  final nome = _getNomeFornecedor(t.idFornecedor);
-                  return Marker(
-                    point: LatLng(t.latitude!, t.longitude!),
-                    width: sel ? 46 : 38,
-                    height: sel ? 46 : 38,
-                    child: Tooltip(
-                      message:
-                          '$nome\n${t.descricao?.isNotEmpty == true ? t.descricao! : 'Sem descrição'}',
-                      child: GestureDetector(
-                        onTap: () => controller.selecionarTerritorio(t),
-                        child: Icon(
-                          Icons.location_on_rounded,
-                          color: sel
-                              ? AdminPalette.primary
-                              : AdminPalette.danger.withValues(alpha: 0.85),
-                          size: sel ? 40 : 30,
+                      final ponto = _pontoDoTerritorio(t);
+                      if (ponto == null) return null;
+                      final sel = t.idTerritorio == selecionadoId;
+                      final nome = _getNomeFornecedor(t.idFornecedor);
+                      return Marker(
+                        point: ponto,
+                        width: sel ? 46 : 38,
+                        height: sel ? 46 : 38,
+                        child: Tooltip(
+                          message:
+                              '$nome\n${t.descricao?.isNotEmpty == true ? t.descricao! : 'Sem descrição'}',
+                          child: GestureDetector(
+                            onTap: () => controller.selecionarTerritorio(t),
+                            child: Icon(
+                              Icons.location_on_rounded,
+                              color: sel
+                                  ? AdminPalette.primary
+                                  : AdminPalette.danger.withValues(alpha: 0.85),
+                              size: sel ? 40 : (selecionado == null ? 30 : 18),
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                  );
-                }).toList(),
+                      );
+                    })
+                    .whereType<Marker>()
+                    .toList(),
               ),
-              Positioned(
+              const Positioned(
                 right: 16,
                 bottom: 84,
-                child: Builder(builder: _buildControlesZoom),
+                child: TerritorioMapaZoom(cor: AdminPalette.primary),
               ),
             ],
           ),
@@ -437,8 +376,8 @@ class AdminTerritorioScreen extends StatelessWidget {
               children: [
                 Flexible(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.94),
                       borderRadius: BorderRadius.circular(12),
@@ -452,9 +391,11 @@ class AdminTerritorioScreen extends StatelessWidget {
                       ],
                     ),
                     child: Text(
-                      selecionado != null
-                          ? 'Focado: ${_getNomeFornecedor(selecionado.idFornecedor)}'
-                          : '${ativos.length} cobertura${ativos.length == 1 ? '' : 's'} ativa${ativos.length == 1 ? '' : 's'} no mapa',
+                      previa != null
+                          ? 'Prévia da cobertura'
+                          : selecionado != null
+                              ? 'Focado: ${_getNomeFornecedor(selecionado.idFornecedor)}'
+                              : '${ativos.length} território${ativos.length == 1 ? ' ativo' : 's ativos'}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.poppins(
@@ -465,7 +406,7 @@ class AdminTerritorioScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-                if (selecionado != null) ...[
+                if (selecionado != null && previa == null) ...[
                   const SizedBox(width: 8),
                   Material(
                     color: Colors.white,
@@ -506,283 +447,25 @@ class AdminTerritorioScreen extends StatelessWidget {
     });
   }
 
-  Widget _buildControlesZoom(BuildContext context) {
-    final camera = MapCamera.of(context);
-    final zoomMais = camera.clampZoom(camera.zoom + 1);
-    final zoomMenos = camera.clampZoom(camera.zoom - 1);
-
-    return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(12),
-      elevation: 2,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          IconButton(
-            tooltip: 'Aproximar mapa',
-            icon: const Icon(Icons.add_rounded),
-            color: AdminPalette.primary,
-            onPressed: zoomMais == camera.zoom
-                ? null
-                : () => controller.mapController.move(camera.center, zoomMais),
-          ),
-          IconButton(
-            tooltip: 'Afastar mapa',
-            icon: const Icon(Icons.remove_rounded),
-            color: AdminPalette.primary,
-            onPressed: zoomMenos == camera.zoom
-                ? null
-                : () => controller.mapController.move(camera.center, zoomMenos),
-          ),
-        ],
-      ),
-    );
+  LatLng? _pontoDoTerritorio(Territorio territorio) {
+    final latitude = territorio.latitude;
+    final longitude = territorio.longitude;
+    if (latitude != null && longitude != null) {
+      return LatLng(latitude, longitude);
+    }
+    if (territorio.tipoCobertura != 'regiao') return null;
+    final vertices = controller.pontosDeCobertura(territorio);
+    return vertices.length < 3
+        ? null
+        : LatLngBounds.fromPoints(vertices).center;
   }
 
   void _abrirDialogTerritorio(BuildContext context, {Territorio? existente}) {
-    final cor = AdminPalette.primary;
-    final formKey = GlobalKey<FormState>();
-
-    var t = existente ??
-        Territorio(
-          idTerritorio: DateTime.now().millisecondsSinceEpoch.toString(),
-          idFornecedor: '',
-          tipoCobertura: 'raio',
-          ativo: true,
-          raioKm: 10,
-        );
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) {
-        return StatefulBuilder(builder: (context, setState) {
-          return AnimatedPadding(
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeOut,
-            padding: EdgeInsets.only(
-              left: 16,
-              right: 16,
-              top: 20,
-              bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-            ),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(24)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.12),
-                    blurRadius: 18,
-                    offset: const Offset(0, -4),
-                  ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(24)),
-                child: Form(
-                  key: formKey,
-                  child: SingleChildScrollView(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 18, vertical: 20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Center(
-                            child: Container(
-                              width: 36,
-                              height: 4,
-                              margin: const EdgeInsets.only(bottom: 16),
-                              decoration: BoxDecoration(
-                                color: AdminPalette.border,
-                                borderRadius: BorderRadius.circular(999),
-                              ),
-                            ),
-                          ),
-                          Row(
-                            children: [
-                              Container(
-                                decoration: BoxDecoration(
-                                  color: cor.withValues(alpha: 0.12),
-                                  shape: BoxShape.circle,
-                                ),
-                                padding: const EdgeInsets.all(10),
-                                child: Icon(
-                                  existente == null
-                                      ? Icons.add_location_alt_rounded
-                                      : Icons.edit_location_alt_rounded,
-                                  color: cor,
-                                  size: 22,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  existente == null
-                                      ? 'Novo Território'
-                                      : 'Editar Território',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w700,
-                                    color: AdminPalette.ink,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 22),
-                          _labelCampo('Fornecedor'),
-                          const SizedBox(height: 6),
-                          DropdownButtonFormField<String>(
-                            isExpanded: true,
-                            value: t.idFornecedor.trim().isNotEmpty
-                                ? t.idFornecedor.trim()
-                                : null,
-                            items: _itensDropdownFornecedor(
-                                t.idFornecedor.trim()),
-                            decoration: _fieldDecoration(accent: cor),
-                            onChanged: (v) => setState(() {
-                              t = t.copyWith(idFornecedor: v ?? '');
-                            }),
-                            validator: (v) => v == null || v.isEmpty
-                                ? 'Selecione um fornecedor'
-                                : null,
-                          ),
-                          const SizedBox(height: 16),
-                          _labelCampo('Tipo de Cobertura'),
-                          const SizedBox(height: 6),
-                          DropdownButtonFormField<String>(
-                            value: t.tipoCobertura,
-                            items: const [
-                              DropdownMenuItem(
-                                  value: 'raio',
-                                  child: Text('Cobertura por Raio')),
-                              DropdownMenuItem(
-                                  value: 'regiao',
-                                  child: Text('Cobertura por Região')),
-                            ],
-                            decoration: _fieldDecoration(),
-                            onChanged: (v) => setState(() {
-                              t = t.copyWith(tipoCobertura: v ?? 'raio');
-                            }),
-                          ),
-                          const SizedBox(height: 16),
-                          if (t.tipoCobertura == 'raio') ...[
-                            _labelCampo('Raio de Cobertura (km)'),
-                            const SizedBox(height: 6),
-                            TextFormField(
-                              initialValue: t.raioKm == null
-                                  ? ''
-                                  : NumericInput.quantidade(t.raioKm!),
-                              keyboardType:
-                                  const TextInputType.numberWithOptions(
-                                      decimal: true),
-                              inputFormatters: [NumericInput.decimal()],
-                              decoration: _fieldDecoration(
-                                  hint: 'Ex: 10', accent: cor),
-                              onChanged: (v) => setState(() {
-                                t = t.copyWith(raioKm: Biblioteca.toDouble(v));
-                              }),
-                            ),
-                            const SizedBox(height: 16),
-                          ],
-                          _labelCampo('Descrição'),
-                          const SizedBox(height: 6),
-                          TextFormField(
-                            initialValue: t.descricao,
-                            maxLines: 2,
-                            decoration: _fieldDecoration(
-                              hint:
-                                  'Ex: Zona Sul — raio de atendimento principal',
-                              accent: cor,
-                            ),
-                            onChanged: (v) => setState(() {
-                              t = t.copyWith(descricao: v);
-                            }),
-                          ),
-                          const SizedBox(height: 16),
-                          Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(12),
-                              color: AdminPalette.surface,
-                              border: Border.all(color: AdminPalette.border),
-                            ),
-                            child: SwitchListTile(
-                              title: Text(
-                                'Território ativo',
-                                style: GoogleFonts.poppins(
-                                  fontWeight: FontWeight.w600,
-                                  color: AdminPalette.ink,
-                                ),
-                              ),
-                              subtitle: Text(
-                                'Inativos não aparecem no mapa de cobertura',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 11.5,
-                                  color: AdminPalette.muted,
-                                ),
-                              ),
-                              value: t.ativo,
-                              activeColor: cor,
-                              onChanged: (v) => setState(() {
-                                t = t.copyWith(ativo: v);
-                              }),
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-                          Row(
-                            children: [
-                              TextButton(
-                                onPressed: Get.back,
-                                child: Text(
-                                  'Cancelar',
-                                  style: GoogleFonts.poppins(
-                                    color: AdminPalette.muted,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                              const Spacer(),
-                              FilledButton.icon(
-                                icon: const Icon(Icons.save_rounded, size: 18),
-                                label: Text(
-                                  existente == null ? 'Salvar' : 'Atualizar',
-                                  style: GoogleFonts.poppins(
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                style: FilledButton.styleFrom(
-                                  backgroundColor: cor,
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 18, vertical: 12),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                                onPressed: () async {
-                                  if (!formKey.currentState!.validate()) {
-                                    return;
-                                  }
-                                  await controller.salvarTerritorio(t);
-                                  Get.back();
-                                },
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          );
-        });
-      },
+    mostrarFormularioTerritorioAdmin(
+      context,
+      controller: controller,
+      fornecedores: fornecedorController.fornecedores,
+      existente: existente,
     );
   }
 }
@@ -837,9 +520,7 @@ class _TerritorioCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               AdminLeadingMark(
-                icon: tipoRaio
-                    ? Icons.radar_rounded
-                    : Icons.pentagon_outlined,
+                icon: tipoRaio ? Icons.radar_rounded : Icons.pentagon_outlined,
                 color: fornecedorOrfao
                     ? AdminPalette.warning
                     : (territorio.ativo

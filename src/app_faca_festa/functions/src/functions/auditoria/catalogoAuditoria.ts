@@ -89,6 +89,18 @@ export const CATALOGO_ACOES_AUDITORIA: Record<string, DefinicaoAcaoAuditoria> = 
     visivelFornecedor: false,
     somenteAdmin: false,
   },
+  MFA_RECUPERACAO_CODIGOS_GERADOS: {
+    area: "ACESSO",
+    nivel: "WARN",
+    visivelFornecedor: false,
+    somenteAdmin: true,
+  },
+  MFA_RECUPERACAO_CODIGO_USADO: {
+    area: "ACESSO",
+    nivel: "WARN",
+    visivelFornecedor: false,
+    somenteAdmin: true,
+  },
   USUARIO_CRIADO: {
     area: "USUARIO",
     nivel: "INFO",

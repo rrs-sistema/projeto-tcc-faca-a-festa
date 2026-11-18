@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import 'package:app_faca_festa/core/legal/politica_privacidade.dart';
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import 'package:app_faca_festa/presentation/modules/auth/controllers/totp_mfa_controller.dart';
 import 'package:app_faca_festa/presentation/modules/auth/widgets/auth_festa_brand.dart';
@@ -25,19 +27,23 @@ class TotpVerifyScreen extends StatefulWidget {
 }
 
 class _TotpVerifyScreenState extends State<TotpVerifyScreen> {
-  static const _esperaReenvio = 30;
+  static const _esperaReenvio = 45;
 
   late final TotpMfaController controller;
   late final TextEditingController codigoCtrl;
   late final FocusNode _focoCodigo;
   Timer? _timerReenvio;
   Worker? _quandoPararEnvio;
+  Worker? _quandoTrocarMetodo;
   var _segundosReenvio = 0;
   var _confirmando = false;
   String? _erro;
 
   bool get _porEmail =>
       controller.metodoLogin.value == TotpMfaController.etapaEmail;
+
+  bool get _porRecuperacao =>
+      controller.metodoLogin.value == TotpMfaController.etapaRecuperacao;
 
   @override
   void initState() {
@@ -52,6 +58,10 @@ class _TotpVerifyScreenState extends State<TotpVerifyScreen> {
     _quandoPararEnvio = ever<bool>(controller.enviandoEmail, (enviando) {
       if (!enviando) _agendarFoco();
     });
+    _quandoTrocarMetodo = ever<String>(controller.metodoLogin, (metodo) {
+      if (metodo == TotpMfaController.etapaEmail) _iniciarEsperaReenvio();
+    });
+    unawaited(controller.carregarMetodosDoDesafio());
     _agendarFoco();
   }
 
@@ -62,6 +72,7 @@ class _TotpVerifyScreenState extends State<TotpVerifyScreen> {
 
   void _pedirFoco() {
     if (!mounted || _confirmando || controller.carregando.value) return;
+    if (ModalRoute.of(context)?.isCurrent != true) return;
     if (!_focoCodigo.canRequestFocus) return;
     FocusScope.of(context).requestFocus(_focoCodigo);
   }
@@ -74,6 +85,7 @@ class _TotpVerifyScreenState extends State<TotpVerifyScreen> {
   void dispose() {
     _timerReenvio?.cancel();
     _quandoPararEnvio?.dispose();
+    _quandoTrocarMetodo?.dispose();
     _focoCodigo.removeListener(_atualizarFoco);
     _focoCodigo.dispose();
     codigoCtrl.dispose();
@@ -104,9 +116,11 @@ class _TotpVerifyScreenState extends State<TotpVerifyScreen> {
 
   Future<void> _confirmar() async {
     if (_confirmando || controller.carregando.value) return;
-    final digitos = codigoCtrl.text.replaceAll(RegExp(r'\D'), '');
-    controller.codigo.value = digitos;
-    if (digitos.length != 6) {
+    final entrada = _porRecuperacao
+        ? codigoCtrl.text.trim()
+        : codigoCtrl.text.replaceAll(RegExp(r'\D'), '');
+    controller.codigo.value = entrada;
+    if (!_porRecuperacao && entrada.length != 6) {
       setState(() {
         _erro = _porEmail
             ? 'Digite os 6 números que chegaram no e-mail'
@@ -124,6 +138,86 @@ class _TotpVerifyScreenState extends State<TotpVerifyScreen> {
     } finally {
       if (mounted) setState(() => _confirmando = false);
     }
+  }
+
+  Future<void> _escolherMetodo() async {
+    final atual = controller.metodoLogin.value;
+    final metodo = await showDialog<String>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: const Text('Usar outro método'),
+        children: [
+          if (controller.totpAtivo && atual != TotpMfaController.etapaTotp)
+            SimpleDialogOption(
+              onPressed: () =>
+                  Navigator.pop(context, TotpMfaController.etapaTotp),
+              child: const Text('App autenticador'),
+            ),
+          if (controller.emailAtivo && atual != TotpMfaController.etapaEmail)
+            SimpleDialogOption(
+              onPressed: () =>
+                  Navigator.pop(context, TotpMfaController.etapaEmail),
+              child: const Text('Código por e-mail'),
+            ),
+          if (!_porRecuperacao)
+            SimpleDialogOption(
+              onPressed: () =>
+                  Navigator.pop(context, TotpMfaController.etapaRecuperacao),
+              child: const Text('Código de recuperação'),
+            ),
+          SimpleDialogOption(
+            onPressed: () => Navigator.pop(context, 'suporte'),
+            child: const Text('Falar com o suporte'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted || metodo == null) return;
+    if (metodo == 'suporte') {
+      await _abrirSuporte();
+      return;
+    }
+    codigoCtrl.clear();
+    setState(() => _erro = null);
+    await controller.trocarMetodoLogin(metodo);
+    _agendarFoco();
+  }
+
+  Future<void> _abrirSuporte() {
+    const email = PoliticaPrivacidade.emailSuporte;
+    return showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Recuperar acesso à conta'),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Escreva de um e-mail a que você tenha acesso e informe o '
+              'e-mail cadastrado no Faça a Festa. O suporte vai orientar '
+              'a verificação de titularidade. Nunca envie senhas ou códigos.',
+            ),
+            SizedBox(height: 12),
+            SelectableText(email),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Voltar'),
+          ),
+          TextButton(
+            onPressed: () => launchUrl(Uri(
+              scheme: 'mailto',
+              path: email,
+              query: 'subject=Recuperar%20acesso%20ao%20Fa%C3%A7a%20a%20Festa',
+            )),
+            child: const Text('Abrir aplicativo de e-mail'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _reenviar() async {
@@ -153,15 +247,26 @@ class _TotpVerifyScreenState extends State<TotpVerifyScreen> {
         backgroundColor: const Color(0xFFFFF3F8),
         body: Obx(() {
           final porEmail = _porEmail;
+          final porRecuperacao = _porRecuperacao;
           final destino = controller.emailMascarado.value;
           final ocupado = _confirmando || controller.carregando.value;
           return AuthFestaShell(
             scrollable: true,
-            title: porEmail ? 'Confira seu e-mail' : 'Código do autenticador',
-            titleHighlight: porEmail ? 'e-mail' : 'autenticador',
-            subtitle: porEmail
-                ? 'Enviamos um código de 6 números para você entrar'
-                : 'Abra o app autenticador e use o código que está na tela',
+            title: porRecuperacao
+                ? 'Código de recuperação'
+                : porEmail
+                    ? 'Confira seu e-mail'
+                    : 'Código do autenticador',
+            titleHighlight: porRecuperacao
+                ? 'recuperação'
+                : porEmail
+                    ? 'e-mail'
+                    : 'autenticador',
+            subtitle: porRecuperacao
+                ? 'Use um dos códigos que você guardou.'
+                : porEmail
+                    ? 'Enviamos um código de 6 números para você entrar'
+                    : 'Abra o app autenticador e use o código que está na tela',
             mostrarProvaSocial: false,
             mostrarCreditos: false,
             mostrarPrivacidade: true,
@@ -174,8 +279,10 @@ class _TotpVerifyScreenState extends State<TotpVerifyScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  _SeloVerificacao(porEmail: porEmail),
-                  const SizedBox(height: 18),
+                  if (!porRecuperacao) ...[
+                    _SeloVerificacao(porEmail: porEmail),
+                    const SizedBox(height: 18),
+                  ],
                   if (porEmail) ...[
                     _DestinoEmail(
                       destino: destino,
@@ -184,26 +291,50 @@ class _TotpVerifyScreenState extends State<TotpVerifyScreen> {
                     ),
                     const SizedBox(height: 18),
                   ],
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      'Código de 6 dígitos',
-                      style: GoogleFonts.poppins(
-                        color: const Color(0xFF374151),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
+                  if (!porRecuperacao)
+                    CheckboxListTile(
+                      contentPadding: EdgeInsets.zero,
+                      value: controller.gerenciarAoConfirmar.value,
+                      onChanged: ocupado
+                          ? null
+                          : (valor) => controller.gerenciarAoConfirmar.value =
+                              valor ?? false,
+                      title: const Text(
+                          'Configurar opções de segurança ao entrar'),
+                    ),
+                  if (porRecuperacao)
+                    TextField(
+                      controller: codigoCtrl,
+                      focusNode: _focoCodigo,
+                      enabled: !ocupado,
+                      autocorrect: false,
+                      enableSuggestions: false,
+                      decoration: const InputDecoration(
+                          labelText: 'Código de recuperação'),
+                      onSubmitted: (_) => _confirmar(),
+                    )
+                  else ...[
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Código de 6 dígitos',
+                        style: GoogleFonts.poppins(
+                          color: const Color(0xFF374151),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  _CaixasCodigo(
-                    controller: codigoCtrl,
-                    focusNode: _focoCodigo,
-                    enabled: !ocupado,
-                    erro: _erro,
-                    onChanged: _aoDigitar,
-                    onSubmitted: _confirmar,
-                  ),
+                    const SizedBox(height: 10),
+                    _CaixasCodigo(
+                      controller: codigoCtrl,
+                      focusNode: _focoCodigo,
+                      enabled: !ocupado,
+                      erro: _erro,
+                      onChanged: _aoDigitar,
+                      onSubmitted: _confirmar,
+                    ),
+                  ],
                   const SizedBox(height: 20),
                   SizedBox(
                     width: double.infinity,
@@ -289,10 +420,14 @@ class _TotpVerifyScreenState extends State<TotpVerifyScreen> {
                         height: 1.35,
                       ),
                     ),
-                  ] else ...[
+                  ] else if (!porRecuperacao) ...[
                     const SizedBox(height: 14),
                     const _DicaAutenticador(),
                   ],
+                  TextButton(
+                    onPressed: ocupado ? null : _escolherMetodo,
+                    child: const Text('Usar outro método'),
+                  ),
                 ],
               ),
             ),
@@ -510,8 +645,8 @@ class _CaixasCodigo extends StatelessWidget {
         LayoutBuilder(
           builder: (context, constraints) {
             const gap = 8.0;
-            final largura = ((constraints.maxWidth - gap * 5) / 6)
-                .clamp(40.0, 52.0);
+            final largura =
+                ((constraints.maxWidth - gap * 5) / 6).clamp(40.0, 52.0);
             final altura = (largura * 1.15).clamp(48.0, 58.0);
 
             return SizedBox(

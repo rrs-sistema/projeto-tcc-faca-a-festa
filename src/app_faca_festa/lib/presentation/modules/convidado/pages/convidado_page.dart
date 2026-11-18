@@ -22,6 +22,7 @@ import 'package:app_faca_festa/presentation/modules/convidado/components/estatis
 import 'package:app_faca_festa/presentation/modules/convidado/components/grupos_tab.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/components/mesa_tab.dart';
 import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_controller.dart';
+import '../widgets/convidados_layout.dart';
 import './area/lista_convidados_screen.dart';
 import './enviar_convites_screen.dart';
 import 'package:app_faca_festa/presentation/widgets/festa_app_bar.dart';
@@ -166,134 +167,56 @@ class _ConvidadosPageState extends State<ConvidadosPage>
                 onPressed: _abrirEnvioConvites,
               ),
             ],
-            bottom: PreferredSize(
-              preferredSize: const Size.fromHeight(64),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
-                child: Container(
-                  height: 52,
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.96),
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.55),
-                      width: 1,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.08),
-                        blurRadius: 16,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: TabBar(
-                    controller: _tabController,
-                    isScrollable: true,
-                    tabAlignment: TabAlignment.start,
-                    padding: EdgeInsets.zero,
-                    labelPadding: const EdgeInsets.symmetric(horizontal: 12),
-                    indicatorSize: TabBarIndicatorSize.tab,
-                    dividerColor: Colors.transparent,
-                    splashFactory: NoSplash.splashFactory,
-                    overlayColor:
-                        const WidgetStatePropertyAll(Colors.transparent),
-                    splashBorderRadius: BorderRadius.circular(14),
-                    onTap: (_) => HapticFeedback.selectionClick(),
-                    indicator: BoxDecoration(
-                      color: primary.withValues(alpha: 0.13),
-                      borderRadius: BorderRadius.circular(14),
-                      border:
-                          Border.all(color: primary.withValues(alpha: 0.16)),
-                      boxShadow: [
-                        BoxShadow(
-                          color: primary.withValues(alpha: 0.10),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    labelColor: primary,
-                    unselectedLabelColor: const Color(0xFF6B7280),
-                    labelStyle: GoogleFonts.poppins(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 11.5,
-                      height: 1.1,
-                    ),
-                    unselectedLabelStyle: GoogleFonts.poppins(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 11.2,
-                      height: 1.1,
-                    ),
-                    tabs: const [
-                      Tab(
-                          height: 44,
-                          iconMargin: EdgeInsets.only(bottom: 2),
-                          icon: Icon(Icons.people_alt_rounded, size: 17),
-                          text: 'Lista'),
-                      Tab(
-                          height: 44,
-                          iconMargin: EdgeInsets.only(bottom: 2),
-                          icon: Icon(Icons.groups_rounded, size: 17),
-                          text: 'Grupos'),
-                      Tab(
-                          height: 44,
-                          iconMargin: EdgeInsets.only(bottom: 2),
-                          icon: Icon(Icons.restaurant_menu_rounded, size: 17),
-                          text: 'Cardápio'),
-                      Tab(
-                          height: 44,
-                          iconMargin: EdgeInsets.only(bottom: 2),
-                          icon: Icon(Icons.table_restaurant_rounded, size: 17),
-                          text: 'Mesas'),
-                      Tab(
-                          height: 44,
-                          iconMargin: EdgeInsets.only(bottom: 2),
-                          icon: Icon(Icons.query_stats_rounded, size: 17),
-                          text: 'Status'),
-                    ],
-                  ),
-                ),
-              ),
+            bottom: ConvidadosTabBar(
+              controller: _tabController,
+              primary: primary,
             ),
           ),
-          body: TabBarView(
-            controller: _tabController,
-            physics: const NeverScrollableScrollPhysics(),
-            children: [
-              ListaConvidadosScreen(
-                themeController: themeController,
-                convidadoController: convidadoController,
-                eventoController: eventoController,
-                grupoController: grupoController,
-                embedded: true,
-                buscaFocusNode: _buscaListaFocus,
-                onModoSelecaoChanged: (emSelecao) =>
-                    listaEmSelecao.value = emSelecao,
-              ),
-              GruposTab(
-                grupoController: grupoController,
-                themeController: themeController,
-                appController: appController,
-              ),
-              CardapiosTab(
-                controller: cardapioController,
-                theme: themeController,
-              ),
-              MesasTab(
-                theme: themeController,
-                controller: convidadoController,
-                grupoController: grupoController,
-              ),
-              EstatisticasTab(
-                convidadoController: convidadoController,
-                eventTheme: themeController,
-              ),
-            ],
+          body: ConvidadosContent(
+            child: TabBarView(
+              controller: _tabController,
+              physics: const NeverScrollableScrollPhysics(),
+              children: [
+                ListaConvidadosScreen(
+                  themeController: themeController,
+                  convidadoController: convidadoController,
+                  eventoController: eventoController,
+                  grupoController: grupoController,
+                  embedded: true,
+                  buscaFocusNode: _buscaListaFocus,
+                  onModoSelecaoChanged: (emSelecao) =>
+                      listaEmSelecao.value = emSelecao,
+                ),
+                GruposTab(
+                  grupoController: grupoController,
+                  themeController: themeController,
+                  appController: appController,
+                ),
+                CardapiosTab(
+                  controller: cardapioController,
+                  theme: themeController,
+                ),
+                MesasTab(
+                  theme: themeController,
+                  controller: convidadoController,
+                  grupoController: grupoController,
+                ),
+                EstatisticasTab(
+                  convidadoController: convidadoController,
+                  eventTheme: themeController,
+                ),
+              ],
+            ),
           ),
           floatingActionButton: podeGerenciar
-              ? _buildFloatingActionButton(primary)
+              ? Padding(
+                  padding: EdgeInsets.only(
+                    right: ConvidadosContent.sideInset(
+                      MediaQuery.sizeOf(context).width,
+                    ),
+                  ),
+                  child: _buildFloatingActionButton(primary),
+                )
               : const SizedBox.shrink(),
         ),
       );

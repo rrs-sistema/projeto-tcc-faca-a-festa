@@ -51,10 +51,19 @@ class NumericInput {
 
   static String dinheiro(num value) {
     final parts = value.toStringAsFixed(2).split('.');
-    final whole = parts.first
-        .replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (_) => '.');
-    return 'R\$ $whole,${parts.last}';
+    return 'R\$ ${_agruparMilhares(parts.first)},${parts.last}';
   }
+
+  static String dinheiroCentavos(int centavos) {
+    final sinal = centavos < 0 ? '-' : '';
+    final valor = centavos.abs();
+    final reais = _agruparMilhares((valor ~/ 100).toString());
+    final fracao = (valor % 100).toString().padLeft(2, '0');
+    return 'R\$ $sinal$reais,$fracao';
+  }
+
+  static String _agruparMilhares(String inteiro) =>
+      inteiro.replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (_) => '.');
 
   static String quantidade(num value) => value.toString().replaceAll('.', ',');
 }

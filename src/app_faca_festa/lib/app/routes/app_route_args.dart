@@ -46,9 +46,15 @@ class AuthFluxoArgs {
 }
 
 class TotpMfaArgs {
-  const TotpMfaArgs({this.metodo = 'totp'});
+  const TotpMfaArgs({
+    this.metodo = 'totp',
+    this.totpAtivo = false,
+    this.emailAtivo = false,
+  });
 
   final String metodo;
+  final bool totpAtivo;
+  final bool emailAtivo;
 
   static TotpMfaArgs? maybeOf(Object? arguments) {
     return arguments is TotpMfaArgs ? arguments : null;

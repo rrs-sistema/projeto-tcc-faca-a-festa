@@ -81,6 +81,15 @@ async function executarExclusao(idUsuario: string): Promise<string> {
 
   await apagarRecursivo(db.collection("usuarios").doc(idUsuario));
 
+  const mfaTotp = db.collection("mfa_totp").doc(idUsuario);
+  const mfa = db.batch();
+  mfa.delete(mfaTotp);
+  mfa.delete(mfaTotp.collection("cadastros").doc("pendente"));
+  mfa.delete(db.collection("mfa_email_codes").doc(idUsuario));
+  mfa.delete(db.collection("mfa_email_vinculos").doc(idUsuario));
+  mfa.delete(db.collection("mfa_recuperacao").doc(idUsuario));
+  await mfa.commit();
+
   try {
     await admin.storage().bucket().deleteFiles({ prefix: `usuarios/${idUsuario}/` });
   } catch (error) {

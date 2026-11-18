@@ -17,8 +17,7 @@ import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme
 /// Google pela LoginScreen real. O seletor OAuth não roda no Windows+emulador;
 /// o remote injeta cancelamento, falha e sucesso com sessão Auth real.
 class _AuthRemoteGoogleQA extends Fake implements AutenticacaoRemoteDatasource {
-  _AuthRemoteGoogleQA(this.auth,
-      {required this.email, required this.senha});
+  _AuthRemoteGoogleQA(this.auth, {required this.email, required this.senha});
 
   final FirebaseAuth auth;
   final String email;
@@ -80,6 +79,11 @@ class PerfilGoogleQA extends Fake implements PerfilUsuarioRepository {
 class SessaoGoogleQA implements SessaoLoginPort {
   var marcaSenha = 0, marcaGoogle = 0, tokens = <String>[];
   @override
+  Future<void> processarLogin(Future<bool> Function() preparar) async {
+    if (await preparar()) Get.offAllNamed('/sessao');
+  }
+
+  @override
   final acessoPorLink = false.obs;
   @override
   bool fluxoConviteAtivo = false;
@@ -102,8 +106,7 @@ void main() {
   const email = 'google-owner@example.test';
   const senha = 'TesteLocal123!';
 
-  testWidgets(
-      'Entrar com Google: cancela, falha de configuração e autentica',
+  testWidgets('Entrar com Google: cancela, falha de configuração e autentica',
       (tester) async {
     if (!const bool.fromEnvironment('CALCULADORA_QA')) {
       throw StateError('Use o harness demo local.');
@@ -128,8 +131,7 @@ void main() {
     db.settings = const Settings(persistenceEnabled: false);
     db.useFirestoreEmulator('127.0.0.1', 8080, automaticHostMapping: false);
 
-    final remote =
-        _AuthRemoteGoogleQA(auth, email: email, senha: senha);
+    final remote = _AuthRemoteGoogleQA(auth, email: email, senha: senha);
     final repo = AutenticacaoRepositoryImpl(remote);
     final perfil = PerfilGoogleQA();
     final sessao = SessaoGoogleQA();
@@ -138,7 +140,7 @@ void main() {
         perfilRepository: perfil,
         sessaoLogin: sessao);
     Get.testMode = true;
-    var splash = 0;
+    var sessoes = 0;
 
     Future<void> abrir() async {
       await tester.pumpWidget(GetMaterialApp(initialRoute: '/login', getPages: [
@@ -149,9 +151,9 @@ void main() {
                 themeController: EventThemeController(),
                 appController: AppTelaGoogleQA())),
         GetPage(
-            name: '/splash',
+            name: '/sessao',
             page: () {
-              splash++;
+              sessoes++;
               return const Scaffold(body: Text('Sessão Google'));
             }),
         GetPage(
@@ -188,8 +190,8 @@ void main() {
     remote.cancelar = true;
     await tocarGoogle();
     expect(auth.currentUser, isNull);
-    expect(splash, 0);
-    expect(sessao.marcaGoogle, 1);
+    expect(sessoes, 0);
+    expect(sessao.marcaGoogle, 0);
     expect(find.text('Sessão Google'), findsNothing);
 
     remote.cancelar = false;
@@ -197,8 +199,8 @@ void main() {
     await tocarGoogle();
     await fecharAviso();
     expect(auth.currentUser, isNull);
-    expect(splash, 0);
-    expect(sessao.marcaGoogle, 2);
+    expect(sessoes, 0);
+    expect(sessao.marcaGoogle, 0);
     expect(find.textContaining('Google'), findsWidgets);
 
     remote.falha = null;
@@ -210,10 +212,10 @@ void main() {
     }
     expect(find.text('Sessão Google'), findsOneWidget);
     expect(auth.currentUser?.email, email);
-    expect(sessao.marcaGoogle, 3);
+    expect(sessao.marcaGoogle, 1);
     expect(sessao.marcaSenha, 0);
     expect(sessao.acessoPorLink.value, false);
-    expect(splash, 1);
+    expect(sessoes, 1);
     expect(perfil.salvo?.email, email);
     expect(perfil.salvo?.tipo, 'O');
     expect(tester.takeException(), isNull);

@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 import 'package:app_faca_festa/app/routes/app_route_args.dart';
 import 'package:app_faca_festa/domain/repositories/autenticacao_repository.dart';
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
+import 'package:app_faca_festa/presentation/modules/auth/widgets/mfa_opcoes_dialog.dart';
 
 class TotpMfaController extends GetxController {
   TotpMfaController({
@@ -22,6 +23,7 @@ class TotpMfaController extends GetxController {
   static const etapaEscolha = 'escolha';
   static const etapaTotp = 'totp';
   static const etapaEmail = 'email';
+  static const etapaRecuperacao = 'recuperacao';
 
   final etapa = etapaEscolha.obs;
   final metodoLogin = 'totp'.obs;
@@ -33,20 +35,61 @@ class TotpMfaController extends GetxController {
   final gerandoQr = false.obs;
   final falhouQr = false.obs;
   final enviandoEmail = false.obs;
+  final gerenciarAoConfirmar = false.obs;
+  bool emailAtivo = false;
+  bool totpAtivo = false;
+  bool _metodosCarregados = false;
   bool _gerandoQrPedido = false;
 
   @override
   void onInit() {
     super.onInit();
     final args = TotpMfaArgs.maybeOf(Get.arguments);
-    if (args != null && args.ehEmail) {
-      metodoLogin.value = etapaEmail;
-      solicitarCodigoEmail(silencioso: true);
+    if (args != null) {
+      _metodosCarregados = true;
+      emailAtivo = args.emailAtivo || args.ehEmail;
+      totpAtivo = args.totpAtivo || !args.ehEmail;
+      if (args.ehEmail) {
+        unawaited(trocarMetodoLogin(etapaEmail));
+      }
       return;
     }
     if (gerarQrNoInicio) {
       escolherAutenticador();
     }
+  }
+
+  Future<void> carregarMetodosDoDesafio() async {
+    if (_metodosCarregados) return;
+    final uid = _autenticacaoRepository.idUsuarioAtual;
+    if (uid == null) return;
+    carregando.value = true;
+    try {
+      final perfil = await appController.obterUsuario(uid);
+      if (perfil == null ||
+          isClosed ||
+          uid != _autenticacaoRepository.idUsuarioAtual) {
+        return;
+      }
+      _metodosCarregados = true;
+      emailAtivo = perfil.mfaEmailAtivo;
+      totpAtivo = perfil.mfaTotpAtivo;
+      if (emailAtivo && !totpAtivo) {
+        metodoLogin.value = etapaEmail;
+        unawaited(solicitarCodigoEmail(silencioso: true));
+      }
+    } catch (_) {
+      _mostrarErro('Não foi possível carregar seus métodos de verificação.');
+    } finally {
+      carregando.value = false;
+    }
+  }
+
+  Future<void> trocarMetodoLogin(String metodo) async {
+    if (carregando.value || metodoLogin.value == metodo) return;
+    codigo.value = '';
+    metodoLogin.value = metodo;
+    if (metodo == etapaEmail) await solicitarCodigoEmail(silencioso: true);
   }
 
   void escolherAutenticador() {
@@ -105,6 +148,7 @@ class TotpMfaController extends GetxController {
   }
 
   Future<void> solicitarCodigoEmail({bool silencioso = false}) async {
+    if (enviandoEmail.value) return;
     try {
       enviandoEmail.value = true;
       if (!silencioso) {
@@ -131,108 +175,84 @@ class TotpMfaController extends GetxController {
     }
   }
 
-  Future<void> confirmarCadastro() async {
-    if (etapa.value == etapaEmail) {
-      await _confirmarEmail();
-      return;
-    }
-    await _confirmarTotp();
+  Future<void> confirmarCadastro() {
+    final porEmail = etapa.value == etapaEmail;
+    return _validarCodigo(
+      validar: porEmail
+          ? _autenticacaoRepository.confirmarEmailMfa
+          : _autenticacaoRepository.confirmarTotpMfa,
+      porEmail: porEmail,
+      status:
+          porEmail ? 'Confirmando e-mail...' : 'Confirmando autenticador...',
+      mensagemFalha: 'Não foi possível confirmar o código. Tente novamente.',
+      cadastrar: true,
+    );
   }
 
-  Future<void> verificarLogin() async {
-    if (metodoLogin.value == etapaEmail) {
-      await _verificarEmail();
-      return;
-    }
-    await _verificarTotp();
+  Future<void> verificarLogin() {
+    final porEmail = metodoLogin.value == etapaEmail;
+    final recuperacao = metodoLogin.value == etapaRecuperacao;
+    return _validarCodigo(
+      validar: recuperacao
+          ? _autenticacaoRepository.verificarCodigoRecuperacaoMfa
+          : porEmail
+              ? _autenticacaoRepository.verificarEmailMfa
+              : _autenticacaoRepository.verificarTotpMfa,
+      porEmail: porEmail,
+      recuperacao: recuperacao,
+      status: 'Validando código...',
+      mensagemFalha: 'Não foi possível validar o código. Tente novamente.',
+    );
   }
 
-  Future<void> _confirmarTotp() async {
-    final codigoLimpo = _codigoLimpo();
-    if (codigoLimpo.length != 6) {
-      _mostrarErro('Informe o código de 6 dígitos do autenticador.');
+  Future<void> _validarCodigo({
+    required Future<String> Function(String) validar,
+    required bool porEmail,
+    required String status,
+    required String mensagemFalha,
+    bool cadastrar = false,
+    bool recuperacao = false,
+  }) async {
+    if (carregando.value) return;
+    final codigoLimpo = recuperacao ? codigo.value.trim() : _codigoLimpo();
+    if (recuperacao
+        ? !RegExp(r'^[a-fA-F0-9]{32}$')
+            .hasMatch(codigoLimpo.replaceAll('-', ''))
+        : codigoLimpo.length != 6) {
+      _mostrarErro(recuperacao
+          ? 'Informe um código de recuperação completo.'
+          : porEmail
+              ? 'Informe o código de 6 dígitos enviado por e-mail.'
+              : 'Informe o código de 6 dígitos do autenticador.');
       return;
     }
 
     try {
       carregando.value = true;
-      EasyLoading.show(status: 'Confirmando autenticador...');
-      await _autenticacaoRepository.confirmarTotpMfa(codigoLimpo);
-      appController.marcarTotpVerificado();
-      Get.offAllNamed('/splash');
+      final idUsuario = _autenticacaoRepository.idUsuarioAtual;
+      final solicitouOpcoes = recuperacao || gerenciarAoConfirmar.value;
+      EasyLoading.show(status: status);
+      final autorizacao = (await validar(codigoLimpo)).trim();
+      if (isClosed || _autenticacaoRepository.idUsuarioAtual != idUsuario) {
+        return;
+      }
+      if (solicitouOpcoes || (cadastrar && autorizacao.isNotEmpty)) {
+        await EasyLoading.dismiss();
+        await Get.dialog<void>(
+          MfaOpcoesDialog(
+            autenticacao: _autenticacaoRepository,
+            autorizacao: autorizacao,
+            emailAtivo: emailAtivo || porEmail,
+            totpAtivo: totpAtivo || (cadastrar && !porEmail),
+          ),
+          barrierDismissible: false,
+        );
+      }
+      await appController.concluirMfa(idUsuario);
     } on AutenticacaoException catch (e) {
       _mostrarErro(_traduzErro(e.codigo, e.mensagem));
     } catch (_) {
-      _mostrarErro('Não foi possível confirmar o código. Tente novamente.');
-    } finally {
-      EasyLoading.dismiss();
-      carregando.value = false;
-    }
-  }
-
-  Future<void> _confirmarEmail() async {
-    final codigoLimpo = _codigoLimpo();
-    if (codigoLimpo.length != 6) {
-      _mostrarErro('Informe o código de 6 dígitos enviado por e-mail.');
-      return;
-    }
-
-    try {
-      carregando.value = true;
-      EasyLoading.show(status: 'Confirmando e-mail...');
-      await _autenticacaoRepository.confirmarEmailMfa(codigoLimpo);
-      appController.marcarTotpVerificado();
-      Get.offAllNamed('/splash');
-    } on AutenticacaoException catch (e) {
-      _mostrarErro(_traduzErro(e.codigo, e.mensagem));
-    } catch (_) {
-      _mostrarErro('Não foi possível confirmar o código. Tente novamente.');
-    } finally {
-      EasyLoading.dismiss();
-      carregando.value = false;
-    }
-  }
-
-  Future<void> _verificarTotp() async {
-    final codigoLimpo = _codigoLimpo();
-    if (codigoLimpo.length != 6) {
-      _mostrarErro('Informe o código de 6 dígitos do autenticador.');
-      return;
-    }
-
-    try {
-      carregando.value = true;
-      EasyLoading.show(status: 'Validando código...');
-      await _autenticacaoRepository.verificarTotpMfa(codigoLimpo);
-      appController.marcarTotpVerificado();
-      Get.offAllNamed('/splash');
-    } on AutenticacaoException catch (e) {
-      _mostrarErro(_traduzErro(e.codigo, e.mensagem));
-    } catch (_) {
-      _mostrarErro('Não foi possível validar o código. Tente novamente.');
-    } finally {
-      EasyLoading.dismiss();
-      carregando.value = false;
-    }
-  }
-
-  Future<void> _verificarEmail() async {
-    final codigoLimpo = _codigoLimpo();
-    if (codigoLimpo.length != 6) {
-      _mostrarErro('Informe o código de 6 dígitos enviado por e-mail.');
-      return;
-    }
-
-    try {
-      carregando.value = true;
-      EasyLoading.show(status: 'Validando código...');
-      await _autenticacaoRepository.verificarEmailMfa(codigoLimpo);
-      appController.marcarTotpVerificado();
-      Get.offAllNamed('/splash');
-    } on AutenticacaoException catch (e) {
-      _mostrarErro(_traduzErro(e.codigo, e.mensagem));
-    } catch (_) {
-      _mostrarErro('Não foi possível validar o código. Tente novamente.');
+      _mostrarErro(mensagemFalha);
     } finally {
       EasyLoading.dismiss();
       carregando.value = false;

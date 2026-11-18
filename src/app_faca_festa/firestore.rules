@@ -593,10 +593,19 @@ service cloud.firestore {
       allow update, delete: if isAdmin() || campoIdFornecedor(resource.data);
     }
 
+    function idFornecedorTerritorio(data) {
+      let valor = data.get('id_fornecedor', '');
+      let id = valor is string ? valor.replace('^\\s+|\\s+$', '') : '';
+      let legado = data.get('idFornecedor', '');
+      return id != '' ? id : (legado is string ? legado.replace('^\\s+|\\s+$', '') : '');
+    }
+
     match /territorio/{id} {
       allow read: if signedIn();
       allow create: if isAdmin() || campoIdFornecedor(request.resource.data);
-      allow update, delete: if isAdmin() || campoIdFornecedor(resource.data);
+      allow update: if (isAdmin() || campoIdFornecedor(resource.data))
+        && idFornecedorTerritorio(request.resource.data) == idFornecedorTerritorio(resource.data);
+      allow delete: if isAdmin() || campoIdFornecedor(resource.data);
     }
 
     function cotacaoDoc(cotacaoId) {
@@ -930,9 +939,21 @@ service cloud.firestore {
 
     match /mfa_totp/{userId} {
       allow read, write: if false;
+
+      match /cadastros/{id} {
+        allow read, write: if false;
+      }
     }
 
     match /mfa_email_codes/{userId} {
+      allow read, write: if false;
+    }
+
+    match /mfa_email_vinculos/{userId} {
+      allow read, write: if false;
+    }
+
+    match /mfa_recuperacao/{userId} {
       allow read, write: if false;
     }
 

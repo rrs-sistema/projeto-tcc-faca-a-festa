@@ -70,6 +70,11 @@ class PerfilLoginQA extends Fake implements PerfilUsuarioRepository {
 class SessaoLoginQA implements SessaoLoginPort {
   var marcaSenha = 0, marcaGoogle = 0, tokens = <String>[];
   @override
+  Future<void> processarLogin(Future<bool> Function() preparar) async {
+    if (await preparar()) Get.offAllNamed('/sessao');
+  }
+
+  @override
   final acessoPorLink = false.obs;
   @override
   bool fluxoConviteAtivo = false;
@@ -127,7 +132,7 @@ void main() {
         perfilRepository: perfil,
         sessaoLogin: sessao);
     Get.testMode = true;
-    var splash = 0;
+    var sessoes = 0;
 
     Future<void> abrir() async {
       await tester.pumpWidget(GetMaterialApp(initialRoute: '/login', getPages: [
@@ -138,9 +143,9 @@ void main() {
                 themeController: EventThemeController(),
                 appController: AppTelaQA())),
         GetPage(
-            name: '/splash',
+            name: '/sessao',
             page: () {
-              splash++;
+              sessoes++;
               return const Scaffold(body: Text('Sessão iniciada'));
             }),
         GetPage(
@@ -174,7 +179,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(auth.currentUser, isNull);
     expect(sessao.marcaSenha, 0);
-    expect(splash, 0);
+    expect(sessoes, 0);
 
     Future<void> tocarEntrar() async {
       final botao = find.widgetWithText(ElevatedButton, 'Entrar');
@@ -203,8 +208,8 @@ void main() {
     await tocarEntrar();
     await fecharAviso();
     expect(auth.currentUser, isNull);
-    expect(splash, 0);
-    expect(sessao.marcaSenha, 1);
+    expect(sessoes, 0);
+    expect(sessao.marcaSenha, 0);
     expect(find.text('Tentar de novo'), findsNothing);
 
     await preencher(email, senha);
@@ -216,15 +221,15 @@ void main() {
     }
     expect(find.text('Sessão iniciada'), findsOneWidget);
     expect(auth.currentUser?.email, email);
-    expect(sessao.marcaSenha, 2);
+    expect(sessao.marcaSenha, 1);
     expect(sessao.acessoPorLink.value, false);
-    expect(splash, 1);
+    expect(sessoes, 1);
     expect(perfil.salvo?.email, email);
     expect(perfil.salvo?.tipo, 'O');
 
     await repo.sair();
     expect(auth.currentUser, isNull);
-    splash = 0;
+    sessoes = 0;
     sessao.marcaSenha = 0;
     Get.offAllNamed('/login');
     await tester.pumpAndSettle();
@@ -237,7 +242,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 40));
     }
     expect(auth.currentUser?.email, email);
-    expect(splash, 1);
+    expect(sessoes, 1);
     expect(sessao.marcaSenha, 1);
     expect(tester.takeException(), isNull);
   });

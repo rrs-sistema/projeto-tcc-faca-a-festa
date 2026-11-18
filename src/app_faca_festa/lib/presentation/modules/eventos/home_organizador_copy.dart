@@ -19,7 +19,7 @@ abstract final class HomeOrganizadorCopy {
   static const barraMais = 'Mais';
 
   static const resumoTitulo = 'Como vai a festa';
-  static const resumoConvidados = 'Convidados';
+  static const resumoConvidados = 'Confirmados';
   static const resumoOrcamento = 'Orçamento';
   static const resumoTarefas = 'Tarefas';
 
@@ -166,6 +166,14 @@ abstract final class HomeOrganizadorCopy {
     if (total <= 0) return 'Ninguém na lista ainda';
     if (confirmados <= 0) return 'Nenhum dos $total confirmou';
     return '$confirmados de $total confirmaram';
+  }
+
+  static String convidadosPendentes(int? pendentes) {
+    if (pendentes == null) return 'Lista indisponível';
+    if (pendentes == 0) return 'Nenhuma resposta pendente';
+    return pendentes == 1
+        ? '1 aguardando resposta'
+        : '$pendentes aguardando resposta';
   }
 
   static String orcamentoDetalhe(double progresso) {

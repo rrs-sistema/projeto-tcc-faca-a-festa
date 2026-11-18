@@ -45,6 +45,7 @@ import 'package:app_faca_festa/domain/entities/tarefa.dart';
 import 'package:app_faca_festa/presentation/modules/checklist/pages/tarefa_dialog.dart';
 import 'package:app_faca_festa/presentation/modules/eventos/components/proximas_tarefas_faixa.dart';
 import 'package:app_faca_festa/presentation/modules/eventos/components/build_animated_header.dart';
+import 'package:app_faca_festa/presentation/modules/eventos/widgets/nudge_cotacao_banner.dart';
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
 import 'package:app_faca_festa/presentation/modules/inspiracao/pages/inspiracao_screen.dart';
 import 'package:app_faca_festa/core/utils/biblioteca.dart';
@@ -592,6 +593,14 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
               child: CustomScrollView(
                 controller: _scrollControllerHome,
                 slivers: [
+                  SliverToBoxAdapter(
+                    child: NudgeCotacaoBanner(
+                      idEvento: eventoModel.idEvento,
+                      idUsuario: eventoModel.idUsuario,
+                      onAbrirFornecedores:
+                          homeEventNavController.irParaFornecedores,
+                    ),
+                  ),
                   if (!resumoLadoALado)
                     _faixa(
                       SliverPersistentHeader(
@@ -982,9 +991,9 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
         final evento = eventoController.eventoAtual.value ??
             eventoController.eventoAtualEntidade!;
         final publico = convidadoController.publicoPlanejadoDoEvento(evento);
-        final totConv = publico.total ?? 0;
+        final totConv = publico.cadastrados ?? 0;
         final conf = publico.confirmados ?? 0;
-        final progConv = totConv > 0 ? conf / totConv : 0.0;
+        final progConv = publico.proporcaoConfirmada ?? 0.0;
 
         final totOrc = orcamentoController.totalCustoEstimado.value;
         final limOrc = evento.custoEstimado ?? 0.0;
@@ -1028,8 +1037,10 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
             const SizedBox(height: 6),
             _linhaStatus(
               titulo: HomeOrganizadorCopy.resumoConvidados,
-              detalhe: HomeOrganizadorCopy.convidadosDetalhe(conf, totConv),
-              valor: publico.confirmados?.toString() ?? '—',
+              detalhe: publico.cadastrados == null
+                  ? HomeOrganizadorCopy.convidadosPendentes(null)
+                  : '${HomeOrganizadorCopy.convidadosDetalhe(conf, totConv)} · ${HomeOrganizadorCopy.convidadosPendentes(publico.pendentes)}',
+              valor: publico.cadastrados == null ? '—' : '$conf/$totConv',
               progresso: progConv,
               cor: cor,
               aoTocar: homeEventNavController.irParaConvidados,
@@ -1089,12 +1100,18 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
                         backgroundColor: cor.withValues(alpha: 0.15),
                       ),
                       Center(
-                        child: Text(
-                          valor,
-                          style: GoogleFonts.poppins(
-                            fontSize: valor.length > 3 ? 10 : 12,
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFF1F2937),
+                        child: Padding(
+                          padding: const EdgeInsets.all(4),
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              valor,
+                              style: GoogleFonts.poppins(
+                                fontSize: valor.length > 3 ? 10 : 12,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF1F2937),
+                              ),
+                            ),
                           ),
                         ),
                       ),
@@ -1116,7 +1133,7 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
                       ),
                       Text(
                         detalhe,
-                        maxLines: 1,
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.poppins(
                           fontSize: 12,
@@ -1163,9 +1180,9 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
       child: Obx(() {
         final evento = eventoController.eventoAtual.value ?? eventoModel;
         final publico = convidadoController.publicoPlanejadoDoEvento(evento);
-        final totConv = publico.total ?? 0;
+        final totConv = publico.cadastrados ?? 0;
         final conf = publico.confirmados ?? 0;
-        final progConv = totConv > 0 ? conf / totConv : 0.0;
+        final progConv = publico.proporcaoConfirmada ?? 0.0;
 
         final totOrc = orcamentoController.totalCustoEstimado.value;
         final limOrc = evento.custoEstimado ?? 0.0;
@@ -1193,6 +1210,7 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
             ),
             const SizedBox(height: 10),
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: agruparIndicadores
                   ? MainAxisAlignment.start
                   : MainAxisAlignment.spaceAround,
@@ -1200,7 +1218,9 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
                 for (final indicador in <Widget>[
                   _MiniCircularIndicator(
                     title: HomeOrganizadorCopy.resumoConvidados,
-                    value: publico.confirmados?.toString() ?? '—',
+                    value: publico.cadastrados == null ? '—' : '$conf/$totConv',
+                    subtitle: HomeOrganizadorCopy.convidadosPendentes(
+                        publico.pendentes),
                     progress: progConv,
                     color: cor,
                     onTap: homeEventNavController.irParaConvidados,
@@ -1220,7 +1240,9 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
                     onTap: () => _abrirListaTarefas(theme),
                   ),
                 ])
-                  agruparIndicadores ? Expanded(child: indicador) : indicador,
+                  agruparIndicadores
+                      ? Expanded(child: indicador)
+                      : Flexible(child: indicador),
               ],
             ),
           ],
@@ -1534,6 +1556,7 @@ class _AtalhoDesktop {
 class _MiniCircularIndicator extends StatelessWidget {
   final String title;
   final String value;
+  final String? subtitle;
   final double progress;
   final Color color;
   final VoidCallback? onTap;
@@ -1543,6 +1566,7 @@ class _MiniCircularIndicator extends StatelessWidget {
     required this.value,
     required this.progress,
     required this.color,
+    this.subtitle,
     this.onTap,
   });
 
@@ -1550,7 +1574,7 @@ class _MiniCircularIndicator extends StatelessWidget {
   Widget build(BuildContext context) {
     return Semantics(
       button: onTap != null,
-      label: '$title. $value',
+      label: [title, value, if (subtitle != null) subtitle].join('. '),
       child: MouseRegion(
         cursor: onTap == null ? MouseCursor.defer : SystemMouseCursors.click,
         child: InkWell(
@@ -1574,11 +1598,17 @@ class _MiniCircularIndicator extends StatelessWidget {
                             color: color,
                             backgroundColor: color.withValues(alpha: 0.15)),
                         Center(
+                            child: Padding(
+                          padding: const EdgeInsets.all(5),
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
                             child: Text(value,
                                 style: GoogleFonts.poppins(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w800,
-                                    color: const Color(0xFF1F2937)))),
+                                    color: const Color(0xFF1F2937))),
+                          ),
+                        )),
                       ],
                     ),
                   ),
@@ -1588,6 +1618,16 @@ class _MiniCircularIndicator extends StatelessWidget {
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
                           color: const Color(0xFF1F2937))),
+                  if (subtitle != null) ...[
+                    const SizedBox(height: 2),
+                    SizedBox(
+                      width: 88,
+                      child: Text(subtitle!,
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.poppins(
+                              fontSize: 10, color: const Color(0xFF6B7280))),
+                    ),
+                  ],
                 ],
               ),
             ),

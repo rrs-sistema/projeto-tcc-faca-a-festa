@@ -91,7 +91,7 @@ class MesasTab extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.all(24),
               child: Container(
-                width: double.infinity,
+                width: 520,
                 padding: const EdgeInsets.fromLTRB(20, 28, 20, 28),
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -348,8 +348,7 @@ class _ResumoMesas extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final resumo = [
-      _ResumoItem('Mesas', estat.totalMesas, Icons.table_bar_rounded,
-          primary),
+      _ResumoItem('Mesas', estat.totalMesas, Icons.table_bar_rounded, primary),
       _ResumoItem(
         'Assentos',
         estat.assentos,
@@ -371,7 +370,8 @@ class _ResumoMesas extends StatelessWidget {
     ];
 
     return LayoutBuilder(builder: (context, constraints) {
-      final width = (constraints.maxWidth - 24) / 4;
+      final columns = constraints.maxWidth >= 600 ? 4 : 2;
+      final width = (constraints.maxWidth - 8 * (columns - 1)) / columns;
       return Wrap(
         spacing: 8,
         runSpacing: 8,

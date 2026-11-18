@@ -4,6 +4,7 @@ import { admin } from "../../shared/firebaseAdmin";
 import { exigirUsuarioAutenticado, exigirTipo } from "../../shared/auth";
 import { carregarMapaDocs } from "../../shared/carregarMapaDocs";
 import {
+  parseEstadoExecucao,
   resolverLinhaContratacao,
 } from "../../services/financeiro/contratacaoIdentidadeService";
 import { centavosDeOrcamento } from "../../services/financeiro/dashboardAdminService";
@@ -41,6 +42,20 @@ function parseData(v: unknown): string | null {
     }
   }
   return null;
+}
+
+const calendarioBrasilia = new Intl.DateTimeFormat("sv-SE", {
+  timeZone: "America/Sao_Paulo",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
+function diaDaConsulta(valor: string | null): string | null {
+  if (!valor) return null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(valor)) return valor;
+  const data = new Date(valor);
+  return Number.isNaN(data.getTime()) ? null : calendarioBrasilia.format(data);
 }
 
 type ChavesContratacao = { id: string; idContrato: string };
@@ -145,19 +160,11 @@ export const consultarCentralContratacoes = onCall(
       if (estadoComercial === "contratado" && !contratado) continue;
       if (estadoComercial === "oportunidade" && contratado) continue;
       if (estadoExecucao) {
-        const ex = texto(contratoMap?.estado_execucao || d.estado_execucao).toLowerCase();
+        const ex = parseEstadoExecucao(d.estado_execucao ?? contratoMap?.estado_execucao);
         if (ex !== estadoExecucao) continue;
       }
 
       const dataEvento = parseData(d.data_evento) || parseData(d.data);
-      const dataContrato = parseData(d.data_cadastro) || parseData(d.data_fechamento);
-      if (inicio || fim) {
-        const ref = eixo === "data_contratacao" ? dataContrato : dataEvento;
-        if (ref) {
-          if (inicio && ref < inicio) continue;
-          if (fim && ref > fim) continue;
-        }
-      }
 
       itens.push({
         id: doc.id,
@@ -169,14 +176,32 @@ export const consultarCentralContratacoes = onCall(
       });
     }
 
+    const filtrarPeriodo = !!(inicio || fim);
+    const porContratacao = eixo === "data_contratacao";
+    const eventosDoPeriodo = filtrarPeriodo && !porContratacao
+      ? await carregarMapaDocs(db, "evento", new Set(
+        itens.filter(it => !diaDaConsulta(it.dataEvento)).map(it => texto(it.data.id_evento)),
+      ))
+      : new Map<string, Record<string, unknown>>();
+    const itensNoPeriodo = filtrarPeriodo ? itens.filter(it => {
+      const evento = eventosDoPeriodo.get(texto(it.data.id_evento));
+      const dia = porContratacao
+        ? it.contratado && (diaDaConsulta(parseData(it.data.data_fechamento))
+          ?? diaDaConsulta(parseData(it.data.data_cadastro)))
+        : diaDaConsulta(it.dataEvento) ?? diaDaConsulta(parseData(evento?.data));
+      return !!dia && (!inicio || dia >= inicio) && (!fim || dia <= fim);
+    }) : itens;
+
     const filtrarPorCaso = typeof casoAbertoFiltro === "boolean" || !!idResponsavel;
-    const casosFiltro = filtrarPorCaso ? await listarCasosPorContratos(db, idsParaMediacao(itens)) : null;
-    const candidatos = casosFiltro ? itens.filter(it => {
+    const casosFiltro = filtrarPorCaso
+      ? await listarCasosPorContratos(db, idsParaMediacao(itensNoPeriodo))
+      : null;
+    const candidatos = casosFiltro ? itensNoPeriodo.filter(it => {
       const caso = casosFiltro.get(it.idContrato) ?? casosFiltro.get(it.id);
       if (casoAbertoFiltro === true && !caso) return false;
       if (casoAbertoFiltro === false && caso) return false;
       return !idResponsavel || caso?.idResponsavel === idResponsavel;
-    }) : itens;
+    }) : itensNoPeriodo;
 
     // Sem busca textual, a página é conhecida antes de ler nomes ou valores.
     const itensParaEnriquecer = busca ? candidatos : candidatos.slice(offset, offset + limite);
@@ -185,7 +210,7 @@ export const consultarCentralContratacoes = onCall(
     const idsUsuario = new Set<string>();
     for (const it of itensParaEnriquecer) {
       const idEvento = texto(it.data.id_evento);
-      if (idEvento) idsEvento.add(idEvento);
+      if (idEvento && !eventosDoPeriodo.has(idEvento)) idsEvento.add(idEvento);
       const idForn = texto(it.data.id_fornecedor);
       if (idForn) idsFornecedor.add(idForn);
       const idSol = texto(it.data.id_solicitante);
@@ -197,8 +222,13 @@ export const consultarCentralContratacoes = onCall(
       carregarMapaDocs(db, "usuarios", idsUsuario),
       busca ? null : carregarFinanceiroPagina(db, itensParaEnriquecer, casosFiltro),
     ]);
+    for (const [id, evento] of eventosDoPeriodo) {
+      eventos.set(id, evento);
+    }
     const organizadoresRestantes = new Set<string>();
-    for (const ev of eventos.values()) {
+    for (const it of itensParaEnriquecer) {
+      const ev = eventos.get(texto(it.data.id_evento));
+      if (!ev) continue;
       const uid = texto(ev.id_usuario) || texto(ev.idUsuario);
       if (uid && !idsUsuario.has(uid)) organizadoresRestantes.add(uid);
     }
@@ -282,7 +312,7 @@ export const consultarCentralContratacoes = onCall(
         idOrcamento: it.id,
         idEvento,
         nomeEvento: linhaId.nome_evento,
-        dataEvento: it.dataEvento,
+        dataEvento: it.dataEvento ?? parseData(eventos.get(texto(d.id_evento))?.data),
         nomeContratante: linhaId.nome_contratante,
         nomeFornecedor: linhaId.nome_fornecedor,
         nomeServico: linhaId.nome_servico,

@@ -158,6 +158,30 @@ enum EstadoExecucaoContrato {
   }
 }
 
+class ValoresContratacaoAdmin {
+  ValoresContratacaoAdmin.fromMap(Map<String, dynamic> map)
+      : liquidoFornecedorCentavos =
+            (map['liquido_fornecedor_centavos'] as num?)?.toInt(),
+        comissaoCentavos = (map['comissao_centavos'] as num?)?.toInt(),
+        comissaoAbsorvida = map['comissao_absorvida'] == true,
+        comissaoRecebidaCentavos =
+            (map['comissao_recebida_centavos'] as num?)?.toInt(),
+        vencimentoComissao =
+            DateTime.tryParse(map['vencimento_comissao']?.toString() ?? ''),
+        repasseConfirmadoCentavos =
+            (map['repasse_confirmado_centavos'] as num?)?.toInt(),
+        ultimoRepasseConfirmadoEm = DateTime.tryParse(
+            map['ultimo_repasse_confirmado_em']?.toString() ?? '');
+
+  final int? liquidoFornecedorCentavos;
+  final int? comissaoCentavos;
+  final bool comissaoAbsorvida;
+  final int? comissaoRecebidaCentavos;
+  final DateTime? vencimentoComissao;
+  final int? repasseConfirmadoCentavos;
+  final DateTime? ultimoRepasseConfirmadoEm;
+}
+
 /// Linha administrativa: uma contratação (orçamento/contrato) identificada.
 class LinhaContratacaoAdmin {
   const LinhaContratacaoAdmin({
@@ -175,6 +199,7 @@ class LinhaContratacaoAdmin {
     this.nomeServico,
     this.valorContratadoCentavos = 0,
     this.pagoCentavos = 0,
+    this.valoresContratacao,
     this.pendenciasIdentificacao = const [],
     this.identidadeIncompleta = false,
     this.perfilAtualSeparado = false,
@@ -196,6 +221,7 @@ class LinhaContratacaoAdmin {
   final EstadoExecucaoContrato estadoExecucao;
   final int valorContratadoCentavos;
   final int pagoCentavos;
+  final ValoresContratacaoAdmin? valoresContratacao;
   final List<String> pendenciasIdentificacao;
   final bool identidadeIncompleta;
   final bool perfilAtualSeparado;
@@ -231,6 +257,7 @@ class LinhaContratacaoAdmin {
 
   factory LinhaContratacaoAdmin.fromMap(Map<String, dynamic> map) {
     final snapRaw = map['snapshot_aceite'] ?? map['snapshotAceite'];
+    final valores = map['valores_contratacao'];
     return LinhaContratacaoAdmin(
       idContrato:
           (map['id_contrato'] ?? map['idContrato'] ?? map['id_orcamento'] ?? '')
@@ -260,6 +287,9 @@ class LinhaContratacaoAdmin {
       pagoCentavos: (map['pago_centavos'] as num?)?.toInt() ??
           (map['pagoCentavos'] as num?)?.toInt() ??
           0,
+      valoresContratacao: valores is Map
+          ? ValoresContratacaoAdmin.fromMap(Map<String, dynamic>.from(valores))
+          : null,
       pendenciasIdentificacao: ((map['pendencias_identificacao'] ??
                   map['pendenciasIdentificacao']) as List?)
               ?.map((e) => e.toString())

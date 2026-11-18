@@ -73,6 +73,65 @@ void main() {
   });
   tearDown(() => Get.reset());
 
+  test('confirmação da lista independe da fonte escolhida na calculadora', () {
+    final lista = [
+      for (var i = 0; i < 42; i++)
+        pessoa('$i',
+            status: i < 27
+                ? StatusConvidado.confirmado
+                : i < 37
+                    ? StatusConvidado.pendente
+                    : StatusConvidado.recusado),
+      pessoa('outro_evento', evento: 'outra_festa'),
+    ];
+    final totaisDoCalculo = {
+      BaseCalculoFesta.todosConvidados: 42,
+      BaseCalculoFesta.apenasConfirmados: 27,
+      BaseCalculoFesta.naoRecusados: 37,
+      BaseCalculoFesta.previstos: 37,
+      BaseCalculoFesta.manual: 20,
+    };
+    for (final base in BaseCalculoFesta.values) {
+      final publico = const PublicoPlanejamentoService().resolver(
+          evento: 'festa',
+          previsao: const PrevisaoPublico(37, null),
+          convidados: lista,
+          base: base,
+          manual:
+              const ConvidadosEquivalentes(adultos: 20, criancas: 0, bebes: 0));
+      expect(publico.total, totaisDoCalculo[base]);
+      expect(publico.cadastrados, 42);
+      expect(publico.confirmados, 27);
+      expect(publico.proporcaoConfirmada, closeTo(27 / 42, .000001));
+      expect(publico.pendentes, 10);
+    }
+  });
+
+  test('indicador distingue lista vazia, indisponível e respostas concluídas',
+      () {
+    PublicoPlanejado resolver(List<Convidado> convidados,
+            {bool disponivel = true}) =>
+        const PublicoPlanejamentoService().resolver(
+            evento: 'festa',
+            previsao: const PrevisaoPublico(100, null),
+            convidados: convidados,
+            listaDisponivel: disponivel);
+    expect(resolver([]).proporcaoConfirmada, 0);
+    expect(resolver([]).pendentes, 0);
+    expect(resolver([], disponivel: false).proporcaoConfirmada, isNull);
+    expect(resolver([], disponivel: false).pendentes, isNull);
+    final publico = resolver([
+      pessoa('sim', status: StatusConvidado.confirmado),
+      pessoa('nao', status: StatusConvidado.recusado),
+    ]);
+    expect(publico.proporcaoConfirmada, .5);
+    expect(publico.pendentes, 0);
+    expect(
+        resolver([pessoa('sim', status: StatusConvidado.confirmado)])
+            .proporcaoConfirmada,
+        1);
+  });
+
   test('manual zero explícito não herda a previsão de 40', () async {
     final c = CalculadoraFestaController(
         aiService: AiQA(),

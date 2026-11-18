@@ -199,6 +199,14 @@ void main() {
         'nomeServico': 'Decoração do salão',
         'contratado': true,
         'valorContratadoCentavos': 8000000,
+        'valores_contratacao': {
+          'liquido_fornecedor_centavos': 7600000,
+          'comissao_centavos': 400000,
+          'comissao_recebida_centavos': 200000,
+          'vencimento_comissao': '2026-11-30T12:00:00.000Z',
+          'repasse_confirmado_centavos': 3800000,
+          'ultimo_repasse_confirmado_em': '2026-11-15T12:00:00.000',
+        },
       };
       final resumo = _fixturePreenchido();
       (resumo['linhasEvento'] as List).first['contratacoes'] = [contratacao];
@@ -224,6 +232,16 @@ void main() {
       ));
       await tester.pumpAndSettle();
 
+      final repasseNaLista =
+          find.text('Repasse previsto ${NumericInput.dinheiro(76000)}');
+      await tester.scrollUntilVisible(repasseNaLista, 300);
+      await tester.pumpAndSettle();
+      expect(repasseNaLista.hitTestable(), findsOneWidget);
+      expect(
+        find.text('Comissão prevista ${NumericInput.dinheiro(4000)}'),
+        findsOneWidget,
+      );
+
       final abrirEvento =
           find.text(largura < 768 ? 'Abrir resumo' : 'Abrir').first;
       await tester.ensureVisible(abrirEvento);
@@ -237,7 +255,15 @@ void main() {
       await tester.tap(linha);
       await tester.pumpAndSettle();
       final detalhe = find.text('Ver contratação e mediação');
-      expect(detalhe.hitTestable(), findsOneWidget);
+      expect(detalhe, findsOneWidget);
+      expect(find.text('Repasse previsto ao fornecedor'), findsOneWidget);
+      expect(
+        find.text('${NumericInput.dinheiro(38000)} · Último em 15/11/2026'),
+        findsOneWidget,
+      );
+      expect(find.text('Comissão prevista da plataforma'), findsOneWidget);
+      expect(find.text('Comissão recebida'), findsOneWidget);
+      expect(find.text('30/11/2026'), findsOneWidget);
 
       final fechar = find.byTooltip('Fechar').hitTestable();
       await tester.tap(fechar);

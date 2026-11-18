@@ -136,65 +136,44 @@ class AutenticacaoRepositoryImpl implements AutenticacaoRepository {
   }
 
   @override
-  Future<InicioTotpMfa> iniciarTotpMfa() {
-    return UpdateOperations.run(() async {
-      try {
-        return await remote.iniciarTotpMfa();
-      } on AutenticacaoRemoteException catch (erro) {
-        throw AutenticacaoException(erro.codigo, erro.mensagem);
-      }
-    });
-  }
+  Future<InicioTotpMfa> iniciarTotpMfa({String? autorizacao}) =>
+      _operarMfa(() => remote.iniciarTotpMfa(autorizacao: autorizacao));
 
   @override
-  Future<CodigoEmailMfa> solicitarCodigoEmailMfa() {
-    return UpdateOperations.run(() async {
-      try {
-        return await remote.solicitarCodigoEmailMfa();
-      } on AutenticacaoRemoteException catch (erro) {
-        throw AutenticacaoException(erro.codigo, erro.mensagem);
-      }
-    });
-  }
+  Future<CodigoEmailMfa> solicitarCodigoEmailMfa({String? autorizacao}) =>
+      _operarMfa(
+          () => remote.solicitarCodigoEmailMfa(autorizacao: autorizacao));
 
   @override
-  Future<void> confirmarTotpMfa(String codigo) {
-    return UpdateOperations.run(() async {
-      try {
-        await remote.confirmarTotpMfa(codigo);
-      } on AutenticacaoRemoteException catch (erro) {
-        throw AutenticacaoException(erro.codigo, erro.mensagem);
-      }
-    });
-  }
+  Future<String> confirmarTotpMfa(String codigo, {String? autorizacao}) =>
+      _operarMfa(
+          () => remote.confirmarTotpMfa(codigo, autorizacao: autorizacao));
 
   @override
-  Future<void> confirmarEmailMfa(String codigo) {
-    return UpdateOperations.run(() async {
-      try {
-        await remote.confirmarEmailMfa(codigo);
-      } on AutenticacaoRemoteException catch (erro) {
-        throw AutenticacaoException(erro.codigo, erro.mensagem);
-      }
-    });
-  }
+  Future<String> confirmarEmailMfa(String codigo, {String? autorizacao}) =>
+      _operarMfa(
+          () => remote.confirmarEmailMfa(codigo, autorizacao: autorizacao));
 
   @override
-  Future<void> verificarTotpMfa(String codigo) {
-    return UpdateOperations.run(() async {
-      try {
-        await remote.verificarTotpMfa(codigo);
-      } on AutenticacaoRemoteException catch (erro) {
-        throw AutenticacaoException(erro.codigo, erro.mensagem);
-      }
-    });
-  }
+  Future<String> verificarTotpMfa(String codigo) =>
+      _operarMfa(() => remote.verificarTotpMfa(codigo));
 
   @override
-  Future<void> verificarEmailMfa(String codigo) {
+  Future<String> verificarEmailMfa(String codigo) =>
+      _operarMfa(() => remote.verificarEmailMfa(codigo));
+
+  @override
+  Future<String> verificarCodigoRecuperacaoMfa(String codigo) =>
+      _operarMfa(() => remote.verificarCodigoRecuperacaoMfa(codigo));
+
+  @override
+  Future<List<String>> gerarCodigosRecuperacaoMfa(String autorizacao) =>
+      _operarMfa(() => remote.gerarCodigosRecuperacaoMfa(autorizacao));
+
+  Future<T> _operarMfa<T>(Future<T> Function() operacao) {
     return UpdateOperations.run(() async {
       try {
-        await remote.verificarEmailMfa(codigo);
+        return await operacao();
       } on AutenticacaoRemoteException catch (erro) {
         throw AutenticacaoException(erro.codigo, erro.mensagem);
       }

@@ -303,7 +303,8 @@ class _StatsOverviewGrid extends StatelessWidget {
           color: const Color(0xFFDC2626)),
     ];
     return LayoutBuilder(builder: (context, constraints) {
-      final itemWidth = (constraints.maxWidth - 8) / 2;
+      final columns = constraints.maxWidth >= 760 ? 4 : 2;
+      final itemWidth = (constraints.maxWidth - 8 * (columns - 1)) / columns;
       return Wrap(
           spacing: 8,
           runSpacing: 8,
@@ -535,49 +536,60 @@ class _ChartsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        _ChartCard(
-            primary: primary,
-            icon: Icons.diversity_3_rounded,
-            title: 'Perfil',
-            subtitle: 'Faixa etária.',
-            chart: _AgePieChart(
-                primary: primary,
-                adultos: totalAdultos,
-                criancas: totalCriancas,
-                bebes: totalBebes),
-            legend: [
-              _LegendItem(
-                  label: 'Adultos', value: totalAdultos, color: primary),
-              _LegendItem(
-                  label: 'Crianças',
-                  value: totalCriancas,
-                  color: const Color(0xFFF59E0B)),
-              _LegendItem(
-                  label: 'Bebês',
-                  value: totalBebes,
-                  color: const Color(0xFF7C3AED))
-            ]),
+    final charts = <Widget>[
+      _ChartCard(
+          primary: primary,
+          icon: Icons.diversity_3_rounded,
+          title: 'Perfil',
+          subtitle: 'Faixa etária.',
+          chart: _AgePieChart(
+              primary: primary,
+              adultos: totalAdultos,
+              criancas: totalCriancas,
+              bebes: totalBebes),
+          legend: [
+            _LegendItem(label: 'Adultos', value: totalAdultos, color: primary),
+            _LegendItem(
+                label: 'Crianças',
+                value: totalCriancas,
+                color: const Color(0xFFF59E0B)),
+            _LegendItem(
+                label: 'Bebês',
+                value: totalBebes,
+                color: const Color(0xFF7C3AED))
+          ]),
+      _ChartCard(
+          primary: primary,
+          icon: Icons.mark_email_read_rounded,
+          title: 'Status',
+          subtitle: 'Respostas.',
+          chart: _StatusPieChart(
+              confirmados: confirmados,
+              pendentes: pendentes,
+              recusados: recusados),
+          legend: const [
+            _LegendItem(label: 'Conf.', value: null, color: Color(0xFF059669)),
+            _LegendItem(label: 'Pend.', value: null, color: Color(0xFFF59E0B)),
+            _LegendItem(label: 'Rec.', value: null, color: Color(0xFFDC2626))
+          ]),
+    ];
+    return LayoutBuilder(builder: (context, constraints) {
+      if (constraints.maxWidth >= 760) {
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: charts[0]),
+            const SizedBox(width: 16),
+            Expanded(child: charts[1]),
+          ],
+        );
+      }
+      return Column(children: [
+        charts[0],
         const SizedBox(height: 12),
-        _ChartCard(
-            primary: primary,
-            icon: Icons.mark_email_read_rounded,
-            title: 'Status',
-            subtitle: 'Respostas.',
-            chart: _StatusPieChart(
-                confirmados: confirmados,
-                pendentes: pendentes,
-                recusados: recusados),
-            legend: const [
-              _LegendItem(
-                  label: 'Conf.', value: null, color: Color(0xFF059669)),
-              _LegendItem(
-                  label: 'Pend.', value: null, color: Color(0xFFF59E0B)),
-              _LegendItem(label: 'Rec.', value: null, color: Color(0xFFDC2626))
-            ]),
-      ],
-    );
+        charts[1],
+      ]);
+    });
   }
 }
 

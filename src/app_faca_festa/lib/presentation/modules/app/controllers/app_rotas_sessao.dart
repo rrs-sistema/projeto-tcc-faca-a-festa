@@ -19,9 +19,7 @@ abstract final class AppRotasSessao {
         ehConvite(rota);
   }
 
-  /// Subtelas abertas com Get.to() (ex.: lista de fornecedores) não são
-  /// `/HomeEventScreen`. Sem esta guarda, qualquer revalidação de sessão
-  /// manda o usuário de volta à splash e ela fica eterna.
+  /// Preserva as subtelas abertas pelo usuário durante a revalidação da sessão.
   static bool usuarioJaNavegando(String rota, {required bool temUsuario}) {
     if (!temUsuario) return false;
     if (rota.isEmpty) return false;

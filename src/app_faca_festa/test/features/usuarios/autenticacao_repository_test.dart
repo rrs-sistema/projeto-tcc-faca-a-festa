@@ -254,34 +254,50 @@ class _AutenticacaoRemoteFake implements AutenticacaoRemoteDatasource {
   }
 
   @override
-  Future<InicioTotpMfa> iniciarTotpMfa() async {
+  Future<InicioTotpMfa> iniciarTotpMfa({String? autorizacao}) async {
     if (erro != null) throw erro!;
     return const InicioTotpMfa();
   }
 
   @override
-  Future<CodigoEmailMfa> solicitarCodigoEmailMfa() async {
+  Future<CodigoEmailMfa> solicitarCodigoEmailMfa({String? autorizacao}) async {
     if (erro != null) throw erro!;
     return const CodigoEmailMfa();
   }
 
   @override
-  Future<void> confirmarTotpMfa(String codigo) async {
+  Future<String> confirmarTotpMfa(String codigo, {String? autorizacao}) async {
     if (erro != null) throw erro!;
+    return 'autorizacao';
   }
 
   @override
-  Future<void> confirmarEmailMfa(String codigo) async {
+  Future<String> confirmarEmailMfa(String codigo, {String? autorizacao}) async {
     if (erro != null) throw erro!;
+    return 'autorizacao';
   }
 
   @override
-  Future<void> verificarTotpMfa(String codigo) async {
+  Future<String> verificarTotpMfa(String codigo) async {
     if (erro != null) throw erro!;
+    return 'autorizacao';
   }
 
   @override
-  Future<void> verificarEmailMfa(String codigo) async {
+  Future<String> verificarEmailMfa(String codigo) async {
     if (erro != null) throw erro!;
+    return 'autorizacao';
+  }
+
+  @override
+  Future<String> verificarCodigoRecuperacaoMfa(String codigo) async {
+    if (erro != null) throw erro!;
+    return 'autorizacao';
+  }
+
+  @override
+  Future<List<String>> gerarCodigosRecuperacaoMfa(String autorizacao) async {
+    if (erro != null) throw erro!;
+    return ['codigo'];
   }
 }

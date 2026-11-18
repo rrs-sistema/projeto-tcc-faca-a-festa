@@ -80,9 +80,28 @@ class Gateway implements CallableSessaoGateway {
   Stream<String?> get sessoes => stream.stream;
   @override
   Future<Map<String, dynamic>> chamar(
-          String nome, Map<String, dynamic> dados) async =>
-      throw FirebaseFunctionsException(
-          code: 'unavailable', message: 'Fonte consolidada fora do ar');
+      String nome, Map<String, dynamic> dados) async {
+    if (nome == 'consultarDemandaLatenteFornecedor') {
+      return {
+        'geradoEm': '2026-10-27T12:00:00Z',
+        'totalEventos': 2,
+        'totalSemCotacao': 2,
+        'buckets': [
+          {
+            'tipoNome': 'Formatura',
+            'cidade': 'Curitiba',
+            'quantidade': 2,
+            'semCotacao': 2,
+            'proximos90Dias': 1,
+            'convidadosMedios': 35,
+          },
+        ],
+        'criterio': 'teste',
+      };
+    }
+    throw FirebaseFunctionsException(
+        code: 'unavailable', message: 'Fonte consolidada fora do ar');
+  }
 }
 
 Map<String, dynamic> fontes() => {
@@ -389,7 +408,7 @@ void main() {
       expect(pedidos.hitTestable(), findsOneWidget);
       expect(find.text('1 pedido no total'), findsOneWidget);
       expect(find.text('1 novo aguardando resposta'), findsOneWidget);
-      expect(t.getTopLeft(find.text('Ana Martins')).dy, lessThan(700));
+      expect(t.getTopLeft(find.text('Ana Martins')).dy, lessThan(980));
       expect(t.getTopLeft(pedidos).dy,
           lessThan(t.getTopLeft(find.text('Acessos rápidos')).dy));
       expect(t.getTopLeft(pedidos).dy,

@@ -42,6 +42,10 @@ final _contrato = {
 
 class _Remote extends Fake implements CentralMediacaoRemote {
   String? ultimoFiltro;
+  String? ultimaExecucao;
+  String? ultimoEixo;
+  String? ultimoInicio;
+  String? ultimoFim;
   String estadoDetalhe = 'oportunidade';
   Completer<void>? esperaConsulta;
   @override
@@ -58,12 +62,17 @@ class _Remote extends Fake implements CentralMediacaoRemote {
       int offset = 0,
       int limite = 50}) async {
     ultimoFiltro = estadoComercial;
+    ultimaExecucao = estadoExecucao;
+    ultimoEixo = eixoTemporal;
+    ultimoInicio = periodoInicio;
+    ultimoFim = periodoFim;
     if (esperaConsulta != null) await esperaConsulta!.future;
     final linhas = [_oportunidade, _contrato]
         .where((m) =>
             estadoComercial == null ||
             estadoComercial.isEmpty ||
             m['estadoComercial'] == estadoComercial)
+        .where((m) => casoAberto != true || m['casoAberto'] == true)
         .toList();
     return {
       'linhas': linhas,
@@ -174,6 +183,7 @@ void main() {
         (tester) async {
       Get.put<FornecedorRepository>(_Fornecedores());
       String? fornecedorConsultado;
+      Completer<void>? consultaPendente;
       final controller = DashboardFinanceiroAdminController(consultarFn: (
           {required eixoTemporal,
           periodoInicio,
@@ -181,6 +191,7 @@ void main() {
           idFornecedor,
           estado}) async {
         fornecedorConsultado = idFornecedor;
+        await consultaPendente?.future;
         return {
           'completo': true,
           'receitaPlataformaCentavos': 0,
@@ -237,9 +248,28 @@ void main() {
       expect(controller.filtroFornecedor.value, 'fornecedor-id');
       expect(fornecedorConsultado, anyOf(isNull, ''));
       final aplicar = find.text('Aplicar filtros');
-      await tester.ensureVisible(aplicar);
-      await tester.tap(aplicar);
+      await Scrollable.ensureVisible(tester.element(aplicar), alignment: .65);
       await tester.pumpAndSettle();
+      final espera = consultaPendente = Completer<void>();
+      await tester.tap(aplicar);
+      await tester.pump();
+      expect(controller.carregando.value, isTrue);
+      final carregando = find.text('Atualizando consulta…');
+      final botaoCarregando = find.ancestor(
+        of: carregando,
+        matching: find.byWidgetPredicate((widget) => widget is FilledButton),
+      );
+      expect(tester.widget<FilledButton>(botaoCarregando).onPressed, isNull);
+      expect(
+          tester
+              .widget<TextButton>(find.widgetWithText(TextButton, 'Limpar'))
+              .onPressed,
+          isNull);
+      expect(find.text('Carregando...'), findsNWidgets(2));
+      espera.complete();
+      await tester.pumpAndSettle();
+      expect(carregando, findsNothing);
+      expect(find.text('Carregando...'), findsNothing);
       expect(fornecedorConsultado, 'fornecedor-id');
       if (tamanho.width > 1000) {
         final secao = find.text('Por contratação');
@@ -322,6 +352,58 @@ void main() {
     expect(remote.ultimoFiltro, 'contratado');
     expect(controller.linhas.length, 1);
     expect(controller.linhas.single.estadoComercial, 'contratado');
+  });
+
+  testWidgets('filtros inferiores consultam e podem ser limpos',
+      (tester) async {
+    final remote = _Remote();
+    final controller = CentralMediacaoController(remote: remote)
+      ..periodoInicio.value = '2026-11-01'
+      ..periodoFim.value = '2026-11-30';
+    await _abrir(
+        tester,
+        CentralMediacaoPage(
+            controller: controller, themeController: EventThemeController()),
+        const Size(1366, 1000),
+        1);
+
+    final espera = remote.esperaConsulta = Completer<void>();
+    await tester.tap(find.text('Caso aberto').first);
+    await tester.pump();
+    expect(find.text('Atualizando…'), findsOneWidget);
+    expect(find.text('Carregando...'), findsOneWidget);
+    expect(controller.casoAberto.value, isTrue);
+    expect(find.text('Nenhuma contratação no recorte'), findsNothing);
+    espera.complete();
+    remote.esperaConsulta = null;
+    await tester.pumpAndSettle();
+    expect(controller.linhas.single.idOrcamento, 'contrato');
+
+    await tester.tap(find.text('Data do evento'));
+    await tester.pumpAndSettle();
+    expect(remote.ultimoEixo, 'data_contratacao');
+    expect(remote.ultimoInicio, '2026-11-01');
+    expect(remote.ultimoFim, '2026-11-30');
+    await tester.tap(find.byTooltip('Limpar período'));
+    await tester.pumpAndSettle();
+    expect(remote.ultimoInicio, isEmpty);
+    expect(remote.ultimoFim, isEmpty);
+
+    await tester.tap(find.text('Mais filtros'));
+    await tester.pumpAndSettle();
+    await tester
+        .tap(find.widgetWithText(DropdownButtonFormField<String>, 'Execução'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Agendado').last);
+    await tester.pumpAndSettle();
+    expect(remote.ultimaExecucao, 'agendado');
+    await tester
+        .tap(find.widgetWithText(DropdownButtonFormField<String>, 'Execução'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Todas').last);
+    await tester.pumpAndSettle();
+    expect(remote.ultimaExecucao, isEmpty);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('oportunidade no detalhe não apresenta dívida ou repasse',

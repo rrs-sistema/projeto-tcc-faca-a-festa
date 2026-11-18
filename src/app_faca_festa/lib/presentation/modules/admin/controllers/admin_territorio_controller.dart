@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter_map/flutter_map.dart';
@@ -23,6 +24,10 @@ class AdminTerritorioController extends GetxController {
   final idTerritorioSelecionado = RxnString();
   final busca = ''.obs;
   final filtroStatus = FiltroStatusTerritorio.todos.obs;
+  final _previaCobertura = Rxn<Territorio>();
+  Timer? _enquadramentoPrevia;
+
+  Territorio? get previaCobertura => _previaCobertura.value;
 
   static const LatLng centroBrasil = LatLng(-15.78, -47.93);
 
@@ -100,7 +105,7 @@ class AdminTerritorioController extends GetxController {
   void ajustarMapaParaTerritorios() {
     final pontos = <LatLng>[];
     for (final t in territorios.where((t) => t.ativo)) {
-      pontos.addAll(_pontosDeCobertura(t));
+      pontos.addAll(pontosDeCobertura(t));
     }
     _aplicarFit(pontos);
   }
@@ -111,10 +116,33 @@ class AdminTerritorioController extends GetxController {
       ajustarMapaParaTerritorios();
       return;
     }
-    _aplicarFit(_pontosDeCobertura(t), maxZoom: 12);
+    _aplicarFit(pontosDeCobertura(t), maxZoom: 12);
   }
 
-  List<LatLng> _pontosDeCobertura(Territorio t) {
+  void mostrarPreviaCobertura(Territorio territorio) {
+    _previaCobertura.value = territorio;
+    _enquadramentoPrevia?.cancel();
+    _enquadramentoPrevia = Timer(const Duration(milliseconds: 220), () {
+      final pontos = pontosDeCobertura(territorio);
+      if (pontos.isNotEmpty) _aplicarFit(pontos, maxZoom: 12);
+    });
+  }
+
+  void encerrarPreviaCobertura({MapCamera? cameraAnterior}) {
+    _enquadramentoPrevia?.cancel();
+    _previaCobertura.value = null;
+    if (cameraAnterior != null) {
+      mapController.moveAndRotate(
+        cameraAnterior.center,
+        cameraAnterior.zoom,
+        cameraAnterior.rotation,
+      );
+    } else {
+      ajustarMapaParaSelecionado();
+    }
+  }
+
+  List<LatLng> pontosDeCobertura(Territorio t) {
     final pontos = <LatLng>[];
 
     if (t.tipoCobertura == 'regiao' &&
@@ -221,6 +249,15 @@ class AdminTerritorioController extends GetxController {
 
   Future<void> salvarTerritorio(Territorio t) async {
     await _territoriosAdmin.salvarTerritorio(t);
+    final atualizados = territorios.toList();
+    final indice =
+        atualizados.indexWhere((item) => item.idTerritorio == t.idTerritorio);
+    if (indice < 0) {
+      atualizados.add(t);
+    } else {
+      atualizados[indice] = t;
+    }
+    territorios.value = atualizados;
     idTerritorioSelecionado.value = t.idTerritorio;
     await carregarTerritorios();
     _mostrarSnackbar(
@@ -251,6 +288,7 @@ class AdminTerritorioController extends GetxController {
 
   @override
   void onClose() {
+    _enquadramentoPrevia?.cancel();
     buscaCtrl.dispose();
     mapController.dispose();
     super.onClose();

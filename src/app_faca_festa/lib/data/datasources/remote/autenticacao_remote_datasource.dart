@@ -68,17 +68,21 @@ abstract interface class AutenticacaoRemoteDatasource {
     required String novaSenha,
   });
 
-  Future<InicioTotpMfa> iniciarTotpMfa();
+  Future<InicioTotpMfa> iniciarTotpMfa({String? autorizacao});
 
-  Future<CodigoEmailMfa> solicitarCodigoEmailMfa();
+  Future<CodigoEmailMfa> solicitarCodigoEmailMfa({String? autorizacao});
 
-  Future<void> confirmarTotpMfa(String codigo);
+  Future<String> confirmarTotpMfa(String codigo, {String? autorizacao});
 
-  Future<void> confirmarEmailMfa(String codigo);
+  Future<String> confirmarEmailMfa(String codigo, {String? autorizacao});
 
-  Future<void> verificarTotpMfa(String codigo);
+  Future<String> verificarTotpMfa(String codigo);
 
-  Future<void> verificarEmailMfa(String codigo);
+  Future<String> verificarEmailMfa(String codigo);
+
+  Future<String> verificarCodigoRecuperacaoMfa(String codigo);
+
+  Future<List<String>> gerarCodigosRecuperacaoMfa(String autorizacao);
 
   Future<void> sair();
 }
@@ -397,40 +401,64 @@ class FirebaseAutenticacaoRemoteDatasource
   }
 
   @override
-  Future<InicioTotpMfa> iniciarTotpMfa() async {
-    final data = await _chamarFunction('iniciarTotpMfa');
+  Future<InicioTotpMfa> iniciarTotpMfa({String? autorizacao}) async {
+    final data = await _chamarFunction('iniciarTotpMfa', {
+      if (autorizacao != null) 'autorizacao': autorizacao,
+    });
     return _inicioTotpMfaDeMap(data);
   }
 
   @override
-  Future<CodigoEmailMfa> solicitarCodigoEmailMfa() async {
-    final data = await _chamarFunction('solicitarCodigoEmailMfa');
+  Future<CodigoEmailMfa> solicitarCodigoEmailMfa({String? autorizacao}) async {
+    final data = await _chamarFunction('solicitarCodigoEmailMfa', {
+      if (autorizacao != null) 'autorizacao': autorizacao,
+    });
     return _codigoEmailMfaDeMap(data);
   }
 
   @override
-  Future<void> confirmarTotpMfa(String codigo) => _chamarFunctionSemRetorno(
-        'confirmarTotpMfa',
-        {'codigo': codigo},
-      );
+  Future<String> confirmarTotpMfa(String codigo, {String? autorizacao}) =>
+      _confirmarMfa('confirmarTotpMfa', codigo, autorizacao: autorizacao);
 
   @override
-  Future<void> confirmarEmailMfa(String codigo) => _chamarFunctionSemRetorno(
-        'confirmarEmailMfa',
-        {'codigo': codigo},
-      );
+  Future<String> confirmarEmailMfa(String codigo, {String? autorizacao}) =>
+      _confirmarMfa('confirmarEmailMfa', codigo, autorizacao: autorizacao);
 
   @override
-  Future<void> verificarTotpMfa(String codigo) => _chamarFunctionSemRetorno(
-        'verificarTotpMfa',
-        {'codigo': codigo},
-      );
+  Future<String> verificarTotpMfa(String codigo) =>
+      _confirmarMfa('verificarTotpMfa', codigo);
 
   @override
-  Future<void> verificarEmailMfa(String codigo) => _chamarFunctionSemRetorno(
-        'verificarEmailMfa',
-        {'codigo': codigo},
-      );
+  Future<String> verificarEmailMfa(String codigo) =>
+      _confirmarMfa('verificarEmailMfa', codigo);
+
+  @override
+  Future<String> verificarCodigoRecuperacaoMfa(String codigo) =>
+      _confirmarMfa('verificarCodigoRecuperacaoMfa', codigo);
+
+  @override
+  Future<List<String>> gerarCodigosRecuperacaoMfa(String autorizacao) async {
+    final data = await _chamarFunction('gerarCodigosRecuperacaoMfa', {
+      'autorizacao': autorizacao,
+    });
+    final codigos = data['codigos'];
+    if (codigos is! List || codigos.isEmpty) {
+      throw const AutenticacaoRemoteException('internal');
+    }
+    return codigos.cast<String>();
+  }
+
+  Future<String> _confirmarMfa(
+    String nome,
+    String codigo, {
+    String? autorizacao,
+  }) async {
+    final data = await _chamarFunction(nome, {
+      'codigo': codigo,
+      if (autorizacao != null) 'autorizacao': autorizacao,
+    });
+    return data['autorizacao'] as String? ?? '';
+  }
 
   Future<void> _chamarFunctionSemRetorno(
     String nome, [

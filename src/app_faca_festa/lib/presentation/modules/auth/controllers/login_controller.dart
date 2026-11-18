@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:get/get.dart';
 
 import 'package:app_faca_festa/app/routes/app_route_args.dart';
@@ -10,8 +12,9 @@ import 'package:app_faca_festa/domain/usecases/gerenciar_auditoria.dart';
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
 import 'package:app_faca_festa/presentation/modules/auth/widgets/auth_erro_login_sheet.dart';
 
-/// Contrato mínimo da sessão após o formulário de login autenticar.
+/// Contrato entre o formulário de login e o ciclo da sessão.
 abstract class SessaoLoginPort {
+  Future<void> processarLogin(Future<bool> Function() preparar);
   void marcarLoginComSenha();
   void marcarLoginComGoogle();
   bool get fluxoConviteAtivo;
@@ -22,6 +25,9 @@ abstract class SessaoLoginPort {
 class AppControllerSessaoLogin implements SessaoLoginPort {
   AppControllerSessaoLogin(this._app);
   final AppController _app;
+  @override
+  Future<void> processarLogin(Future<bool> Function() preparar) =>
+      _app.processarLogin(preparar);
   @override
   void marcarLoginComSenha() => _app.marcarLoginComSenha();
   @override
@@ -73,6 +79,7 @@ class LoginController extends GetxController {
   }
 
   Future<void> login() async {
+    if (carregando.value) return;
     final erroEmail = FormValidators.email(email.value);
     if (erroEmail != null) {
       _mostrarErro(mensagem: erroEmail, titulo: 'Confira o e-mail');
@@ -88,20 +95,18 @@ class LoginController extends GetxController {
       carregando.value = true;
       final sessao = _resolverSessao();
       _capturarTokenDosArgumentos(sessao);
-      sessao.marcarLoginComSenha();
-      await _autenticacaoRepository.entrar(
-        email: email.value.trim(),
-        senha: senha.value.trim(),
-      );
-
-      await _garantirPerfilDoUsuario();
-      await _registrarAcesso(
-        acao: 'LOGIN_REALIZADO',
-        resumo: 'Login com e-mail e senha realizado.',
-        metodo: 'senha',
-      );
-      sessao.acessoPorLink.value = false;
-      Get.offAllNamed('/splash');
+      await sessao.processarLogin(() async {
+        await _autenticacaoRepository.entrar(
+          email: email.value.trim(),
+          senha: senha.value.trim(),
+        );
+        sessao.marcarLoginComSenha();
+        return _prepararSessao(
+          sessao,
+          resumo: 'Login com e-mail e senha realizado.',
+          metodo: 'senha',
+        );
+      });
     } on AutenticacaoException catch (e) {
       await _registrarFalhaLogin(codigo: e.codigo, metodo: 'senha');
       _mostrarErro(codigo: e.codigo);
@@ -111,23 +116,21 @@ class LoginController extends GetxController {
   }
 
   Future<void> loginComGoogle() async {
+    if (carregando.value) return;
     try {
       carregando.value = true;
       final sessao = _resolverSessao();
       _capturarTokenDosArgumentos(sessao);
-      sessao.marcarLoginComGoogle();
-      final autenticou = await _autenticacaoRepository.entrarComGoogle();
-      if (!autenticou) {
-        return;
-      }
-      await _garantirPerfilDoUsuario();
-      await _registrarAcesso(
-        acao: 'LOGIN_REALIZADO',
-        resumo: 'Login com Google realizado.',
-        metodo: 'google',
-      );
-      sessao.acessoPorLink.value = false;
-      Get.offAllNamed('/splash');
+      await sessao.processarLogin(() async {
+        final autenticou = await _autenticacaoRepository.entrarComGoogle();
+        if (!autenticou) return false;
+        sessao.marcarLoginComGoogle();
+        return _prepararSessao(
+          sessao,
+          resumo: 'Login com Google realizado.',
+          metodo: 'google',
+        );
+      });
     } on AutenticacaoException catch (e) {
       if (e.foiCancelada) {
         return;
@@ -139,12 +142,27 @@ class LoginController extends GetxController {
     }
   }
 
-  Future<void> _garantirPerfilDoUsuario() async {
+  Future<bool> _prepararSessao(
+    SessaoLoginPort sessao, {
+    required String resumo,
+    required String metodo,
+  }) async {
     final idUsuario = _autenticacaoRepository.idUsuarioAtual;
-    if (idUsuario == null) return;
+    if (idUsuario == null) return false;
+    await _garantirPerfilDoUsuario(idUsuario);
+    if (_autenticacaoRepository.idUsuarioAtual != idUsuario) return false;
 
+    sessao.acessoPorLink.value = false;
+    unawaited(_registrarAcesso(resumo: resumo, metodo: metodo));
+    return true;
+  }
+
+  Future<void> _garantirPerfilDoUsuario(String idUsuario) async {
     final usuario = await _perfilRepository.buscarUsuario(idUsuario);
-    if (usuario != null) return;
+    if (usuario != null ||
+        _autenticacaoRepository.idUsuarioAtual != idUsuario) {
+      return;
+    }
 
     final nome = _autenticacaoRepository.nomeUsuarioAtual?.trim() ?? '';
     final email = _autenticacaoRepository.emailUsuarioAtual ?? '';
@@ -186,7 +204,6 @@ class LoginController extends GetxController {
   }
 
   Future<void> _registrarAcesso({
-    required String acao,
     required String resumo,
     required String metodo,
   }) async {
@@ -195,7 +212,7 @@ class LoginController extends GetxController {
       if (auditoria == null) return;
       await auditoria.registrar(
         RegistroAuditoria(
-          acao: acao,
+          acao: 'LOGIN_REALIZADO',
           resumo: resumo,
           entidadeTipo: 'sessao',
           entidadeId: _autenticacaoRepository.idUsuarioAtual,

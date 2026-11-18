@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'atualizacao_indicadores.dart';
+import 'demanda_latente_section.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
@@ -265,6 +266,8 @@ class _VisaoOperacionalFornecedorState
                 ],
               ),
             ),
+            const SizedBox(height: 16),
+            DemandaLatenteSection(gateway: c.gateway),
             const SizedBox(height: 16),
             if (widget.pedidos != null) ...[
               widget.pedidos!,

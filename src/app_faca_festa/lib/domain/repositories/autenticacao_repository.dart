@@ -74,17 +74,21 @@ abstract interface class AutenticacaoRepository {
     required String novaSenha,
   });
 
-  Future<InicioTotpMfa> iniciarTotpMfa();
+  Future<InicioTotpMfa> iniciarTotpMfa({String? autorizacao});
 
-  Future<CodigoEmailMfa> solicitarCodigoEmailMfa();
+  Future<CodigoEmailMfa> solicitarCodigoEmailMfa({String? autorizacao});
 
-  Future<void> confirmarTotpMfa(String codigo);
+  Future<String> confirmarTotpMfa(String codigo, {String? autorizacao});
 
-  Future<void> confirmarEmailMfa(String codigo);
+  Future<String> confirmarEmailMfa(String codigo, {String? autorizacao});
 
-  Future<void> verificarTotpMfa(String codigo);
+  Future<String> verificarTotpMfa(String codigo);
 
-  Future<void> verificarEmailMfa(String codigo);
+  Future<String> verificarEmailMfa(String codigo);
+
+  Future<String> verificarCodigoRecuperacaoMfa(String codigo);
+
+  Future<List<String>> gerarCodigosRecuperacaoMfa(String autorizacao);
 
   Future<void> sair();
 }

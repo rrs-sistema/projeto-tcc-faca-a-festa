@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 
 import 'package:app_faca_festa/core/utils/numeric_input.dart';
 import 'package:app_faca_festa/domain/entities/financeiro/contratacao_identidade.dart';
@@ -13,6 +14,7 @@ import 'package:app_faca_festa/presentation/modules/tema/admin_theme.dart';
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import 'package:app_faca_festa/presentation/widgets/admin/admin_kit.dart';
 import 'package:app_faca_festa/presentation/widgets/festa_app_bar.dart';
+import 'package:app_faca_festa/presentation/widgets/operacao/operacao_skeleton.dart';
 
 /// Visão financeira administrativa — síntese executiva, filtros compactos, eventos.
 class DashboardFinanceiroAdminPage extends StatefulWidget {
@@ -146,7 +148,7 @@ class _DashboardFinanceiroAdminPageState
       final sync = c.sincronizado.value;
       final busy = c.carregando.value;
       final pendentes = c.filtrosPendentes.value;
-      final loading = busy && r == null;
+      final loading = busy && r == null && !_filtrosAbertos && !pendentes;
       // Lê eixo/filtros aqui para o Obx reagir a rascunhos.
       c.eixoTemporal.value;
       c.filtroEstado.value;
@@ -214,18 +216,31 @@ class _DashboardFinanceiroAdminPageState
                             _contagemRecorte(r),
                             const SizedBox(height: 16),
                             _painelFiltros(w, pendentes: pendentes, busy: busy),
-                            if (c.consultaTruncada ||
-                                c.qtdIdentidadeIncompleta > 0) ...[
+                            if (!busy &&
+                                (c.consultaTruncada ||
+                                    c.qtdIdentidadeIncompleta > 0)) ...[
                               const SizedBox(height: 12),
                               _avisosCompletude(),
                             ],
+                          ] else ...[
+                            _painelFiltros(w, pendentes: pendentes, busy: busy),
+                          ],
+                          if (busy) ...[
                             const SizedBox(height: 16),
-                            // Evento primeiro (agregado) → contratação (linha a linha).
+                            const OperacaoSkeleton(
+                              titulo: 'Por evento',
+                              icon: Icons.event_outlined,
+                            ),
+                            const SizedBox(height: 16),
+                            const OperacaoSkeleton(
+                              titulo: 'Por contratação',
+                              icon: Icons.handshake_outlined,
+                            ),
+                          ] else if (r != null) ...[
+                            const SizedBox(height: 16),
                             _secaoEventos(r, w, erro: err),
                             const SizedBox(height: 16),
                             _secaoContratacoes(w),
-                          ] else ...[
-                            _painelFiltros(w, pendentes: pendentes, busy: busy),
                           ],
                           if (r == null && err.isEmpty && !busy)
                             Padding(
@@ -376,7 +391,7 @@ class _DashboardFinanceiroAdminPageState
                 if (c.fornecedorAplicado.isNotEmpty)
                   Text(
                       'Fornecedor: ${_nomesFornecedores[c.fornecedorAplicado] ?? 'selecionado'}'),
-                if (pendentes)
+                if (pendentes && !busy)
                   const Text(
                       'Filtros alterados: aplique para atualizar os valores.',
                       style: TextStyle(color: AdminPalette.warning)),
@@ -412,7 +427,7 @@ class _DashboardFinanceiroAdminPageState
                   ),
                 ),
               ),
-              if (pendentes)
+              if (pendentes && !busy)
                 AdminStatusChip(
                   label: 'Alterações pendentes',
                   color: AdminPalette.warning,
@@ -421,20 +436,20 @@ class _DashboardFinanceiroAdminPageState
           ),
           const SizedBox(height: 12),
           if (compact) ...[
-            _dropdownEixo(),
+            _dropdownEixo(busy: busy),
             const SizedBox(height: 10),
-            _dropdownEstado(),
+            _dropdownEstado(busy: busy),
             const SizedBox(height: 10),
-            _campoFornecedor(),
+            _campoFornecedor(busy: busy),
           ] else
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(flex: 2, child: _dropdownEixo()),
+                Expanded(flex: 2, child: _dropdownEixo(busy: busy)),
                 const SizedBox(width: 10),
-                Expanded(flex: 2, child: _dropdownEstado()),
+                Expanded(flex: 2, child: _dropdownEstado(busy: busy)),
                 const SizedBox(width: 10),
-                Expanded(flex: 3, child: _campoFornecedor()),
+                Expanded(flex: 3, child: _campoFornecedor(busy: busy)),
               ],
             ),
           const SizedBox(height: 4),
@@ -472,6 +487,7 @@ class _DashboardFinanceiroAdminPageState
           if (_maisFiltros) ...[
             if (compact) ...[
               _campoPeriodo(
+                busy: busy,
                 label: 'Início do período',
                 controller: _periodoInicioCtrl,
                 onChanged: (v) {
@@ -481,6 +497,7 @@ class _DashboardFinanceiroAdminPageState
               ),
               const SizedBox(height: 10),
               _campoPeriodo(
+                busy: busy,
                 label: 'Fim do período',
                 controller: _periodoFimCtrl,
                 onChanged: (v) {
@@ -493,6 +510,7 @@ class _DashboardFinanceiroAdminPageState
                 children: [
                   Expanded(
                     child: _campoPeriodo(
+                      busy: busy,
                       label: 'Início do período',
                       controller: _periodoInicioCtrl,
                       onChanged: (v) {
@@ -504,6 +522,7 @@ class _DashboardFinanceiroAdminPageState
                   const SizedBox(width: 10),
                   Expanded(
                     child: _campoPeriodo(
+                      busy: busy,
                       label: 'Fim do período',
                       controller: _periodoFimCtrl,
                       onChanged: (v) {
@@ -523,11 +542,27 @@ class _DashboardFinanceiroAdminPageState
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               FilledButton.icon(
-                onPressed: busy ? null : c.carregar,
-                icon: const Icon(Icons.check_rounded, size: 18),
-                label: Text(
-                  'Aplicar filtros',
-                  style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+                onPressed: busy
+                    ? null
+                    : () {
+                        FocusScope.of(context).unfocus();
+                        c.carregar();
+                      },
+                icon: busy
+                    ? const SizedBox.square(
+                        dimension: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AdminPalette.primary,
+                        ),
+                      )
+                    : const Icon(Icons.check_rounded, size: 18),
+                label: Semantics(
+                  liveRegion: busy,
+                  child: Text(
+                    busy ? 'Atualizando consulta…' : 'Aplicar filtros',
+                    style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+                  ),
                 ),
                 style: FilledButton.styleFrom(
                   backgroundColor: AdminPalette.primary,
@@ -537,13 +572,15 @@ class _DashboardFinanceiroAdminPageState
                 ),
               ),
               TextButton(
-                onPressed: () {
-                  _fornecedorCtrl.clear();
-                  _periodoInicioCtrl.clear();
-                  _periodoFimCtrl.clear();
-                  c.limparFiltros();
-                  c.carregar();
-                },
+                onPressed: busy
+                    ? null
+                    : () {
+                        _fornecedorCtrl.clear();
+                        _periodoInicioCtrl.clear();
+                        _periodoFimCtrl.clear();
+                        c.limparFiltros();
+                        c.carregar();
+                      },
                 child: Text(
                   'Limpar',
                   style: GoogleFonts.poppins(
@@ -559,7 +596,7 @@ class _DashboardFinanceiroAdminPageState
     );
   }
 
-  Widget _dropdownEixo() {
+  Widget _dropdownEixo({required bool busy}) {
     return DropdownButtonFormField<String>(
       value: c.eixoTemporal.value,
       isExpanded: true,
@@ -581,16 +618,19 @@ class _DashboardFinanceiroAdminPageState
           child: Text('Data da contratação', overflow: TextOverflow.ellipsis),
         ),
       ],
-      onChanged: (v) {
-        if (v == null) return;
-        c.eixoTemporal.value = v;
-        c.marcarFiltroAlterado();
-      },
+      onChanged: busy
+          ? null
+          : (v) {
+              if (v == null) return;
+              c.eixoTemporal.value = v;
+              c.marcarFiltroAlterado();
+            },
     );
   }
 
-  Widget _campoFornecedor() => TextFormField(
+  Widget _campoFornecedor({required bool busy}) => TextFormField(
         controller: _fornecedorCtrl,
+        enabled: !busy,
         readOnly: true,
         onTap: _selecionarFornecedor,
         decoration: InputDecoration(
@@ -688,14 +728,14 @@ class _DashboardFinanceiroAdminPageState
                         child: const Text('Cancelar'))
                   ],
                 )));
-    if (selecionado == null || !mounted) return;
+    if (selecionado == null || !mounted || c.carregando.value) return;
     _nomesFornecedores[selecionado.key] = selecionado.value;
     _fornecedorCtrl.text = selecionado.value;
     c.filtroFornecedor.value = selecionado.key;
     c.marcarFiltroAlterado();
   }
 
-  Widget _dropdownEstado() {
+  Widget _dropdownEstado({required bool busy}) {
     return DropdownButtonFormField<String>(
       value: c.filtroEstado.value.isEmpty ? '' : c.filtroEstado.value,
       isExpanded: true,
@@ -711,20 +751,24 @@ class _DashboardFinanceiroAdminPageState
         DropdownMenuItem(value: 'contratado', child: Text('Contratados')),
         DropdownMenuItem(value: 'oportunidade', child: Text('Oportunidades')),
       ],
-      onChanged: (v) {
-        c.filtroEstado.value = v ?? '';
-        c.marcarFiltroAlterado();
-      },
+      onChanged: busy
+          ? null
+          : (v) {
+              c.filtroEstado.value = v ?? '';
+              c.marcarFiltroAlterado();
+            },
     );
   }
 
   Widget _campoPeriodo({
+    required bool busy,
     required String label,
     required TextEditingController controller,
     required ValueChanged<String> onChanged,
   }) {
     return TextField(
       controller: controller,
+      enabled: !busy,
       readOnly: true,
       onTap: () async {
         final data = await showDatePicker(
@@ -732,7 +776,7 @@ class _DashboardFinanceiroAdminPageState
             initialDate: DateTime.tryParse(controller.text) ?? DateTime.now(),
             firstDate: DateTime(1900),
             lastDate: DateTime(2200));
-        if (data == null || !mounted) return;
+        if (data == null || !mounted || c.carregando.value) return;
         controller.text =
             '${data.year.toString().padLeft(4, '0')}-${data.month.toString().padLeft(2, '0')}-${data.day.toString().padLeft(2, '0')}';
         onChanged(controller.text);
@@ -1631,17 +1675,7 @@ class _DashboardFinanceiroAdminPageState
                   _celulaFlex(
                     flex: _flexContratacoes[3],
                     align: TextAlign.end,
-                    child: Text(
-                      l.contratado ? _reais(l.valorContratadoCentavos) : '—',
-                      textAlign: TextAlign.end,
-                      style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: l.contratado
-                            ? AdminPalette.ink
-                            : AdminPalette.muted,
-                      ),
-                    ),
+                    child: _resumoValorContratacao(l, alinhadoAoFim: true),
                   ),
                   _celulaFlex(
                     flex: _flexContratacoes[4],
@@ -1811,14 +1845,7 @@ class _DashboardFinanceiroAdminPageState
               ),
               if (l.contratado) ...[
                 const SizedBox(height: 4),
-                Text(
-                  _reais(l.valorContratadoCentavos),
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: AdminPalette.primary,
-                  ),
-                ),
+                _resumoValorContratacao(l),
               ],
               const SizedBox(height: 8),
               Wrap(
@@ -1830,6 +1857,128 @@ class _DashboardFinanceiroAdminPageState
           ),
         ),
       ),
+    );
+  }
+
+  Widget _resumoValorContratacao(
+    LinhaContratacaoAdmin l, {
+    bool alinhadoAoFim = false,
+  }) {
+    if (!l.contratado) {
+      return Text(
+        '—',
+        style: GoogleFonts.poppins(
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+          color: AdminPalette.muted,
+        ),
+      );
+    }
+
+    final valores = l.valoresContratacao;
+    final fornecedor = valores?.liquidoFornecedorCentavos;
+    final comissao = valores?.comissaoCentavos;
+    final alinhamento = alinhadoAoFim ? TextAlign.end : TextAlign.start;
+    final estiloSecundario = GoogleFonts.poppins(
+      fontSize: 11,
+      color: AdminPalette.muted,
+    );
+    return Column(
+      crossAxisAlignment:
+          alinhadoAoFim ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      children: [
+        Text(
+          _reais(l.valorContratadoCentavos),
+          textAlign: alinhamento,
+          style: GoogleFonts.poppins(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: AdminPalette.ink,
+          ),
+        ),
+        const SizedBox(height: 2),
+        if (fornecedor != null && comissao != null) ...[
+          Text(
+            'Repasse previsto ${_reais(fornecedor)}',
+            textAlign: alinhamento,
+            style: estiloSecundario,
+          ),
+          Text(
+            valores!.comissaoAbsorvida
+                ? 'Comissão absorvida ${_reais(comissao)}'
+                : 'Comissão prevista ${_reais(comissao)}',
+            textAlign: alinhamento,
+            style: estiloSecundario,
+          ),
+        ] else
+          Text(
+            'Divisão indisponível',
+            textAlign: alinhamento,
+            style: estiloSecundario,
+          ),
+      ],
+    );
+  }
+
+  Widget _divisaoValorContratacao(ValoresContratacaoAdmin? valores) {
+    final fornecedor = valores?.liquidoFornecedorCentavos;
+    final comissao = valores?.comissaoCentavos;
+    final recebido = valores?.comissaoRecebidaCentavos;
+    final vencimento = valores?.vencimentoComissao;
+    final repassado = valores?.repasseConfirmadoCentavos;
+    final ultimoRepasse = valores?.ultimoRepasseConfirmadoEm;
+    final formatoData = DateFormat('dd/MM/yyyy');
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _painelLinhaPessoa(
+          Icons.storefront_outlined,
+          'Repasse previsto ao fornecedor',
+          fornecedor == null ? 'Indisponível' : _reais(fornecedor),
+        ),
+        if (repassado != null)
+          _painelLinhaPessoa(
+            Icons.check_circle_outline,
+            'Repasse confirmado',
+            ultimoRepasse == null
+                ? _reais(repassado)
+                : '${_reais(repassado)} · Último em ${formatoData.format(ultimoRepasse.toLocal())}',
+          ),
+        if (fornecedor != null && (repassado ?? 0) < fornecedor)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(10, 2, 10, 10),
+            child: Text(
+              'Com saldo disponível, o repasse pode ser liberado após a '
+              'finalização do evento ou mediante autorização do organizador.',
+              style: GoogleFonts.poppins(
+                fontSize: 11.5,
+                color: AdminPalette.muted,
+              ),
+            ),
+          ),
+        _painelLinhaPessoa(
+          Icons.account_balance_wallet_outlined,
+          valores?.comissaoAbsorvida == true
+              ? 'Comissão absorvida pela plataforma'
+              : 'Comissão prevista da plataforma',
+          comissao == null ? 'Indisponível' : _reais(comissao),
+          ultimo: recebido == null && vencimento == null,
+        ),
+        if (recebido != null)
+          _painelLinhaPessoa(
+            Icons.check_circle_outline,
+            'Comissão recebida',
+            _reais(recebido),
+            ultimo: vencimento == null,
+          ),
+        if (vencimento != null)
+          _painelLinhaPessoa(
+            Icons.event_outlined,
+            'Vencimento da comissão',
+            formatoData.format(vencimento),
+            ultimo: true,
+          ),
+      ],
     );
   }
 
@@ -1852,58 +2001,68 @@ class _DashboardFinanceiroAdminPageState
         _painelSecao(
           titulo: 'Valor',
           icone: Icons.payments_outlined,
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-            decoration: BoxDecoration(
-              color: corValor.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: corValor.withValues(alpha: 0.22)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  oportunidade ? 'Valor estimado' : 'Valor contratado',
-                  style: GoogleFonts.poppins(
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w600,
-                    color: AdminPalette.muted,
-                  ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(
+                width: double.infinity,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                decoration: BoxDecoration(
+                  color: corValor.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: corValor.withValues(alpha: 0.22)),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  oportunidade && l.valorContratadoCentavos <= 0
-                      ? 'Sem valor'
-                      : _reais(l.valorContratadoCentavos),
-                  style: GoogleFonts.poppins(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    color: corValor,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      oportunidade ? 'Valor estimado' : 'Valor contratado',
+                      style: GoogleFonts.poppins(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
+                        color: AdminPalette.muted,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      oportunidade && l.valorContratadoCentavos <= 0
+                          ? 'Sem valor'
+                          : _reais(l.valorContratadoCentavos),
+                      style: GoogleFonts.poppins(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        color: corValor,
+                      ),
+                    ),
+                    if (oportunidade)
+                      Text(
+                        'Oportunidade — execução e cobrança ainda não iniciadas.',
+                        style: GoogleFonts.poppins(
+                          fontSize: 11.5,
+                          color: AdminPalette.warning,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      )
+                    else if (l.pagoCentavos > 0) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        'Pagamento registrado: ${_reais(l.pagoCentavos)}',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AdminPalette.success,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
-                if (oportunidade)
-                  Text(
-                    'Oportunidade — execução e cobrança ainda não iniciadas.',
-                    style: GoogleFonts.poppins(
-                      fontSize: 11.5,
-                      color: AdminPalette.warning,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  )
-                else if (l.pagoCentavos > 0) ...[
-                  const SizedBox(height: 6),
-                  Text(
-                    'Pagamento registrado: ${_reais(l.pagoCentavos)}',
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: AdminPalette.success,
-                    ),
-                  ),
-                ],
+              ),
+              if (l.contratado) ...[
+                const SizedBox(height: 10),
+                _divisaoValorContratacao(l.valoresContratacao),
               ],
-            ),
+            ],
           ),
         ),
         const SizedBox(height: 12),

@@ -1,4 +1,4 @@
-// Prova real das callables TOTP no emulador: cifra, confirmação e desafio.
+// Callables MFA com Auth e Firestore emulados e caixa de e-mail de teste.
 const assert = require('node:assert/strict');
 const crypto = require('node:crypto');
 const path = require('node:path');
@@ -14,6 +14,10 @@ if (process.env.GCLOUD_PROJECT && process.env.GCLOUD_PROJECT !== projectId) {
   throw Error('Projeto inesperado.');
 }
 process.env.GCLOUD_PROJECT = projectId;
+const functionsPort = Number(process.env.MFA_TEST_FUNCTIONS_PORT || 5001);
+if (!Number.isInteger(functionsPort) || functionsPort < 1 || functionsPort > 65535) {
+  throw Error('Porta inválida para o emulador de Functions.');
+}
 
 const admin = require('firebase-admin');
 admin.initializeApp({ projectId });
@@ -69,7 +73,7 @@ async function tokenSenha(email, senha) {
 
 async function chamar(nome, idToken, data = {}) {
   const r = await fetch(
-    `http://127.0.0.1:5001/${projectId}/southamerica-east1/${nome}`,
+    `http://127.0.0.1:${functionsPort}/${projectId}/southamerica-east1/${nome}`,
     {
       method: 'POST',
       headers: {
@@ -163,9 +167,95 @@ async function main() {
   assert.equal(verificado.ok, true);
   checks++;
 
-  // Reuso do secret pendente: novo iniciar após ativo não deve quebrar desafio.
-  const deNovo = await chamar('iniciarTotpMfa', idToken);
-  assert.ok(deNovo.secret);
+  const { autorizacao } = verificado;
+  assert.ok(autorizacao);
+  for (const acao of [
+    'iniciarTotpMfa', 'solicitarCodigoEmailMfa', 'gerarCodigosRecuperacaoMfa',
+  ]) {
+    await assert.rejects(
+      () => chamar(acao, idToken),
+      (e) => e.code === 'permission-denied',
+    );
+  }
+  checks++;
+
+  const usuarioRef = admin.firestore().doc('usuarios/' + uid);
+  const emailRef = admin.firestore().doc('_qa_mfa_email/' + email);
+  await chamar('solicitarCodigoEmailMfa', idToken, { autorizacao });
+  const codigoEmail = (await emailRef.get()).data().codigo;
+  await assert.rejects(
+    () => chamar('confirmarEmailMfa', idToken, { codigo: codigoEmail }),
+    (e) => e.code === 'permission-denied',
+  );
+  await assert.rejects(
+    () => chamar('verificarEmailMfa', idToken, { codigo: codigoEmail }),
+    (e) => e.code === 'failed-precondition',
+  );
+  await chamar('confirmarEmailMfa', idToken, { codigo: codigoEmail, autorizacao });
+  const ambos = (await usuarioRef.get()).data();
+  assert.equal(ambos.mfa_totp_ativo, true);
+  assert.equal(ambos.mfa_email_ativo, true);
+  assert.equal(ambos.mfa_metodo, 'totp');
+  checks++;
+
+  // Simula a espera do reenvio sem atrasar a suíte.
+  const emailCodigoRef = admin.firestore().doc('mfa_email_codes/' + uid);
+  await emailCodigoRef.update({ enviadoEm: admin.firestore.Timestamp.fromMillis(Date.now() - 46000) });
+  const outroEmail = 'novo-endereco@example.test';
+  await admin.auth().updateUser(uid, { email: outroEmail });
+  await chamar('solicitarCodigoEmailMfa', idToken);
+  assert.equal((await admin.firestore().doc('_qa_mfa_email/' + outroEmail).get()).exists, false);
+  assert.equal((await emailCodigoRef.get()).data().email, email);
+  const codigoLogin = (await emailRef.get()).data().codigo;
+  const entradaPorEmail = await chamar('verificarEmailMfa', idToken, { codigo: codigoLogin });
+  assert.ok(entradaPorEmail.autorizacao);
+  await assert.rejects(
+    () => chamar('verificarEmailMfa', idToken, { codigo: codigoLogin }),
+    (e) => e.code === 'failed-precondition',
+  );
+  checks++;
+
+  const lote = await chamar('gerarCodigosRecuperacaoMfa', idToken, { autorizacao });
+  assert.equal(lote.codigos.length, 8);
+  const salvos = (await admin.firestore().doc('mfa_recuperacao/' + uid).get()).data();
+  assert.equal(salvos.hashes.length, 8);
+  assert.match(salvos.hashes[0], /^[0-9a-f]{64}$/);
+  assert.equal(JSON.stringify(salvos).includes(lote.codigos[0]), false);
+
+  const concorrentes = await Promise.allSettled([1, 2].map(() =>
+    chamar('verificarCodigoRecuperacaoMfa', idToken, { codigo: lote.codigos[0] }),
+  ));
+  const entradaPorRecuperacao = concorrentes.find((r) => r.status === 'fulfilled');
+  assert.ok(entradaPorRecuperacao?.value.autorizacao);
+  assert.equal(concorrentes.filter((r) =>
+    r.status === 'rejected' && r.reason.code === 'permission-denied').length, 1);
+  checks++;
+
+  const novaAutorizacao = entradaPorRecuperacao.value.autorizacao;
+  const reset = await chamar('iniciarTotpMfa', idToken, { autorizacao: novaAutorizacao });
+  assert.notEqual(reset.secret, inicio.secret);
+  await chamar('verificarTotpMfa', idToken, { codigo: codigoTotp(inicio.secret) });
+  await chamar('confirmarTotpMfa', idToken, {
+    codigo: codigoTotp(reset.secret), autorizacao: novaAutorizacao,
+  });
+  assert.equal((await usuarioRef.get()).data().mfa_email_ativo, true);
+  assert.notEqual((await admin.firestore().doc('mfa_totp/' + uid).get()).data().secretCifrado,
+    ativo.data().secretCifrado);
+  await chamar('verificarTotpMfa', idToken, { codigo: codigoTotp(reset.secret) });
+  await chamar('gerarCodigosRecuperacaoMfa', idToken, { autorizacao: novaAutorizacao });
+  await assert.rejects(
+    () => chamar('verificarCodigoRecuperacaoMfa', idToken, { codigo: lote.codigos[1] }),
+    (e) => e.code === 'permission-denied',
+  );
+  checks++;
+
+  const auditoria = await admin.firestore().collection('auditoria_eventos')
+    .where('entidade_id', '==', uid).get();
+  const recuperacoes = auditoria.docs.map((doc) => doc.data())
+    .filter((evento) => evento.acao.startsWith('MFA_RECUPERACAO'));
+  assert.equal(recuperacoes.filter((evento) => evento.acao === 'MFA_RECUPERACAO_CODIGO_USADO').length, 1);
+  assert.equal(recuperacoes.filter((evento) => evento.acao === 'MFA_RECUPERACAO_CODIGOS_GERADOS').length, 2);
+  assert.equal(JSON.stringify(recuperacoes).includes(lote.codigos[0]), false);
   checks++;
 
   console.log(`TOTP MFA emulador: ${checks} verificações passaram.`);
