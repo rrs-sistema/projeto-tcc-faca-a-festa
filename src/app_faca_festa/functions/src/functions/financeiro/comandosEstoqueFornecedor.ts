@@ -1,6 +1,7 @@
 import { mapItem, mapReserva, persistItem } from "../../services/financeiro/estoqueFornecedorMapper";
 import { FieldValue } from "firebase-admin/firestore";
-import { HttpsError, onCall } from "firebase-functions/v2/https";
+import { onCall } from "../../shared/callableComMfa";
+import { HttpsError } from "firebase-functions/v2/https";
 import { randomUUID } from "crypto";
 import { admin } from "../../shared/firebaseAdmin";
 import { exigirUsuarioAutenticado } from "../../shared/auth";

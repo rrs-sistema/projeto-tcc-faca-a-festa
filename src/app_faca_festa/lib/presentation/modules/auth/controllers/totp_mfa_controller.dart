@@ -6,17 +6,21 @@ import 'package:get/get.dart';
 
 import 'package:app_faca_festa/app/routes/app_route_args.dart';
 import 'package:app_faca_festa/domain/repositories/autenticacao_repository.dart';
+import 'package:app_faca_festa/domain/entities/usuario.dart';
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
 import 'package:app_faca_festa/presentation/modules/auth/widgets/mfa_opcoes_dialog.dart';
 
 class TotpMfaController extends GetxController {
   TotpMfaController({
     this.gerarQrNoInicio = false,
+    this.perfilGestao,
     required AutenticacaoRepository autenticacaoRepository,
     required this.appController,
   }) : _autenticacaoRepository = autenticacaoRepository;
 
   final bool gerarQrNoInicio;
+  final Usuario? perfilGestao;
+  bool get gerenciandoConta => perfilGestao != null;
   final AutenticacaoRepository _autenticacaoRepository;
   final AppController appController;
 
@@ -44,6 +48,17 @@ class TotpMfaController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    final perfil = perfilGestao;
+    if (perfil != null) {
+      emailAtivo = perfil.mfaEmailAtivo;
+      totpAtivo = perfil.mfaTotpAtivo;
+      _metodosCarregados = true;
+      gerenciarAoConfirmar.value = true;
+      if (emailAtivo && !totpAtivo) {
+        unawaited(trocarMetodoLogin(etapaEmail));
+      }
+      return;
+    }
     final args = TotpMfaArgs.maybeOf(Get.arguments);
     if (args != null) {
       _metodosCarregados = true;
@@ -244,11 +259,17 @@ class TotpMfaController extends GetxController {
             autorizacao: autorizacao,
             emailAtivo: emailAtivo || porEmail,
             totpAtivo: totpAtivo || (cadastrar && !porEmail),
+            perfilGestao: perfilGestao,
           ),
           barrierDismissible: false,
         );
       }
-      await appController.concluirMfa(idUsuario);
+      if (gerenciandoConta) {
+        await appController.prepararUsuarioComEndereco();
+        Get.back<void>();
+      } else {
+        await appController.concluirMfa(idUsuario);
+      }
     } on AutenticacaoException catch (e) {
       _mostrarErro(_traduzErro(e.codigo, e.mensagem));
     } catch (_) {

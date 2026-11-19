@@ -181,6 +181,14 @@ class AutenticacaoRepositoryImpl implements AutenticacaoRepository {
   }
 
   @override
+  Future<void> definirMfaOpcional(bool ativar, String autorizacao) =>
+      _operarMfa(() => remote.definirMfaOpcional(ativar, autorizacao));
+
+  @override
+  Future<bool> sessaoMfaVerificada() =>
+      _operarMfa(() => remote.sessaoMfaVerificada());
+
+  @override
   Future<void> sair() {
     return UpdateOperations.run(() async {
       try {

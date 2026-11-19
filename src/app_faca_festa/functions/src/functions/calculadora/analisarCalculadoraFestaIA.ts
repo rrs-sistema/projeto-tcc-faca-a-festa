@@ -2,7 +2,8 @@ import { limitarAnaliseCalculadora } from "../../services/calculadora/limiteAnal
 import { financeiroCalculadora } from "../../services/calculadora/financeiroCalculadoraService";
 import { defineSecret } from "firebase-functions/params";
 import * as logger from "firebase-functions/logger";
-import { HttpsError, onCall } from "firebase-functions/v2/https";
+import { onCall } from "../../shared/callableComMfa";
+import { HttpsError } from "firebase-functions/v2/https";
 
 import { admin } from "../../shared/firebaseAdmin";
 import { buildInput, buildInstructions } from "../../ia/calculadora/prompt";

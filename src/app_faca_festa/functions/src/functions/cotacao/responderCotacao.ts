@@ -1,4 +1,4 @@
-import { onCall } from "firebase-functions/v2/https";
+import { onCall } from "../../shared/callableComMfa";
 import { admin } from "../../shared/firebaseAdmin";
 import { exigirUsuarioAutenticado, exigirTipo } from "../../shared/auth";
 import { emitirProposta } from "../../services/cotacao/jornadaAtendimentoService";

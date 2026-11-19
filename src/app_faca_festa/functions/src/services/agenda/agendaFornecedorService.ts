@@ -1,5 +1,6 @@
 import { FieldValue, Firestore, Transaction } from "firebase-admin/firestore";
-import { HttpsError, onCall } from "firebase-functions/v2/https";
+import { onCall } from "../../shared/callableComMfa";
+import { HttpsError } from "firebase-functions/v2/https";
 import { createHash } from "crypto";
 import { admin } from "../../shared/firebaseAdmin";
 import { exigirUsuarioAutenticado } from "../../shared/auth";

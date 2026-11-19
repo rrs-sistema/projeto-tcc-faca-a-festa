@@ -1,4 +1,4 @@
-import { onCall } from "firebase-functions/v2/https";
+import { onCall } from "../../shared/callableComMfa";
 import { admin } from "../../shared/firebaseAdmin";
 import { executarPlano, normalizarFonte } from "../../services/calculadora/executarPlanoService";
 import { salvarRevisaoPosEvento } from "../../services/calculadora/revisaoPosEventoService";

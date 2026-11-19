@@ -1,9 +1,10 @@
 import { createHmac, timingSafeEqual } from "crypto";
 import { defineSecret } from "firebase-functions/params";
 import { CallableRequest, HttpsError } from "firebase-functions/v2/https";
-import { DocumentData, Transaction } from "firebase-admin/firestore";
-import { exigirLoginComSenha, exigirUsuarioAutenticado } from "../../shared/auth";
+import { DocumentData, Transaction, Timestamp } from "firebase-admin/firestore";
+import { exigirUsuarioAutenticado } from "../../shared/auth";
 import { admin } from "../../shared/firebaseAdmin";
+import { referenciaSessaoMfa } from "../../shared/politicaMfa";
 
 export const PASSWORD_RESET_SECRET = defineSecret("PASSWORD_RESET_SECRET");
 
@@ -21,7 +22,9 @@ type MetodoMfa = "totp" | "email";
 
 export async function obterSessaoMfa(request: CallableRequest): Promise<SessaoMfa> {
   const perfil = await exigirUsuarioAutenticado(request.auth?.uid);
-  await exigirLoginComSenha(perfil.uid);
+  if (request.auth?.token.firebase?.sign_in_provider === "anonymous") {
+    throw new HttpsError("permission-denied", "Entre com sua conta para configurar a proteção.");
+  }
   const autenticadaEm = request.auth?.token.auth_time;
   if (typeof autenticadaEm !== "number") {
     throw new HttpsError("unauthenticated", "Entre novamente na sua conta.");
@@ -73,7 +76,11 @@ export function exigirCadastroPermitido(
   }
 }
 
-export function confirmarVerificacaoMfa(sessao: SessaoMfa) {
+export async function confirmarVerificacaoMfa(sessao: SessaoMfa) {
+  // Sessões paralelas da mesma conta mantêm verificações independentes.
+  await referenciaSessaoMfa(sessao.uid, sessao.autenticadaEm).set({
+    expiraEm: Timestamp.fromMillis(Date.now() + 30 * 24 * 60 * 60 * 1000),
+  });
   const expiraEm = Date.now() + 10 * 60 * 1000;
   return { ok: true, autorizacao: `${expiraEm}.${assinatura(sessao, expiraEm)}` };
 }

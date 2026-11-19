@@ -261,18 +261,23 @@ class AppCicloSessao {
           return;
         }
 
-        if (_contaRevisaoPlay(usuarioTotp.email) ||
-            _contaRevisaoPlay(user.email)) {
-          _totp.marcarVerificado();
-        } else if (_totp.deveExigir()) {
+        if (AppRotasSessao.ehTotp(Get.currentRoute) &&
+            Get.isDialogOpen == true) {
+          return;
+        }
+
+        if (_totp.deveExigir(usuarioTotp) &&
+            await _autenticacao.sessaoMfaVerificada()) {
+          if (!_podeProcessar(user)) return;
+          _totp.marcarVerificado(user.idUsuario);
+        }
+        if (_totp.deveExigir(usuarioTotp)) {
           final totpAtivo = usuarioTotp.mfaTotpAtivo;
           final emailAtivo = usuarioTotp.mfaEmailAtivo;
           final temMetodo = totpAtivo || emailAtivo;
           final rota = temMetodo ? '/loginTotp' : '/loginTotpSetup';
           final rotaAtual = Get.currentRoute;
-          final configurandoMfa =
-              AppRotasSessao.ehTotp(rotaAtual) && Get.isDialogOpen == true;
-          if (rotaAtual != rota && !configurandoMfa) {
+          if (rotaAtual != rota) {
             Get.offAllNamed(
               rota,
               arguments: temMetodo
@@ -508,12 +513,6 @@ class AppCicloSessao {
     } catch (erro, stack) {
       debugPrint('$_logTag Falha ao parar escutas no logout: $erro\n$stack');
     }
-  }
-
-  bool _contaRevisaoPlay(String? email) {
-    final normalizado = (email ?? '').trim().toLowerCase();
-    return normalizado == 'rrs.sistema+play-organizador@gmail.com' ||
-        normalizado == 'rrs.sistema+play-fornecedor@gmail.com';
   }
 
   Future<void> cancelarEscuta() async {

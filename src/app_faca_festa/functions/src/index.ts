@@ -1,4 +1,5 @@
 export { buscarCepGoogle } from "./address/buscarCepGoogle";
+export { consultarSessaoMfa, definirMfaOpcional } from "./functions/auth/preferenciaMfa";
 export { notificarMensagemChat } from "./functions/cotacao/notificarMensagemChat";
 export { notificarAutorizacaoRepasse } from "./functions/financeiro/notificarAutorizacaoRepasse";
 export { obterEstatisticasPublicas } from "./functions/publico/obterEstatisticasPublicas";

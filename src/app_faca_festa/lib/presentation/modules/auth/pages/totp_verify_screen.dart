@@ -271,9 +271,12 @@ class _TotpVerifyScreenState extends State<TotpVerifyScreen> {
             mostrarCreditos: false,
             mostrarPrivacidade: true,
             footerLink: AuthFestaFooterLink(
-              prefixo: 'Quer usar outra conta? ',
-              acao: 'Sair',
-              onTap: controller.sair,
+              prefixo:
+                  controller.gerenciandoConta ? '' : 'Quer usar outra conta? ',
+              acao: controller.gerenciandoConta ? 'Voltar' : 'Sair',
+              onTap: controller.gerenciandoConta
+                  ? () => Get.back<void>()
+                  : controller.sair,
             ),
             child: AuthFestaCard(
               child: Column(
@@ -291,7 +294,7 @@ class _TotpVerifyScreenState extends State<TotpVerifyScreen> {
                     ),
                     const SizedBox(height: 18),
                   ],
-                  if (!porRecuperacao)
+                  if (!porRecuperacao && !controller.gerenciandoConta)
                     CheckboxListTile(
                       contentPadding: EdgeInsets.zero,
                       value: controller.gerenciarAoConfirmar.value,
@@ -360,7 +363,9 @@ class _TotpVerifyScreenState extends State<TotpVerifyScreen> {
                               ),
                             )
                           : Text(
-                              'Confirmar e entrar',
+                              controller.gerenciandoConta
+                                  ? 'Confirmar identidade'
+                                  : 'Confirmar e entrar',
                               style: GoogleFonts.poppins(
                                 color: Colors.white,
                                 fontSize: 16,

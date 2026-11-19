@@ -300,4 +300,15 @@ class _AutenticacaoRemoteFake implements AutenticacaoRemoteDatasource {
     if (erro != null) throw erro!;
     return ['codigo'];
   }
+
+  @override
+  Future<void> definirMfaOpcional(bool ativar, String autorizacao) async {
+    if (erro != null) throw erro!;
+  }
+
+  @override
+  Future<bool> sessaoMfaVerificada() async {
+    if (erro != null) throw erro!;
+    return false;
+  }
 }

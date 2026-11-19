@@ -63,8 +63,6 @@ class AppController extends GetxController {
     UsuarioController? Function()? usuarioControllerResolver,
   })  : totp = AppTotpSessao(
           storage ?? GetStorage(),
-          contaTemLoginComSenha: () =>
-              autenticacaoRepository.contaAtualTemLoginComSenha,
         ),
         carrinho = AppCarrinhoCotacao(),
         sessaoFornecedor = AppSessaoFornecedor(
@@ -274,7 +272,7 @@ class AppController extends GetxController {
         encerrandoSessao.value) {
       return;
     }
-    totp.marcarVerificado();
+    totp.marcarVerificado(idUsuario);
     await _cicloSessao.revalidar();
   }
 

@@ -54,11 +54,14 @@ class _TotpSetupScreenState extends State<TotpSetupScreen> {
           scrollable: true,
           title: 'Proteja sua conta',
           titleHighlight: 'conta',
-          subtitle: 'Escolha como confirmar o login com e-mail e senha',
+          subtitle: 'Escolha como confirmar sua identidade ao entrar',
           footerLink: AuthFestaFooterLink(
-            prefixo: 'Quer usar outra conta? ',
-            acao: 'Sair aqui',
-            onTap: controller.sair,
+            prefixo:
+                controller.gerenciandoConta ? '' : 'Quer usar outra conta? ',
+            acao: controller.gerenciandoConta ? 'Voltar' : 'Sair aqui',
+            onTap: controller.gerenciandoConta
+                ? () => Get.back<void>()
+                : controller.sair,
           ),
           child: AuthFestaCard(
             child: Obx(() {
@@ -113,7 +116,7 @@ class _EtapaEscolha extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          'Escolha como você quer confirmar o login com e-mail e senha.',
+          'Escolha como você quer confirmar sua identidade ao entrar.',
           textAlign: TextAlign.center,
           style: GoogleFonts.poppins(
             color: AuthFestaBrand.muted,
@@ -437,82 +440,83 @@ class _EtapaEmailState extends State<_EtapaEmail> {
       child: Obx(() {
         final destino = controller.emailMascarado.value;
         return Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (widget.cadastro)
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton.icon(
-                onPressed: controller.voltarEscolha,
-                icon: Icon(Icons.arrow_back_rounded, color: primary),
-                label: Text(
-                  'Trocar método',
-                  style: GoogleFonts.poppins(
-                    color: primary,
-                    fontWeight: FontWeight.w600,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (widget.cadastro)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  onPressed: controller.voltarEscolha,
+                  icon: Icon(Icons.arrow_back_rounded, color: primary),
+                  label: Text(
+                    'Trocar método',
+                    style: GoogleFonts.poppins(
+                      color: primary,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ),
-            ),
-          Icon(Icons.mark_email_read_outlined, size: 48, color: primary),
-          const SizedBox(height: 12),
-          Text(
-            'Código por e-mail',
-            textAlign: TextAlign.center,
-            style: GoogleFonts.poppins(
-              color: AuthFestaBrand.titulo,
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            destino.isEmpty
-                ? 'Enviamos um código de 6 dígitos para o e-mail da sua conta.'
-                : 'Enviamos um código de 6 dígitos para $destino.',
-            textAlign: TextAlign.center,
-            style: GoogleFonts.poppins(
-              color: Colors.grey.shade700,
-              fontSize: 13.5,
-              height: 1.35,
-            ),
-          ),
-          const SizedBox(height: 22),
-          CustomInputField(
-            label: 'Código do e-mail',
-            hintlabel: '000000',
-            icon: Icons.shield_outlined,
-            controller: widget.codigoCtrl,
-            color: primary,
-            titleColor: primary,
-            type: InputType.number,
-            isRequired: true,
-            maxLength: 6,
-            keyboardType: TextInputType.number,
-            validator: FormValidators.codigoVerificacao,
-            onChanged: (value) => controller.codigo.value = value,
-          ),
-          const SizedBox(height: 16),
-          _BotaoConfirmar(
-            primary: primary,
-            loading: controller.carregando.value,
-            label: widget.cadastro ? 'Confirmar e-mail' : 'Confirmar e entrar',
-            onPressed: _confirmar,
-          ),
-          TextButton(
-            onPressed: controller.enviandoEmail.value
-                ? null
-                : controller.solicitarCodigoEmail,
-            child: Text(
-              'Reenviar código',
+            Icon(Icons.mark_email_read_outlined, size: 48, color: primary),
+            const SizedBox(height: 12),
+            Text(
+              'Código por e-mail',
+              textAlign: TextAlign.center,
               style: GoogleFonts.poppins(
-                color: primary,
-                fontWeight: FontWeight.w600,
+                color: AuthFestaBrand.titulo,
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
               ),
             ),
-          ),
-        ],
-      );
+            const SizedBox(height: 8),
+            Text(
+              destino.isEmpty
+                  ? 'Enviamos um código de 6 dígitos para o e-mail da sua conta.'
+                  : 'Enviamos um código de 6 dígitos para $destino.',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(
+                color: Colors.grey.shade700,
+                fontSize: 13.5,
+                height: 1.35,
+              ),
+            ),
+            const SizedBox(height: 22),
+            CustomInputField(
+              label: 'Código do e-mail',
+              hintlabel: '000000',
+              icon: Icons.shield_outlined,
+              controller: widget.codigoCtrl,
+              color: primary,
+              titleColor: primary,
+              type: InputType.number,
+              isRequired: true,
+              maxLength: 6,
+              keyboardType: TextInputType.number,
+              validator: FormValidators.codigoVerificacao,
+              onChanged: (value) => controller.codigo.value = value,
+            ),
+            const SizedBox(height: 16),
+            _BotaoConfirmar(
+              primary: primary,
+              loading: controller.carregando.value,
+              label:
+                  widget.cadastro ? 'Confirmar e-mail' : 'Confirmar e entrar',
+              onPressed: _confirmar,
+            ),
+            TextButton(
+              onPressed: controller.enviandoEmail.value
+                  ? null
+                  : controller.solicitarCodigoEmail,
+              child: Text(
+                'Reenviar código',
+                style: GoogleFonts.poppins(
+                  color: primary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        );
       }),
     );
   }

@@ -10,6 +10,9 @@ class Usuario {
   final bool mfaTotpAtivo;
   final bool mfaEmailAtivo;
   final String mfaMetodo;
+  final bool mfaLoginOpcional;
+
+  bool get exigeMfaNoLogin => tipo == 'F' || tipo == 'A' || mfaLoginOpcional;
   final DateTime? dataCadastro;
   final String? cidade;
   final String? uf;
@@ -28,6 +31,7 @@ class Usuario {
     this.mfaTotpAtivo = false,
     this.mfaEmailAtivo = false,
     this.mfaMetodo = '',
+    this.mfaLoginOpcional = false,
     this.dataCadastro,
     this.cidade,
     this.uf,
@@ -47,6 +51,7 @@ class Usuario {
     bool? mfaTotpAtivo,
     bool? mfaEmailAtivo,
     String? mfaMetodo,
+    bool? mfaLoginOpcional,
     DateTime? dataCadastro,
     String? cidade,
     String? uf,
@@ -65,6 +70,7 @@ class Usuario {
         mfaTotpAtivo: mfaTotpAtivo ?? this.mfaTotpAtivo,
         mfaEmailAtivo: mfaEmailAtivo ?? this.mfaEmailAtivo,
         mfaMetodo: mfaMetodo ?? this.mfaMetodo,
+        mfaLoginOpcional: mfaLoginOpcional ?? this.mfaLoginOpcional,
         dataCadastro: dataCadastro ?? this.dataCadastro,
         cidade: cidade ?? this.cidade,
         uf: uf ?? this.uf,

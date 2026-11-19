@@ -167,6 +167,7 @@ void main() {
         'mfa_totp_ativo',
         'mfa_email_ativo',
         'mfa_metodo',
+        'mfa_login_opcional',
         'data_cadastro',
         'cidade',
         'uf',

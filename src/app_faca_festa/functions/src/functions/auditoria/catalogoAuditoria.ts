@@ -59,6 +59,12 @@ export const CATALOGO_ACOES_AUDITORIA: Record<string, DefinicaoAcaoAuditoria> = 
     visivelFornecedor: false,
     somenteAdmin: false,
   },
+  MFA_PREFERENCIA_ALTERADA: {
+    area: "ACESSO",
+    nivel: "WARN",
+    visivelFornecedor: false,
+    somenteAdmin: true,
+  },
   MFA_EMAIL_CONFIRMADO: {
     area: "ACESSO",
     nivel: "INFO",

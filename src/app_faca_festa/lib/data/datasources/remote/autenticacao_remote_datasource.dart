@@ -84,6 +84,10 @@ abstract interface class AutenticacaoRemoteDatasource {
 
   Future<List<String>> gerarCodigosRecuperacaoMfa(String autorizacao);
 
+  Future<void> definirMfaOpcional(bool ativar, String autorizacao);
+
+  Future<bool> sessaoMfaVerificada();
+
   Future<void> sair();
 }
 
@@ -458,6 +462,19 @@ class FirebaseAutenticacaoRemoteDatasource
       if (autorizacao != null) 'autorizacao': autorizacao,
     });
     return data['autorizacao'] as String? ?? '';
+  }
+
+  @override
+  Future<void> definirMfaOpcional(bool ativar, String autorizacao) =>
+      _chamarFunctionSemRetorno('definirMfaOpcional', {
+        'ativar': ativar,
+        'autorizacao': autorizacao,
+      });
+
+  @override
+  Future<bool> sessaoMfaVerificada() async {
+    final data = await _chamarFunction('consultarSessaoMfa');
+    return data['verificada'] == true;
   }
 
   Future<void> _chamarFunctionSemRetorno(

@@ -145,7 +145,6 @@ void main() {
     AppBootstrap.registerControllers();
     // Começa na sessão autenticada preparada para a jornada de eventos.
     // MFA/login pela interface são outro escopo e não são declarados aprovados.
-    Get.find<AppController>().totp.marcarVerificado();
     final key = GlobalKey();
     await tester
         .pumpWidget(RepaintBoundary(key: key, child: const FacaFestaApp()));

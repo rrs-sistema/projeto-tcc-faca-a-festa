@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:app_faca_festa/domain/entities/usuario.dart';
+import 'package:app_faca_festa/data/models/usuario/usuario_model.dart';
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_totp_sessao.dart';
 
 void main() {
@@ -10,7 +12,8 @@ void main() {
 
   late GetStorage storage;
   late AppTotpSessao totp;
-  var temSenha = true;
+  const base =
+      Usuario(idUsuario: 'usuario', nome: 'Usuário', email: 'qa@example.test');
 
   setUpAll(() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
@@ -24,28 +27,46 @@ void main() {
     await GetStorage.init('totp_sessao_qa');
     storage = GetStorage('totp_sessao_qa');
     await storage.erase();
-    temSenha = true;
-    totp = AppTotpSessao(storage, contaTemLoginComSenha: () => temSenha);
+    totp = AppTotpSessao(storage);
   });
 
-  test('login com senha exige MFA até marcar verificado', () {
-    totp.marcarLoginComSenha();
-    expect(totp.deveExigir(), isTrue);
-    totp.marcarVerificado();
-    expect(totp.deveExigir(), isFalse);
+  for (final tipo in ['O', 'C', 'F', 'A']) {
+    for (final google in [false, true]) {
+      test('perfil $tipo, Google=$google aplica a política de MFA', () {
+        if (google) {
+          totp.marcarLoginComGoogle();
+        } else {
+          totp.marcarLoginComSenha();
+        }
+        final usuario = base.copyWith(tipo: tipo);
+        expect(totp.deveExigir(usuario), tipo == 'F' || tipo == 'A');
+        totp.marcarVerificado(usuario.idUsuario);
+        expect(totp.deveExigir(usuario), isFalse);
+      });
+    }
+  }
+
+  test('métodos antigos não ativam a preferência opcional', () {
+    final legado = UsuarioModel.fromMap({
+      'id_usuario': 'legado',
+      'nome': 'Legado',
+      'email': base.email,
+      'tipo': 'O',
+      'mfa_email_ativo': true,
+      'mfa_totp_ativo': true,
+    });
+    expect(legado.mfaLoginOpcional, isFalse);
+    expect(totp.deveExigir(legado), isFalse);
   });
 
-  test('login com Google não exige MFA nesta sessão', () {
+  test('opção voluntária exige MFA, inclusive pelo Google', () {
     totp.marcarLoginComGoogle();
-    expect(totp.deveExigir(), isFalse);
+    final usuario = base.copyWith(tipo: 'O', mfaLoginOpcional: true);
+    expect(totp.deveExigir(usuario), isTrue);
+    totp.marcarVerificado(usuario.idUsuario);
+    expect(totp.deveExigir(usuario), isFalse);
+    expect(totp.deveExigir(usuario.copyWith(idUsuario: 'outro')), isTrue);
     totp.limpar();
-    totp.marcarLoginComSenha();
-    expect(totp.deveExigir(), isTrue);
-  });
-
-  test('conta sem provedor de senha não exige MFA', () {
-    temSenha = false;
-    totp.marcarLoginComSenha();
-    expect(totp.deveExigir(), isFalse);
+    expect(totp.deveExigir(usuario), isTrue);
   });
 }

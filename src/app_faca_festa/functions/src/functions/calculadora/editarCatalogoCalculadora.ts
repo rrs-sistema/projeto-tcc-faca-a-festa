@@ -1,4 +1,5 @@
-import {onCall,HttpsError} from "firebase-functions/v2/https";
+import { onCall } from "../../shared/callableComMfa";
+import { HttpsError } from "firebase-functions/v2/https";
 import {admin} from "../../shared/firebaseAdmin";
 import {editarCatalogoContextual} from "../../services/calculadora/catalogoContextualService";
 export const editarCatalogoCalculadora = onCall({region:"southamerica-east1",timeoutSeconds:120,memory:"512MiB",cors:true}, req => {

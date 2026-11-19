@@ -1,5 +1,6 @@
 import { FieldValue } from "firebase-admin/firestore";
-import { HttpsError, onCall } from "firebase-functions/v2/https";
+import { onCall } from "../../shared/callableComMfa";
+import { HttpsError } from "firebase-functions/v2/https";
 import { logger } from "firebase-functions";
 
 import { exigirTipo, exigirUsuarioAutenticado } from "../../shared/auth";
@@ -89,6 +90,7 @@ async function executarExclusao(idUsuario: string): Promise<string> {
   mfa.delete(db.collection("mfa_email_vinculos").doc(idUsuario));
   mfa.delete(db.collection("mfa_recuperacao").doc(idUsuario));
   await mfa.commit();
+  await db.recursiveDelete(db.collection("mfa_sessoes").doc(idUsuario));
 
   try {
     await admin.storage().bucket().deleteFiles({ prefix: `usuarios/${idUsuario}/` });

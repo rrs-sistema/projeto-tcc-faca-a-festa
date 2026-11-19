@@ -1,4 +1,4 @@
-import { onCall } from "firebase-functions/v2/https";
+import { onCall } from "../../shared/callableComMfa";
 
 import { exigirTipo, exigirUsuarioAutenticado } from "../../shared/auth";
 import { admin } from "../../shared/firebaseAdmin";

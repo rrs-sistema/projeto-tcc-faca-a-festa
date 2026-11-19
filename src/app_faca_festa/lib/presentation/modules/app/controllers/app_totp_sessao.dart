@@ -1,43 +1,37 @@
 import 'package:get_storage/get_storage.dart';
+import 'package:app_faca_festa/domain/entities/usuario.dart';
 
 class AppTotpSessao {
-  AppTotpSessao(
-    this._storage, {
-    required bool Function() contaTemLoginComSenha,
-  }) : _contaTemLoginComSenha = contaTemLoginComSenha;
+  AppTotpSessao(this._storage);
 
   static const String _chaveLoginMetodo = 'login_metodo';
   static const String _metodoSenha = 'senha';
   static const String _metodoGoogle = 'google';
 
   final GetStorage _storage;
-  final bool Function() _contaTemLoginComSenha;
 
-  bool verificadoNestaSessao = false;
+  String? _usuarioVerificado;
 
   void marcarLoginComSenha() {
-    verificadoNestaSessao = false;
+    _usuarioVerificado = null;
     _storage.write(_chaveLoginMetodo, _metodoSenha);
   }
 
   void marcarLoginComGoogle() {
-    verificadoNestaSessao = true;
+    _usuarioVerificado = null;
     _storage.write(_chaveLoginMetodo, _metodoGoogle);
   }
 
-  void marcarVerificado() {
-    verificadoNestaSessao = true;
+  void marcarVerificado(String idUsuario) {
+    _usuarioVerificado = idUsuario;
   }
 
-  bool deveExigir() {
-    if (verificadoNestaSessao) return false;
-    if (_storage.read(_chaveLoginMetodo) == _metodoGoogle) return false;
-    if (!_contaTemLoginComSenha()) return false;
-    return true;
+  bool deveExigir(Usuario usuario) {
+    return usuario.exigeMfaNoLogin && _usuarioVerificado != usuario.idUsuario;
   }
 
   void limpar() {
-    verificadoNestaSessao = false;
+    _usuarioVerificado = null;
     _storage.remove(_chaveLoginMetodo);
   }
 }

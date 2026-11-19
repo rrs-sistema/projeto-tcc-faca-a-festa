@@ -13,6 +13,7 @@ import 'package:app_faca_festa/presentation/modules/app/controllers/app_controll
 import 'package:app_faca_festa/presentation/modules/auth/controllers/totp_mfa_controller.dart';
 import 'package:app_faca_festa/presentation/modules/auth/pages/totp_setup_screen.dart';
 import 'package:app_faca_festa/presentation/modules/auth/pages/totp_verify_screen.dart';
+import 'package:app_faca_festa/presentation/modules/auth/pages/seguranca_conta_screen.dart';
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 
 class _AuthRemoteMfaQA extends Fake implements AutenticacaoRemoteDatasource {
@@ -30,6 +31,7 @@ class _AuthRemoteMfaQA extends Fake implements AutenticacaoRemoteDatasource {
   var enviosPorEmail = 0;
   var geracoesRecuperacao = 0;
   var autorizacaoEmail = '';
+  final preferencias = <bool>[];
 
   @override
   String get idUsuarioAtual => 'mfa-owner';
@@ -82,13 +84,26 @@ class _AuthRemoteMfaQA extends Fake implements AutenticacaoRemoteDatasource {
     geracoesRecuperacao++;
     return ['0123-4567-89AB-CDEF-0123-4567-89AB-CDEF'];
   }
+
+  @override
+  Future<void> definirMfaOpcional(bool ativar, String autorizacao) async {
+    expectSync(autorizacao, 'prova-qa');
+    preferencias.add(ativar);
+  }
 }
 
 class AppMfaQA extends Fake implements AppController {
   var totpVerificado = 0;
+  Usuario? perfil;
+  late AutenticacaoRepositoryImpl autenticacao;
+  @override
+  AutenticacaoRepositoryImpl get autenticacaoRepository => autenticacao;
 
   @override
-  Future<Usuario?> obterUsuario(String id) async => null;
+  Future<Usuario?> obterUsuario(String id) async => perfil;
+
+  @override
+  Future<Usuario?> prepararUsuarioComEndereco() async => perfil;
 
   @override
   Future<void> concluirMfa(String? idUsuario) async {
@@ -126,6 +141,7 @@ void main() {
     remote = _AuthRemoteMfaQA();
     repo = AutenticacaoRepositoryImpl(remote);
     app = AppMfaQA();
+    app.autenticacao = repo;
     Get.reset();
     Get.testMode = true;
   });
@@ -393,6 +409,40 @@ void main() {
     expect(app.totpVerificado, 0);
     await _tocar(tester, find.text('Entrar agora'));
     expect(app.totpVerificado, 1);
+    await _assentar(tester);
+  });
+
+  testWidgets('organizador ativa e desativa a proteção pela segurança da conta',
+      (tester) async {
+    remote.autorizacaoEmail = 'prova-qa';
+    app.perfil = const Usuario(
+      idUsuario: 'mfa-owner',
+      nome: 'Organizador',
+      email: 'qa@example.test',
+      tipo: 'O',
+      mfaEmailAtivo: true,
+    );
+    await tester.pumpWidget(GetMaterialApp(
+      builder: EasyLoading.init(),
+      home: SegurancaContaScreen(
+        appController: app,
+        themeController: EventThemeController(),
+      ),
+    ));
+    await tester.pump();
+    await _tocar(tester, find.text('Configurar proteção'));
+    await tester.enterText(find.byType(TextField), '135790');
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pump();
+    expect(find.byType(SwitchListTile), findsOneWidget);
+    await _tocar(tester, find.byType(SwitchListTile));
+    expect(remote.preferencias, [true]);
+    await _tocar(tester, find.byType(SwitchListTile));
+    expect(remote.preferencias, [true, false]);
+    await _tocar(tester, find.text('Concluir'));
+    expect(find.text('Configurar proteção'), findsOneWidget);
+    expect(app.totpVerificado, 0);
     await _assentar(tester);
   });
 }

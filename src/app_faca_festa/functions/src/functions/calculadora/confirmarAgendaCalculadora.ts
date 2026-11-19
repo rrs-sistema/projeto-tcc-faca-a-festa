@@ -1,4 +1,5 @@
-import {onCall,HttpsError} from "firebase-functions/v2/https";
+import { onCall } from "../../shared/callableComMfa";
+import { HttpsError } from "firebase-functions/v2/https";
 import {admin} from "../../shared/firebaseAdmin";
 import {confirmarAgendaServico} from "../../services/calculadora/agendaServicoService";
 export const confirmarAgendaCalculadora=onCall({region:"southamerica-east1",timeoutSeconds:120,memory:"512MiB",cors:true},req=>{

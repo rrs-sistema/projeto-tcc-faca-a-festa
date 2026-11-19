@@ -1,4 +1,5 @@
-import { onCall, HttpsError } from "firebase-functions/v2/https";
+import { onCall } from "../../../shared/callableComMfa";
+import { HttpsError } from "firebase-functions/v2/https";
 import * as logger from "firebase-functions/logger";
 import { recomendarFornecedoresParaEventoService } from "../../../services/fornecedores/fornecedorRecomendacaoService";
 import { RecomendacaoFornecedoresPayload } from "../../../types/fornecedorRecomendacao.types";

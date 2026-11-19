@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import 'package:app_faca_festa/app/routes/app_route_args.dart';
+import 'package:app_faca_festa/presentation/modules/auth/pages/seguranca_conta_screen.dart';
 import 'package:app_faca_festa/presentation/modules/calculadora/controllers/calculadora_itens_admin_controller.dart';
 import 'package:app_faca_festa/presentation/modules/calculadora/controllers/calculadora_festa_controller.dart';
 import 'package:app_faca_festa/presentation/modules/calculadora/controllers/fornecedor_migracao_admin_controller.dart';
@@ -167,6 +168,19 @@ class MenuDrawerFacaFesta extends StatelessWidget {
                   ),
                   const SizedBox(height: 10),
                   _sectionTitle('Conta'),
+                  _menuItem(
+                    Icons.security_outlined,
+                    'Segurança da conta',
+                    subtitle: 'Verificação em duas etapas e recuperação',
+                    color: primary,
+                    onTap: () {
+                      Get.back();
+                      Get.to(() => SegurancaContaScreen(
+                            appController: appController,
+                            themeController: themeController,
+                          ));
+                    },
+                  ),
                   _menuItem(
                     Icons.privacy_tip_outlined,
                     'Dados protegidos',

@@ -90,5 +90,9 @@ abstract interface class AutenticacaoRepository {
 
   Future<List<String>> gerarCodigosRecuperacaoMfa(String autorizacao);
 
+  Future<void> definirMfaOpcional(bool ativar, String autorizacao);
+
+  Future<bool> sessaoMfaVerificada();
+
   Future<void> sair();
 }

@@ -1,5 +1,6 @@
 import { defineSecret } from "firebase-functions/params";
-import { HttpsError, onCall } from "firebase-functions/v2/https";
+import { onCall } from "../../shared/callableComMfa";
+import { HttpsError } from "firebase-functions/v2/https";
 import { admin } from "../../shared/firebaseAdmin";
 import { limitarAnaliseCalculadora } from "../../services/calculadora/limiteAnaliseCalculadoraService";
 import { aplicarEntradaAssistente, Dados, mapa, prepararEntradaAssistente } from "../../services/calculadora/entradaAssistenteService";

@@ -30,6 +30,7 @@ const ts = path.join(modulos, 'typescript');
 const totpMfa = path.join(root, 'functions/src/functions/auth/totpMfa.ts');
 const emailMfa = path.join(root, 'functions/src/functions/auth/emailMfa.ts');
 const recuperacaoMfa = path.join(root, 'functions/src/functions/auth/recuperacaoMfa.ts');
+const preferenciaMfa = path.join(root, 'functions/src/functions/auth/preferenciaMfa.ts');
 const emailCodigo = path.join(root, 'functions/src/shared/emailCodigo.ts');
 const index = `const fs=require('node:fs'),ts=require(${JSON.stringify(ts)});
 require.extensions['.ts']=(m,file)=>m._compile(ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText,file);
@@ -46,6 +47,13 @@ require(${JSON.stringify(emailCodigo)}).enviarEmailCodigo=async ({ para, texto }
   await admin.firestore().collection('_qa_mfa_email').doc(para).set({codigo});
 };
 Object.assign(exports,require(${JSON.stringify(emailMfa)}),require(${JSON.stringify(recuperacaoMfa)}));
+Object.assign(exports,require(${JSON.stringify(preferenciaMfa)}));
+exports.consultarResumoFinanceiroFornecedor =
+  require(${JSON.stringify(path.join(root, 'functions/src/functions/financeiro/comandosFinanceiroFornecedor.ts'))}).consultarResumoFinanceiroFornecedor;
+exports.consultarDashboardFinanceiroAdmin =
+  require(${JSON.stringify(path.join(root, 'functions/src/functions/financeiro/consultarDashboardFinanceiroAdmin.ts'))}).consultarDashboardFinanceiroAdmin;
+exports.consultarPrevisaoFinanceiraGerente =
+  require(${JSON.stringify(path.join(root, 'functions/src/functions/financeiro/consultarPrevisaoGerente.ts'))}).consultarPrevisaoFinanceiraGerente;
 `;
 fs.writeFileSync(path.join(destino, 'index.js'), index);
 console.log('Composição MFA12 preparada em .dart_tool, sem deploy.');

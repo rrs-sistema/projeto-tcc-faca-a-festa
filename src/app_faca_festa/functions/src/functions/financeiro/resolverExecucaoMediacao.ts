@@ -1,4 +1,5 @@
-import { HttpsError, onCall } from "firebase-functions/v2/https";
+import { onCall } from "../../shared/callableComMfa";
+import { HttpsError } from "firebase-functions/v2/https";
 import { admin } from "../../shared/firebaseAdmin";
 import { exigirTipo, exigirUsuarioAutenticado } from "../../shared/auth";
 import { resolverExecucaoAposMediacao } from "../../services/financeiro/resolucaoMediacaoService";

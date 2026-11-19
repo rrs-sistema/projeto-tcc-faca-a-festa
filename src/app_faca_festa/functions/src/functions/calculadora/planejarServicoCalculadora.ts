@@ -1,4 +1,5 @@
-import { onCall, HttpsError } from "firebase-functions/v2/https";
+import { onCall } from "../../shared/callableComMfa";
+import { HttpsError } from "firebase-functions/v2/https";
 import { defineSecret } from "firebase-functions/params";
 import { admin } from "../../shared/firebaseAdmin";
 import { confirmarPlanejador, sugerirCandidatosPlanejador } from "../../services/calculadora/planejadorHibridoService";

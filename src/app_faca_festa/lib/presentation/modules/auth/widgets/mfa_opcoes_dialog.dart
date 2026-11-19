@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 import 'package:app_faca_festa/domain/entities/resultados_operacao.dart';
+import 'package:app_faca_festa/domain/entities/usuario.dart';
 import 'package:app_faca_festa/domain/repositories/autenticacao_repository.dart';
 
 class MfaOpcoesDialog extends StatefulWidget {
@@ -12,12 +13,14 @@ class MfaOpcoesDialog extends StatefulWidget {
     required this.autorizacao,
     required this.emailAtivo,
     required this.totpAtivo,
+    this.perfilGestao,
   });
 
   final AutenticacaoRepository autenticacao;
   final String autorizacao;
   final bool emailAtivo;
   final bool totpAtivo;
+  final Usuario? perfilGestao;
 
   @override
   State<MfaOpcoesDialog> createState() => _MfaOpcoesDialogState();
@@ -32,6 +35,7 @@ class _MfaOpcoesDialogState extends State<MfaOpcoesDialog> {
   List<String> _codigos = const [];
   bool _ocupado = false;
   bool _copiado = false;
+  late bool _opcionalAtivo = widget.perfilGestao?.mfaLoginOpcional ?? false;
   String? _erro;
 
   @override
@@ -183,6 +187,24 @@ class _MfaOpcoesDialogState extends State<MfaOpcoesDialog> {
                   onSubmitted: (_) => _confirmarMetodo(),
                 ),
               ] else ...[
+                if (widget.perfilGestao case final perfil?)
+                  if (perfil.tipo == 'O' || perfil.tipo == 'C')
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('Verificação em duas etapas no login'),
+                      subtitle: const Text(
+                          'Escolha se deseja pedir um código ao entrar.'),
+                      value: _opcionalAtivo,
+                      onChanged: _ocupado
+                          ? null
+                          : (ativar) => _executar(
+                                () => widget.autenticacao.definirMfaOpcional(
+                                  ativar,
+                                  widget.autorizacao,
+                                ),
+                                (_) => _opcionalAtivo = ativar,
+                              ),
+                    ),
                 if (_totpAtivo) const Text('App autenticador ativo'),
                 OutlinedButton(
                   onPressed: _ocupado
@@ -251,8 +273,11 @@ class _MfaOpcoesDialogState extends State<MfaOpcoesDialog> {
           ] else
             FilledButton(
               onPressed: _ocupado ? null : () => Navigator.of(context).pop(),
-              child: Text(
-                  exibindoCodigos ? 'Já guardei, entrar' : 'Concluir e entrar'),
+              child: Text(widget.perfilGestao != null
+                  ? 'Concluir'
+                  : exibindoCodigos
+                      ? 'Já guardei, entrar'
+                      : 'Concluir e entrar'),
             ),
         ],
       ),

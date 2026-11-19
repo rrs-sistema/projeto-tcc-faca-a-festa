@@ -39,131 +39,143 @@ const _usuario = Usuario(
   tipo: 'O',
   mfaEmailAtivo: true,
   mfaMetodo: 'email',
+  mfaLoginOpcional: true,
 );
 
 void main() {
-  testWidgets('login aguarda o perfil e abre o desafio por e-mail uma só vez',
-      (tester) async {
-    Get.testMode = true;
-    final auth = _Autenticacao();
-    final perfil = _Perfil();
-    final auditoria = _Auditoria();
-    final tema = EventThemeController();
-    final app = Get.put(AppController(
-      storage: _Storage(),
-      autenticacaoRepository: auth,
-      perfilUsuarioRepository: perfil,
-      pushTokenRepository: _Push(),
-      documentos: _Documentos(),
-      fornecedores: _Fornecedores(),
-      convite: _Convite(),
-      eventoController: _Eventos(),
-      orcamentoController: _Orcamentos(),
-      cotacaoController: _Cotacoes(),
-      fornecedorController: _Fornecedor(),
-      tarefaController: _Tarefas(),
-      avaliacaoController: _Avaliacoes(),
-      servicoController: _Servicos(),
-      themeController: tema,
-    ));
-    addTearDown(() async {
-      Get.reset();
-      Get.testMode = false;
-      await auth.sessoes.close();
-    });
-    final login = LoginController(
-      autenticacaoRepository: auth,
-      perfilRepository: perfil,
-      appController: app,
-      gerenciarAuditoria: GerenciarAuditoria(auditoria),
-    );
-    final mfa = TotpMfaController(
-      autenticacaoRepository: auth,
-      appController: app,
-    );
-    var splashes = 0;
+  for (final voluntaria in [true, false]) {
+    testWidgets('login do organizador com proteção opcional $voluntaria',
+        (tester) async {
+      Get.testMode = true;
+      final auth = _Autenticacao();
+      final perfil = _Perfil(_usuario.copyWith(mfaLoginOpcional: voluntaria));
+      final auditoria = _Auditoria();
+      final tema = EventThemeController();
+      final app = Get.put(AppController(
+        storage: _Storage(),
+        autenticacaoRepository: auth,
+        perfilUsuarioRepository: perfil,
+        pushTokenRepository: _Push(),
+        documentos: _Documentos(),
+        fornecedores: _Fornecedores(),
+        convite: _Convite(),
+        eventoController: _Eventos(),
+        orcamentoController: _Orcamentos(),
+        cotacaoController: _Cotacoes(),
+        fornecedorController: _Fornecedor(),
+        tarefaController: _Tarefas(),
+        avaliacaoController: _Avaliacoes(),
+        servicoController: _Servicos(),
+        themeController: tema,
+      ));
+      addTearDown(() async {
+        Get.reset();
+        Get.testMode = false;
+        await auth.sessoes.close();
+      });
+      final login = LoginController(
+        autenticacaoRepository: auth,
+        perfilRepository: perfil,
+        appController: app,
+        gerenciarAuditoria: GerenciarAuditoria(auditoria),
+      );
+      final mfa = TotpMfaController(
+        autenticacaoRepository: auth,
+        appController: app,
+      );
+      var splashes = 0;
 
-    await tester.pumpWidget(GetMaterialApp(
-      initialRoute: '/login',
-      builder: EasyLoading.init(),
-      getPages: [
-        GetPage(name: '/login', page: () => const Scaffold()),
-        GetPage(
-          name: '/splash',
-          page: () {
-            splashes++;
-            return const Scaffold();
-          },
-        ),
-        GetPage(
-          name: '/loginTotp',
-          page: () => TotpVerifyScreen(
-            controller: Get.put(mfa),
-            themeController: tema,
+      await tester.pumpWidget(GetMaterialApp(
+        initialRoute: '/login',
+        builder: EasyLoading.init(),
+        getPages: [
+          GetPage(name: '/login', page: () => const Scaffold()),
+          GetPage(
+            name: '/splash',
+            page: () {
+              splashes++;
+              return const Scaffold();
+            },
           ),
-        ),
-        GetPage(
-          name: '/welcome',
-          middlewares: [
-            PapelMiddleware(tiposPermitidos: const ['O'])
-          ],
-          page: () => const Scaffold(body: Text('Sessão iniciada')),
-        ),
-      ],
-    ));
-    login.email.value = _usuario.email;
-    login.senha.value = 'senha-exemplo';
-    final entrada = login.login();
-    await tester.pump();
-    await tester.pump(const Duration(seconds: 1));
+          GetPage(
+            name: '/loginTotp',
+            page: () => TotpVerifyScreen(
+              controller: Get.put(mfa),
+              themeController: tema,
+            ),
+          ),
+          GetPage(
+            name: '/welcome',
+            middlewares: [
+              PapelMiddleware(tiposPermitidos: const ['O'])
+            ],
+            page: () => const Scaffold(body: Text('Sessão iniciada')),
+          ),
+        ],
+      ));
+      login.email.value = _usuario.email;
+      login.senha.value = 'senha-exemplo';
+      final entrada = login.login();
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
 
-    expect(auth.idUsuarioAtual, _usuario.idUsuario);
-    expect(login.carregando.value, isTrue);
-    expect(Get.currentRoute, '/login');
-    expect(perfil.carregamentos, 0);
+      expect(auth.idUsuarioAtual, _usuario.idUsuario);
+      expect(login.carregando.value, isTrue);
+      expect(Get.currentRoute, '/login');
+      expect(perfil.carregamentos, 0);
 
-    perfil.busca.complete(_usuario);
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
-    await tester.pump(const Duration(milliseconds: 500));
-    await tester.pump();
-    await entrada;
+      perfil.busca.complete(perfil.usuario);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pump();
+      await entrada;
 
-    expect(Get.currentRoute, '/loginTotp');
-    expect(auth.codigosEnviados, 1);
-    expect(app.usuarioLogado.value, isNull);
-    expect(auditoria.registros.single.acao, 'LOGIN_REALIZADO');
+      if (!voluntaria) {
+        expect(Get.currentRoute, '/welcome');
+        expect(auth.codigosEnviados, 0);
+        expect(app.usuarioLogado.value, perfil.usuario);
+        expect(splashes, 0);
+        auditoria.resposta.complete('registro-login');
+        return;
+      }
 
-    auditoria.resposta.complete('registro-login');
-    auth.sessoes.add(auth.sessaoAtual);
-    await tester.pump();
-    await tester.pump(const Duration(seconds: 5));
-    await tester.pump();
+      expect(Get.currentRoute, '/loginTotp');
+      expect(auth.codigosEnviados, 1);
+      expect(app.usuarioLogado.value, isNull);
+      expect(auditoria.registros.single.acao, 'LOGIN_REALIZADO');
 
-    expect(Get.currentRoute, '/loginTotp');
-    expect(auth.codigosEnviados, 1);
-    expect(splashes, 0);
+      auditoria.resposta.complete('registro-login');
+      auth.sessoes.add(auth.sessaoAtual);
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pump();
 
-    await tester.enterText(find.byType(TextField), '000000');
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 500));
-    expect(find.text('Código incorreto.'), findsOneWidget);
-    expect(Get.currentRoute, '/loginTotp');
-    expect(app.usuarioLogado.value, isNull);
-    Get.closeAllSnackbars();
-    await tester.pump(const Duration(milliseconds: 500));
+      expect(Get.currentRoute, '/loginTotp');
+      expect(auth.codigosEnviados, 1);
+      expect(splashes, 0);
 
-    await tester.enterText(find.byType(TextField), '123456');
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
-    await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), '000000');
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(find.text('Código incorreto.'), findsOneWidget);
+      expect(Get.currentRoute, '/loginTotp');
+      expect(app.usuarioLogado.value, isNull);
+      Get.closeAllSnackbars();
+      await tester.pump(const Duration(milliseconds: 500));
 
-    expect(auth.codigosValidados, ['000000', '123456']);
-    expect(find.text('Sessão iniciada'), findsOneWidget);
-    expect(app.usuarioLogado.value, _usuario);
-    expect(auth.codigosEnviados, 1);
-    expect(splashes, 0);
-  });
+      await tester.enterText(find.byType(TextField), '123456');
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pumpAndSettle();
+
+      expect(auth.codigosValidados, ['000000', '123456']);
+      expect(find.text('Sessão iniciada'), findsOneWidget);
+      expect(app.usuarioLogado.value, perfil.usuario);
+      expect(auth.codigosEnviados, 1);
+      expect(splashes, 0);
+    });
+  }
 }
 
 class _Autenticacao extends Fake implements AutenticacaoRepository {
@@ -171,6 +183,9 @@ class _Autenticacao extends Fake implements AutenticacaoRepository {
   SessaoUsuario? sessaoAtual;
   var codigosEnviados = 0;
   final codigosValidados = <String>[];
+
+  @override
+  Future<bool> sessaoMfaVerificada() async => false;
 
   @override
   String? get idUsuarioAtual => sessaoAtual?.idUsuario;
@@ -213,6 +228,8 @@ class _Autenticacao extends Fake implements AutenticacaoRepository {
 }
 
 class _Perfil extends Fake implements PerfilUsuarioRepository {
+  _Perfil(this.usuario);
+  final Usuario usuario;
   final busca = Completer<Usuario?>();
   var carregamentos = 0;
 
@@ -222,7 +239,7 @@ class _Perfil extends Fake implements PerfilUsuarioRepository {
   @override
   Future<PerfilUsuario?> carregarPerfil(String idUsuario) async {
     carregamentos++;
-    return const PerfilUsuario(usuario: _usuario, enderecos: []);
+    return PerfilUsuario(usuario: usuario, enderecos: []);
   }
 }
 

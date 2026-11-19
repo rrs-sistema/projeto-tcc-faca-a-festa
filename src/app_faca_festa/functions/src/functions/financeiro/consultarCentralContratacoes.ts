@@ -1,5 +1,6 @@
 import { divisaoContrato, carregarContextoRepasse } from "../../services/financeiro/liberacaoRepasseService";
-import { onCall, HttpsError } from "firebase-functions/v2/https";
+import { onCall } from "../../shared/callableComMfa";
+import { HttpsError } from "firebase-functions/v2/https";
 import { admin } from "../../shared/firebaseAdmin";
 import { exigirUsuarioAutenticado, exigirTipo } from "../../shared/auth";
 import { carregarMapaDocs } from "../../shared/carregarMapaDocs";
