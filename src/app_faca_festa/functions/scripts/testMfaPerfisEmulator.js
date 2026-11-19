@@ -56,7 +56,22 @@ async function login(uid, google) {
   assert.ok(body.idToken, JSON.stringify(body.error));
   const decoded = JSON.parse(Buffer.from(body.idToken.split('.')[1], 'base64url'));
   assert.equal(typeof decoded.sub, 'string');
-  return { uid: decoded.sub, token: body.idToken, authTime: decoded.auth_time };
+  return { uid: decoded.sub, token: body.idToken, authTime: decoded.auth_time, refreshToken: body.refreshToken };
+}
+
+async function renovarToken(refreshToken, authTime) {
+  const response = await fetch(
+    'http://' + process.env.FIREBASE_AUTH_EMULATOR_HOST + '/securetoken.googleapis.com/v1/token?key=demo',
+    {
+      method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ grant_type: 'refresh_token', refresh_token: refreshToken }).toString(),
+    },
+  );
+  const body = await response.json();
+  assert.ok(body.id_token, JSON.stringify(body.error));
+  const decoded = JSON.parse(Buffer.from(body.id_token.split('.')[1], 'base64url'));
+  assert.equal(decoded.auth_time, authTime, 'Renovar o token preserva a sessão original.');
+  return body.id_token;
 }
 
 async function main() {
@@ -72,7 +87,7 @@ async function main() {
   try {
     for (const tipo of ['O', 'C', 'F', 'A']) {
       for (const google of [false, true]) {
-        const { uid, token, authTime } = await login('perfil-' + tipo + '-' + google, google);
+        const { uid, token, authTime, refreshToken } = await login('perfil-' + tipo + '-' + google, google);
         const perfil = db.doc('usuarios/' + uid);
         await perfil.set({ tipo, ativo: true, nome: uid, email: uid + '@example.test' });
         await db.doc('evento/perfis-' + uid).set({ id_usuario: uid });
@@ -107,6 +122,14 @@ async function main() {
         assert.ok(verificado.autorizacao);
         assert.equal((await chamar('consultarSessaoMfa', token)).verificada, true);
         if (tipo === 'A' || tipo === 'F') {
+          const tokenRestaurado = await renovarToken(refreshToken, authTime);
+          assert.equal((await chamar('consultarSessaoMfa', tokenRestaurado)).verificada, true);
+          const confirmacao = (await prova.get()).data();
+          await prova.update({ expiraEm: new Date(Date.now() - 1000) });
+          assert.equal((await chamar('consultarSessaoMfa', tokenRestaurado)).verificada, false);
+          await assert.rejects(acesso, (erro) => erro.status === 'PERMISSION_DENIED');
+          await assertFails(ctx.doc(privada).get());
+          await prova.set(confirmacao);
           await assertSucceeds(ctx.doc(privada).get());
           const outraSessao = env.authenticatedContext(uid, { auth_time: authTime + 1 }).firestore();
           await assertFails(outraSessao.doc(privada).get());

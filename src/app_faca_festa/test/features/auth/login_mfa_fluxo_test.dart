@@ -19,6 +19,11 @@ import 'package:app_faca_festa/domain/usecases/gerenciar_auditoria.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_documentos.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_fornecedores.dart';
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
+import 'package:app_faca_festa/presentation/modules/app/controllers/app_carrinho_cotacao.dart';
+import 'package:app_faca_festa/presentation/modules/app/controllers/app_ciclo_sessao.dart';
+import 'package:app_faca_festa/presentation/modules/app/controllers/app_destino_rota.dart';
+import 'package:app_faca_festa/presentation/modules/app/controllers/app_sessao_fornecedor.dart';
+import 'package:app_faca_festa/presentation/modules/app/controllers/app_totp_sessao.dart';
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_convite_controller.dart';
 import 'package:app_faca_festa/presentation/modules/auth/controllers/login_controller.dart';
 import 'package:app_faca_festa/presentation/modules/auth/controllers/totp_mfa_controller.dart';
@@ -176,16 +181,86 @@ void main() {
       expect(splashes, 0);
     });
   }
+
+  for (final tipo in ['F', 'A']) {
+    for (final verificada in [true, false]) {
+      testWidgets(
+          'reabertura do perfil $tipo com sessão MFA válida=$verificada',
+          (tester) async {
+        Get.testMode = true;
+        final auth = _Autenticacao()
+          ..sessaoAtual = const SessaoUsuario(idUsuario: 'organizador')
+          ..mfaVerificada = verificada;
+        final perfil = _Perfil(_usuario.copyWith(tipo: tipo));
+        addTearDown(() async {
+          Get.reset();
+          Get.testMode = false;
+          await auth.sessoes.close();
+        });
+        await tester.pumpWidget(GetMaterialApp(
+          initialRoute: '/login',
+          getPages: [
+            for (final rota in [
+              '/login',
+              '/loginTotp',
+              '/fornecedor',
+              '/admin'
+            ])
+              GetPage(name: rota, page: () => const Scaffold()),
+          ],
+        ));
+
+        // Cada inicialização perde a memória local, mas restaura o mesmo login.
+        for (var abertura = 0; abertura < 2; abertura++) {
+          if (abertura > 0) {
+            Get.offAllNamed('/login');
+            await tester.pumpAndSettle();
+          }
+          final ciclo = AppCicloSessao(
+            autenticacao: auth,
+            perfil: perfil,
+            convite: _Convite(),
+            totp: AppTotpSessao(_Storage()),
+            carrinho: AppCarrinhoCotacao(),
+            sessaoFornecedor: _SessaoFornecedor(),
+            eventos: _Eventos(),
+            orcamentos: _Orcamentos(),
+            cotacoes: _Cotacoes(),
+            fornecedor: _Fornecedor(),
+            tarefas: _Tarefas(),
+            servicos: _Servicos(),
+            theme: EventThemeController(),
+          );
+          final restauracao = ciclo.processar(auth.sessaoAtual);
+          await tester.pump(const Duration(milliseconds: 300));
+          await restauracao;
+          await tester.pumpAndSettle();
+          expect(
+              Get.currentRoute,
+              verificada
+                  ? (tipo == 'A' ? '/admin' : '/fornecedor')
+                  : '/loginTotp');
+        }
+        expect(auth.consultasMfa, 2);
+        expect(auth.codigosValidados, isEmpty);
+      });
+    }
+  }
 }
 
 class _Autenticacao extends Fake implements AutenticacaoRepository {
   final sessoes = StreamController<SessaoUsuario?>.broadcast();
   SessaoUsuario? sessaoAtual;
   var codigosEnviados = 0;
+  var consultasMfa = 0;
+  bool mfaVerificada = false;
   final codigosValidados = <String>[];
 
   @override
-  Future<bool> sessaoMfaVerificada() async => false;
+  Future<bool> sessaoMfaVerificada() async {
+    consultasMfa++;
+    return mfaVerificada;
+  }
 
   @override
   String? get idUsuarioAtual => sessaoAtual?.idUsuario;
@@ -307,4 +382,14 @@ class _Tarefas extends Fake implements TarefaController {}
 
 class _Avaliacoes extends Fake implements AvaliacaoServicoController {}
 
-class _Servicos extends Fake implements ServicoProdutoController {}
+class _Servicos extends Fake implements ServicoProdutoController {
+  @override
+  Future<void> carregarServicosComDetalhesOtimizado(
+      {String? idFornecedor}) async {}
+}
+
+class _SessaoFornecedor extends Fake implements AppSessaoFornecedor {
+  @override
+  Future<AppDestinoRota> resolverDestino(String idUsuario) async =>
+      const AppDestinoRota('/fornecedor');
+}

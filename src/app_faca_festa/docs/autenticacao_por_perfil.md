@@ -10,4 +10,6 @@ As funções privadas usam `callableComMfa`; operações de login, cadastro e co
 
 Ao publicar esta mudança, atualizar primeiro as funções afetadas e depois as regras do Firestore. Aplicativos antigos que pulavam a confirmação no login Google de fornecedores ou administradores precisam ser atualizados. A nova política do organizador depende também da atualização do aplicativo.
 
+Confirmações feitas antes dessa publicação não criaram a prova no servidor. Na primeira utilização após a atualização, fornecedores e administradores precisam confirmar o código uma vez, mesmo que o Firebase tenha restaurado seu login. Nas próximas aberturas, a prova válida é recuperada para a mesma sessão. Não é seguro criar essa prova apenas a partir dos indicadores de métodos cadastrados no perfil.
+
 Validação: testes Flutter de autenticação e persistência do perfil, testes existentes de métodos MFA e teste `functions/scripts/testMfaPerfisEmulator.js` com Auth, Functions e Firestore locais. A matriz cobre os quatro perfis com senha e Google, adesão opcional, bloqueio de sessões sem confirmação e proteção das regras.
