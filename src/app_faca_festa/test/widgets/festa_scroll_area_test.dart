@@ -3,6 +3,75 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  testWidgets('Tabela mantém altura e controles de rolagem independentes',
+      (tester) async {
+    tester.view.physicalSize = const Size(1366, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final horizontal = ScrollController();
+    final vertical = ScrollController();
+    addTearDown(horizontal.dispose);
+    addTearDown(vertical.dispose);
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: FestaContent(
+          child: LayoutBuilder(builder: (context, constraints) {
+            return FestaScrollArea(
+              controller: horizontal,
+              color: Colors.teal,
+              scrollDirection: Axis.horizontal,
+              contentPadding: EdgeInsets.zero,
+              child: SingleChildScrollView(
+                controller: horizontal,
+                scrollDirection: Axis.horizontal,
+                child: SizedBox(
+                  width: 1600,
+                  height: constraints.maxHeight,
+                  child: Column(children: [
+                    const Text('Cabeçalho fixo'),
+                    Expanded(
+                      child: FestaScrollArea(
+                        controller: vertical,
+                        color: Colors.teal,
+                        contentPadding: EdgeInsets.zero,
+                        child: SingleChildScrollView(
+                          controller: vertical,
+                          child: DataTable(
+                            columns: const [
+                              DataColumn(label: Text('Serviço')),
+                              DataColumn(label: Text('Situação')),
+                            ],
+                            rows: List.generate(
+                                40,
+                                (index) => DataRow(cells: [
+                                      DataCell(Text('Serviço $index')),
+                                      const DataCell(Text('Ativo')),
+                                    ])),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ]),
+                ),
+              ),
+            );
+          }),
+        ),
+      ),
+    ));
+    await tester.pumpAndSettle();
+    expect(horizontal.position.maxScrollExtent, greaterThan(0));
+    expect(vertical.position.maxScrollExtent, greaterThan(0));
+    horizontal.jumpTo(100);
+    vertical.jumpTo(200);
+    await tester.pumpAndSettle();
+    expect(horizontal.offset, 100);
+    expect(vertical.offset, 200);
+    expect(find.text('Cabeçalho fixo'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   for (final width in [360.0, 1920.0]) {
     testWidgets('Barras horizontal e vertical independentes em $width px',
         (tester) async {
@@ -12,7 +81,16 @@ void main() {
       addTearDown(tester.view.resetDevicePixelRatio);
 
       Future<void> render(Color color) => tester.pumpWidget(MaterialApp(
-            theme: ThemeData(platform: TargetPlatform.windows),
+            theme: ThemeData(
+                platform: width < 650
+                    ? TargetPlatform.android
+                    : TargetPlatform.windows),
+            builder: (context, child) => MediaQuery(
+              data: MediaQuery.of(context).copyWith(
+                padding: EdgeInsets.only(bottom: width < 650 ? 64 : 0),
+              ),
+              child: child!,
+            ),
             home: Scaffold(
               body: FestaScrollArea(
                 color: color,
@@ -49,10 +127,17 @@ void main() {
       final horizontalBar = tester.widget<RawScrollbar>(horizontal);
       final verticalBar =
           tester.widget<RawScrollbar>(find.byType(RawScrollbar).first);
-      expect(horizontalBar.thumbVisibility, isTrue);
+      expect(horizontalBar.thumbVisibility, width >= 650);
+      expect(horizontalBar.trackVisibility, width >= 650);
+      expect(horizontalBar.interactive, width >= 650);
+      expect(horizontalBar.padding, EdgeInsets.zero);
       final bounds = tester.getRect(horizontal);
-      await tester.dragFrom(
-          Offset(bounds.left + 20, bounds.bottom - 6), const Offset(120, 0));
+      if (width >= 650) {
+        await tester.dragFrom(
+            Offset(bounds.left + 20, bounds.bottom - 6), const Offset(120, 0));
+      } else {
+        await tester.drag(find.byType(ListView), const Offset(-150, 0));
+      }
       await tester.pumpAndSettle();
       expect(horizontalBar.controller!.offset, greaterThan(0));
       expect(verticalBar.controller!.offset, 0);

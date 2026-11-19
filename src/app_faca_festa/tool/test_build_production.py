@@ -11,7 +11,7 @@ spec.loader.exec_module(production)
 
 
 class ProductionTests(unittest.TestCase):
-    def exercise(self, fail_bundle=False):
+    def exercise(self, fail_bundle=False, fail_hosting=False):
         trace = []
         args = argparse.Namespace(windows=True, web=True, apk=True, bundle=True, all=False,
                                   deploy=True, skip_pub_get=True, no_bump=True, bump_build=False, bump=None)
@@ -20,6 +20,10 @@ class ProductionTests(unittest.TestCase):
             if fail_bundle:
                 raise SystemExit(1)
             return Path(__file__)
+        def run(command):
+            trace.append(command)
+            if fail_hosting and command[0] == 'firebase':
+                raise SystemExit(1)
         with patch.object(production, 'parse_args', return_value=args), \
              patch.object(production, 'read_version', return_value=('1.0.6','8')), \
              patch.object(production, 'ensure_flutter', return_value='flutter'), \
@@ -28,10 +32,10 @@ class ProductionTests(unittest.TestCase):
              patch.object(production, 'step_apk', side_effect=lambda *args: trace.append('apk') or Path(__file__)), \
              patch.object(production, 'step_bundle', side_effect=bundle), \
              patch.object(production, 'which', return_value='node'), \
-             patch.object(production, 'run', side_effect=lambda command: trace.append(command)), \
+             patch.object(production, 'run', side_effect=run), \
              patch.object(production, 'ensure_firebase', return_value='firebase'), \
              patch.object(production.shutil, 'copytree'):
-            if fail_bundle:
+            if fail_bundle or fail_hosting:
                 with self.assertRaises(SystemExit): production.main()
             else:
                 production.main()
@@ -40,12 +44,19 @@ class ProductionTests(unittest.TestCase):
     def test_all_builds_precede_every_publication(self):
         trace = self.exercise()
         self.assertEqual(trace[:4], [('windows',('1.0.6','8')),('web',False),'apk','bundle'])
-        self.assertEqual(trace[-1], ['firebase','deploy','--project','faca-a-festa','--only','hosting'])
-        self.assertIn('--publish',trace[-2])
+        self.assertEqual(trace[-2], ['firebase','deploy','--project','faca-a-festa','--only','hosting'])
+        self.assertIn('release_retention.cjs',trace[-1][1])
+        self.assertEqual(trace[-1][-1], '--apply')
+        self.assertIn('--publish',trace[-3])
         self.assertFalse(any('play' in str(item).lower() for item in trace))
 
     def test_failure_never_publishes_a_partial_release(self):
         self.assertEqual(len(self.exercise(True)),4)
+
+    def test_hosting_failure_never_runs_retention(self):
+        trace = self.exercise(fail_hosting=True)
+        self.assertEqual(trace[-1][0], 'firebase')
+        self.assertFalse(any('release_retention.cjs' in str(item) for item in trace))
 
 
 if __name__ == '__main__': unittest.main()

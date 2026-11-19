@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/presentation/widgets/festa_scroll_area.dart';
 import 'package:app_faca_festa/core/utils/numeric_input.dart';
 import 'dart:collection';
 
@@ -382,7 +383,7 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
         ],
       ),
       bottomNavigationBar: _buildBottomBar(context),
-      body: SafeArea(
+      body: FestaContent(child: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
             final isWide = constraints.maxWidth >= 980;
@@ -390,289 +391,297 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
 
             return Form(
               key: _formKey,
-              child: SingleChildScrollView(
-                keyboardDismissBehavior:
-                    ScrollViewKeyboardDismissBehavior.onDrag,
-                padding: EdgeInsets.fromLTRB(
-                  horizontal,
-                  16,
-                  horizontal,
-                  128 + MediaQuery.of(context).viewInsets.bottom,
-                ),
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 1180),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        _buildHeroCard(isWide: isWide),
-                        const SizedBox(height: 14),
-                        _FormSection(
-                          icon: Icons.article_outlined,
-                          title: 'Dados principais',
-                          subtitle:
-                              'Informações básicas exibidas para o organizador do evento.',
-                          child: Column(
-                            children: [
-                              _responsiveFields(
-                                isWide: isWide,
+              child: FestaScrollArea(
+                  color: Theme.of(context).colorScheme.primary,
+                  maxWidth: double.infinity,
+                  scrollDirection: Axis.vertical,
+                  child: SingleChildScrollView(
+                    primary: true,
+                    keyboardDismissBehavior:
+                        ScrollViewKeyboardDismissBehavior.onDrag,
+                    padding: EdgeInsets.fromLTRB(
+                      horizontal,
+                      16,
+                      horizontal,
+                      128 + MediaQuery.of(context).viewInsets.bottom,
+                    ),
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 1180),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            _buildHeroCard(isWide: isWide),
+                            const SizedBox(height: 14),
+                            _FormSection(
+                              icon: Icons.article_outlined,
+                              title: 'Dados principais',
+                              subtitle:
+                                  'Informações básicas exibidas para o organizador do evento.',
+                              child: Column(
                                 children: [
-                                  _buildTextField(
-                                    controller: _tituloController,
-                                    label: 'Título da inspiração',
-                                    hint:
-                                        'Ex.: Mesa provençal rosa com dourado',
-                                    icon: Icons.title_rounded,
-                                    requiredField: true,
-                                    validator: (value) => FormValidators.titulo(
-                                        value,
-                                        campo: 'o título'),
+                                  _responsiveFields(
+                                    isWide: isWide,
+                                    children: [
+                                      _buildTextField(
+                                        controller: _tituloController,
+                                        label: 'Título da inspiração',
+                                        hint:
+                                            'Ex.: Mesa provençal rosa com dourado',
+                                        icon: Icons.title_rounded,
+                                        requiredField: true,
+                                        validator: (value) =>
+                                            FormValidators.titulo(value,
+                                                campo: 'o título'),
+                                      ),
+                                      _buildTextField(
+                                        controller: _categoriaController,
+                                        label: 'Categoria',
+                                        hint: 'Ex.: Decoração',
+                                        icon: Icons.category_outlined,
+                                        requiredField: true,
+                                        validator: (value) =>
+                                            FormValidators.obrigatorio(
+                                          value,
+                                          campo: 'a categoria',
+                                        ),
+                                      ),
+                                      _buildTextField(
+                                        controller: _categoriaIdController,
+                                        label: 'Categoria ID',
+                                        hint: 'Ex.: decoracao',
+                                        icon: Icons.tag_rounded,
+                                      ),
+                                      _buildTextField(
+                                        controller: _ordemController,
+                                        label: 'Ordem',
+                                        hint: 'Ex.: 1',
+                                        icon: Icons.sort_rounded,
+                                        keyboardType: TextInputType.number,
+                                        inputFormatters: [
+                                          FilteringTextInputFormatter.digitsOnly
+                                        ],
+                                      ),
+                                    ],
                                   ),
+                                  const SizedBox(height: 12),
                                   _buildTextField(
-                                    controller: _categoriaController,
-                                    label: 'Categoria',
-                                    hint: 'Ex.: Decoração',
-                                    icon: Icons.category_outlined,
-                                    requiredField: true,
-                                    validator: (value) =>
-                                        FormValidators.obrigatorio(
+                                    controller: _descricaoController,
+                                    label: 'Descrição',
+                                    hint:
+                                        'Descreva a ideia, quando usar e quais detalhes ela sugere.',
+                                    icon: Icons.notes_rounded,
+                                    minLines: 4,
+                                    maxLines: 8,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+                            _FormSection(
+                              icon: Icons.image_outlined,
+                              title: 'Imagem e galeria',
+                              subtitle:
+                                  'Cadastre a imagem principal e URLs extras de referência.',
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  _buildImagePanel(),
+                                  const SizedBox(height: 12),
+                                  _buildTextField(
+                                    controller: _imagemUrlController,
+                                    label: 'Imagem principal URL',
+                                    hint: 'https://...',
+                                    icon: Icons.link_rounded,
+                                    keyboardType: TextInputType.url,
+                                    validator: (value) => FormValidators.url(
                                       value,
-                                      campo: 'a categoria',
+                                      obrigatorio: false,
+                                      campo: 'a URL da imagem',
                                     ),
                                   ),
+                                  const SizedBox(height: 12),
                                   _buildTextField(
-                                    controller: _categoriaIdController,
-                                    label: 'Categoria ID',
-                                    hint: 'Ex.: decoracao',
-                                    icon: Icons.tag_rounded,
+                                    controller: _galeriaUrlsController,
+                                    label: 'URLs adicionais da galeria',
+                                    hint:
+                                        'Uma URL por linha. Você também pode adicionar imagens pelo botão abaixo.',
+                                    icon: Icons.collections_outlined,
+                                    minLines: 3,
+                                    maxLines: 6,
                                   ),
-                                  _buildTextField(
-                                    controller: _ordemController,
-                                    label: 'Ordem',
-                                    hint: 'Ex.: 1',
-                                    icon: Icons.sort_rounded,
-                                    keyboardType: TextInputType.number,
-                                    inputFormatters: [
-                                      FilteringTextInputFormatter.digitsOnly
+                                  const SizedBox(height: 12),
+                                  _buildGaleriaPanel(),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+                            _FormSection(
+                              icon: Icons.event_available_outlined,
+                              title: 'Tipos de evento',
+                              subtitle:
+                                  'Selecione pelo menos um tipo de evento onde essa inspiração será exibida.',
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  _buildTipoEventoChips(),
+                                  if (_tentouSalvar &&
+                                      !_possuiTipoEventoValido()) ...[
+                                    const SizedBox(height: 10),
+                                    _buildInlineWarning(
+                                      'Selecione pelo menos um tipo de evento ou preencha os campos de tipo manualmente.',
+                                      color: _danger,
+                                      icon: Icons.error_outline_rounded,
+                                    ),
+                                  ],
+                                  const SizedBox(height: 14),
+                                  _responsiveFields(
+                                    isWide: isWide,
+                                    children: [
+                                      _buildTextField(
+                                        controller: _tipoEventoController,
+                                        label: 'Tipo de evento principal',
+                                        hint: 'Ex.: Casamento',
+                                        icon: Icons.celebration_outlined,
+                                      ),
+                                      _buildTextField(
+                                        controller: _tipoEventoIdController,
+                                        label: 'Tipo de evento ID principal',
+                                        hint: 'ID principal',
+                                        icon: Icons.key_rounded,
+                                      ),
+                                      _buildTextField(
+                                        controller:
+                                            _tipoEventoNormalizadoController,
+                                        label: 'Tipo normalizado',
+                                        hint: 'Ex.: casamento',
+                                        icon: Icons.data_object_rounded,
+                                      ),
+                                      _buildTextField(
+                                        controller: _tipoEventoIdsController,
+                                        label: 'TipoEventoIds',
+                                        hint: 'IDs separados por vírgula',
+                                        icon:
+                                            Icons.format_list_bulleted_rounded,
+                                      ),
+                                      _buildTextField(
+                                        controller: _tipoEventoSlugsController,
+                                        label: 'TipoEventoSlugs',
+                                        hint: 'slugs separados por vírgula',
+                                        icon: Icons.link_outlined,
+                                      ),
+                                      _buildTextField(
+                                        controller: _tipoEventoNomesController,
+                                        label: 'TipoEventoNomes',
+                                        hint: 'nomes separados por vírgula',
+                                        icon: Icons.badge_outlined,
+                                      ),
                                     ],
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 12),
-                              _buildTextField(
-                                controller: _descricaoController,
-                                label: 'Descrição',
-                                hint:
-                                    'Descreva a ideia, quando usar e quais detalhes ela sugere.',
-                                icon: Icons.notes_rounded,
-                                minLines: 4,
-                                maxLines: 8,
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 14),
-                        _FormSection(
-                          icon: Icons.image_outlined,
-                          title: 'Imagem e galeria',
-                          subtitle:
-                              'Cadastre a imagem principal e URLs extras de referência.',
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              _buildImagePanel(),
-                              const SizedBox(height: 12),
-                              _buildTextField(
-                                controller: _imagemUrlController,
-                                label: 'Imagem principal URL',
-                                hint: 'https://...',
-                                icon: Icons.link_rounded,
-                                keyboardType: TextInputType.url,
-                                validator: (value) => FormValidators.url(
-                                  value,
-                                  obrigatorio: false,
-                                  campo: 'a URL da imagem',
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              _buildTextField(
-                                controller: _galeriaUrlsController,
-                                label: 'URLs adicionais da galeria',
-                                hint:
-                                    'Uma URL por linha. Você também pode adicionar imagens pelo botão abaixo.',
-                                icon: Icons.collections_outlined,
-                                minLines: 3,
-                                maxLines: 6,
-                              ),
-                              const SizedBox(height: 12),
-                              _buildGaleriaPanel(),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 14),
-                        _FormSection(
-                          icon: Icons.event_available_outlined,
-                          title: 'Tipos de evento',
-                          subtitle:
-                              'Selecione pelo menos um tipo de evento onde essa inspiração será exibida.',
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              _buildTipoEventoChips(),
-                              if (_tentouSalvar &&
-                                  !_possuiTipoEventoValido()) ...[
-                                const SizedBox(height: 10),
-                                _buildInlineWarning(
-                                  'Selecione pelo menos um tipo de evento ou preencha os campos de tipo manualmente.',
-                                  color: _danger,
-                                  icon: Icons.error_outline_rounded,
-                                ),
-                              ],
-                              const SizedBox(height: 14),
-                              _responsiveFields(
-                                isWide: isWide,
+                            ),
+                            const SizedBox(height: 14),
+                            _FormSection(
+                              icon: Icons.tune_rounded,
+                              title: 'Classificação',
+                              subtitle:
+                                  'Dados usados para busca, filtros e experiência personalizada.',
+                              child: Column(
                                 children: [
-                                  _buildTextField(
-                                    controller: _tipoEventoController,
-                                    label: 'Tipo de evento principal',
-                                    hint: 'Ex.: Casamento',
-                                    icon: Icons.celebration_outlined,
-                                  ),
-                                  _buildTextField(
-                                    controller: _tipoEventoIdController,
-                                    label: 'Tipo de evento ID principal',
-                                    hint: 'ID principal',
-                                    icon: Icons.key_rounded,
-                                  ),
-                                  _buildTextField(
-                                    controller:
-                                        _tipoEventoNormalizadoController,
-                                    label: 'Tipo normalizado',
-                                    hint: 'Ex.: casamento',
-                                    icon: Icons.data_object_rounded,
-                                  ),
-                                  _buildTextField(
-                                    controller: _tipoEventoIdsController,
-                                    label: 'TipoEventoIds',
-                                    hint: 'IDs separados por vírgula',
-                                    icon: Icons.format_list_bulleted_rounded,
-                                  ),
-                                  _buildTextField(
-                                    controller: _tipoEventoSlugsController,
-                                    label: 'TipoEventoSlugs',
-                                    hint: 'slugs separados por vírgula',
-                                    icon: Icons.link_outlined,
-                                  ),
-                                  _buildTextField(
-                                    controller: _tipoEventoNomesController,
-                                    label: 'TipoEventoNomes',
-                                    hint: 'nomes separados por vírgula',
-                                    icon: Icons.badge_outlined,
+                                  _responsiveFields(
+                                    isWide: isWide,
+                                    children: [
+                                      _buildTextField(
+                                        controller: _tagsController,
+                                        label: 'Tags',
+                                        hint: 'moderno, rosa, luxo',
+                                        icon: Icons.sell_outlined,
+                                      ),
+                                      _buildTextField(
+                                        controller: _paletaCoresController,
+                                        label: 'Paleta de cores',
+                                        hint: '#E94B8A, dourado, branco',
+                                        icon: Icons.palette_outlined,
+                                      ),
+                                      _buildTextField(
+                                        controller: _estiloController,
+                                        label: 'Estilo',
+                                        hint: 'Ex.: Clássico, moderno, rústico',
+                                        icon: Icons.auto_awesome_outlined,
+                                      ),
+                                      _buildTextField(
+                                        controller: _faixaCustoController,
+                                        label: 'Faixa de custo',
+                                        hint: 'Ex.: baixo, médio, alto',
+                                        icon: Icons.attach_money_rounded,
+                                      ),
+                                      _buildTextField(
+                                        controller: _nivelDificuldadeController,
+                                        label: 'Nível de dificuldade',
+                                        hint: 'Ex.: fácil, médio, avançado',
+                                        icon: Icons.speed_rounded,
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 14),
-                        _FormSection(
-                          icon: Icons.tune_rounded,
-                          title: 'Classificação',
-                          subtitle:
-                              'Dados usados para busca, filtros e experiência personalizada.',
-                          child: Column(
-                            children: [
-                              _responsiveFields(
-                                isWide: isWide,
+                            ),
+                            const SizedBox(height: 14),
+                            _FormSection(
+                              icon: Icons.fact_check_outlined,
+                              title: 'Planejamento sugerido',
+                              subtitle:
+                                  'Itens que podem gerar checklist, orçamento e fornecedores sugeridos.',
+                              child: Column(
                                 children: [
-                                  _buildTextField(
-                                    controller: _tagsController,
-                                    label: 'Tags',
-                                    hint: 'moderno, rosa, luxo',
-                                    icon: Icons.sell_outlined,
-                                  ),
-                                  _buildTextField(
-                                    controller: _paletaCoresController,
-                                    label: 'Paleta de cores',
-                                    hint: '#E94B8A, dourado, branco',
-                                    icon: Icons.palette_outlined,
-                                  ),
-                                  _buildTextField(
-                                    controller: _estiloController,
-                                    label: 'Estilo',
-                                    hint: 'Ex.: Clássico, moderno, rústico',
-                                    icon: Icons.auto_awesome_outlined,
-                                  ),
-                                  _buildTextField(
-                                    controller: _faixaCustoController,
-                                    label: 'Faixa de custo',
-                                    hint: 'Ex.: baixo, médio, alto',
-                                    icon: Icons.attach_money_rounded,
-                                  ),
-                                  _buildTextField(
-                                    controller: _nivelDificuldadeController,
-                                    label: 'Nível de dificuldade',
-                                    hint: 'Ex.: fácil, médio, avançado',
-                                    icon: Icons.speed_rounded,
+                                  _buildTarefasSugeridasEditor(),
+                                  const SizedBox(height: 12),
+                                  _buildItensOrcamentoSugeridosEditor(),
+                                  const SizedBox(height: 12),
+                                  _responsiveFields(
+                                    isWide: isWide,
+                                    children: [
+                                      _buildTextField(
+                                        controller:
+                                            _categoriasFornecedorSugeridasController,
+                                        label:
+                                            'Categorias de fornecedor sugeridas',
+                                        hint: 'Decoração, Buffet, Fotografia',
+                                        icon: Icons.storefront_outlined,
+                                      ),
+                                      _buildTextField(
+                                        controller:
+                                            _fornecedoresRelacionadosController,
+                                        label: 'Fornecedores relacionados',
+                                        hint:
+                                            'Um ID, nome ou referência por linha',
+                                        icon: Icons.handshake_outlined,
+                                        minLines: 3,
+                                        maxLines: 6,
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
-                            ],
-                          ),
+                            ),
+                            const SizedBox(height: 14),
+                            _FormSection(
+                              icon: Icons.public_rounded,
+                              title: 'Publicação',
+                              subtitle:
+                                  'Controle de disponibilidade da inspiração no app público.',
+                              child: _buildPublicacaoCards(isWide: isWide),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 14),
-                        _FormSection(
-                          icon: Icons.fact_check_outlined,
-                          title: 'Planejamento sugerido',
-                          subtitle:
-                              'Itens que podem gerar checklist, orçamento e fornecedores sugeridos.',
-                          child: Column(
-                            children: [
-                              _buildTarefasSugeridasEditor(),
-                              const SizedBox(height: 12),
-                              _buildItensOrcamentoSugeridosEditor(),
-                              const SizedBox(height: 12),
-                              _responsiveFields(
-                                isWide: isWide,
-                                children: [
-                                  _buildTextField(
-                                    controller:
-                                        _categoriasFornecedorSugeridasController,
-                                    label: 'Categorias de fornecedor sugeridas',
-                                    hint: 'Decoração, Buffet, Fotografia',
-                                    icon: Icons.storefront_outlined,
-                                  ),
-                                  _buildTextField(
-                                    controller:
-                                        _fornecedoresRelacionadosController,
-                                    label: 'Fornecedores relacionados',
-                                    hint: 'Um ID, nome ou referência por linha',
-                                    icon: Icons.handshake_outlined,
-                                    minLines: 3,
-                                    maxLines: 6,
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 14),
-                        _FormSection(
-                          icon: Icons.public_rounded,
-                          title: 'Publicação',
-                          subtitle:
-                              'Controle de disponibilidade da inspiração no app público.',
-                          child: _buildPublicacaoCards(isWide: isWide),
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
-                ),
-              ),
+                  )),
             );
           },
         ),
-      ),
+      )),
     );
   }
 

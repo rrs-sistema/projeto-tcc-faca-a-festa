@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/presentation/widgets/festa_scroll_area.dart';
 import 'package:app_faca_festa/presentation/widgets/operacao/operacao_skeleton.dart';
 import 'package:app_faca_festa/presentation/modules/financeiro/widgets/financeiro_contexto.dart';
 import 'package:flutter/material.dart';
@@ -92,42 +93,47 @@ class _ComissaoPlataformaPageState extends State<ComissaoPlataformaPage>
             ),
           ],
         ),
-        body: LayoutBuilder(
-          builder: (context, constraints) {
-            final w = constraints.maxWidth;
-            final pad = (w >= 1100
-                ? 28.0
-                : w >= 720
-                    ? 20.0
-                    : 16.0);
-            final maxW = _admin ? 1400.0 : 1240.0;
-            return Align(
-              alignment: Alignment.topCenter,
-              child: ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: maxW),
-                child: loading
-                    ? ListView(
-                        padding: EdgeInsets.fromLTRB(
-                            pad, FestaPageInsets.belowAppBar, pad, 32),
-                        children: [
-                          _cabecalho(w),
-                          const SizedBox(height: 24),
-                          const OperacaoSkeleton(
-                              titulo: 'Resumo das comissões',
-                              icon: Icons.payments_outlined),
-                          const SizedBox(height: 16),
-                          const OperacaoSkeleton(
-                              titulo: 'Extrato',
-                              icon: Icons.receipt_long_outlined),
-                        ],
-                      )
-                    : _admin
-                        ? _layoutAdmin(pad, w.clamp(0, maxW), err)
-                        : _layoutPagador(pad, w.clamp(0, maxW), err),
-              ),
-            );
-          },
-        ),
+        body: FestaContent(
+            child: ScrollbarTheme(
+                data: ScrollbarThemeData(
+                    thumbColor: WidgetStatePropertyAll(_accent),
+                    radius: const Radius.circular(12)),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final w = constraints.maxWidth;
+                    final pad = (w >= 1100
+                        ? 28.0
+                        : w >= 720
+                            ? 20.0
+                            : 16.0);
+                    final maxW = _admin ? 1400.0 : 1240.0;
+                    return Align(
+                      alignment: Alignment.topCenter,
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(maxWidth: maxW),
+                        child: loading
+                            ? ListView(
+                                padding: EdgeInsets.fromLTRB(
+                                    pad, FestaPageInsets.belowAppBar, pad, 32),
+                                children: [
+                                  _cabecalho(w),
+                                  const SizedBox(height: 24),
+                                  const OperacaoSkeleton(
+                                      titulo: 'Resumo das comissões',
+                                      icon: Icons.payments_outlined),
+                                  const SizedBox(height: 16),
+                                  const OperacaoSkeleton(
+                                      titulo: 'Extrato',
+                                      icon: Icons.receipt_long_outlined),
+                                ],
+                              )
+                            : _admin
+                                ? _layoutAdmin(pad, w.clamp(0, maxW), err)
+                                : _layoutPagador(pad, w.clamp(0, maxW), err),
+                      ),
+                    );
+                  },
+                ))),
       );
     });
   }
@@ -555,75 +561,82 @@ class _ComissaoPlataformaPageState extends State<ComissaoPlataformaPage>
             color: _card,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: _border)),
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: ConstrainedBox(
-            constraints: BoxConstraints(minWidth: box.maxWidth),
-            child: DataTable(
-              headingRowColor: WidgetStatePropertyAll(_bg),
-              headingRowHeight: 54,
-              dataRowMinHeight: 76,
-              dataRowMaxHeight: 96,
-              horizontalMargin: 24,
-              columnSpacing: 24,
-              dividerThickness: .6,
-              headingTextStyle: GoogleFonts.poppins(
-                  fontWeight: FontWeight.w600, fontSize: 12, color: _muted),
-              dataTextStyle: GoogleFonts.poppins(fontSize: 13, color: _ink),
-              columns: [
-                const DataColumn(label: Text('Evento')),
-                const DataColumn(label: Text('Fornecedor')),
-                if (_admin) const DataColumn(label: Text('Pagador')),
-                const DataColumn(label: Text('Taxa aplicada')),
-                const DataColumn(label: Text('Comissão'), numeric: true),
-                const DataColumn(label: Text('Saldo'), numeric: true),
-                const DataColumn(label: Text('Situação')),
-                const DataColumn(label: Text('Detalhes')),
-              ],
-              rows: c.obrigacoes
-                  .map((o) => DataRow(cells: [
-                        DataCell(SizedBox(
-                            width: 200,
-                            child: Text(_refCobranca(o),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
+        child: FestaScrollArea(
+            color: _accent,
+            maxWidth: double.infinity,
+            scrollDirection: Axis.horizontal,
+            child: SingleChildScrollView(
+              primary: true,
+              scrollDirection: Axis.horizontal,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minWidth: box.maxWidth),
+                child: DataTable(
+                  headingRowColor: WidgetStatePropertyAll(_bg),
+                  headingRowHeight: 54,
+                  dataRowMinHeight: 76,
+                  dataRowMaxHeight: 96,
+                  horizontalMargin: 24,
+                  columnSpacing: 24,
+                  dividerThickness: .6,
+                  headingTextStyle: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w600, fontSize: 12, color: _muted),
+                  dataTextStyle: GoogleFonts.poppins(fontSize: 13, color: _ink),
+                  columns: [
+                    const DataColumn(label: Text('Evento')),
+                    const DataColumn(label: Text('Fornecedor')),
+                    if (_admin) const DataColumn(label: Text('Pagador')),
+                    const DataColumn(label: Text('Taxa aplicada')),
+                    const DataColumn(label: Text('Comissão'), numeric: true),
+                    const DataColumn(label: Text('Saldo'), numeric: true),
+                    const DataColumn(label: Text('Situação')),
+                    const DataColumn(label: Text('Detalhes')),
+                  ],
+                  rows: c.obrigacoes
+                      .map((o) => DataRow(cells: [
+                            DataCell(SizedBox(
+                                width: 200,
+                                child: Text(_refCobranca(o),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: GoogleFonts.poppins(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600)))),
+                            DataCell(SizedBox(
+                                width: 200,
+                                child: Text(
+                                    ComissaoPlataformaController
+                                        .nomeFornecedorDe(o),
+                                    maxLines: 3,
+                                    overflow: TextOverflow.ellipsis))),
+                            if (_admin)
+                              DataCell(SizedBox(
+                                  width: 180,
+                                  child: Text(
+                                      ComissaoPlataformaController
+                                          .nomePagadorDe(o),
+                                      maxLines: 3,
+                                      overflow: TextOverflow.ellipsis))),
+                            DataCell(Text(_taxaAplicada(o))),
+                            DataCell(Text(_reaisCentavos(
+                                ComissaoPlataformaController.valorOriginalDe(
+                                    o)))),
+                            DataCell(Text(
+                                _reaisCentavos(
+                                    ComissaoPlataformaController.saldoDe(o)),
                                 style: GoogleFonts.poppins(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600)))),
-                        DataCell(SizedBox(
-                            width: 200,
-                            child: Text(
-                                ComissaoPlataformaController.nomeFornecedorDe(
-                                    o),
-                                maxLines: 3,
-                                overflow: TextOverflow.ellipsis))),
-                        if (_admin)
-                          DataCell(SizedBox(
-                              width: 180,
-                              child: Text(
-                                  ComissaoPlataformaController.nomePagadorDe(o),
-                                  maxLines: 3,
-                                  overflow: TextOverflow.ellipsis))),
-                        DataCell(Text(_taxaAplicada(o))),
-                        DataCell(Text(_reaisCentavos(
-                            ComissaoPlataformaController.valorOriginalDe(o)))),
-                        DataCell(Text(
-                            _reaisCentavos(
-                                ComissaoPlataformaController.saldoDe(o)),
-                            style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                                color: _ink))),
-                        DataCell(ComissaoStatus(
-                            status: ComissaoPlataformaController
-                                .statusApresentacaoDe(o),
-                            pagador: !_admin)),
-                        DataCell(_botaoDetalhes(o)),
-                      ]))
-                  .toList(),
-            ),
-          ),
-        ),
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                    color: _ink))),
+                            DataCell(ComissaoStatus(
+                                status: ComissaoPlataformaController
+                                    .statusApresentacaoDe(o),
+                                pagador: !_admin)),
+                            DataCell(_botaoDetalhes(o)),
+                          ]))
+                      .toList(),
+                ),
+              ),
+            )),
       );
     });
   }

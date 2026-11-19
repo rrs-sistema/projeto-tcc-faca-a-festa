@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/presentation/widgets/festa_scroll_area.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
@@ -61,7 +62,8 @@ class _TabelasAbrangenciaAdminPageState
           ),
         ],
       ),
-      body: FutureBuilder<AbrangenciaAdmin>(
+      body: FestaContent(
+          child: FutureBuilder<AbrangenciaAdmin>(
         future: _consulta,
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
@@ -77,7 +79,7 @@ class _TabelasAbrangenciaAdminPageState
           }
           return _conteudo(snapshot.requireData);
         },
-      ),
+      )),
     );
   }
 
@@ -104,123 +106,129 @@ class _TabelasAbrangenciaAdminPageState
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 1120),
-        child: ListView(
-          padding:
-              EdgeInsets.all(MediaQuery.sizeOf(context).width < 600 ? 16 : 28),
-          children: [
-            Wrap(
-              alignment: WrapAlignment.spaceBetween,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              spacing: 24,
-              runSpacing: 16,
+        child: FestaScrollArea(
+            color: AdminPalette.primary,
+            maxWidth: double.infinity,
+            child: ListView(
+              primary: true,
+              padding: EdgeInsets.all(
+                  MediaQuery.sizeOf(context).width < 600 ? 16 : 28),
               children: [
-                Text('Preços de cobertura',
-                    style: texto.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w700, color: AdminPalette.ink)),
-                FilledButton.icon(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AdminPalette.primary,
-                    minimumSize: const Size(0, 48),
-                  ),
-                  onPressed: () => _editar(dados, vigente),
-                  icon: const Icon(Icons.add),
-                  label: const Text('Publicar tabela'),
+                Wrap(
+                  alignment: WrapAlignment.spaceBetween,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 24,
+                  runSpacing: 16,
+                  children: [
+                    Text('Preços de cobertura',
+                        style: texto.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: AdminPalette.ink)),
+                    FilledButton.icon(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AdminPalette.primary,
+                        minimumSize: const Size(0, 48),
+                      ),
+                      onPressed: () => _editar(dados, vigente),
+                      icon: const Icon(Icons.add),
+                      label: const Text('Publicar tabela'),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            AdminCard(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Wrap(
-                    spacing: 32,
-                    runSpacing: 12,
+                const SizedBox(height: 20),
+                AdminCard(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Até ${dados.raioGratuitoKm} km gratuitos',
-                          style: texto.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              color: AdminPalette.primary)),
-                      Text('Expansão em faixas de ${dados.incrementoKm} km',
-                          style: texto.titleMedium),
+                      Wrap(
+                        spacing: 32,
+                        runSpacing: 12,
+                        children: [
+                          Text('Até ${dados.raioGratuitoKm} km gratuitos',
+                              style: texto.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  color: AdminPalette.primary)),
+                          Text('Expansão em faixas de ${dados.incrementoKm} km',
+                              style: texto.titleMedium),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'A mensalidade soma os adicionais das faixas. '
+                        'A cobrança é separada das comissões por serviço.',
+                      ),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'A mensalidade soma os adicionais das faixas. '
-                    'A cobrança é separada das comissões por serviço.',
+                ),
+                const SizedBox(height: 24),
+                if (vigente == null)
+                  AdminCard(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Nenhuma tabela vigente', style: texto.titleLarge),
+                        const SizedBox(height: 8),
+                        Text(agendadas.isEmpty
+                            ? 'Publique os valores das faixas para definir a mensalidade do Premium.'
+                            : 'A primeira tabela entra em vigor em ${datas.formatCompactDate(agendadas.first.vigencia)}.'),
+                      ],
+                    ),
+                  )
+                else
+                  AdminCard(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text('Tabela vigente',
+                            style: texto.titleLarge
+                                ?.copyWith(fontWeight: FontWeight.w700)),
+                        const SizedBox(height: 4),
+                        Text(
+                            'Em vigor desde ${datas.formatCompactDate(vigente.vigencia)}'),
+                        const SizedBox(height: 20),
+                        _FaixasTabela(
+                            tabela: vigente,
+                            raioGratuitoKm: dados.raioGratuitoKm),
+                        const SizedBox(height: 12),
+                        Text('Vigência pelo horário de Brasília.',
+                            style: texto.bodySmall
+                                ?.copyWith(color: AdminPalette.muted)),
+                        _DadosPublicacao(tabela: publicacaoVigente ?? vigente),
+                      ],
+                    ),
                   ),
+                if (agendadas.isNotEmpty) ...[
+                  const SizedBox(height: 28),
+                  Text('Próximas vigências', style: texto.titleLarge),
+                  const SizedBox(height: 12),
+                  for (final tabela in agendadas)
+                    _PublicacaoCard(
+                      tabela: tabela,
+                      raioGratuitoKm: dados.raioGratuitoKm,
+                      agendada: true,
+                      onUsarComoBase: () => _editar(dados, tabela),
+                    ),
                 ],
-              ),
-            ),
-            const SizedBox(height: 24),
-            if (vigente == null)
-              AdminCard(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Nenhuma tabela vigente', style: texto.titleLarge),
-                    const SizedBox(height: 8),
-                    Text(agendadas.isEmpty
-                        ? 'Publique os valores das faixas para definir a mensalidade do Premium.'
-                        : 'A primeira tabela entra em vigor em ${datas.formatCompactDate(agendadas.first.vigencia)}.'),
-                  ],
-                ),
-              )
-            else
-              AdminCard(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text('Tabela vigente',
-                        style: texto.titleLarge
-                            ?.copyWith(fontWeight: FontWeight.w700)),
-                    const SizedBox(height: 4),
-                    Text(
-                        'Em vigor desde ${datas.formatCompactDate(vigente.vigencia)}'),
-                    const SizedBox(height: 20),
-                    _FaixasTabela(
-                        tabela: vigente, raioGratuitoKm: dados.raioGratuitoKm),
-                    const SizedBox(height: 12),
-                    Text('Vigência pelo horário de Brasília.',
-                        style: texto.bodySmall
-                            ?.copyWith(color: AdminPalette.muted)),
-                    _DadosPublicacao(tabela: publicacaoVigente ?? vigente),
-                  ],
-                ),
-              ),
-            if (agendadas.isNotEmpty) ...[
-              const SizedBox(height: 28),
-              Text('Próximas vigências', style: texto.titleLarge),
-              const SizedBox(height: 12),
-              for (final tabela in agendadas)
-                _PublicacaoCard(
-                  tabela: tabela,
-                  raioGratuitoKm: dados.raioGratuitoKm,
-                  agendada: true,
-                  onUsarComoBase: () => _editar(dados, tabela),
-                ),
-            ],
-            if (anteriores.isNotEmpty) ...[
-              const SizedBox(height: 28),
-              Text('Histórico de publicações', style: texto.titleLarge),
-              const SizedBox(height: 4),
-              const Text(
-                  'Consulte os valores anteriores ou use uma publicação como base.'),
-              const SizedBox(height: 12),
-              for (final tabela in anteriores)
-                _PublicacaoCard(
-                  tabela: tabela,
-                  raioGratuitoKm: dados.raioGratuitoKm,
-                  agendada: false,
-                  onUsarComoBase: () => _editar(dados, tabela),
-                ),
-            ],
-          ],
-        ),
+                if (anteriores.isNotEmpty) ...[
+                  const SizedBox(height: 28),
+                  Text('Histórico de publicações', style: texto.titleLarge),
+                  const SizedBox(height: 4),
+                  const Text(
+                      'Consulte os valores anteriores ou use uma publicação como base.'),
+                  const SizedBox(height: 12),
+                  for (final tabela in anteriores)
+                    _PublicacaoCard(
+                      tabela: tabela,
+                      raioGratuitoKm: dados.raioGratuitoKm,
+                      agendada: false,
+                      onUsarComoBase: () => _editar(dados, tabela),
+                    ),
+                ],
+              ],
+            )),
       ),
     );
   }

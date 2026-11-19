@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/presentation/widgets/festa_scroll_area.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -85,12 +86,13 @@ class AdminTerritorioScreen extends StatelessWidget {
             ),
           ),
         ),
-        body: Row(
+        body: FestaContent(
+            child: Row(
           children: [
             Expanded(flex: 3, child: _buildLista(context)),
             Expanded(flex: 5, child: _buildMapa()),
           ],
-        ),
+        )),
       ),
     );
   }
@@ -201,24 +203,29 @@ class AdminTerritorioScreen extends StatelessWidget {
                 );
               }
 
-              return ListView.separated(
-                padding: const EdgeInsets.fromLTRB(12, 4, 12, 88),
-                itemCount: lista.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 8),
-                itemBuilder: (_, i) {
-                  final t = lista[i];
-                  return _TerritorioCard(
-                    territorio: t,
-                    nomeFornecedor: _getNomeFornecedor(t.idFornecedor),
-                    fornecedorOrfao: !_fornecedorExiste(t.idFornecedor),
-                    selecionado: controller.idTerritorioSelecionado.value ==
-                        t.idTerritorio,
-                    onSelect: () => controller.selecionarTerritorio(t),
-                    onEdit: () => _abrirDialogTerritorio(context, existente: t),
-                    onToggle: (v) => controller.toggleAtivo(t, v),
-                  );
-                },
-              );
+              return FestaScrollArea(
+                  color: AdminPalette.primary,
+                  maxWidth: double.infinity,
+                  child: ListView.separated(
+                    primary: true,
+                    padding: const EdgeInsets.fromLTRB(12, 4, 12, 88),
+                    itemCount: lista.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 8),
+                    itemBuilder: (_, i) {
+                      final t = lista[i];
+                      return _TerritorioCard(
+                        territorio: t,
+                        nomeFornecedor: _getNomeFornecedor(t.idFornecedor),
+                        fornecedorOrfao: !_fornecedorExiste(t.idFornecedor),
+                        selecionado: controller.idTerritorioSelecionado.value ==
+                            t.idTerritorio,
+                        onSelect: () => controller.selecionarTerritorio(t),
+                        onEdit: () =>
+                            _abrirDialogTerritorio(context, existente: t),
+                        onToggle: (v) => controller.toggleAtivo(t, v),
+                      );
+                    },
+                  ));
             }),
           ),
         ],

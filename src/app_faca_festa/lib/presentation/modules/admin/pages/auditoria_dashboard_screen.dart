@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/presentation/widgets/festa_scroll_area.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -56,7 +57,7 @@ class AuditoriaDashboardScreen extends StatelessWidget {
             ),
           ],
         ),
-        body: Obx(() {
+        body: FestaContent(child: Obx(() {
           if (controller.carregando.value) {
             return const Center(child: CircularProgressIndicator());
           }
@@ -73,148 +74,155 @@ class AuditoriaDashboardScreen extends StatelessWidget {
           return RefreshIndicator(
             color: _theme.primary,
             onRefresh: controller.carregar,
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-              children: [
-                _HeaderBand(controller: controller, theme: _theme),
-                const SizedBox(height: 10),
-                _MetricGrid(
-                  items: [
-                    _MetricData(
-                      'Total',
-                      '${controller.totalEventos}',
-                      Icons.fact_check_rounded,
-                      _theme.primary,
+            child: FestaScrollArea(
+                color: _theme.primary,
+                maxWidth: double.infinity,
+                child: ListView(
+                  primary: true,
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                  children: [
+                    _HeaderBand(controller: controller, theme: _theme),
+                    const SizedBox(height: 10),
+                    _MetricGrid(
+                      items: [
+                        _MetricData(
+                          'Total',
+                          '${controller.totalEventos}',
+                          Icons.fact_check_rounded,
+                          _theme.primary,
+                        ),
+                        _MetricData(
+                          'Auditados',
+                          '${controller.totalAuditados}',
+                          Icons.visibility_rounded,
+                          _theme.success,
+                        ),
+                        _MetricData(
+                          'Registros',
+                          '${controller.totalSnapshots}',
+                          Icons.inventory_2_rounded,
+                          _theme.muted,
+                        ),
+                        _MetricData(
+                          'Hoje',
+                          '${controller.totalHoje}',
+                          Icons.today_rounded,
+                          _theme.warning,
+                        ),
+                        _MetricData(
+                          'Últimos 7 dias',
+                          '${controller.totalUltimos7d}',
+                          Icons.date_range_rounded,
+                          _theme.primary,
+                        ),
+                        _MetricData(
+                          'Últimos 15 dias',
+                          '${controller.totalUltimos15d}',
+                          Icons.calendar_month_rounded,
+                          _theme.primary,
+                        ),
+                        _MetricData(
+                          'Últimos 30 dias',
+                          '${controller.totalUltimos30d}',
+                          Icons.calendar_view_month_rounded,
+                          _theme.muted,
+                        ),
+                        _MetricData(
+                          'Sem hash',
+                          '${controller.totalAuditadosSemHash}',
+                          Icons.fingerprint_rounded,
+                          controller.totalAuditadosSemHash == 0
+                              ? _theme.success
+                              : _theme.warning,
+                        ),
+                      ],
+                      theme: _theme,
                     ),
-                    _MetricData(
-                      'Auditados',
-                      '${controller.totalAuditados}',
-                      Icons.visibility_rounded,
-                      _theme.success,
+                    const SizedBox(height: 10),
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final compacto = constraints.maxWidth < 920;
+                        if (compacto) {
+                          return Column(
+                            children: [
+                              _ActivityPanel(
+                                  controller: controller, theme: _theme),
+                              const SizedBox(height: 10),
+                              _HealthPanel(
+                                  controller: controller, theme: _theme),
+                            ],
+                          );
+                        }
+                        return Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              flex: 7,
+                              child: _ActivityPanel(
+                                controller: controller,
+                                theme: _theme,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              flex: 5,
+                              child: _HealthPanel(
+                                controller: controller,
+                                theme: _theme,
+                              ),
+                            ),
+                          ],
+                        );
+                      },
                     ),
-                    _MetricData(
-                      'Registros',
-                      '${controller.totalSnapshots}',
-                      Icons.inventory_2_rounded,
-                      _theme.muted,
-                    ),
-                    _MetricData(
-                      'Hoje',
-                      '${controller.totalHoje}',
-                      Icons.today_rounded,
-                      _theme.warning,
-                    ),
-                    _MetricData(
-                      'Últimos 7 dias',
-                      '${controller.totalUltimos7d}',
-                      Icons.date_range_rounded,
-                      _theme.primary,
-                    ),
-                    _MetricData(
-                      'Últimos 15 dias',
-                      '${controller.totalUltimos15d}',
-                      Icons.calendar_month_rounded,
-                      _theme.primary,
-                    ),
-                    _MetricData(
-                      'Últimos 30 dias',
-                      '${controller.totalUltimos30d}',
-                      Icons.calendar_view_month_rounded,
-                      _theme.muted,
-                    ),
-                    _MetricData(
-                      'Sem hash',
-                      '${controller.totalAuditadosSemHash}',
-                      Icons.fingerprint_rounded,
-                      controller.totalAuditadosSemHash == 0
-                          ? _theme.success
-                          : _theme.warning,
+                    const SizedBox(height: 10),
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final compacto = constraints.maxWidth < 920;
+                        final children = [
+                          _BarsPanel(
+                            title: 'Distribuição por área',
+                            items: controller.distribuicaoPorArea,
+                            theme: _theme,
+                          ),
+                          _BarsPanel(
+                            title: 'Principais ações',
+                            items: controller.principaisAcoes,
+                            theme: _theme,
+                          ),
+                          _BarsPanel(
+                            title: 'Principais atores',
+                            items: controller.principaisAtores,
+                            theme: _theme,
+                          ),
+                        ];
+                        if (compacto) {
+                          return Column(
+                            children: [
+                              for (final child in children) ...[
+                                child,
+                                if (child != children.last)
+                                  const SizedBox(height: 10),
+                              ],
+                            ],
+                          );
+                        }
+                        return Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            for (final child in children) ...[
+                              Expanded(child: child),
+                              if (child != children.last)
+                                const SizedBox(width: 10),
+                            ],
+                          ],
+                        );
+                      },
                     ),
                   ],
-                  theme: _theme,
-                ),
-                const SizedBox(height: 10),
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    final compacto = constraints.maxWidth < 920;
-                    if (compacto) {
-                      return Column(
-                        children: [
-                          _ActivityPanel(controller: controller, theme: _theme),
-                          const SizedBox(height: 10),
-                          _HealthPanel(controller: controller, theme: _theme),
-                        ],
-                      );
-                    }
-                    return Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          flex: 7,
-                          child: _ActivityPanel(
-                            controller: controller,
-                            theme: _theme,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          flex: 5,
-                          child: _HealthPanel(
-                            controller: controller,
-                            theme: _theme,
-                          ),
-                        ),
-                      ],
-                    );
-                  },
-                ),
-                const SizedBox(height: 10),
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    final compacto = constraints.maxWidth < 920;
-                    final children = [
-                      _BarsPanel(
-                        title: 'Distribuição por área',
-                        items: controller.distribuicaoPorArea,
-                        theme: _theme,
-                      ),
-                      _BarsPanel(
-                        title: 'Principais ações',
-                        items: controller.principaisAcoes,
-                        theme: _theme,
-                      ),
-                      _BarsPanel(
-                        title: 'Principais atores',
-                        items: controller.principaisAtores,
-                        theme: _theme,
-                      ),
-                    ];
-                    if (compacto) {
-                      return Column(
-                        children: [
-                          for (final child in children) ...[
-                            child,
-                            if (child != children.last)
-                              const SizedBox(height: 10),
-                          ],
-                        ],
-                      );
-                    }
-                    return Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        for (final child in children) ...[
-                          Expanded(child: child),
-                          if (child != children.last) const SizedBox(width: 10),
-                        ],
-                      ],
-                    );
-                  },
-                ),
-              ],
-            ),
+                )),
           );
-        }),
+        })),
       ),
     );
   }

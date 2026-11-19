@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/presentation/widgets/festa_scroll_area.dart';
 import 'package:app_faca_festa/presentation/modules/financeiro/widgets/ajuda_fluxo_financeiro.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -202,7 +203,7 @@ class _IntermediacaoFinanceiraPageState
             ),
           ],
         ),
-        body: LayoutBuilder(
+        body: FestaContent(child: LayoutBuilder(
           builder: (context, constraints) {
             final w = constraints.maxWidth;
             final pad = w >= 1100 ? 28.0 : (w >= 720 ? 20.0 : 16.0);
@@ -211,87 +212,91 @@ class _IntermediacaoFinanceiraPageState
               alignment: Alignment.topCenter,
               child: ConstrainedBox(
                 constraints: BoxConstraints(maxWidth: maxW),
-                child: ListView(
-                  padding: EdgeInsets.fromLTRB(
-                    pad,
-                    FestaPageInsets.belowAppBar,
-                    pad,
-                    32,
-                  ),
-                  children: [
-                    Text(
-                      'Cliente → plataforma → fornecedor',
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: AdminPalette.ink,
+                child: FestaScrollArea(
+                    color: AdminPalette.primary,
+                    maxWidth: double.infinity,
+                    child: ListView(
+                      primary: true,
+                      padding: EdgeInsets.fromLTRB(
+                        pad,
+                        FestaPageInsets.belowAppBar,
+                        pad,
+                        32,
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Sem banco integrado. Confirmar repasse é conferência manual — '
-                      'não move dinheiro automaticamente.',
-                      style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        color: AdminPalette.muted,
-                        height: 1.35,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    const Align(
-                      alignment: Alignment.centerLeft,
-                      child: AjudaFluxoFinanceiro(
-                        perfil: PerfilAjudaFinanceira.administrador,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    _passosVisuais(),
-                    const SizedBox(height: 16),
-                    _painelConsulta(busy || _envio != null),
-                    if (err.isNotEmpty) ...[
-                      const SizedBox(height: 12),
-                      _banner(err, AdminPalette.danger),
-                    ],
-                    if (aviso.isNotEmpty && ext == null) ...[
-                      const SizedBox(height: 12),
-                      _banner(aviso, AdminPalette.warning),
-                    ],
-                    if (ext != null) ...[
-                      const SizedBox(height: 12),
-                      _painelPolitica(ext),
-                    ],
-                    if (sim != null && _simAberta) ...[
-                      const SizedBox(height: 14),
-                      _painelSimulacao(sim),
-                    ],
-                    if (ext == null && err.isEmpty) ...[
-                      const SizedBox(height: 24),
-                      const AdminEmptyState(
-                        icon: Icons.account_balance_outlined,
-                        title: 'Consulte um evento',
-                        message:
-                            'Informe a referência do evento para ver recebimentos, '
-                            'alocações e repasses deste fluxo.',
-                      ),
-                    ],
-                    if (ext != null) ...[
-                      const SizedBox(height: 16),
-                      _sintese(ext),
-                      const SizedBox(height: 14),
-                      _listaRecebimentos(ext),
-                      const SizedBox(height: 14),
-                      _listaRepasses(ext),
-                      const SizedBox(height: 16),
-                      _painelRecebimento(),
-                      const SizedBox(height: 12),
-                      _painelAlocacao(),
-                    ],
-                  ],
-                ),
+                      children: [
+                        Text(
+                          'Cliente → plataforma → fornecedor',
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: AdminPalette.ink,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Sem banco integrado. Confirmar repasse é conferência manual — '
+                          'não move dinheiro automaticamente.',
+                          style: GoogleFonts.poppins(
+                            fontSize: 13,
+                            color: AdminPalette.muted,
+                            height: 1.35,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        const Align(
+                          alignment: Alignment.centerLeft,
+                          child: AjudaFluxoFinanceiro(
+                            perfil: PerfilAjudaFinanceira.administrador,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        _passosVisuais(),
+                        const SizedBox(height: 16),
+                        _painelConsulta(busy || _envio != null),
+                        if (err.isNotEmpty) ...[
+                          const SizedBox(height: 12),
+                          _banner(err, AdminPalette.danger),
+                        ],
+                        if (aviso.isNotEmpty && ext == null) ...[
+                          const SizedBox(height: 12),
+                          _banner(aviso, AdminPalette.warning),
+                        ],
+                        if (ext != null) ...[
+                          const SizedBox(height: 12),
+                          _painelPolitica(ext),
+                        ],
+                        if (sim != null && _simAberta) ...[
+                          const SizedBox(height: 14),
+                          _painelSimulacao(sim),
+                        ],
+                        if (ext == null && err.isEmpty) ...[
+                          const SizedBox(height: 24),
+                          const AdminEmptyState(
+                            icon: Icons.account_balance_outlined,
+                            title: 'Consulte um evento',
+                            message:
+                                'Informe a referência do evento para ver recebimentos, '
+                                'alocações e repasses deste fluxo.',
+                          ),
+                        ],
+                        if (ext != null) ...[
+                          const SizedBox(height: 16),
+                          _sintese(ext),
+                          const SizedBox(height: 14),
+                          _listaRecebimentos(ext),
+                          const SizedBox(height: 14),
+                          _listaRepasses(ext),
+                          const SizedBox(height: 16),
+                          _painelRecebimento(),
+                          const SizedBox(height: 12),
+                          _painelAlocacao(),
+                        ],
+                      ],
+                    )),
               ),
             );
           },
-        ),
+        )),
       );
     });
   }
@@ -910,6 +915,7 @@ class _IntermediacaoFinanceiraPageState
       final valor = dados[campo];
       return valor is num ? valor : 0;
     }
+
     final declarado = valor('pagamento_declarado_centavos');
     final alocado = valor('alocado_centavos');
     final autorizado = valor('repasse_autorizado_centavos');
@@ -948,7 +954,9 @@ class _IntermediacaoFinanceiraPageState
         ),
       _ => (
           '${_reais(alocado)} alocados ao contrato',
-          motivo.isEmpty ? 'Confira o saldo e as condições de liberação.' : motivo,
+          motivo.isEmpty
+              ? 'Confira o saldo e as condições de liberação.'
+              : motivo,
         ),
     };
     return (

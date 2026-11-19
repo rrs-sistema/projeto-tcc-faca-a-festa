@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/presentation/widgets/festa_scroll_area.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -71,106 +72,117 @@ class _OrcamentosAdminListScreenState extends State<OrcamentosAdminListScreen> {
                         const Icon(Icons.refresh_rounded, color: Colors.white),
                     onPressed: c.carregarOrcamentosComEventoDetalhes),
               ]),
-          body: LayoutBuilder(
-              builder: (context, box) => Align(
-                    alignment: Alignment.topCenter,
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 1440),
-                      child: Obx(() {
-                        final todos = c.orcamentos.toList();
-                        final grupos = GrupoOrcamentosAdmin.agrupar(todos);
-                        final visiveis = c.orcamentosFiltrados
-                            .where(_incluido)
-                            .map((o) => o.id)
-                            .toSet();
-                        final resultados = grupos
-                            .where((g) =>
-                                g.itens.any((o) => visiveis.contains(o.id)))
-                            .toList();
-                        return RefreshIndicator(
-                          onRefresh: c.carregarOrcamentosComEventoDetalhes,
-                          child: ListView(
-                              padding:
-                                  EdgeInsets.all(box.maxWidth < 600 ? 16 : 28),
-                              physics: const AlwaysScrollableScrollPhysics(),
-                              children: [
-                                Text('Controle dos orçamentos',
-                                    style: TextStyle(
-                                        fontSize: box.maxWidth < 600 ? 22 : 28,
-                                        fontWeight: FontWeight.w800,
-                                        color: AdminPalette.ink)),
-                                const SizedBox(height: 6),
-                                const Text(
-                                    'Compare o planejamento do evento com os itens e os pagamentos registrados.',
-                                    style: TextStyle(
-                                        fontSize: 14,
-                                        color: AdminPalette.muted)),
-                                const SizedBox(height: 20),
-                                const FinanceiroAjuda(
-                                    titulo: 'Como interpretar os valores',
-                                    itens: {
-                                      'Planejamento do evento':
-                                          'Limite de gastos definido no cadastro do evento. Cada evento é identificado separadamente, mesmo quando os nomes são iguais.',
-                                      'Estimativa dos itens':
-                                          'Soma dos valores previstos nos itens ativos, inclusive os que ainda estão em negociação. Itens cancelados ficam fora dos resumos.',
-                                      'Registrado nos gastos':
-                                          'Pagamentos informados nos detalhes dos gastos. Não comprovam recebimento pela plataforma, entrega do serviço ou repasse ao fornecedor.',
-                                      'Saldo previsto':
-                                          'Diferença entre a estimativa e os pagamentos de cada item. Não representa automaticamente uma dívida contratual.',
-                                      'Planejamento e filtros':
-                                          'A comparação com o planejamento usa todos os itens ativos do evento. Os filtros abaixo alteram apenas a lista de itens exibida.',
-                                    }),
-                                const SizedBox(height: 20),
-                                if (c.carregando.value)
-                                  const LinearProgressIndicator(),
-                                if (c.erro.value.isNotEmpty) ...[
-                                  AdminEmptyState(
-                                      icon: Icons.cloud_off_outlined,
-                                      title: 'Orçamentos indisponíveis',
-                                      message:
-                                          'Não foi possível carregar os dados. Tente atualizar a consulta.',
-                                      actionLabel: 'Tentar novamente',
-                                      onAction: c
-                                          .carregarOrcamentosComEventoDetalhes),
-                                ] else if (!c.carregando.value ||
-                                    todos.isNotEmpty) ...[
-                                  _resumo(todos, grupos.length),
-                                  const SizedBox(height: 24),
-                                  _filtros(),
-                                  const SizedBox(height: 20),
-                                  Text(
-                                      '${_contagem(resultados.length, 'evento', 'eventos')} · ${_contagem(visiveis.length, 'item', 'itens')} na lista',
-                                      style: const TextStyle(
-                                          fontSize: 14,
-                                          color: AdminPalette.muted)),
-                                  const SizedBox(height: 12),
-                                  if (resultados.isEmpty)
-                                    AdminEmptyState(
-                                        icon: Icons.request_quote_outlined,
-                                        title: todos.isEmpty
-                                            ? 'Nenhum orçamento cadastrado'
-                                            : 'Nenhum item nesta busca',
-                                        message: todos.isEmpty
-                                            ? 'Os itens aparecerão aqui quando forem cadastrados nos eventos.'
-                                            : 'Altere a busca ou limpe os filtros para ver outros itens.',
-                                        actionLabel: todos.isEmpty
-                                            ? null
-                                            : 'Limpar filtros',
-                                        onAction:
-                                            todos.isEmpty ? null : _limpar),
-                                  for (final grupo in resultados)
-                                    _evento(
-                                        grupo,
-                                        grupo.itens
-                                            .where(
-                                                (o) => visiveis.contains(o.id))
-                                            .toList()),
-                                ],
-                              ]),
-                        );
-                      }),
-                    ),
-                  )),
+          body: FestaContent(
+              child: LayoutBuilder(
+                  builder: (context, box) => Align(
+                        alignment: Alignment.topCenter,
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 1440),
+                          child: Obx(() {
+                            final todos = c.orcamentos.toList();
+                            final grupos = GrupoOrcamentosAdmin.agrupar(todos);
+                            final visiveis = c.orcamentosFiltrados
+                                .where(_incluido)
+                                .map((o) => o.id)
+                                .toSet();
+                            final resultados = grupos
+                                .where((g) =>
+                                    g.itens.any((o) => visiveis.contains(o.id)))
+                                .toList();
+                            return RefreshIndicator(
+                              onRefresh: c.carregarOrcamentosComEventoDetalhes,
+                              child: FestaScrollArea(
+                                  color: AdminPalette.primary,
+                                  maxWidth: double.infinity,
+                                  child: ListView(
+                                      primary: true,
+                                      padding: EdgeInsets.all(
+                                          box.maxWidth < 600 ? 16 : 28),
+                                      physics:
+                                          const AlwaysScrollableScrollPhysics(),
+                                      children: [
+                                        Text('Controle dos orçamentos',
+                                            style: TextStyle(
+                                                fontSize: box.maxWidth < 600
+                                                    ? 22
+                                                    : 28,
+                                                fontWeight: FontWeight.w800,
+                                                color: AdminPalette.ink)),
+                                        const SizedBox(height: 6),
+                                        const Text(
+                                            'Compare o planejamento do evento com os itens e os pagamentos registrados.',
+                                            style: TextStyle(
+                                                fontSize: 14,
+                                                color: AdminPalette.muted)),
+                                        const SizedBox(height: 20),
+                                        const FinanceiroAjuda(
+                                            titulo:
+                                                'Como interpretar os valores',
+                                            itens: {
+                                              'Planejamento do evento':
+                                                  'Limite de gastos definido no cadastro do evento. Cada evento é identificado separadamente, mesmo quando os nomes são iguais.',
+                                              'Estimativa dos itens':
+                                                  'Soma dos valores previstos nos itens ativos, inclusive os que ainda estão em negociação. Itens cancelados ficam fora dos resumos.',
+                                              'Registrado nos gastos':
+                                                  'Pagamentos informados nos detalhes dos gastos. Não comprovam recebimento pela plataforma, entrega do serviço ou repasse ao fornecedor.',
+                                              'Saldo previsto':
+                                                  'Diferença entre a estimativa e os pagamentos de cada item. Não representa automaticamente uma dívida contratual.',
+                                              'Planejamento e filtros':
+                                                  'A comparação com o planejamento usa todos os itens ativos do evento. Os filtros abaixo alteram apenas a lista de itens exibida.',
+                                            }),
+                                        const SizedBox(height: 20),
+                                        if (c.carregando.value)
+                                          const LinearProgressIndicator(),
+                                        if (c.erro.value.isNotEmpty) ...[
+                                          AdminEmptyState(
+                                              icon: Icons.cloud_off_outlined,
+                                              title: 'Orçamentos indisponíveis',
+                                              message:
+                                                  'Não foi possível carregar os dados. Tente atualizar a consulta.',
+                                              actionLabel: 'Tentar novamente',
+                                              onAction: c
+                                                  .carregarOrcamentosComEventoDetalhes),
+                                        ] else if (!c.carregando.value ||
+                                            todos.isNotEmpty) ...[
+                                          _resumo(todos, grupos.length),
+                                          const SizedBox(height: 24),
+                                          _filtros(),
+                                          const SizedBox(height: 20),
+                                          Text(
+                                              '${_contagem(resultados.length, 'evento', 'eventos')} · ${_contagem(visiveis.length, 'item', 'itens')} na lista',
+                                              style: const TextStyle(
+                                                  fontSize: 14,
+                                                  color: AdminPalette.muted)),
+                                          const SizedBox(height: 12),
+                                          if (resultados.isEmpty)
+                                            AdminEmptyState(
+                                                icon: Icons
+                                                    .request_quote_outlined,
+                                                title: todos.isEmpty
+                                                    ? 'Nenhum orçamento cadastrado'
+                                                    : 'Nenhum item nesta busca',
+                                                message: todos.isEmpty
+                                                    ? 'Os itens aparecerão aqui quando forem cadastrados nos eventos.'
+                                                    : 'Altere a busca ou limpe os filtros para ver outros itens.',
+                                                actionLabel: todos.isEmpty
+                                                    ? null
+                                                    : 'Limpar filtros',
+                                                onAction: todos.isEmpty
+                                                    ? null
+                                                    : _limpar),
+                                          for (final grupo in resultados)
+                                            _evento(
+                                                grupo,
+                                                grupo.itens
+                                                    .where((o) =>
+                                                        visiveis.contains(o.id))
+                                                    .toList()),
+                                        ],
+                                      ])),
+                            );
+                          }),
+                        ),
+                      ))),
         ),
       );
 
@@ -428,43 +440,49 @@ class _OrcamentosAdminListScreenState extends State<OrcamentosAdminListScreen> {
                         final usarTabela = box.maxWidth - 2 * espacamento >=
                                 1150 &&
                             MediaQuery.textScalerOf(context).scale(1) <= 1.3;
-                        return CustomScrollView(
-                          primary: false,
-                          shrinkWrap: true,
-                          slivers: [
-                            SliverPadding(
-                              padding: EdgeInsets.all(espacamento),
-                              sliver: SliverToBoxAdapter(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(grupo.evento.eventoNome,
-                                        style: const TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.w700)),
-                                    const SizedBox(height: 4),
-                                    Text(_identificacaoEvento(grupo.evento),
-                                        style: const TextStyle(
-                                            color: AdminPalette.muted)),
-                                    const SizedBox(height: 8),
-                                    Text(_contagemItens(
-                                        itens.length, grupo.itens.length)),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            SliverPadding(
-                              padding: EdgeInsets.fromLTRB(
-                                  espacamento, 0, espacamento, espacamento),
-                              sliver: usarTabela
-                                  ? SliverToBoxAdapter(child: _tabela(itens))
-                                  : SliverList.builder(
-                                      itemCount: itens.length,
-                                      itemBuilder: (_, i) => _item(itens[i]),
+                        return FestaScrollArea(
+                            color: AdminPalette.primary,
+                            maxWidth: double.infinity,
+                            child: CustomScrollView(
+                              primary: true,
+                              shrinkWrap: true,
+                              slivers: [
+                                SliverPadding(
+                                  padding: EdgeInsets.all(espacamento),
+                                  sliver: SliverToBoxAdapter(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(grupo.evento.eventoNome,
+                                            style: const TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.w700)),
+                                        const SizedBox(height: 4),
+                                        Text(_identificacaoEvento(grupo.evento),
+                                            style: const TextStyle(
+                                                color: AdminPalette.muted)),
+                                        const SizedBox(height: 8),
+                                        Text(_contagemItens(
+                                            itens.length, grupo.itens.length)),
+                                      ],
                                     ),
-                            ),
-                          ],
-                        );
+                                  ),
+                                ),
+                                SliverPadding(
+                                  padding: EdgeInsets.fromLTRB(
+                                      espacamento, 0, espacamento, espacamento),
+                                  sliver: usarTabela
+                                      ? SliverToBoxAdapter(
+                                          child: _tabela(itens))
+                                      : SliverList.builder(
+                                          itemCount: itens.length,
+                                          itemBuilder: (_, i) =>
+                                              _item(itens[i]),
+                                        ),
+                                ),
+                              ],
+                            ));
                       }),
                     ),
                   ],

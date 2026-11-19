@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/presentation/widgets/festa_scroll_area.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -73,7 +74,8 @@ class _SubcategoriaServicoListScreenState
             subcategoriaController: controller,
           ),
         ),
-        body: Column(
+        body: FestaContent(
+            child: Column(
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
@@ -151,84 +153,94 @@ class _SubcategoriaServicoListScreenState
                   color: AdminPalette.primary,
                   onRefresh: () =>
                       controller.carregarSubcategorias(widget.categoria.id),
-                  child: ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(12, 4, 12, 88),
-                    itemCount: lista.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 8),
-                    itemBuilder: (_, i) {
-                      final s = lista[i];
-                      final qtd = controller.servicosDe(s.id);
-                      final descricao = s.descricao?.trim();
-                      return AdminCard(
-                        onTap: () => showSubcategoriaServicoBottomSheet(
-                          context,
-                          subcategoria: s,
-                          categoriaController: widget.categoriaController,
-                          subcategoriaController: controller,
-                        ),
-                        onLongPress: () async {
-                          final ok = await confirmarAcaoAdmin(
-                            context,
-                            titulo: 'Excluir subcategoria',
-                            mensagem: 'Deseja realmente excluir "${s.nome}"?',
-                          );
-                          if (ok) await controller.excluirSubcategoria(s.id);
-                        },
-                        child: Row(
-                          children: [
-                            AdminLeadingMark(
-                              icon: CategoriaIcones.de(s.icone),
-                              color: s.ativo
-                                  ? AdminPalette.primary
-                                  : AdminPalette.muted,
+                  child: FestaScrollArea(
+                      color: AdminPalette.primary,
+                      maxWidth: double.infinity,
+                      child: ListView.separated(
+                        primary: true,
+                        padding: const EdgeInsets.fromLTRB(12, 4, 12, 88),
+                        itemCount: lista.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 8),
+                        itemBuilder: (_, i) {
+                          final s = lista[i];
+                          final qtd = controller.servicosDe(s.id);
+                          final descricao = s.descricao?.trim();
+                          return AdminCard(
+                            onTap: () => showSubcategoriaServicoBottomSheet(
+                              context,
+                              subcategoria: s,
+                              categoriaController: widget.categoriaController,
+                              subcategoriaController: controller,
                             ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    s.nome,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: GoogleFonts.poppins(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 13.5,
-                                      color: s.ativo
-                                          ? AdminPalette.ink
-                                          : AdminPalette.muted,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  AdminMetaLine(
-                                    parts: [
-                                      if (descricao != null &&
-                                          descricao.isNotEmpty)
-                                        descricao,
-                                      qtd == 1 ? '1 serviço' : '$qtd serviços',
+                            onLongPress: () async {
+                              final ok = await confirmarAcaoAdmin(
+                                context,
+                                titulo: 'Excluir subcategoria',
+                                mensagem:
+                                    'Deseja realmente excluir "${s.nome}"?',
+                              );
+                              if (ok) {
+                                await controller.excluirSubcategoria(s.id);
+                              }
+                            },
+                            child: Row(
+                              children: [
+                                AdminLeadingMark(
+                                  icon: CategoriaIcones.de(s.icone),
+                                  color: s.ativo
+                                      ? AdminPalette.primary
+                                      : AdminPalette.muted,
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        s.nome,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: GoogleFonts.poppins(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 13.5,
+                                          color: s.ativo
+                                              ? AdminPalette.ink
+                                              : AdminPalette.muted,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      AdminMetaLine(
+                                        parts: [
+                                          if (descricao != null &&
+                                              descricao.isNotEmpty)
+                                            descricao,
+                                          qtd == 1
+                                              ? '1 serviço'
+                                              : '$qtd serviços',
+                                        ],
+                                      ),
                                     ],
                                   ),
-                                ],
-                              ),
+                                ),
+                                if (!s.ativo)
+                                  AdminStatusChip.neutral('Inativa',
+                                      icon: Icons.pause_rounded),
+                                AdminCompactSwitch(
+                                  value: s.ativo,
+                                  onChanged: (v) =>
+                                      controller.atualizarStatus(s, v),
+                                ),
+                              ],
                             ),
-                            if (!s.ativo)
-                              AdminStatusChip.neutral('Inativa',
-                                  icon: Icons.pause_rounded),
-                            AdminCompactSwitch(
-                              value: s.ativo,
-                              onChanged: (v) =>
-                                  controller.atualizarStatus(s, v),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
+                          );
+                        },
+                      )),
                 );
               }),
             ),
           ],
-        ),
+        )),
       ),
     );
   }

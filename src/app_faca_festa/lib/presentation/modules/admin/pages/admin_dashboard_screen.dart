@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/presentation/widgets/festa_scroll_area.dart';
 import 'dart:math' as math;
 import 'package:app_faca_festa/presentation/widgets/desktop_update_overlay.dart';
 
@@ -135,7 +136,11 @@ class AdminDashboardScreen extends StatelessWidget {
             ],
           ),
           actions: [
-            IconButton(tooltip:'Moderação de avaliações (permissão específica)',onPressed:()=>Get.toNamed('/moderacao-avaliacoes'),icon:const Icon(Icons.rate_review_outlined,color:Colors.white)),
+            IconButton(
+                tooltip: 'Moderação de avaliações (permissão específica)',
+                onPressed: () => Get.toNamed('/moderacao-avaliacoes'),
+                icon: const Icon(Icons.rate_review_outlined,
+                    color: Colors.white)),
             const DesktopUpdateMenuButton(color: Colors.white),
             IconButton(
               tooltip: 'Atualizar indicadores',
@@ -150,7 +155,7 @@ class AdminDashboardScreen extends StatelessWidget {
             const SizedBox(width: 8),
           ],
         ),
-        body: Obx(() {
+        body: FestaContent(child: Obx(() {
           final s = controller.stats.value;
           final modules = _buildAdminItems(s, controller);
 
@@ -161,87 +166,94 @@ class AdminDashboardScreen extends StatelessWidget {
               builder: (context, constraints) {
                 final desktop = constraints.maxWidth >= 1100;
 
-                return ListView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: EdgeInsets.fromLTRB(
-                    desktop ? 28 : 16,
-                    22,
-                    desktop ? 28 : 16,
-                    32,
-                  ),
-                  children: [
-                    if (controller.erro.isNotEmpty)
-                      _ErrorBanner(message: controller.erro.value),
-                    _ExecutiveHero(
-                      stats: s,
-                      loading: controller.carregando.value,
-                      updatedAt: controller.atualizadoEm.value,
-                      onRefresh: controller.carregar,
-                    )
-                        .animate()
-                        .fadeIn(duration: 360.ms)
-                        .slideY(begin: 0.03, duration: 360.ms),
-                    const SizedBox(height: 18),
-                    _KpiStrip(stats: s, loading: controller.carregando.value),
-                    const SizedBox(height: 18),
-                    if (desktop)
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            flex: 7,
-                            child: _ModulesPanel(items: modules),
-                          ),
-                          const SizedBox(width: 18),
-                          Expanded(
-                            flex: 3,
-                            child: _OperationsPanel(
-                              stats: s,
-                              loading: controller.carregando.value,
-                              openAudit: () => Get.toNamed('/admin/auditoria'),
-                              openBudgets: () async {
-                                await Get.to(() => OrcamentosAdminListScreen(
-                                      controller: orcamentosAdminController,
-                                      themeController: theme,
-                                    ));
-                                controller.carregar();
-                              },
-                              openSuppliers: () async {
-                                await Get.to(
-                                    () => _criarFornecedoresAdminListScreen());
-                                controller.carregar();
-                              },
-                            ),
-                          ),
-                        ],
-                      )
-                    else ...[
-                      _OperationsPanel(
-                        stats: s,
-                        loading: controller.carregando.value,
-                        openAudit: () => Get.toNamed('/admin/auditoria'),
-                        openBudgets: () async {
-                          await Get.to(() => OrcamentosAdminListScreen(
-                                controller: orcamentosAdminController,
-                                themeController: theme,
-                              ));
-                          controller.carregar();
-                        },
-                        openSuppliers: () async {
-                          await Get.to(
-                              () => _criarFornecedoresAdminListScreen());
-                          controller.carregar();
-                        },
+                return FestaScrollArea(
+                    color: AdminPalette.primary,
+                    maxWidth: double.infinity,
+                    child: ListView(
+                      primary: true,
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: EdgeInsets.fromLTRB(
+                        desktop ? 28 : 16,
+                        22,
+                        desktop ? 28 : 16,
+                        32,
                       ),
-                      const SizedBox(height: 18),
-                      _ModulesPanel(items: modules),
-                    ],
-                  ],
-                );
+                      children: [
+                        if (controller.erro.isNotEmpty)
+                          _ErrorBanner(message: controller.erro.value),
+                        _ExecutiveHero(
+                          stats: s,
+                          loading: controller.carregando.value,
+                          updatedAt: controller.atualizadoEm.value,
+                          onRefresh: controller.carregar,
+                        )
+                            .animate()
+                            .fadeIn(duration: 360.ms)
+                            .slideY(begin: 0.03, duration: 360.ms),
+                        const SizedBox(height: 18),
+                        _KpiStrip(
+                            stats: s, loading: controller.carregando.value),
+                        const SizedBox(height: 18),
+                        if (desktop)
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                flex: 7,
+                                child: _ModulesPanel(items: modules),
+                              ),
+                              const SizedBox(width: 18),
+                              Expanded(
+                                flex: 3,
+                                child: _OperationsPanel(
+                                  stats: s,
+                                  loading: controller.carregando.value,
+                                  openAudit: () =>
+                                      Get.toNamed('/admin/auditoria'),
+                                  openBudgets: () async {
+                                    await Get.to(() =>
+                                        OrcamentosAdminListScreen(
+                                          controller: orcamentosAdminController,
+                                          themeController: theme,
+                                        ));
+                                    controller.carregar();
+                                  },
+                                  openSuppliers: () async {
+                                    await Get.to(() =>
+                                        _criarFornecedoresAdminListScreen());
+                                    controller.carregar();
+                                  },
+                                ),
+                              ),
+                            ],
+                          )
+                        else ...[
+                          _OperationsPanel(
+                            stats: s,
+                            loading: controller.carregando.value,
+                            openAudit: () => Get.toNamed('/admin/auditoria'),
+                            openBudgets: () async {
+                              await Get.to(() => OrcamentosAdminListScreen(
+                                    controller: orcamentosAdminController,
+                                    themeController: theme,
+                                  ));
+                              controller.carregar();
+                            },
+                            openSuppliers: () async {
+                              await Get.to(
+                                  () => _criarFornecedoresAdminListScreen());
+                              controller.carregar();
+                            },
+                          ),
+                          const SizedBox(height: 18),
+                          _ModulesPanel(items: modules),
+                        ],
+                      ],
+                    ));
               },
             ),
           );
-        }),
+        })),
       ),
     );
   }

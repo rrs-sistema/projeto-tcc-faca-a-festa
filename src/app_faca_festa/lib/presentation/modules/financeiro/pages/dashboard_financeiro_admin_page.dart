@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/presentation/widgets/festa_scroll_area.dart';
 import 'package:app_faca_festa/domain/repositories/fornecedor_repository.dart';
 import 'package:app_faca_festa/presentation/modules/financeiro/widgets/financeiro_contexto.dart';
 import 'package:app_faca_festa/presentation/modules/financeiro/widgets/ajuda_fluxo_financeiro.dart';
@@ -170,94 +171,102 @@ class _DashboardFinanceiroAdminPageState
             ),
           ],
         ),
-        body: loading
-            ? const Center(child: CircularProgressIndicator())
-            : LayoutBuilder(
-                builder: (context, constraints) {
-                  final w = constraints.maxWidth;
-                  final pad = w >= 1100 ? 28.0 : (w >= 720 ? 20.0 : 16.0);
-                  final maxW = w >= 1280 ? 1400.0 : w;
-                  return Align(
-                    alignment: Alignment.topCenter,
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(maxWidth: maxW),
-                      child: ListView(
-                        padding: EdgeInsets.fromLTRB(
-                            pad, FestaPageInsets.belowAppBar, pad, 32),
-                        children: [
-                          _cabecalho(
-                            busy: busy,
-                            sync: sync,
-                            erro: err,
-                            aviso: aviso,
-                          ),
-                          if (err.isNotEmpty) ...[
-                            const SizedBox(height: 12),
-                            _bannerErro(err),
-                          ] else if (aviso.isNotEmpty) ...[
-                            const SizedBox(height: 12),
-                            _bannerAviso(aviso),
-                          ],
-                          const SizedBox(height: 14),
-                          const FinanceiroAjuda(itens: ajudaFinanceira),
-                          const SizedBox(height: 8),
-                          const Align(
-                            alignment: Alignment.centerLeft,
-                            child: AjudaFluxoFinanceiro(
-                              perfil: PerfilAjudaFinanceira.administrador,
-                            ),
-                          ),
-                          if (r != null) ...[
-                            const SizedBox(height: 16),
-                            _heroReceita(r),
-                            const SizedBox(height: 12),
-                            _kpisExecutivos(r, w),
-                            const SizedBox(height: 12),
-                            _contagemRecorte(r),
-                            const SizedBox(height: 16),
-                            _painelFiltros(w, pendentes: pendentes, busy: busy),
-                            if (!busy &&
-                                (c.consultaTruncada ||
-                                    c.qtdIdentidadeIncompleta > 0)) ...[
-                              const SizedBox(height: 12),
-                              _avisosCompletude(),
-                            ],
-                          ] else ...[
-                            _painelFiltros(w, pendentes: pendentes, busy: busy),
-                          ],
-                          if (busy) ...[
-                            const SizedBox(height: 16),
-                            const OperacaoSkeleton(
-                              titulo: 'Por evento',
-                              icon: Icons.event_outlined,
-                            ),
-                            const SizedBox(height: 16),
-                            const OperacaoSkeleton(
-                              titulo: 'Por contratação',
-                              icon: Icons.handshake_outlined,
-                            ),
-                          ] else if (r != null) ...[
-                            const SizedBox(height: 16),
-                            _secaoEventos(r, w, erro: err),
-                            const SizedBox(height: 16),
-                            _secaoContratacoes(w),
-                          ],
-                          if (r == null && err.isEmpty && !busy)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 24),
-                              child: AdminEmptyState(
-                                icon: Icons.query_stats_outlined,
-                                title: 'Sem consulta ainda',
-                                message:
-                                    'Escolha o período e toque em Aplicar filtros.',
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
+        body: FestaContent(
+            child: loading
+                ? const Center(child: CircularProgressIndicator())
+                : LayoutBuilder(
+                    builder: (context, constraints) {
+                      final w = constraints.maxWidth;
+                      final pad = w >= 1100 ? 28.0 : (w >= 720 ? 20.0 : 16.0);
+                      final maxW = w >= 1280 ? 1400.0 : w;
+                      return Align(
+                        alignment: Alignment.topCenter,
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(maxWidth: maxW),
+                          child: FestaScrollArea(
+                              color: AdminPalette.primary,
+                              maxWidth: double.infinity,
+                              child: ListView(
+                                primary: true,
+                                padding: EdgeInsets.fromLTRB(
+                                    pad, FestaPageInsets.belowAppBar, pad, 32),
+                                children: [
+                                  _cabecalho(
+                                    busy: busy,
+                                    sync: sync,
+                                    erro: err,
+                                    aviso: aviso,
+                                  ),
+                                  if (err.isNotEmpty) ...[
+                                    const SizedBox(height: 12),
+                                    _bannerErro(err),
+                                  ] else if (aviso.isNotEmpty) ...[
+                                    const SizedBox(height: 12),
+                                    _bannerAviso(aviso),
+                                  ],
+                                  const SizedBox(height: 14),
+                                  const FinanceiroAjuda(itens: ajudaFinanceira),
+                                  const SizedBox(height: 8),
+                                  const Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: AjudaFluxoFinanceiro(
+                                      perfil:
+                                          PerfilAjudaFinanceira.administrador,
+                                    ),
+                                  ),
+                                  if (r != null) ...[
+                                    const SizedBox(height: 16),
+                                    _heroReceita(r),
+                                    const SizedBox(height: 12),
+                                    _kpisExecutivos(r, w),
+                                    const SizedBox(height: 12),
+                                    _contagemRecorte(r),
+                                    const SizedBox(height: 16),
+                                    _painelFiltros(w,
+                                        pendentes: pendentes, busy: busy),
+                                    if (!busy &&
+                                        (c.consultaTruncada ||
+                                            c.qtdIdentidadeIncompleta > 0)) ...[
+                                      const SizedBox(height: 12),
+                                      _avisosCompletude(),
+                                    ],
+                                  ] else ...[
+                                    _painelFiltros(w,
+                                        pendentes: pendentes, busy: busy),
+                                  ],
+                                  if (busy) ...[
+                                    const SizedBox(height: 16),
+                                    const OperacaoSkeleton(
+                                      titulo: 'Por evento',
+                                      icon: Icons.event_outlined,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    const OperacaoSkeleton(
+                                      titulo: 'Por contratação',
+                                      icon: Icons.handshake_outlined,
+                                    ),
+                                  ] else if (r != null) ...[
+                                    const SizedBox(height: 16),
+                                    _secaoEventos(r, w, erro: err),
+                                    const SizedBox(height: 16),
+                                    _secaoContratacoes(w),
+                                  ],
+                                  if (r == null && err.isEmpty && !busy)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 24),
+                                      child: AdminEmptyState(
+                                        icon: Icons.query_stats_outlined,
+                                        title: 'Sem consulta ainda',
+                                        message:
+                                            'Escolha o período e toque em Aplicar filtros.',
+                                      ),
+                                    ),
+                                ],
+                              )),
+                        ),
+                      );
+                    },
+                  )),
       );
     });
   }

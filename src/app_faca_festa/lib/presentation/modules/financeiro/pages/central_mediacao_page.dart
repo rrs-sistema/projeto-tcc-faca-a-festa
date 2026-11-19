@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/presentation/widgets/festa_scroll_area.dart';
 import 'package:app_faca_festa/presentation/modules/financeiro/widgets/financeiro_contexto.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -173,7 +174,7 @@ class _CentralMediacaoPageState extends State<CentralMediacaoPage> {
             ),
           ],
         ),
-        body: LayoutBuilder(
+        body: FestaContent(child: LayoutBuilder(
           builder: (context, constraints) {
             final w = constraints.maxWidth;
             final pad = w >= 1100 ? 28.0 : (w >= 720 ? 20.0 : 16.0);
@@ -182,47 +183,52 @@ class _CentralMediacaoPageState extends State<CentralMediacaoPage> {
               alignment: Alignment.topCenter,
               child: ConstrainedBox(
                 constraints: BoxConstraints(maxWidth: maxW),
-                child: ListView(
-                  controller: _scrollCtrl,
-                  padding: EdgeInsets.fromLTRB(pad, 16, pad, 32),
-                  children: [
-                    _cabecalhoAcoes(),
-                    const SizedBox(height: 14),
-                    _filtros(busy: busy),
-                    if (err.isNotEmpty) ...[
-                      const SizedBox(height: 12),
-                      _banner(err, AdminPalette.danger),
-                    ] else if (aviso.isNotEmpty) ...[
-                      const SizedBox(height: 12),
-                      _banner(aviso, AdminPalette.warning),
-                    ],
-                    const SizedBox(height: 16),
-                    if (busy)
-                      const OperacaoSkeleton(
-                        titulo: 'Contratações e oportunidades',
-                        icon: Icons.handshake_outlined,
-                      )
-                    else if (err.isEmpty && linhas.isEmpty)
-                      AdminEmptyState(
-                        icon: Icons.handshake_outlined,
-                        title: 'Nenhuma contratação no recorte',
-                        message: 'Altere os filtros ou faça uma nova busca.',
-                      )
-                    else if (linhas.isNotEmpty) ...[
-                      _resumoLista(linhas),
-                      const SizedBox(height: 12),
-                      ...linhas.map(_linhaCard),
-                      if (c.temPaginaAnterior || c.temProximaPagina) ...[
-                        const SizedBox(height: 8),
-                        _paginacao(busy),
+                child: FestaScrollArea(
+                    color: AdminPalette.primary,
+                    controller: _scrollCtrl,
+                    maxWidth: double.infinity,
+                    child: ListView(
+                      controller: _scrollCtrl,
+                      padding: EdgeInsets.fromLTRB(pad, 16, pad, 32),
+                      children: [
+                        _cabecalhoAcoes(),
+                        const SizedBox(height: 14),
+                        _filtros(busy: busy),
+                        if (err.isNotEmpty) ...[
+                          const SizedBox(height: 12),
+                          _banner(err, AdminPalette.danger),
+                        ] else if (aviso.isNotEmpty) ...[
+                          const SizedBox(height: 12),
+                          _banner(aviso, AdminPalette.warning),
+                        ],
+                        const SizedBox(height: 16),
+                        if (busy)
+                          const OperacaoSkeleton(
+                            titulo: 'Contratações e oportunidades',
+                            icon: Icons.handshake_outlined,
+                          )
+                        else if (err.isEmpty && linhas.isEmpty)
+                          AdminEmptyState(
+                            icon: Icons.handshake_outlined,
+                            title: 'Nenhuma contratação no recorte',
+                            message:
+                                'Altere os filtros ou faça uma nova busca.',
+                          )
+                        else if (linhas.isNotEmpty) ...[
+                          _resumoLista(linhas),
+                          const SizedBox(height: 12),
+                          ...linhas.map(_linhaCard),
+                          if (c.temPaginaAnterior || c.temProximaPagina) ...[
+                            const SizedBox(height: 8),
+                            _paginacao(busy),
+                          ],
+                        ],
                       ],
-                    ],
-                  ],
-                ),
+                    )),
               ),
             );
           },
-        ),
+        )),
       );
     });
   }

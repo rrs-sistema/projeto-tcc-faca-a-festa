@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/presentation/widgets/festa_scroll_area.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
@@ -43,7 +44,8 @@ class SolicitacoesLgpdAdminScreen extends StatefulWidget {
       _SolicitacoesLgpdAdminScreenState();
 }
 
-class _SolicitacoesLgpdAdminScreenState extends State<SolicitacoesLgpdAdminScreen> {
+class _SolicitacoesLgpdAdminScreenState
+    extends State<SolicitacoesLgpdAdminScreen> {
   final _busca = TextEditingController();
   var _carregando = true;
   var _atendendo = false;
@@ -69,8 +71,10 @@ class _SolicitacoesLgpdAdminScreenState extends State<SolicitacoesLgpdAdminScree
     });
     try {
       final firestore = Get.find<FirebaseFirestore>();
-      final abertas = await firestore.collectionGroup('solicitacoes_lgpd').limit(200).get();
-      final arquivo = await firestore.collection('lgpd_protocolos').limit(200).get();
+      final abertas =
+          await firestore.collectionGroup('solicitacoes_lgpd').limit(200).get();
+      final arquivo =
+          await firestore.collection('lgpd_protocolos').limit(200).get();
       final porId = <String, SolicitacaoLgpd>{};
       for (final doc in abertas.docs) {
         porId[doc.id] = _deDoc(doc, arquivada: false);
@@ -98,7 +102,8 @@ class _SolicitacoesLgpdAdminScreenState extends State<SolicitacoesLgpdAdminScree
     }
   }
 
-  SolicitacaoLgpd _deDoc(QueryDocumentSnapshot<Map<String, dynamic>> doc, {required bool arquivada}) {
+  SolicitacaoLgpd _deDoc(QueryDocumentSnapshot<Map<String, dynamic>> doc,
+      {required bool arquivada}) {
     final data = doc.data();
     final pai = doc.reference.parent.parent?.id ?? '';
     return SolicitacaoLgpd(
@@ -167,11 +172,13 @@ class _SolicitacoesLgpdAdminScreenState extends State<SolicitacoesLgpdAdminScree
         acao: acao,
       );
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(resultado)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(resultado)));
       await _carregar();
     } on LgpdFunctionsException catch (erro) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(erro.message)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(erro.message)));
     } finally {
       await EasyLoading.dismiss();
       if (mounted) setState(() => _atendendo = false);
@@ -189,7 +196,8 @@ class _SolicitacoesLgpdAdminScreenState extends State<SolicitacoesLgpdAdminScree
         title: 'Protocolos LGPD',
         subtitle: 'Pedidos do titular',
       ),
-      body: Column(
+      body: FestaContent(
+          child: Column(
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
@@ -212,80 +220,117 @@ class _SolicitacoesLgpdAdminScreenState extends State<SolicitacoesLgpdAdminScree
                         ? const AdminEmptyState(
                             icon: Icons.folder_open_rounded,
                             title: 'Nenhum protocolo',
-                            message: 'Os pedidos feitos em Dados protegidos aparecem aqui.',
+                            message:
+                                'Os pedidos feitos em Dados protegidos aparecem aqui.',
                           )
-                        : ListView.builder(
-                            padding: const EdgeInsets.fromLTRB(12, 4, 12, 24),
-                            itemCount: lista.length,
-                            itemBuilder: (context, index) {
-                              final item = lista[index];
-                              return Card(
-                                elevation: 0,
-                                margin: const EdgeInsets.only(bottom: 8),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(12),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        '${_rotuloTipo(item.tipo)} · ${_rotuloStatus(item.status)}',
-                                        style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        item.nome.isEmpty ? item.email : '${item.nome} · ${item.email}',
-                                        style: GoogleFonts.poppins(fontSize: 13),
-                                      ),
-                                      Text(
-                                        'Protocolo ${item.id}',
-                                        style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF6B7280)),
-                                      ),
-                                      if (item.criadoEm != null)
+                        : FestaScrollArea(
+                            color: Theme.of(context).colorScheme.primary,
+                            maxWidth: double.infinity,
+                            scrollDirection: Axis.vertical,
+                            child: ListView.builder(
+                              primary: true,
+                              padding: const EdgeInsets.fromLTRB(12, 4, 12, 24),
+                              itemCount: lista.length,
+                              itemBuilder: (context, index) {
+                                final item = lista[index];
+                                return Card(
+                                  elevation: 0,
+                                  margin: const EdgeInsets.only(bottom: 8),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(12),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
                                         Text(
-                                          dataFmt.format(item.criadoEm!.toLocal()),
-                                          style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF6B7280)),
+                                          '${_rotuloTipo(item.tipo)} · ${_rotuloStatus(item.status)}',
+                                          style: GoogleFonts.poppins(
+                                              fontWeight: FontWeight.w700),
                                         ),
-                                      if (item.resumo.isNotEmpty) ...[
-                                        const SizedBox(height: 6),
-                                        Text(item.resumo, style: GoogleFonts.poppins(fontSize: 13, height: 1.35)),
-                                      ],
-                                      if (item.resultado.isNotEmpty) ...[
-                                        const SizedBox(height: 6),
-                                        Text(item.resultado, style: GoogleFonts.poppins(fontSize: 12.5, height: 1.35)),
-                                      ],
-                                      if (!item.arquivada && item.status != 'concluida' && item.status != 'recusada')
-                                        Wrap(
-                                          spacing: 8,
-                                          children: [
-                                            TextButton(
-                                              onPressed: _atendendo ? null : () => _atender(item, 'em_atendimento'),
-                                              child: const Text('Em atendimento'),
-                                            ),
-                                            if (item.tipo == 'exclusao')
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          item.nome.isEmpty
+                                              ? item.email
+                                              : '${item.nome} · ${item.email}',
+                                          style:
+                                              GoogleFonts.poppins(fontSize: 13),
+                                        ),
+                                        Text(
+                                          'Protocolo ${item.id}',
+                                          style: GoogleFonts.poppins(
+                                              fontSize: 12,
+                                              color: const Color(0xFF6B7280)),
+                                        ),
+                                        if (item.criadoEm != null)
+                                          Text(
+                                            dataFmt.format(
+                                                item.criadoEm!.toLocal()),
+                                            style: GoogleFonts.poppins(
+                                                fontSize: 12,
+                                                color: const Color(0xFF6B7280)),
+                                          ),
+                                        if (item.resumo.isNotEmpty) ...[
+                                          const SizedBox(height: 6),
+                                          Text(item.resumo,
+                                              style: GoogleFonts.poppins(
+                                                  fontSize: 13, height: 1.35)),
+                                        ],
+                                        if (item.resultado.isNotEmpty) ...[
+                                          const SizedBox(height: 6),
+                                          Text(item.resultado,
+                                              style: GoogleFonts.poppins(
+                                                  fontSize: 12.5,
+                                                  height: 1.35)),
+                                        ],
+                                        if (!item.arquivada &&
+                                            item.status != 'concluida' &&
+                                            item.status != 'recusada')
+                                          Wrap(
+                                            spacing: 8,
+                                            children: [
                                               TextButton(
-                                                onPressed: _atendendo ? null : () => _atender(item, 'executar_exclusao'),
-                                                child: const Text('Executar exclusão'),
-                                              )
-                                            else
-                                              TextButton(
-                                                onPressed: _atendendo ? null : () => _atender(item, 'concluir'),
-                                                child: const Text('Concluir'),
+                                                onPressed: _atendendo
+                                                    ? null
+                                                    : () => _atender(
+                                                        item, 'em_atendimento'),
+                                                child: const Text(
+                                                    'Em atendimento'),
                                               ),
-                                            TextButton(
-                                              onPressed: _atendendo ? null : () => _atender(item, 'recusar'),
-                                              child: const Text('Recusar'),
-                                            ),
-                                          ],
-                                        ),
-                                    ],
+                                              if (item.tipo == 'exclusao')
+                                                TextButton(
+                                                  onPressed: _atendendo
+                                                      ? null
+                                                      : () => _atender(item,
+                                                          'executar_exclusao'),
+                                                  child: const Text(
+                                                      'Executar exclusão'),
+                                                )
+                                              else
+                                                TextButton(
+                                                  onPressed: _atendendo
+                                                      ? null
+                                                      : () => _atender(
+                                                          item, 'concluir'),
+                                                  child: const Text('Concluir'),
+                                                ),
+                                              TextButton(
+                                                onPressed: _atendendo
+                                                    ? null
+                                                    : () => _atender(
+                                                        item, 'recusar'),
+                                                child: const Text('Recusar'),
+                                              ),
+                                            ],
+                                          ),
+                                      ],
+                                    ),
                                   ),
-                                ),
-                              );
-                            },
-                          ),
+                                );
+                              },
+                            )),
           ),
         ],
-      ),
+      )),
     );
   }
 

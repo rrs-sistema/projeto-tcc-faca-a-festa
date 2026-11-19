@@ -74,6 +74,7 @@ class DesktopUpdateService {
             message:
                 'Não foi possível baixar ou verificar a atualização. Tente novamente.');
       } else if (call.method == 'noUpdate') {
+        _downloadDeadline?.cancel();
         state.value = const DesktopUpdateState(DesktopUpdateStatus.idle);
       }
     });
@@ -112,13 +113,24 @@ class DesktopUpdateService {
         state.value = const DesktopUpdateState(DesktopUpdateStatus.idle);
         return;
       }
+      final hash = data['sha256']?.toString().toLowerCase() ?? '';
+      if (!RegExp(r'^[a-f0-9]{64}$').hasMatch(hash)) {
+        throw StateError('Catálogo sem SHA-256 válido');
+      }
+      final cached = await _channel.invokeMapMethod<String, dynamic>(
+          'restoreDownload', {
+        'build': build,
+        'sha256': hash
+      }).timeout(const Duration(seconds: 30));
+      if (cached != null && cached['build'] == build) {
+        state.value = DesktopUpdateState(DesktopUpdateStatus.ready,
+            version: cached['version'].toString(), build: build);
+        return;
+      }
       state.value = DesktopUpdateState(DesktopUpdateStatus.downloading,
           version: data['version'].toString(), build: build);
       // URL e chave ficam no executável. O JSON não escolhe um instalador
       // arbitrário: WinSparkle consulta o appcast e verifica o pacote assinado.
-      await _channel
-          .invokeMethod<void>('download')
-          .timeout(const Duration(seconds: 10));
       _downloadDeadline?.cancel();
       _downloadDeadline = Timer(const Duration(minutes: 10), () {
         if (state.value.status == DesktopUpdateStatus.downloading) {
@@ -126,7 +138,11 @@ class DesktopUpdateService {
               'O download excedeu o prazo. Verifique a conexão e tente novamente.');
         }
       });
+      await _channel
+          .invokeMethod<void>('download')
+          .timeout(const Duration(seconds: 10));
     } catch (_) {
+      _downloadDeadline?.cancel();
       state.value = const DesktopUpdateState(DesktopUpdateStatus.error,
           message:
               'Sem acesso às atualizações. O sistema pode continuar sendo usado.');

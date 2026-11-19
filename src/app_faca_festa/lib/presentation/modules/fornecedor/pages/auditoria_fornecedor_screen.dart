@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/presentation/widgets/festa_scroll_area.dart';
 import 'package:app_faca_festa/core/services/update_operations.dart';
 import 'dart:convert';
 import 'dart:typed_data';
@@ -103,7 +104,7 @@ class AuditoriaFornecedorScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: LayoutBuilder(
+      body: FestaContent(child: LayoutBuilder(
         builder: (context, constraints) {
           return Column(
             children: [
@@ -220,32 +221,37 @@ class AuditoriaFornecedorScreen extends StatelessWidget {
                   return RefreshIndicator(
                     color: _theme.primary,
                     onRefresh: controller.carregar,
-                    child: ListView.separated(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.fromLTRB(16, 6, 16, 24),
-                      itemCount:
-                          lista.length + (controller.temMais.value ? 1 : 0),
-                      separatorBuilder: (_, __) => const SizedBox(height: 8),
-                      itemBuilder: (context, i) {
-                        if (i == lista.length) {
-                          return AuditoriaLoadMoreButton(
-                            controller: controller,
-                            theme: _theme,
-                          );
-                        }
-                        return AuditoriaEventoCard(
-                          evento: lista[i],
-                          theme: _theme,
-                        );
-                      },
-                    ),
+                    child: FestaScrollArea(
+                        color: _theme.primary,
+                        maxWidth: double.infinity,
+                        child: ListView.separated(
+                          primary: true,
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: const EdgeInsets.fromLTRB(16, 6, 16, 24),
+                          itemCount:
+                              lista.length + (controller.temMais.value ? 1 : 0),
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(height: 8),
+                          itemBuilder: (context, i) {
+                            if (i == lista.length) {
+                              return AuditoriaLoadMoreButton(
+                                controller: controller,
+                                theme: _theme,
+                              );
+                            }
+                            return AuditoriaEventoCard(
+                              evento: lista[i],
+                              theme: _theme,
+                            );
+                          },
+                        )),
                   );
                 }),
               ),
             ],
           );
         },
-      ),
+      )),
     );
   }
 

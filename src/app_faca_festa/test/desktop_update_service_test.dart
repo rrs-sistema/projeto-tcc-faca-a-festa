@@ -62,7 +62,8 @@ void main() {
               'identity': 'faca-festa-windows-x64',
               'platform': 'windows-x64',
               'version': '1.0.6',
-              'build': 8
+              'build': 8,
+              'sha256': 'a' * 64,
             }),
             200)));
   });
@@ -72,10 +73,55 @@ void main() {
   });
   test('startup downloads but never installs without confirmation', () async {
     await service.initialize(installedBuild: 7);
-    expect(trace, ['initialize', 'download']);
+    expect(trace, ['initialize', 'restoreDownload', 'download']);
     await ready(8);
     expect(service.state.value.status, DesktopUpdateStatus.ready);
     expect(trace.contains('install'), false);
+  });
+  test('validated package survives reopening without another download',
+      () async {
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      trace.add(call.method);
+      if (call.method == 'restoreDownload') {
+        expect(call.arguments, {'build': 8, 'sha256': 'a' * 64});
+        return {'version': '1.0.6', 'build': 8};
+      }
+      return null;
+    });
+    await service.initialize(installedBuild: 7);
+    expect(trace, ['initialize', 'restoreDownload']);
+    expect(service.state.value.status, DesktopUpdateStatus.ready);
+    await service.check();
+    expect(trace.contains('download'), false);
+    expect(trace.contains('install'), false);
+    await service.startInstall();
+    expect(trace.last, 'install');
+  });
+  test('cache miss downloads once and repeated checks do not download again',
+      () async {
+    await service.initialize(installedBuild: 7);
+    await service.check();
+    await ready(8);
+    await service.check();
+    expect(trace.where((method) => method == 'download'), hasLength(1));
+    expect(trace.contains('install'), false);
+  });
+  test('invalid catalog hash never restores or downloads a package', () async {
+    service.dispose();
+    service = DesktopUpdateService(
+      channel: channel,
+      client: MockClient((_) async => http.Response(
+          jsonEncode({
+            'identity': 'faca-festa-windows-x64',
+            'platform': 'windows-x64',
+            'build': 8,
+            'sha256': 'invalid',
+          }),
+          200)),
+    );
+    await service.initialize(installedBuild: 7);
+    expect(service.state.value.status, DesktopUpdateStatus.error);
+    expect(trace, ['initialize']);
   });
   test('save finishes before native helper starts', () async {
     await service.initialize(installedBuild: 7);
@@ -85,7 +131,14 @@ void main() {
       await Future<void>.delayed(Duration.zero);
       trace.add('closed-db');
     });
-    expect(trace, ['initialize', 'download', 'save', 'closed-db', 'install']);
+    expect(trace, [
+      'initialize',
+      'restoreDownload',
+      'download',
+      'save',
+      'closed-db',
+      'install'
+    ]);
   });
   test('preparation failure never starts helper and removes loading', () async {
     await service.initialize(installedBuild: 7);

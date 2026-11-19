@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/presentation/widgets/festa_scroll_area.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -52,7 +53,8 @@ class UsuariosAdminListScreen extends StatelessWidget {
           onPressed: () =>
               _abrirCadastroUsuarioBottomSheet(context, controller, primary),
         ),
-        body: Column(
+        body: FestaContent(
+            child: Column(
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
@@ -79,130 +81,137 @@ class UsuariosAdminListScreen extends StatelessWidget {
                   );
                 }
 
-                return ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(12, 2, 12, 88),
-                  itemCount: lista.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 8),
-                  itemBuilder: (_, i) {
-                    final user = lista[i];
-                    final isAdmin = user.tipo == 'A';
-                    final ativo = user.ativo;
-                    final estiloTipo =
-                        user.tipo != null ? _estiloTipo(user.tipo!) : null;
-                    final registro = user.dataCadastro != null
-                        ? DateFormat('dd/MM/yyyy').format(user.dataCadastro!)
-                        : null;
+                return FestaScrollArea(
+                    color: AdminPalette.primary,
+                    maxWidth: double.infinity,
+                    child: ListView.separated(
+                      primary: true,
+                      padding: const EdgeInsets.fromLTRB(12, 2, 12, 88),
+                      itemCount: lista.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 8),
+                      itemBuilder: (_, i) {
+                        final user = lista[i];
+                        final isAdmin = user.tipo == 'A';
+                        final ativo = user.ativo;
+                        final estiloTipo =
+                            user.tipo != null ? _estiloTipo(user.tipo!) : null;
+                        final registro = user.dataCadastro != null
+                            ? DateFormat('dd/MM/yyyy')
+                                .format(user.dataCadastro!)
+                            : null;
 
-                    return AdminCard(
-                      onTap: () => _abrirCadastroUsuarioBottomSheet(
-                        context,
-                        controller,
-                        primary,
-                        usuario: user,
-                      ),
-                      child: Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 18,
-                            backgroundColor: isAdmin
-                                ? Colors.blue.shade50
-                                : Colors.grey.shade100,
-                            backgroundImage: user.fotoPerfilUrl != null
-                                ? NetworkImage(user.fotoPerfilUrl!)
-                                : null,
-                            child: user.fotoPerfilUrl == null
-                                ? Icon(
-                                    isAdmin
-                                        ? Icons.admin_panel_settings_rounded
-                                        : Icons.person_outline_rounded,
-                                    color: isAdmin
-                                        ? Colors.blue.shade600
-                                        : Colors.grey.shade400,
-                                    size: 18,
-                                  )
-                                : null,
+                        return AdminCard(
+                          onTap: () => _abrirCadastroUsuarioBottomSheet(
+                            context,
+                            controller,
+                            primary,
+                            usuario: user,
                           ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  user.nome,
-                                  style: GoogleFonts.poppins(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 13.5,
-                                    height: 1.2,
-                                    color: ativo
-                                        ? AdminPalette.ink
-                                        : AdminPalette.muted,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                const SizedBox(height: 2),
-                                AdminMetaLine(
-                                  parts: [
-                                    user.email,
-                                    if (registro != null) registro,
+                          child: Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 18,
+                                backgroundColor: isAdmin
+                                    ? Colors.blue.shade50
+                                    : Colors.grey.shade100,
+                                backgroundImage: user.fotoPerfilUrl != null
+                                    ? NetworkImage(user.fotoPerfilUrl!)
+                                    : null,
+                                child: user.fotoPerfilUrl == null
+                                    ? Icon(
+                                        isAdmin
+                                            ? Icons.admin_panel_settings_rounded
+                                            : Icons.person_outline_rounded,
+                                        color: isAdmin
+                                            ? Colors.blue.shade600
+                                            : Colors.grey.shade400,
+                                        size: 18,
+                                      )
+                                    : null,
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      user.nome,
+                                      style: GoogleFonts.poppins(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 13.5,
+                                        height: 1.2,
+                                        color: ativo
+                                            ? AdminPalette.ink
+                                            : AdminPalette.muted,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 2),
+                                    AdminMetaLine(
+                                      parts: [
+                                        user.email,
+                                        if (registro != null) registro,
+                                      ],
+                                    ),
                                   ],
                                 ),
-                              ],
-                            ),
-                          ),
-                          if (estiloTipo != null) ...[
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 7, vertical: 2),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(6),
-                                color: estiloTipo.background,
                               ),
-                              child: Text(
-                                estiloTipo.label,
-                                style: GoogleFonts.poppins(
-                                  fontSize: 9.5,
-                                  fontWeight: FontWeight.w700,
-                                  color: estiloTipo.foreground,
-                                  letterSpacing: 0.4,
+                              if (estiloTipo != null) ...[
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 7, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(6),
+                                    color: estiloTipo.background,
+                                  ),
+                                  child: Text(
+                                    estiloTipo.label,
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 9.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: estiloTipo.foreground,
+                                      letterSpacing: 0.4,
+                                    ),
+                                  ),
                                 ),
+                                const SizedBox(width: 4),
+                              ],
+                              AdminIconAction(
+                                tooltip: ativo
+                                    ? 'Suspender acesso'
+                                    : 'Liberar acesso',
+                                icon: ativo
+                                    ? Icons.lock_open_rounded
+                                    : Icons.lock_rounded,
+                                color: ativo
+                                    ? Colors.grey.shade400
+                                    : AdminPalette.danger,
+                                onPressed: () => controller.toggleAtivo(
+                                    user.idUsuario, !ativo),
                               ),
-                            ),
-                            const SizedBox(width: 4),
-                          ],
-                          AdminIconAction(
-                            tooltip:
-                                ativo ? 'Suspender acesso' : 'Liberar acesso',
-                            icon: ativo
-                                ? Icons.lock_open_rounded
-                                : Icons.lock_rounded,
-                            color: ativo
-                                ? Colors.grey.shade400
-                                : AdminPalette.danger,
-                            onPressed: () =>
-                                controller.toggleAtivo(user.idUsuario, !ativo),
+                              AdminIconAction(
+                                tooltip:
+                                    isAdmin ? 'Remover admin' : 'Tornar admin',
+                                icon: isAdmin
+                                    ? Icons.remove_moderator_rounded
+                                    : Icons.add_moderator_rounded,
+                                color: isAdmin
+                                    ? AdminPalette.danger
+                                    : Colors.grey.shade400,
+                                onPressed: () => isAdmin
+                                    ? controller.removerAdmin(user.idUsuario)
+                                    : controller.tornarAdmin(user.idUsuario),
+                              ),
+                            ],
                           ),
-                          AdminIconAction(
-                            tooltip: isAdmin ? 'Remover admin' : 'Tornar admin',
-                            icon: isAdmin
-                                ? Icons.remove_moderator_rounded
-                                : Icons.add_moderator_rounded,
-                            color: isAdmin
-                                ? AdminPalette.danger
-                                : Colors.grey.shade400,
-                            onPressed: () => isAdmin
-                                ? controller.removerAdmin(user.idUsuario)
-                                : controller.tornarAdmin(user.idUsuario),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                );
+                        );
+                      },
+                    ));
               }),
             ),
           ],
-        ),
+        )),
       ),
     );
   }

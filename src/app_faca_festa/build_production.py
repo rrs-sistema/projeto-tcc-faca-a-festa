@@ -644,6 +644,10 @@ def main() -> None:
                 fail(f"Não foi possível preservar catálogo Android: {exc}")
         log("Todos os builds concluídos; publicando Hosting web + downloads")
         run([ensure_firebase(), "deploy", "--project", "faca-a-festa", "--only", "hosting"])
+        # Só limpa pacotes antigos depois que o catálogo está no ar. O script
+        # valida os catálogos remotos e preserva a versão atual + duas anteriores.
+        node = which("node") or fail("Node.js necessário para limitar o acervo de instaladores.")
+        run([node, str(ROOT / "tool/release_retention.cjs"), "--apply"])
         results.append(f"Download permanente: {HOSTING_URL}/desktop/")
 
     print("\n" + "=" * 60)

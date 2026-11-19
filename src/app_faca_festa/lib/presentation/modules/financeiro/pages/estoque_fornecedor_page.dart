@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/presentation/widgets/festa_scroll_area.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -98,7 +99,8 @@ class _EstoqueFornecedorPageState extends State<EstoqueFornecedorPage> {
               elevation: 12,
               shadowColor: Colors.black26,
               shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.horizontal(left: Radius.circular(24)),
+                borderRadius:
+                    BorderRadius.horizontal(left: Radius.circular(24)),
               ),
               clipBehavior: Clip.antiAlias,
               child: SizedBox(
@@ -186,53 +188,59 @@ class _EstoqueFornecedorPageState extends State<EstoqueFornecedorPage> {
             ),
           ],
         ),
-        body: loading
-            ? const Center(child: CircularProgressIndicator())
-            : LayoutBuilder(
-                builder: (context, constraints) {
-                  final w = constraints.maxWidth;
-                  final pad = FornecedorBreakpoints.padding(w);
-                  final maxW = w >= 1280 ? 1400.0 : w;
-                  return Align(
-                    alignment: Alignment.topCenter,
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(maxWidth: maxW),
-                      child: ListView(
-                        padding: EdgeInsets.fromLTRB(pad, FestaPageInsets.belowAppBar, pad, 32),
-                        children: [
-                          _cabecalho(w, vazio: c.itens.isEmpty),
-                          if (err.isNotEmpty) ...[
-                            const SizedBox(height: 10),
-                            _bannerErro(err),
-                          ],
-                          if (c.itens.isEmpty) ...[
-                            const SizedBox(height: 16),
-                            _vazioInicial(),
-                          ] else ...[
-                            const SizedBox(height: 14),
-                            _barraBuscaEAcao(w),
-                            const SizedBox(height: 14),
-                            _sintese(contagens, w),
-                            if (alertas.isNotEmpty) ...[
-                              const SizedBox(height: 12),
-                              _alertas(alertas),
-                            ],
-                            const SizedBox(height: 14),
-                            _filtros(filtro, contagens),
-                            const SizedBox(height: 14),
-                            if (lista.isEmpty)
-                              _vazioFiltro()
-                            else if (w >= 768)
-                              _tabela(lista)
-                            else
-                              ...lista.map(_cardMobile),
-                          ],
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
+        body: FestaContent(
+            child: loading
+                ? const Center(child: CircularProgressIndicator())
+                : LayoutBuilder(
+                    builder: (context, constraints) {
+                      final w = constraints.maxWidth;
+                      final pad = FornecedorBreakpoints.padding(w);
+                      final maxW = w >= 1280 ? 1400.0 : w;
+                      return Align(
+                        alignment: Alignment.topCenter,
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(maxWidth: maxW),
+                          child: FestaScrollArea(
+                              color: widget.themeController.primaryColor.value,
+                              maxWidth: double.infinity,
+                              child: ListView(
+                                primary: true,
+                                padding: EdgeInsets.fromLTRB(
+                                    pad, FestaPageInsets.belowAppBar, pad, 32),
+                                children: [
+                                  _cabecalho(w, vazio: c.itens.isEmpty),
+                                  if (err.isNotEmpty) ...[
+                                    const SizedBox(height: 10),
+                                    _bannerErro(err),
+                                  ],
+                                  if (c.itens.isEmpty) ...[
+                                    const SizedBox(height: 16),
+                                    _vazioInicial(),
+                                  ] else ...[
+                                    const SizedBox(height: 14),
+                                    _barraBuscaEAcao(w),
+                                    const SizedBox(height: 14),
+                                    _sintese(contagens, w),
+                                    if (alertas.isNotEmpty) ...[
+                                      const SizedBox(height: 12),
+                                      _alertas(alertas),
+                                    ],
+                                    const SizedBox(height: 14),
+                                    _filtros(filtro, contagens),
+                                    const SizedBox(height: 14),
+                                    if (lista.isEmpty)
+                                      _vazioFiltro()
+                                    else if (w >= 768)
+                                      _tabela(lista)
+                                    else
+                                      ...lista.map(_cardMobile),
+                                  ],
+                                ],
+                              )),
+                        ),
+                      );
+                    },
+                  )),
       );
     });
   }
@@ -549,7 +557,8 @@ class _EstoqueFornecedorPageState extends State<EstoqueFornecedorPage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(item.nome,
-                        style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+                        style:
+                            GoogleFonts.poppins(fontWeight: FontWeight.w600)),
                     if (item.status != StatusFisicoItemEstoque.disponivel)
                       Text(
                         _rotuloStatus(item.status),
@@ -562,7 +571,8 @@ class _EstoqueFornecedorPageState extends State<EstoqueFornecedorPage> {
                 ),
               ),
               DataCell(Text(_rotuloNatureza(item.natureza))),
-              DataCell(Text('${item.quantidadeDisponivelLivre} ${item.unidade}')),
+              DataCell(
+                  Text('${item.quantidadeDisponivelLivre} ${item.unidade}')),
               DataCell(Text('${item.quantidadeReservada}')),
               DataCell(Text('${item.quantidadeEmUso}')),
               DataCell(
@@ -742,7 +752,8 @@ class _PainelCadastroItemState extends State<_PainelCadastroItem> {
       custoUsoCentavos: _natureza == 'reutilizavel' ? centavos : 0,
       montagemMinutos: _natureza == 'reutilizavel' ? montagem : 0,
       desmontagemMinutos: _natureza == 'reutilizavel' ? desmontagem : 0,
-      unidade: _unidadeCtrl.text.trim().isEmpty ? 'un' : _unidadeCtrl.text.trim(),
+      unidade:
+          _unidadeCtrl.text.trim().isEmpty ? 'un' : _unidadeCtrl.text.trim(),
     );
     if (widget.controller.erro.value.isEmpty) {
       widget.onSalvo();
@@ -767,8 +778,8 @@ class _PainelCadastroItemState extends State<_PainelCadastroItem> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(
-            color: FornecedorPremiumPalette.primary, width: 2),
+        borderSide:
+            const BorderSide(color: FornecedorPremiumPalette.primary, width: 2),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
@@ -1252,7 +1263,8 @@ class _PainelDetalheItemState extends State<_PainelDetalheItem> {
           child: Column(
             children: [
               Text('Item indisponível', style: GoogleFonts.poppins()),
-              TextButton(onPressed: widget.onFechar, child: const Text('Fechar')),
+              TextButton(
+                  onPressed: widget.onFechar, child: const Text('Fechar')),
             ],
           ),
         );
@@ -1431,8 +1443,8 @@ class _PainelDetalheItemState extends State<_PainelDetalheItem> {
                             style: OutlinedButton.styleFrom(
                               minimumSize: const Size(48, 48),
                             ),
-                            child: Text('Cancelar',
-                                style: GoogleFonts.poppins()),
+                            child:
+                                Text('Cancelar', style: GoogleFonts.poppins()),
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -1444,8 +1456,7 @@ class _PainelDetalheItemState extends State<_PainelDetalheItem> {
                                     ? _confirmarReserva
                                     : _confirmarConsumo),
                             style: FilledButton.styleFrom(
-                              backgroundColor:
-                                  FornecedorPremiumPalette.primary,
+                              backgroundColor: FornecedorPremiumPalette.primary,
                               minimumSize: const Size(48, 48),
                             ),
                             child: Text(

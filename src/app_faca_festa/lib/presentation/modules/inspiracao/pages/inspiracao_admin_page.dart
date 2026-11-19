@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/presentation/widgets/festa_scroll_area.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
@@ -108,7 +109,7 @@ class _InspiracaoAdminPageState extends State<InspiracaoAdminPage> {
         ],
       ),
       floatingActionButton: _buildFloatingActionButton(),
-      body: SafeArea(
+      body: FestaContent(child: SafeArea(
         child: Obx(() {
           final loadingInicial =
               controller.loading.value && controller.todasInspiracoes.isEmpty;
@@ -119,31 +120,36 @@ class _InspiracaoAdminPageState extends State<InspiracaoAdminPage> {
 
           return RefreshIndicator(
             onRefresh: controller.recarregar,
-            child: CustomScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              slivers: [
-                SliverToBoxAdapter(
-                  child: Obx(
-                    () => AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 220),
-                      child:
-                          controller.salvando.value || controller.loading.value
+            child: FestaScrollArea(
+                color: Theme.of(context).colorScheme.primary,
+                maxWidth: double.infinity,
+                scrollDirection: Axis.vertical,
+                child: CustomScrollView(
+                  primary: true,
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  slivers: [
+                    SliverToBoxAdapter(
+                      child: Obx(
+                        () => AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 220),
+                          child: controller.salvando.value ||
+                                  controller.loading.value
                               ? const LinearProgressIndicator(minHeight: 2)
                               : const SizedBox(height: 2),
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-                SliverToBoxAdapter(child: _buildHeader(context)),
-                SliverToBoxAdapter(child: _buildResumoCards(context)),
-                SliverToBoxAdapter(child: _buildFiltros(context)),
-                _buildConteudo(context),
-                const SliverToBoxAdapter(
-                    child: SizedBox(height: 60)), // Menos espaço no rodapé
-              ],
-            ),
+                    SliverToBoxAdapter(child: _buildHeader(context)),
+                    SliverToBoxAdapter(child: _buildResumoCards(context)),
+                    SliverToBoxAdapter(child: _buildFiltros(context)),
+                    _buildConteudo(context),
+                    const SliverToBoxAdapter(
+                        child: SizedBox(height: 60)), // Menos espaço no rodapé
+                  ],
+                )),
           );
         }),
-      ),
+      )),
     );
   }
 

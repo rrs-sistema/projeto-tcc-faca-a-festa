@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/presentation/widgets/festa_scroll_area.dart';
 import 'package:app_faca_festa/domain/entities/financeiro/contratacao_identidade.dart';
 import 'package:app_faca_festa/presentation/widgets/operacao/operacao_skeleton.dart';
 import 'package:app_faca_festa/presentation/widgets/festa_app_bar.dart';
@@ -86,178 +87,201 @@ class _AgendaFornecedorPageState extends State<AgendaFornecedorPage> {
                   return fim == null ||
                       DateTime.tryParse(fim)?.isAfter(DateTime.now()) == true;
                 }).toList();
-                return ListView(padding: const EdgeInsets.all(16), children: [
-                  OperacaoSurface(
-                      child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                        const OperacaoHeading(
-                            title: 'Compromissos e disponibilidade',
-                            subtitle:
-                                'Organize horários, equipe e recursos para cada contratação.',
-                            icon: Icons.calendar_month_outlined),
-                        const SizedBox(height: 20),
-                        Wrap(spacing: 10, runSpacing: 10, children: [
-                          OutlinedButton.icon(
-                              onPressed: c.carregando.value ? null : c.carregar,
-                              icon: const Icon(Icons.refresh_rounded),
-                              label: const Text('Atualizar agenda')),
-                          if (d != null)
-                            FilledButton.icon(
-                                onPressed:
-                                    c.enviando.value ? null : _capacidade,
-                                icon: const Icon(Icons.groups_outlined),
-                                label: Text(
-                                    'Capacidade: ${d['capacidade'] ?? 'não configurada'} · Configurar')),
-                          if (d != null)
-                            OutlinedButton.icon(
-                                onPressed: () =>
-                                    Get.toNamed('/fornecedor/estoque'),
-                                icon: const Icon(Icons.inventory_2_outlined),
-                                label:
-                                    const Text('Estoque, retirada e devolução'))
-                        ]),
-                        if (d != null) ...[
-                          const SizedBox(height: 18),
-                          Wrap(spacing: 8, runSpacing: 8, children: [
-                            for (final opcao in [
-                              'Próximos',
-                              'Pendentes',
-                              'Histórico'
-                            ])
-                              ChoiceChip(
-                                  label: Text(opcao),
-                                  selected: filtro == opcao,
-                                  onSelected: (_) =>
-                                      setState(() => filtro = opcao))
-                          ])
-                        ],
-                      ])),
-                  const SizedBox(height: 20),
-                  if (c.carregando.value || (d == null && c.erro.value.isEmpty))
-                    const OperacaoSkeleton(
-                        titulo: 'Seus compromissos',
-                        icon: Icons.calendar_month_outlined),
-                  if (c.erro.value.isNotEmpty)
-                    OperacaoFalha(
-                        titulo: 'Não foi possível carregar a agenda',
-                        mensagem: c.erro.value,
-                        onRetry: c.carregando.value ? null : c.carregar),
-                  if (c.pendente.value != null)
-                    Card(
-                        child: ListTile(
-                            title: const Text(
-                                'Envio pendente: reconcilie a operação original'),
-                            trailing: TextButton(
-                                onPressed: c.enviando.value ? null : c.retomar,
-                                child: const Text('Retomar envio')))),
-                  if (d != null)
-                    const ExpansionTile(
-                        title: Text('Como funciona a disponibilidade?'),
+                return FestaScrollArea(
+                    color: Theme.of(context).colorScheme.primary,
+                    maxWidth: double.infinity,
+                    child: ListView(
+                        primary: true,
+                        padding: const EdgeInsets.all(16),
                         children: [
-                          Padding(
-                              padding: EdgeInsets.all(16),
-                              child: Text(
-                                  'Consultas comerciais não reservam capacidade. Compromissos precisam de intervalos definidos; um horário ausente não significa disponibilidade confirmada.'))
-                        ]),
-                  if (d != null && !c.carregando.value && lista.isEmpty)
-                    const Padding(
-                        padding: EdgeInsets.all(24),
-                        child: Text(
-                            'Nenhum compromisso neste filtro. Ausência de horários não confirma disponibilidade.')),
-                  if (d != null)
-                    for (final r in (d['reservas'] as List).where((r) =>
-                        r['idOrcamento'] != null &&
-                        (widget.idOrcamento == null ||
-                            r['idOrcamento'] == widget.idOrcamento)))
-                      Card(
-                          child: ListTile(
-                              title: Text(
-                                  'Recurso reservado · contrato ${r['idOrcamento']} · ${r['status']}'),
-                              subtitle: Text((d['itens'] as List)
-                                      .where((i) => i['id'] == r['idItem'])
-                                      .firstOrNull?['nome']
-                                      ?.toString() ??
-                                  'Recurso interno'),
-                              trailing: Wrap(children: [
-                                if (r['status'] == 'ativa')
-                                  TextButton(
-                                      onPressed: c.enviando.value ||
-                                              c.pendente.value != null
+                          OperacaoSurface(
+                              child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                const OperacaoHeading(
+                                    title: 'Compromissos e disponibilidade',
+                                    subtitle:
+                                        'Organize horários, equipe e recursos para cada contratação.',
+                                    icon: Icons.calendar_month_outlined),
+                                const SizedBox(height: 20),
+                                Wrap(spacing: 10, runSpacing: 10, children: [
+                                  OutlinedButton.icon(
+                                      onPressed: c.carregando.value
                                           ? null
-                                          : () => _estoque(
-                                              'retirarEstoqueFornecedor',
-                                              r['id']),
-                                      child: const Text('Retirar')),
-                                if (r['status'] == 'retirada')
-                                  TextButton(
-                                      onPressed: c.enviando.value ||
-                                              c.pendente.value != null
-                                          ? null
-                                          : () => _estoque(
-                                              'devolverEstoqueFornecedor',
-                                              r['id']),
-                                      child: const Text('Registrar devolução'))
-                              ]))),
-                  if (d != null)
-                    ExpansionTile(
-                        title: const Text('Histórico de agenda e capacidade'),
-                        children: [
-                          for (final h in d['historico'] ?? [])
-                            if (widget.idOrcamento == null ||
-                                h['idOrcamento'] == widget.idOrcamento)
-                              ListTile(
-                                  title: Text(
-                                      '${h['tipo']} · ${h['idOrcamento'] ?? 'capacidade'}'),
-                                  subtitle: Text(
-                                      '${h['motivo'] ?? 'Ação auditada'} · ${h['autor']} · ${data(h['em'], 'America/Sao_Paulo')}'))
-                        ]),
-                  for (final x in lista)
-                    Card(
-                        child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  _detalhesCompromisso(x, d!),
-                                  const SizedBox(height: 16),
-                                  const Divider(height: 1),
-                                  const SizedBox(height: 8),
-                                  Wrap(spacing: 8, children: [
-                                    if (x['ativo'] == true)
-                                      TextButton(
-                                          onPressed: c.enviando.value ||
-                                                  c.pendente.value != null
-                                              ? null
-                                              : () => _agenda(x),
-                                          child: Text(x['agenda'] == null
-                                              ? 'Definir e confirmar intervalo'
-                                              : 'Reagendar com revisão')),
-                                    if (x['idCotacao'] != null)
-                                      TextButton(
-                                          onPressed: () => Get.toNamed(
-                                                  '/jornada-atendimento',
-                                                  arguments: {
-                                                    'idCotacao': x['idCotacao'],
-                                                    'idFornecedor':
-                                                        c.gateway.usuario
-                                                  }),
-                                          child: const Text('Abrir jornada')),
-                                    TextButton(
-                                        onPressed: () => Get.toNamed(
-                                                '/acompanhamento-fornecedor',
-                                                arguments: {
-                                                  'idEvento': x['idEvento'],
-                                                  'idFornecedor':
-                                                      c.gateway.usuario,
-                                                  'idOrcamento':
-                                                      x['idOrcamento']
-                                                }),
-                                        child:
-                                            const Text('Contrato e pendências'))
+                                          : c.carregar,
+                                      icon: const Icon(Icons.refresh_rounded),
+                                      label: const Text('Atualizar agenda')),
+                                  if (d != null)
+                                    FilledButton.icon(
+                                        onPressed: c.enviando.value
+                                            ? null
+                                            : _capacidade,
+                                        icon: const Icon(Icons.groups_outlined),
+                                        label: Text(
+                                            'Capacidade: ${d['capacidade'] ?? 'não configurada'} · Configurar')),
+                                  if (d != null)
+                                    OutlinedButton.icon(
+                                        onPressed: () =>
+                                            Get.toNamed('/fornecedor/estoque'),
+                                        icon: const Icon(
+                                            Icons.inventory_2_outlined),
+                                        label: const Text(
+                                            'Estoque, retirada e devolução'))
+                                ]),
+                                if (d != null) ...[
+                                  const SizedBox(height: 18),
+                                  Wrap(spacing: 8, runSpacing: 8, children: [
+                                    for (final opcao in [
+                                      'Próximos',
+                                      'Pendentes',
+                                      'Histórico'
+                                    ])
+                                      ChoiceChip(
+                                          label: Text(opcao),
+                                          selected: filtro == opcao,
+                                          onSelected: (_) =>
+                                              setState(() => filtro = opcao))
                                   ])
-                                ]))),
-                ]);
+                                ],
+                              ])),
+                          const SizedBox(height: 20),
+                          if (c.carregando.value ||
+                              (d == null && c.erro.value.isEmpty))
+                            const OperacaoSkeleton(
+                                titulo: 'Seus compromissos',
+                                icon: Icons.calendar_month_outlined),
+                          if (c.erro.value.isNotEmpty)
+                            OperacaoFalha(
+                                titulo: 'Não foi possível carregar a agenda',
+                                mensagem: c.erro.value,
+                                onRetry:
+                                    c.carregando.value ? null : c.carregar),
+                          if (c.pendente.value != null)
+                            Card(
+                                child: ListTile(
+                                    title: const Text(
+                                        'Envio pendente: reconcilie a operação original'),
+                                    trailing: TextButton(
+                                        onPressed:
+                                            c.enviando.value ? null : c.retomar,
+                                        child: const Text('Retomar envio')))),
+                          if (d != null)
+                            const ExpansionTile(
+                                title: Text('Como funciona a disponibilidade?'),
+                                children: [
+                                  Padding(
+                                      padding: EdgeInsets.all(16),
+                                      child: Text(
+                                          'Consultas comerciais não reservam capacidade. Compromissos precisam de intervalos definidos; um horário ausente não significa disponibilidade confirmada.'))
+                                ]),
+                          if (d != null && !c.carregando.value && lista.isEmpty)
+                            const Padding(
+                                padding: EdgeInsets.all(24),
+                                child: Text(
+                                    'Nenhum compromisso neste filtro. Ausência de horários não confirma disponibilidade.')),
+                          if (d != null)
+                            for (final r in (d['reservas'] as List).where((r) =>
+                                r['idOrcamento'] != null &&
+                                (widget.idOrcamento == null ||
+                                    r['idOrcamento'] == widget.idOrcamento)))
+                              Card(
+                                  child: ListTile(
+                                      title: Text(
+                                          'Recurso reservado · contrato ${r['idOrcamento']} · ${r['status']}'),
+                                      subtitle: Text((d['itens'] as List)
+                                              .where(
+                                                  (i) => i['id'] == r['idItem'])
+                                              .firstOrNull?['nome']
+                                              ?.toString() ??
+                                          'Recurso interno'),
+                                      trailing: Wrap(children: [
+                                        if (r['status'] == 'ativa')
+                                          TextButton(
+                                              onPressed: c.enviando.value ||
+                                                      c.pendente.value != null
+                                                  ? null
+                                                  : () => _estoque(
+                                                      'retirarEstoqueFornecedor',
+                                                      r['id']),
+                                              child: const Text('Retirar')),
+                                        if (r['status'] == 'retirada')
+                                          TextButton(
+                                              onPressed: c.enviando.value ||
+                                                      c.pendente.value != null
+                                                  ? null
+                                                  : () => _estoque(
+                                                      'devolverEstoqueFornecedor',
+                                                      r['id']),
+                                              child: const Text(
+                                                  'Registrar devolução'))
+                                      ]))),
+                          if (d != null)
+                            ExpansionTile(
+                                title: const Text(
+                                    'Histórico de agenda e capacidade'),
+                                children: [
+                                  for (final h in d['historico'] ?? [])
+                                    if (widget.idOrcamento == null ||
+                                        h['idOrcamento'] == widget.idOrcamento)
+                                      ListTile(
+                                          title: Text(
+                                              '${h['tipo']} · ${h['idOrcamento'] ?? 'capacidade'}'),
+                                          subtitle: Text(
+                                              '${h['motivo'] ?? 'Ação auditada'} · ${h['autor']} · ${data(h['em'], 'America/Sao_Paulo')}'))
+                                ]),
+                          for (final x in lista)
+                            Card(
+                                child: Padding(
+                                    padding: const EdgeInsets.all(16),
+                                    child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          _detalhesCompromisso(x, d!),
+                                          const SizedBox(height: 16),
+                                          const Divider(height: 1),
+                                          const SizedBox(height: 8),
+                                          Wrap(spacing: 8, children: [
+                                            if (x['ativo'] == true)
+                                              TextButton(
+                                                  onPressed: c.enviando.value ||
+                                                          c.pendente.value !=
+                                                              null
+                                                      ? null
+                                                      : () => _agenda(x),
+                                                  child: Text(x['agenda'] ==
+                                                          null
+                                                      ? 'Definir e confirmar intervalo'
+                                                      : 'Reagendar com revisão')),
+                                            if (x['idCotacao'] != null)
+                                              TextButton(
+                                                  onPressed: () => Get.toNamed(
+                                                          '/jornada-atendimento',
+                                                          arguments: {
+                                                            'idCotacao':
+                                                                x['idCotacao'],
+                                                            'idFornecedor': c
+                                                                .gateway.usuario
+                                                          }),
+                                                  child: const Text(
+                                                      'Abrir jornada')),
+                                            TextButton(
+                                                onPressed: () => Get.toNamed(
+                                                        '/acompanhamento-fornecedor',
+                                                        arguments: {
+                                                          'idEvento':
+                                                              x['idEvento'],
+                                                          'idFornecedor':
+                                                              c.gateway.usuario,
+                                                          'idOrcamento':
+                                                              x['idOrcamento']
+                                                        }),
+                                                child: const Text(
+                                                    'Contrato e pendências'))
+                                          ])
+                                        ]))),
+                        ]));
               }))));
   String _tipoJanela(Object? tipo) => switch (tipo) {
         'montagem' => 'Montagem',

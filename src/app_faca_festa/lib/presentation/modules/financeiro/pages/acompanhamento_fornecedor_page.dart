@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/presentation/widgets/festa_scroll_area.dart';
 import 'package:app_faca_festa/presentation/widgets/operacao/operacao_skeleton.dart';
 import 'package:app_faca_festa/presentation/modules/financeiro/widgets/ajuda_fluxo_financeiro.dart';
 import 'package:flutter/material.dart';
@@ -144,72 +145,76 @@ class _AcompanhamentoFornecedorPageState
             ),
           ],
         ),
-        body: LayoutBuilder(
+        body: FestaContent(child: LayoutBuilder(
           builder: (context, constraints) {
             final pad = constraints.maxWidth >= 900 ? 28.0 : 16.0;
             return Align(
               alignment: Alignment.topCenter,
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 720),
-                child: ListView(
-                  padding: EdgeInsets.fromLTRB(
-                    pad,
-                    FestaPageInsets.belowAppBar,
-                    pad,
-                    32,
-                  ),
-                  children: [
-                    const Align(
-                      alignment: Alignment.centerLeft,
-                      child: AjudaFluxoFinanceiro(
-                        perfil: PerfilAjudaFinanceira.fornecedor,
+                child: FestaScrollArea(
+                    color: widget.themeController.primaryColor.value,
+                    maxWidth: double.infinity,
+                    child: ListView(
+                      primary: true,
+                      padding: EdgeInsets.fromLTRB(
+                        pad,
+                        FestaPageInsets.belowAppBar,
+                        pad,
+                        32,
                       ),
-                    ),
-                    if (aviso.isNotEmpty && !_avisoRedundante(aviso)) ...[
-                      const SizedBox(height: 10),
-                      _InfoBanner(
-                        icon: Icons.info_outline_rounded,
-                        color: FornecedorPremiumPalette.amber,
-                        title: 'Aviso da plataforma',
-                        body: aviso,
-                        soft: true,
-                      ),
-                    ],
-                    if (erro.isNotEmpty) ...[
-                      const SizedBox(height: 10),
-                      _InfoBanner(
-                        icon: Icons.error_outline_rounded,
-                        color: FornecedorPremiumPalette.rose,
-                        title: 'Não foi possível carregar',
-                        body: erro,
-                        soft: true,
-                      ),
-                    ],
-                    const SizedBox(height: 18),
-                    if (busy)
-                      const OperacaoSkeleton(
-                          titulo: 'Seus contratos',
-                          icon: Icons.description_outlined)
-                    else if (linhas.isEmpty)
-                      const _EmptyContratos()
-                    else ...[
-                      Text(
-                        '${linhas.length} contrato${linhas.length == 1 ? '' : 's'} · valores previstos (não são saldo bancário)',
-                        style: GoogleFonts.poppins(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w600,
-                          color: FornecedorPremiumPalette.muted,
+                      children: [
+                        const Align(
+                          alignment: Alignment.centerLeft,
+                          child: AjudaFluxoFinanceiro(
+                            perfil: PerfilAjudaFinanceira.fornecedor,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 10),
-                      ...linhas.map(_card),
-                    ],
-                  ],
-                ),
+                        if (aviso.isNotEmpty && !_avisoRedundante(aviso)) ...[
+                          const SizedBox(height: 10),
+                          _InfoBanner(
+                            icon: Icons.info_outline_rounded,
+                            color: FornecedorPremiumPalette.amber,
+                            title: 'Aviso da plataforma',
+                            body: aviso,
+                            soft: true,
+                          ),
+                        ],
+                        if (erro.isNotEmpty) ...[
+                          const SizedBox(height: 10),
+                          _InfoBanner(
+                            icon: Icons.error_outline_rounded,
+                            color: FornecedorPremiumPalette.rose,
+                            title: 'Não foi possível carregar',
+                            body: erro,
+                            soft: true,
+                          ),
+                        ],
+                        const SizedBox(height: 18),
+                        if (busy)
+                          const OperacaoSkeleton(
+                              titulo: 'Seus contratos',
+                              icon: Icons.description_outlined)
+                        else if (linhas.isEmpty)
+                          const _EmptyContratos()
+                        else ...[
+                          Text(
+                            '${linhas.length} contrato${linhas.length == 1 ? '' : 's'} · valores previstos (não são saldo bancário)',
+                            style: GoogleFonts.poppins(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w600,
+                              color: FornecedorPremiumPalette.muted,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          ...linhas.map(_card),
+                        ],
+                      ],
+                    )),
               ),
             );
           },
-        ),
+        )),
       );
     });
   }

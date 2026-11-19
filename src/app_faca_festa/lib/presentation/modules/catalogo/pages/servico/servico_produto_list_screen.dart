@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/presentation/widgets/festa_scroll_area.dart';
 // ignore_for_file: avoid_print, use_build_context_synchronously
 
 import 'package:app_faca_festa/presentation/widgets/operacao/operacao_skeleton.dart';
@@ -203,22 +204,27 @@ class _ServicoProdutoListScreenState extends State<ServicoProdutoListScreen> {
                 )
               ],
             ),
-      body: Obx(() {
+      body: FestaContent(child: Obx(() {
         if (controller.carregando.value) {
           return Align(
             alignment: Alignment.topCenter,
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 1100),
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(
-                    16, FestaPageInsets.belowAppBar, 16, 32),
-                children: const [
-                  OperacaoSkeleton(
-                      titulo: 'Serviços e produtos',
-                      icon: Icons.storefront_outlined,
-                      linhas: 6),
-                ],
-              ),
+              child: FestaScrollArea(
+                  color: primary,
+                  maxWidth: double.infinity,
+                  scrollDirection: Axis.vertical,
+                  child: ListView(
+                    primary: true,
+                    padding: const EdgeInsets.fromLTRB(
+                        16, FestaPageInsets.belowAppBar, 16, 32),
+                    children: const [
+                      OperacaoSkeleton(
+                          titulo: 'Serviços e produtos',
+                          icon: Icons.storefront_outlined,
+                          linhas: 6),
+                    ],
+                  )),
             ),
           );
         }
@@ -233,11 +239,12 @@ class _ServicoProdutoListScreenState extends State<ServicoProdutoListScreen> {
           return LayoutBuilder(
             builder: (context, constraints) {
               final colunas = ServicoGridColunas.para(constraints.maxWidth);
-              return Scrollbar(
+              return FestaScrollArea(
+                color: primary,
+                maxWidth: double.infinity,
+                contentPadding: EdgeInsets.zero,
+                scrollDirection: Axis.horizontal,
                 controller: _scrollBody,
-                thumbVisibility: colunas.total > constraints.maxWidth + 1,
-                notificationPredicate: (notif) =>
-                    notif.metrics.axis == Axis.horizontal,
                 child: SingleChildScrollView(
                   controller: _scrollBody,
                   scrollDirection: Axis.horizontal,
@@ -250,86 +257,87 @@ class _ServicoProdutoListScreenState extends State<ServicoProdutoListScreen> {
                       children: [
                         _buildHeader(primary, colunas),
                         Expanded(
-                          child: Scrollbar(
+                          child: FestaScrollArea(
+                            color: primary,
+                            maxWidth: double.infinity,
+                            contentPadding: EdgeInsets.zero,
+                            scrollDirection: Axis.vertical,
                             controller: _scrollVertical,
-                            thumbVisibility: true,
-                            notificationPredicate: (notif) =>
-                                notif.metrics.axis == Axis.vertical,
                             child: SingleChildScrollView(
                               controller: _scrollVertical,
                               scrollDirection: Axis.vertical,
                               physics: const BouncingScrollPhysics(),
                               child: ServicoDataTable(
                                 colunas: colunas,
-                              servicos: controller.servicosFornecedor,
-                              medidas: medidas,
-                              primary: primary,
-                              currentPage: _currentPage,
-                              rowsPerPage: _rowsPerPage,
-                              onEditar: (s) async {
-                                if (appController.usuarioLogado.value?.tipo ==
-                                    'F') {
-                                  fotoController.fotos.clear();
-                                  await fotoController.carregarFotos(
-                                      s.idFornecedor, s.idProdutoServico);
-                                  final vinculo = FornecedorProdutoServico(
-                                    id: s.id,
-                                    idProdutoServico: s.idProdutoServico,
-                                    idFornecedor: s.idFornecedor,
-                                    preco: s.preco,
-                                    precoPromocao: s.precoPromocao,
-                                    idSubcategoria: s.idSubcategoria,
-                                    ativo: s.ativo,
-                                  );
-                                  showFornecedorServicoBottomSheet(
-                                    context,
-                                    widget.fornecedorId ?? '',
-                                    themeController: theme,
-                                    categoriaController: categoriaController,
-                                    subcategoriaController:
-                                        subcategoriaController,
-                                    servicoController: servicoController,
-                                    fotoController: fotoController,
-                                    vinculo: vinculo,
-                                  );
-                                } else {
-                                  final servico = controller.servicos
-                                      .firstWhereOrNull(
-                                          (p) => p.id == s.idProdutoServico);
-                                  showServicoProdutoBottomSheet(
-                                    context,
-                                    servicoController: servicoController,
-                                    categoriaController: categoriaController,
-                                    subcategoriaController:
-                                        subcategoriaController,
-                                    primary: primary,
-                                    servico: servico,
-                                  );
-                                }
-                              },
-                              onExcluir: (s) async {
-                                if (appController.usuarioLogado.value?.tipo ==
-                                    'F') {
-                                  _confirmarExclusao(
-                                    context: context,
-                                    onConfirmar: () async {
-                                      EasyLoading.show(
-                                          status: 'Processando...');
-                                      await servicoController.excluirVinculo(
-                                          s.id, s.idFornecedor);
+                                servicos: controller.servicosFornecedor,
+                                medidas: medidas,
+                                primary: primary,
+                                currentPage: _currentPage,
+                                rowsPerPage: _rowsPerPage,
+                                onEditar: (s) async {
+                                  if (appController.usuarioLogado.value?.tipo ==
+                                      'F') {
+                                    fotoController.fotos.clear();
+                                    await fotoController.carregarFotos(
+                                        s.idFornecedor, s.idProdutoServico);
+                                    final vinculo = FornecedorProdutoServico(
+                                      id: s.id,
+                                      idProdutoServico: s.idProdutoServico,
+                                      idFornecedor: s.idFornecedor,
+                                      preco: s.preco,
+                                      precoPromocao: s.precoPromocao,
+                                      idSubcategoria: s.idSubcategoria,
+                                      ativo: s.ativo,
+                                    );
+                                    showFornecedorServicoBottomSheet(
+                                      context,
+                                      widget.fornecedorId ?? '',
+                                      themeController: theme,
+                                      categoriaController: categoriaController,
+                                      subcategoriaController:
+                                          subcategoriaController,
+                                      servicoController: servicoController,
+                                      fotoController: fotoController,
+                                      vinculo: vinculo,
+                                    );
+                                  } else {
+                                    final servico = controller.servicos
+                                        .firstWhereOrNull(
+                                            (p) => p.id == s.idProdutoServico);
+                                    showServicoProdutoBottomSheet(
+                                      context,
+                                      servicoController: servicoController,
+                                      categoriaController: categoriaController,
+                                      subcategoriaController:
+                                          subcategoriaController,
+                                      primary: primary,
+                                      servico: servico,
+                                    );
+                                  }
+                                },
+                                onExcluir: (s) async {
+                                  if (appController.usuarioLogado.value?.tipo ==
+                                      'F') {
+                                    _confirmarExclusao(
+                                      context: context,
+                                      onConfirmar: () async {
+                                        EasyLoading.show(
+                                            status: 'Processando...');
+                                        await servicoController.excluirVinculo(
+                                            s.id, s.idFornecedor);
 
-                                      EasyLoading.dismiss();
-                                    },
-                                  );
-                                } else if (appController
-                                        .usuarioLogado.value?.tipo ==
-                                    'A') {
-                                  //controller.excluirServico(id);
-                                }
-                              },
+                                        EasyLoading.dismiss();
+                                      },
+                                    );
+                                  } else if (appController
+                                          .usuarioLogado.value?.tipo ==
+                                      'A') {
+                                    //controller.excluirServico(id);
+                                  }
+                                },
+                              ),
                             ),
                           ),
-                        ),
                         ),
                       ],
                     ),
@@ -340,18 +348,23 @@ class _ServicoProdutoListScreenState extends State<ServicoProdutoListScreen> {
           );
         }
 
-        return ListView.builder(
-          padding: const EdgeInsets.all(12),
-          itemCount: controller.servicosFornecedor.length,
-          itemBuilder: (context, i) {
-            final s = controller.servicosFornecedor[i];
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6),
-              child: _buildServicoCard(context, s, primary, medidas),
-            );
-          },
-        );
-      }),
+        return FestaScrollArea(
+            color: primary,
+            maxWidth: double.infinity,
+            scrollDirection: Axis.vertical,
+            child: ListView.builder(
+              primary: true,
+              padding: const EdgeInsets.all(12),
+              itemCount: controller.servicosFornecedor.length,
+              itemBuilder: (context, i) {
+                final s = controller.servicosFornecedor[i];
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: _buildServicoCard(context, s, primary, medidas),
+                );
+              },
+            ));
+      })),
     );
   }
 
@@ -993,86 +1006,86 @@ class ServicoDataTable extends StatelessWidget {
       return Column(
         children: [
           Table(
-                columnWidths: {
-                  0: FixedColumnWidth(colunas.numero),
-                  1: FixedColumnWidth(colunas.servico),
-                  2: FixedColumnWidth(colunas.categoria),
-                  3: FixedColumnWidth(colunas.subcategoria),
-                  4: FixedColumnWidth(colunas.medida),
-                  5: FixedColumnWidth(colunas.preco),
-                  6: FixedColumnWidth(colunas.acoes),
-                },
-                border: TableBorder.symmetric(
-                  inside: BorderSide(color: Colors.grey.withValues(alpha: 0.1)),
-                ),
-                defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-                children: List.generate(visibleServicos.length, (index) {
-                  final s = visibleServicos[index];
-                  final tipo = medidas[s.tipoMedida] ?? s.tipoMedida ?? '-';
-                  final isHovered = hoveredIndex.value == index;
-                  final isSelected = selectedIndex.value == index;
-                  final Color baseColor = index.isEven
-                      ? Colors.white.withValues(alpha: 0.7)
-                      : Colors.grey.shade100;
-                  final Color hoverColor = primary.withValues(alpha: 0.12);
-                  final Color selectedColor = primary.withValues(alpha: 0.25);
+            columnWidths: {
+              0: FixedColumnWidth(colunas.numero),
+              1: FixedColumnWidth(colunas.servico),
+              2: FixedColumnWidth(colunas.categoria),
+              3: FixedColumnWidth(colunas.subcategoria),
+              4: FixedColumnWidth(colunas.medida),
+              5: FixedColumnWidth(colunas.preco),
+              6: FixedColumnWidth(colunas.acoes),
+            },
+            border: TableBorder.symmetric(
+              inside: BorderSide(color: Colors.grey.withValues(alpha: 0.1)),
+            ),
+            defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+            children: List.generate(visibleServicos.length, (index) {
+              final s = visibleServicos[index];
+              final tipo = medidas[s.tipoMedida] ?? s.tipoMedida ?? '-';
+              final isHovered = hoveredIndex.value == index;
+              final isSelected = selectedIndex.value == index;
+              final Color baseColor = index.isEven
+                  ? Colors.white.withValues(alpha: 0.7)
+                  : Colors.grey.shade100;
+              final Color hoverColor = primary.withValues(alpha: 0.12);
+              final Color selectedColor = primary.withValues(alpha: 0.25);
 
-                  return TableRow(
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? selectedColor
-                          : (isHovered ? hoverColor : baseColor),
-                    ),
-                    children: [
-                      _cell(index, hoveredIndex, selectedIndex,
-                          '${startIndex + index + 1}', TextAlign.center),
-                      _cell(index, hoveredIndex, selectedIndex,
-                          s.nomeServico ?? 'Sem nome', TextAlign.left),
-                      _cell(index, hoveredIndex, selectedIndex,
-                          s.nomeCategoria ?? '-', TextAlign.left),
-                      _cell(index, hoveredIndex, selectedIndex,
-                          s.nomeSubcategoria ?? '-', TextAlign.left),
-                      Center(child: _medidaBadge(tipo, primary)),
-                      _cell(
-                        index,
-                        hoveredIndex,
-                        selectedIndex,
-                        Biblioteca.formatarPrecoGrid(s.preco, s.precoPromocao),
-                        TextAlign.right,
-                      ),
-                      Center(
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            IconButton(
-                              visualDensity: VisualDensity.compact,
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(
-                                minWidth: 36,
-                                minHeight: 36,
-                              ),
-                              icon: const Icon(Icons.edit_rounded,
-                                  color: Colors.blueAccent),
-                              onPressed: () => onEditar(s),
-                            ),
-                            IconButton(
-                              visualDensity: VisualDensity.compact,
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(
-                                minWidth: 36,
-                                minHeight: 36,
-                              ),
-                              icon: const Icon(Icons.delete_outline_rounded,
-                                  color: Colors.redAccent),
-                              onPressed: () => onExcluir(s),
-                            ),
-                          ],
+              return TableRow(
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? selectedColor
+                      : (isHovered ? hoverColor : baseColor),
+                ),
+                children: [
+                  _cell(index, hoveredIndex, selectedIndex,
+                      '${startIndex + index + 1}', TextAlign.center),
+                  _cell(index, hoveredIndex, selectedIndex,
+                      s.nomeServico ?? 'Sem nome', TextAlign.left),
+                  _cell(index, hoveredIndex, selectedIndex,
+                      s.nomeCategoria ?? '-', TextAlign.left),
+                  _cell(index, hoveredIndex, selectedIndex,
+                      s.nomeSubcategoria ?? '-', TextAlign.left),
+                  Center(child: _medidaBadge(tipo, primary)),
+                  _cell(
+                    index,
+                    hoveredIndex,
+                    selectedIndex,
+                    Biblioteca.formatarPrecoGrid(s.preco, s.precoPromocao),
+                    TextAlign.right,
+                  ),
+                  Center(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        IconButton(
+                          visualDensity: VisualDensity.compact,
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(
+                            minWidth: 36,
+                            minHeight: 36,
+                          ),
+                          icon: const Icon(Icons.edit_rounded,
+                              color: Colors.blueAccent),
+                          onPressed: () => onEditar(s),
                         ),
-                      ),
-                    ],
-                  );
-                }),
+                        IconButton(
+                          visualDensity: VisualDensity.compact,
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(
+                            minWidth: 36,
+                            minHeight: 36,
+                          ),
+                          icon: const Icon(Icons.delete_outline_rounded,
+                              color: Colors.redAccent),
+                          onPressed: () => onExcluir(s),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            }),
           ),
 
           // 🔹 Rodapé original (sem alterar nada)

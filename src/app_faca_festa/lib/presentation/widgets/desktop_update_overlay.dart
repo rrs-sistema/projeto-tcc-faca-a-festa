@@ -66,6 +66,55 @@ class _DesktopUpdateOverlayState extends State<DesktopUpdateOverlay> {
               child: AbsorbPointer(
                   absorbing: installing || UpdateOperations.sealed,
                   child: widget.child)),
+          // Fica acessível inclusive no login e no autenticador, sem depender
+          // dos menus específicos de administrador ou fornecedor.
+          if (!panel &&
+              !confirm &&
+              !installing &&
+              (state.status == DesktopUpdateStatus.ready ||
+                  state.status == DesktopUpdateStatus.error))
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: 16,
+              child: SafeArea(
+                child: Align(
+                  alignment: Alignment.bottomRight,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 520),
+                    child: Material(
+                      elevation: 8,
+                      borderRadius: BorderRadius.circular(12),
+                      color: Theme.of(context).colorScheme.surface,
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(state.status == DesktopUpdateStatus.ready
+                                ? 'Versão ${state.version} pronta para instalar'
+                                : 'A atualização não foi concluída'),
+                            const SizedBox(height: 8),
+                            Text(state.status == DesktopUpdateStatus.ready
+                                ? 'O download foi concluído. Confirme para instalar e reiniciar o aplicativo.'
+                                : aviso),
+                            const SizedBox(height: 8),
+                            TextButton(
+                              onPressed: openPanel,
+                              child: Text(
+                                  state.status == DesktopUpdateStatus.ready
+                                      ? 'Revisar e instalar atualização'
+                                      : 'Abrir atualizações'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
           if (confirm || installing) ...[
             const Positioned.fill(
                 child: ModalBarrier(dismissible: false, color: Colors.black54)),

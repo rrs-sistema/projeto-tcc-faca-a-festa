@@ -11,6 +11,7 @@ class FestaScrollArea extends StatefulWidget {
     required this.child,
     this.maxWidth = 1360,
     this.scrollDirection = Axis.vertical,
+    this.contentPadding,
   });
 
   static double sideInset(double width, {double maxWidth = 1360}) =>
@@ -21,6 +22,9 @@ class FestaScrollArea extends StatefulWidget {
   final Widget child;
   final double maxWidth;
   final Axis scrollDirection;
+
+  /// Permite preservar a geometria de tabelas que já reservam o próprio trilho.
+  final EdgeInsetsGeometry? contentPadding;
 
   @override
   State<FestaScrollArea> createState() => _FestaScrollAreaState();
@@ -54,12 +58,15 @@ class _FestaScrollAreaState extends State<FestaScrollArea> {
             ),
             child: RawScrollbar(
               controller: widget.controller ?? _ownedController,
-              thumbVisibility: desktop || horizontal,
-              trackVisibility: desktop || horizontal,
+              thumbVisibility: desktop,
+              trackVisibility: desktop,
               scrollbarOrientation:
                   horizontal ? ScrollbarOrientation.bottom : null,
-              interactive: true,
-              thickness: desktop ? 8 : 4,
+              interactive: desktop,
+              thickness: desktop ? 8 : 3,
+              // O Scaffold já trata a área segura do dispositivo. Herdar esse
+              // inset aqui desloca a barra horizontal para cima dos cards.
+              padding: EdgeInsets.zero,
               radius: const Radius.circular(12),
               trackRadius: const Radius.circular(12),
               thumbColor: widget.color,
@@ -74,9 +81,10 @@ class _FestaScrollAreaState extends State<FestaScrollArea> {
                 controller: widget.controller ?? _ownedController,
                 automaticallyInheritForPlatforms: const <TargetPlatform>{},
                 child: Padding(
-                  padding: horizontal
-                      ? const EdgeInsets.only(bottom: 14)
-                      : EdgeInsets.only(right: desktop ? 14 : 0),
+                  padding: widget.contentPadding ??
+                      (horizontal
+                          ? const EdgeInsets.only(bottom: 14)
+                          : EdgeInsets.only(right: desktop ? 14 : 0)),
                   child: widget.child,
                 ),
               ),

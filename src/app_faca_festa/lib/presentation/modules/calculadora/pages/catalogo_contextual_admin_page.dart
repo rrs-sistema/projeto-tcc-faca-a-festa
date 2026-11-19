@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/presentation/widgets/festa_scroll_area.dart';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 import 'package:app_faca_festa/domain/entities/referencia_contextual.dart';
@@ -79,45 +80,58 @@ class _CatalogoAdminState extends State<CatalogoContextualAdminPage> {
   @override
   Widget build(BuildContext context) => Scaffold(
       appBar: AppBar(title: const Text('Referências e modelos')),
-      body: repo == null
-          ? const Center(child: Text('Repositório indisponível.'))
-          : ListView(padding: const EdgeInsets.all(16), children: [
-              const Text(
-                  'Rascunhos não entram nas propostas. Publicar cria uma versão imutável, identifica o aprovador e oferece revisão aos clientes compatíveis. Não altera receitas ou históricos.'),
-              if (erro != null) Text(erro!),
-              if (carregando) const LinearProgressIndicator(),
-              Wrap(spacing: 8, children: [
-                FilledButton(
-                    onPressed: () => editar(),
-                    child: const Text('Nova referência ou modelo')),
-                TextButton(onPressed: carregar, child: const Text('Atualizar')),
-              ]),
-              ExpansionTile(
-                  title: const Text('Revisar referências locais existentes'),
-                  children: [
-                    const Padding(
-                        padding: EdgeInsets.all(12),
-                        child: Text(
-                            'Valores e fontes do código anterior. O enquadramento precisa de revisão; nenhuma fonte foi consultada novamente. Salvar rascunho não publica.')),
-                    for (final r in CatalogoContextualLegado.propostas())
-                      ListTile(
-                          title: Text(r.nome),
-                          subtitle: Text(r.id),
-                          onTap: () => editar(id: r.id, inicial: r)),
-                  ]),
-              const Text('Catálogo existente — abrir publicação ou rascunho'),
-              for (final item in widget.controller.itensBase)
-                ListTile(
-                    title: Text(item.nome),
-                    subtitle: Text(item.id),
-                    trailing: repo is GovernancaCatalogoRepository
-                        ? IconButton(
-                            tooltip: 'Selecionar versão ou desativar',
-                            onPressed: () => selecionar(item.id),
-                            icon: const Icon(Icons.history))
-                        : null,
-                    onTap: () => editar(id: item.id)),
-            ]));
+      body: FestaContent(
+          child: repo == null
+              ? const Center(child: Text('Repositório indisponível.'))
+              : FestaScrollArea(
+                  color: Theme.of(context).colorScheme.primary,
+                  maxWidth: double.infinity,
+                  scrollDirection: Axis.vertical,
+                  child: ListView(
+                      primary: true,
+                      padding: const EdgeInsets.all(16),
+                      children: [
+                        const Text(
+                            'Rascunhos não entram nas propostas. Publicar cria uma versão imutável, identifica o aprovador e oferece revisão aos clientes compatíveis. Não altera receitas ou históricos.'),
+                        if (erro != null) Text(erro!),
+                        if (carregando) const LinearProgressIndicator(),
+                        Wrap(spacing: 8, children: [
+                          FilledButton(
+                              onPressed: () => editar(),
+                              child: const Text('Nova referência ou modelo')),
+                          TextButton(
+                              onPressed: carregar,
+                              child: const Text('Atualizar')),
+                        ]),
+                        ExpansionTile(
+                            title: const Text(
+                                'Revisar referências locais existentes'),
+                            children: [
+                              const Padding(
+                                  padding: EdgeInsets.all(12),
+                                  child: Text(
+                                      'Valores e fontes do código anterior. O enquadramento precisa de revisão; nenhuma fonte foi consultada novamente. Salvar rascunho não publica.')),
+                              for (final r
+                                  in CatalogoContextualLegado.propostas())
+                                ListTile(
+                                    title: Text(r.nome),
+                                    subtitle: Text(r.id),
+                                    onTap: () => editar(id: r.id, inicial: r)),
+                            ]),
+                        const Text(
+                            'Catálogo existente — abrir publicação ou rascunho'),
+                        for (final item in widget.controller.itensBase)
+                          ListTile(
+                              title: Text(item.nome),
+                              subtitle: Text(item.id),
+                              trailing: repo is GovernancaCatalogoRepository
+                                  ? IconButton(
+                                      tooltip: 'Selecionar versão ou desativar',
+                                      onPressed: () => selecionar(item.id),
+                                      icon: const Icon(Icons.history))
+                                  : null,
+                              onTap: () => editar(id: item.id)),
+                      ]))));
 }
 
 class ReferenciaContextualEditor extends StatefulWidget {

@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/presentation/widgets/festa_scroll_area.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:get/get.dart';
@@ -72,7 +73,8 @@ class TemaFestaAdminListScreen extends StatelessWidget {
             controller: controller,
           ),
         ),
-        body: Column(
+        body: FestaContent(
+            child: Column(
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
@@ -157,46 +159,50 @@ class TemaFestaAdminListScreen extends StatelessWidget {
                   );
                 }
 
-                return ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(12, 4, 12, 88),
-                  itemCount: lista.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 8),
-                  itemBuilder: (_, index) {
-                    final tema = lista[index];
-                    return Slidable(
-                      endActionPane: ActionPane(
-                        motion: const DrawerMotion(),
-                        extentRatio: 0.22,
-                        children: [
-                          SlidableAction(
-                            onPressed: (_) =>
-                                _confirmarExclusao(context, controller, tema),
-                            backgroundColor: AdminPalette.danger,
-                            foregroundColor: Colors.white,
-                            icon: Icons.delete_rounded,
-                            label: 'Excluir',
-                            borderRadius: BorderRadius.circular(12),
+                return FestaScrollArea(
+                    color: AdminPalette.primary,
+                    maxWidth: double.infinity,
+                    child: ListView.separated(
+                      primary: true,
+                      padding: const EdgeInsets.fromLTRB(12, 4, 12, 88),
+                      itemCount: lista.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 8),
+                      itemBuilder: (_, index) {
+                        final tema = lista[index];
+                        return Slidable(
+                          endActionPane: ActionPane(
+                            motion: const DrawerMotion(),
+                            extentRatio: 0.22,
+                            children: [
+                              SlidableAction(
+                                onPressed: (_) => _confirmarExclusao(
+                                    context, controller, tema),
+                                backgroundColor: AdminPalette.danger,
+                                foregroundColor: Colors.white,
+                                icon: Icons.delete_rounded,
+                                label: 'Excluir',
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                      child: _TemaFestaCard(
-                        tema: tema,
-                        onTap: () => showTemaFestaFormBottomSheet(
-                          context,
-                          theme: theme,
-                          controller: controller,
-                          tema: tema,
-                        ),
-                        onDelete: () =>
-                            _confirmarExclusao(context, controller, tema),
-                      ),
-                    );
-                  },
-                );
+                          child: _TemaFestaCard(
+                            tema: tema,
+                            onTap: () => showTemaFestaFormBottomSheet(
+                              context,
+                              theme: theme,
+                              controller: controller,
+                              tema: tema,
+                            ),
+                            onDelete: () =>
+                                _confirmarExclusao(context, controller, tema),
+                          ),
+                        );
+                      },
+                    ));
               }),
             ),
           ],
-        ),
+        )),
       ),
     );
   }

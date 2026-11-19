@@ -7,6 +7,12 @@ foreach ($taskEntry in $taskEnvironment) {
 }
 $taskOutput = Join-Path $taskRoot '.codex_tmp/native-tests'
 New-Item -ItemType Directory -Force -Path $taskOutput | Out-Null
+& rc.exe /nologo "/fo$taskOutput/cache.res" "$(Join-Path $PSScriptRoot 'update_cache_test.rc')"
+if ($LASTEXITCODE -ne 0) { throw 'Cache resource compile failed' }
+& cl.exe /nologo /EHsc /std:c++17 /utf-8 /O2 /DUNICODE /D_UNICODE "$(Join-Path $PSScriptRoot 'update_cache_test.cpp')" "/Fo$taskOutput/cache.obj" "/Fe$taskOutput/cache.exe" "$taskOutput/cache.res" /link bcrypt.lib version.lib
+if ($LASTEXITCODE -ne 0) { throw 'Cache test compile failed' }
+& "$taskOutput/cache.exe"
+if ($LASTEXITCODE -ne 0) { throw 'Cache regression failed' }
 & cl.exe /nologo /EHsc /std:c++17 /utf-8 /O2 /DUNICODE /D_UNICODE /DFACA_FESTA_HELPER_TEST "$(Join-Path $taskRoot 'windows/runner/update_helper.cpp')" "/Fo$taskOutput/helper.obj" "/Fe$taskOutput/helper.exe" /link /SUBSYSTEM:WINDOWS bcrypt.lib shell32.lib user32.lib
 if ($LASTEXITCODE -ne 0) { throw 'Helper test compile failed' }
 $taskSparkle = Join-Path $taskRoot '.dart_tool/winsparkle-0.9.4/WinSparkle-0.9.4'

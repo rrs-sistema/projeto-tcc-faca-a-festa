@@ -1,0 +1,11 @@
+#include <windows.h>
+1 VERSIONINFO
+FILEVERSION 1,2,3,42
+PRODUCTVERSION 1,2,3,42
+FILETYPE VFT_APP
+BEGIN
+  BLOCK "VarFileInfo"
+  BEGIN
+    VALUE "Translation", 0x409, 1252
+  END
+END

@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/presentation/widgets/festa_scroll_area.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -60,7 +61,7 @@ class PainelCotacaoPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
       appBar: _buildElegantAppBar(gradient),
-      body: Obx(() {
+      body: FestaContent(child: Obx(() {
         final cotacoes = cotacaoCtrl.cotacoesDoEvento(
           eventoCtrl.eventoAtualEntidade?.idEvento,
         );
@@ -70,41 +71,45 @@ class PainelCotacaoPage extends StatelessWidget {
         final total = cotacoes.length;
         final progresso = total == 0 ? 0.0 : contratados / total;
 
-        return ListView(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-          physics: const AlwaysScrollableScrollPhysics(),
-          children: [
-            _buildHeader(primary, gradient),
-            const SizedBox(height: 14),
-            _buildResumoCard(progresso, contratados, total, gradient),
-            const SizedBox(height: 16),
-            _buildRecomendacoesIAFornecedores(context),
-            if (cotacaoCtrl.carregando.value)
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(20.0),
-                  child: CircularProgressIndicator(),
-                ),
-              )
-            else if (cotacaoCtrl.erroEscuta.value.isNotEmpty)
-              _buildMensagemVazia(
-                primary,
-                cotacaoCtrl.erroEscuta.value,
-                icone: Icons.cloud_off_rounded,
-              )
-            else if (cotacoes.isNotEmpty)
-              _buildMinhasCotacoes(cotacoes, primary)
-            else
-              _buildMensagemVazia(
-                primary,
-                cotacaoCtrl.cotacoes.isEmpty
-                    ? 'Você ainda não pediu preço a nenhum fornecedor neste evento. Use Orçamento ou as recomendações acima para solicitar.'
-                    : 'Há pedidos em outras festas da sua conta, mas nenhum neste evento ainda.',
-              ),
-            const SizedBox(height: 20),
-          ],
-        );
-      }),
+        return FestaScrollArea(
+            color: primary,
+            maxWidth: double.infinity,
+            child: ListView(
+              primary: true,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: [
+                _buildHeader(primary, gradient),
+                const SizedBox(height: 14),
+                _buildResumoCard(progresso, contratados, total, gradient),
+                const SizedBox(height: 16),
+                _buildRecomendacoesIAFornecedores(context),
+                if (cotacaoCtrl.carregando.value)
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(20.0),
+                      child: CircularProgressIndicator(),
+                    ),
+                  )
+                else if (cotacaoCtrl.erroEscuta.value.isNotEmpty)
+                  _buildMensagemVazia(
+                    primary,
+                    cotacaoCtrl.erroEscuta.value,
+                    icone: Icons.cloud_off_rounded,
+                  )
+                else if (cotacoes.isNotEmpty)
+                  _buildMinhasCotacoes(cotacoes, primary)
+                else
+                  _buildMensagemVazia(
+                    primary,
+                    cotacaoCtrl.cotacoes.isEmpty
+                        ? 'Você ainda não pediu preço a nenhum fornecedor neste evento. Use Orçamento ou as recomendações acima para solicitar.'
+                        : 'Há pedidos em outras festas da sua conta, mas nenhum neste evento ainda.',
+                  ),
+                const SizedBox(height: 20),
+              ],
+            ));
+      })),
     );
   }
 

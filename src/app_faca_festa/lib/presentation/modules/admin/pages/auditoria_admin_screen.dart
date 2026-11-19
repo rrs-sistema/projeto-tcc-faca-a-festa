@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/presentation/widgets/festa_scroll_area.dart';
 import 'package:app_faca_festa/core/services/update_operations.dart';
 import 'dart:convert';
 import 'dart:typed_data';
@@ -73,14 +74,15 @@ class AuditoriaAdminScreen extends StatelessWidget {
             ),
           ],
         ),
-        body: _AuditoriaBody(
+        body: FestaContent(
+            child: _AuditoriaBody(
           controller: controller,
           theme: _theme,
           bannerTitulo: 'Histórico global do Faça a Festa',
           bannerTexto:
               'Visão administrativa: operador, horário e o antes/depois de cada alteração na plataforma.',
           buscaHint: 'Buscar por ação, usuário, serviço ou e-mail',
-        ),
+        )),
       ),
     );
   }
@@ -247,25 +249,29 @@ class _AuditoriaBody extends StatelessWidget {
                 return RefreshIndicator(
                   color: theme.primary,
                   onRefresh: controller.carregar,
-                  child: ListView.separated(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.fromLTRB(16, 6, 16, 24),
-                    itemCount:
-                        lista.length + (controller.temMais.value ? 1 : 0),
-                    separatorBuilder: (_, __) => const SizedBox(height: 8),
-                    itemBuilder: (context, i) {
-                      if (i == lista.length) {
-                        return AuditoriaLoadMoreButton(
-                          controller: controller,
-                          theme: theme,
-                        );
-                      }
-                      return AuditoriaEventoCard(
-                        evento: lista[i],
-                        theme: theme,
-                      );
-                    },
-                  ),
+                  child: FestaScrollArea(
+                      color: theme.primary,
+                      maxWidth: double.infinity,
+                      child: ListView.separated(
+                        primary: true,
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.fromLTRB(16, 6, 16, 24),
+                        itemCount:
+                            lista.length + (controller.temMais.value ? 1 : 0),
+                        separatorBuilder: (_, __) => const SizedBox(height: 8),
+                        itemBuilder: (context, i) {
+                          if (i == lista.length) {
+                            return AuditoriaLoadMoreButton(
+                              controller: controller,
+                              theme: theme,
+                            );
+                          }
+                          return AuditoriaEventoCard(
+                            evento: lista[i],
+                            theme: theme,
+                          );
+                        },
+                      )),
                 );
               }),
             ),

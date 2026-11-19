@@ -50,7 +50,9 @@
     "ignore": [
       "firebase.json",
       "**/.*",
-      "**/node_modules/**"
+      "**/node_modules/**",
+      "desktop/packages/**",
+      "android/packages/**"
     ],
     "redirects": [
       {

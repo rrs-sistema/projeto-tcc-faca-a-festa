@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/presentation/widgets/festa_scroll_area.dart';
 import 'package:app_faca_festa/presentation/widgets/operacao/operacao_skeleton.dart';
 import 'package:app_faca_festa/presentation/widgets/festa_app_bar.dart';
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
@@ -107,234 +108,269 @@ class _PlanejamentoFinanceiroPageState
                         id, () => 'Nome do evento indisponível');
                   }
                 }
-                return ListView(padding: const EdgeInsets.all(16), children: [
-                  OperacaoSurface(
-                      padding: 16,
-                      child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            OperacaoHeading(
-                                title: 'Planeje o dinheiro do seu negócio',
-                                subtitle:
-                                    'Veja o que receber, o que pagar e o que ainda precisa ser definido.',
-                                icon: Icons.account_balance_wallet_outlined,
-                                trailing: IconButton(
-                                    tooltip: 'Atualizar planejamento',
-                                    onPressed: carregando ? null : c.carregar,
-                                    icon: const Icon(Icons.refresh_rounded))),
-                            const SizedBox(height: 12),
-                            Text('Área privada do fornecedor',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .labelMedium
-                                    ?.copyWith(
+                return FestaScrollArea(
+                    color: Theme.of(context).colorScheme.primary,
+                    maxWidth: double.infinity,
+                    child: ListView(
+                        primary: true,
+                        padding: const EdgeInsets.all(16),
+                        children: [
+                          OperacaoSurface(
+                              padding: 16,
+                              child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    OperacaoHeading(
+                                        title:
+                                            'Planeje o dinheiro do seu negócio',
+                                        subtitle:
+                                            'Veja o que receber, o que pagar e o que ainda precisa ser definido.',
+                                        icon: Icons
+                                            .account_balance_wallet_outlined,
+                                        trailing: IconButton(
+                                            tooltip: 'Atualizar planejamento',
+                                            onPressed:
+                                                carregando ? null : c.carregar,
+                                            icon: const Icon(
+                                                Icons.refresh_rounded))),
+                                    const SizedBox(height: 12),
+                                    Text('Área privada do fornecedor',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .labelMedium
+                                            ?.copyWith(
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .onSurfaceVariant)),
+                                  ])),
+                          const SizedBox(height: 20),
+                          if (consultaConcluida) ...[
+                            _painelFiltros(carregando),
+                            const SizedBox(height: 16),
+                          ],
+                          if (c.erro.value.isNotEmpty)
+                            OperacaoFalha(
+                                titulo:
+                                    'Não foi possível carregar o planejamento',
+                                mensagem: c.erro.value,
+                                onRetry:
+                                    c.carregando.value ? null : c.carregar),
+                          if (carregando) ...[
+                            const OperacaoSkeleton(
+                                titulo: 'O que entrou e saiu',
+                                icon: Icons.swap_horiz_rounded),
+                          ] else if (d != null)
+                            _resumoFinanceiro(d),
+                          if (carregando) ...[
+                            const SizedBox(height: 16),
+                            const OperacaoSkeleton(
+                                titulo: 'Resultado por evento',
+                                icon: Icons.trending_up_rounded),
+                            const SizedBox(height: 16),
+                            const OperacaoSkeleton(
+                                titulo: 'Contas a receber e a pagar',
+                                icon: Icons.receipt_long_outlined),
+                          ],
+                          if (consultaConcluida && !carregando) ...[
+                            const SizedBox(height: 16),
+                            const ExpansionTile(
+                                title: Text('Como ler este relatório'),
+                                leading: Icon(Icons.info_outline_rounded),
+                                children: [
+                                  Padding(
+                                      padding: EdgeInsets.all(16),
+                                      child: Text(
+                                          'A receber é o que ainda falta entrar. Recebido é o valor já registrado, e não apenas um contrato assinado.\n\nA estimativa após custos considera somente os valores informados; pode haver outras despesas do negócio.\n\nO período usa o vencimento das contas, a data dos movimentos e a data do evento para os resultados. Valores sem data ficam separados. A situação filtra apenas as contas.'))
+                                ]),
+                          ],
+                          if (c.pendente.value != null)
+                            ListTile(
+                                title: const Text(
+                                    'Envio pendente: retome a mesma operação'),
+                                trailing: TextButton(
+                                    onPressed:
+                                        c.enviando.value ? null : c.retomar,
+                                    child: const Text('Retomar envio'))),
+                          if (d != null && !carregando) ...[
+                            if (widget.idObrigacao != null)
+                              for (final a in (d['contas'] as List).where((a) =>
+                                  a['tipo'] == 'pagar' &&
+                                  a['id'] == widget.idObrigacao))
+                                Card(
+                                    child: Padding(
+                                        padding: const EdgeInsets.all(16),
+                                        child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              const Text(
+                                                  'Despesa selecionada no painel'),
+                                              Text(a['descricao'] ?? a['id']),
+                                              Text(
+                                                  'Registro ${a['id']} · Vencimento ${a['data'] ?? 'sem previsão'} · Saldo ${moeda(a['saldoCentavos'])}'),
+                                              if (a['saldoCentavos'] != null &&
+                                                  a['saldoCentavos'] > 0 &&
+                                                  a['legadoSemVinculo'] != true)
+                                                TextButton(
+                                                    onPressed: () => _baixa(a),
+                                                    child: const Text(
+                                                        'Registrar baixa desta despesa'))
+                                            ]))),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              child: Wrap(
+                                  spacing: 12,
+                                  runSpacing: 6,
+                                  crossAxisAlignment: WrapCrossAlignment.center,
+                                  children: [
+                                    Icon(Icons.schedule_outlined,
+                                        size: 16,
                                         color: Theme.of(context)
                                             .colorScheme
-                                            .onSurfaceVariant)),
-                          ])),
-                  const SizedBox(height: 20),
-                  if (consultaConcluida) ...[
-                    _painelFiltros(carregando),
-                    const SizedBox(height: 16),
-                  ],
-                  if (c.erro.value.isNotEmpty)
-                    OperacaoFalha(
-                        titulo: 'Não foi possível carregar o planejamento',
-                        mensagem: c.erro.value,
-                        onRetry: c.carregando.value ? null : c.carregar),
-                  if (carregando) ...[
-                    const OperacaoSkeleton(
-                        titulo: 'O que entrou e saiu',
-                        icon: Icons.swap_horiz_rounded),
-                  ] else if (d != null)
-                    _resumoFinanceiro(d),
-                  if (carregando) ...[
-                    const SizedBox(height: 16),
-                    const OperacaoSkeleton(
-                        titulo: 'Resultado por evento',
-                        icon: Icons.trending_up_rounded),
-                    const SizedBox(height: 16),
-                    const OperacaoSkeleton(
-                        titulo: 'Contas a receber e a pagar',
-                        icon: Icons.receipt_long_outlined),
-                  ],
-                  if (consultaConcluida && !carregando) ...[
-                    const SizedBox(height: 16),
-                    const ExpansionTile(
-                        title: Text('Como ler este relatório'),
-                        leading: Icon(Icons.info_outline_rounded),
-                        children: [
-                          Padding(
-                              padding: EdgeInsets.all(16),
-                              child: Text(
-                                  'A receber é o que ainda falta entrar. Recebido é o valor já registrado, e não apenas um contrato assinado.\n\nA estimativa após custos considera somente os valores informados; pode haver outras despesas do negócio.\n\nO período usa o vencimento das contas, a data dos movimentos e a data do evento para os resultados. Valores sem data ficam separados. A situação filtra apenas as contas.'))
-                        ]),
-                  ],
-                  if (c.pendente.value != null)
-                    ListTile(
-                        title: const Text(
-                            'Envio pendente: retome a mesma operação'),
-                        trailing: TextButton(
-                            onPressed: c.enviando.value ? null : c.retomar,
-                            child: const Text('Retomar envio'))),
-                  if (d != null && !carregando) ...[
-                    if (widget.idObrigacao != null)
-                      for (final a in (d['contas'] as List).where((a) =>
-                          a['tipo'] == 'pagar' &&
-                          a['id'] == widget.idObrigacao))
-                        Card(
-                            child: Padding(
-                                padding: const EdgeInsets.all(16),
+                                            .onSurfaceVariant),
+                                    Text(
+                                        'Atualizado em ${_geradoEm(d['geradoEm'])}',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall),
+                                    Text('Dados da consulta aplicada',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall
+                                            ?.copyWith(
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .onSurfaceVariant)),
+                                  ]),
+                            ),
+                            if (d['completo'] != true)
+                              OperacaoSurface(
+                                  child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                      'Faltam informações para completar a estimativa',
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.w700)),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                      'Os valores disponíveis continuam abaixo. Informe custos e outras despesas para saber quanto pode sobrar.',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium
+                                          ?.copyWith(
+                                              height: 1.6,
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .onSurfaceVariant)),
+                                  ExpansionTile(
+                                      title: const Text(
+                                          'Ver o que falta conferir'),
+                                      children: [
+                                        for (final a in d['avisos'] ?? [])
+                                          ListTile(title: Text(a))
+                                      ]),
+                                ],
+                              )),
+                            const SizedBox(height: 16),
+                            OperacaoSurface(
                                 child: Column(
                                     crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                        CrossAxisAlignment.stretch,
                                     children: [
-                                      const Text(
-                                          'Despesa selecionada no painel'),
-                                      Text(a['descricao'] ?? a['id']),
-                                      Text(
-                                          'Registro ${a['id']} · Vencimento ${a['data'] ?? 'sem previsão'} · Saldo ${moeda(a['saldoCentavos'])}'),
-                                      if (a['saldoCentavos'] != null &&
-                                          a['saldoCentavos'] > 0 &&
-                                          a['legadoSemVinculo'] != true)
-                                        TextButton(
-                                            onPressed: () => _baixa(a),
-                                            child: const Text(
-                                                'Registrar baixa desta despesa'))
-                                    ]))),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      child: Wrap(
-                          spacing: 12,
-                          runSpacing: 6,
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          children: [
-                            Icon(Icons.schedule_outlined,
-                                size: 16,
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurfaceVariant),
-                            Text('Atualizado em ${_geradoEm(d['geradoEm'])}',
-                                style: Theme.of(context).textTheme.bodySmall),
-                            Text('Dados da consulta aplicada',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodySmall
-                                    ?.copyWith(
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurfaceVariant)),
-                          ]),
-                    ),
-                    if (d['completo'] != true)
-                      OperacaoSurface(
-                          child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                              'Faltam informações para completar a estimativa',
-                              style: TextStyle(fontWeight: FontWeight.w700)),
-                          const SizedBox(height: 8),
-                          Text(
-                              'Os valores disponíveis continuam abaixo. Informe custos e outras despesas para saber quanto pode sobrar.',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium
-                                  ?.copyWith(
-                                      height: 1.6,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurfaceVariant)),
-                          ExpansionTile(
-                              title: const Text('Ver o que falta conferir'),
-                              children: [
-                                for (final a in d['avisos'] ?? [])
-                                  ListTile(title: Text(a))
-                              ]),
-                        ],
-                      )),
-                    const SizedBox(height: 16),
-                    OperacaoSurface(
-                        child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                          _tituloSecao('Gerenciar planejamento'),
-                          const SizedBox(height: 12),
-                          Wrap(spacing: 12, runSpacing: 12, children: [
-                            OutlinedButton.icon(
-                                onPressed: c.enviando.value ? null : _saldo,
-                                icon: const Icon(
-                                    Icons.account_balance_wallet_outlined,
-                                    size: 18),
-                                label: const Text('Informar saldo de partida')),
-                            OutlinedButton.icon(
-                                onPressed: c.enviando.value ? null : _deducoes,
-                                icon: const Icon(Icons.calculate_outlined,
-                                    size: 18),
-                                label:
-                                    const Text('Informar custos e descontos')),
-                            FilledButton.icon(
-                                onPressed: c.enviando.value ? null : _obrigacao,
-                                icon: const Icon(Icons.add_rounded, size: 18),
-                                label: const Text('Adicionar despesa')),
-                            OutlinedButton.icon(
-                                onPressed: c.carregando.value
-                                    ? null
-                                    : () => _exportar(d),
-                                icon: const Icon(Icons.download_outlined,
-                                    size: 18),
-                                label: const Text('Baixar planilha (CSV)')),
-                          ]),
-                        ])),
-                    if (d['consolidado'] != null) ...[
-                      const SizedBox(height: 20),
-                      OperacaoSurface(
-                          child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                            _tituloSecao('Total após custos informados'),
+                                  _tituloSecao('Gerenciar planejamento'),
+                                  const SizedBox(height: 12),
+                                  Wrap(spacing: 12, runSpacing: 12, children: [
+                                    OutlinedButton.icon(
+                                        onPressed:
+                                            c.enviando.value ? null : _saldo,
+                                        icon: const Icon(
+                                            Icons
+                                                .account_balance_wallet_outlined,
+                                            size: 18),
+                                        label: const Text(
+                                            'Informar saldo de partida')),
+                                    OutlinedButton.icon(
+                                        onPressed:
+                                            c.enviando.value ? null : _deducoes,
+                                        icon: const Icon(
+                                            Icons.calculate_outlined,
+                                            size: 18),
+                                        label: const Text(
+                                            'Informar custos e descontos')),
+                                    FilledButton.icon(
+                                        onPressed: c.enviando.value
+                                            ? null
+                                            : _obrigacao,
+                                        icon: const Icon(Icons.add_rounded,
+                                            size: 18),
+                                        label: const Text('Adicionar despesa')),
+                                    OutlinedButton.icon(
+                                        onPressed: c.carregando.value
+                                            ? null
+                                            : () => _exportar(d),
+                                        icon: const Icon(
+                                            Icons.download_outlined,
+                                            size: 18),
+                                        label: const Text(
+                                            'Baixar planilha (CSV)')),
+                                  ]),
+                                ])),
+                            if (d['consolidado'] != null) ...[
+                              const SizedBox(height: 20),
+                              OperacaoSurface(
+                                  child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.stretch,
+                                      children: [
+                                    _tituloSecao(
+                                        'Total após custos informados'),
+                                    const SizedBox(height: 16),
+                                    _gradeValores([
+                                      _dado(
+                                          'Previsto',
+                                          moeda(d['consolidado'][
+                                              'resultadoDiretoPrevistoCentavos'])),
+                                      _dado(
+                                          'Realizado',
+                                          moeda(d['consolidado'][
+                                              'resultadoDiretoRealizadoCentavos'])),
+                                    ]),
+                                  ])),
+                            ],
+                            const SizedBox(height: 24),
+                            _tituloSecao('Resultado por evento'),
+                            const SizedBox(height: 8),
+                            if ((d['resultados'] as List).isEmpty)
+                              const Text(
+                                  'Nenhum resultado neste período de eventos.')
+                            else ...[
+                              _observacao(
+                                  'O resultado considera os custos informados. Impostos e outras despesas podem alterar o valor.'),
+                              const SizedBox(height: 8),
+                              for (final r in d['resultados'])
+                                _resultadoEvento(r),
+                            ],
                             const SizedBox(height: 16),
-                            _gradeValores([
-                              _dado(
-                                  'Previsto',
-                                  moeda(d['consolidado']
-                                      ['resultadoDiretoPrevistoCentavos'])),
-                              _dado(
-                                  'Realizado',
-                                  moeda(d['consolidado']
-                                      ['resultadoDiretoRealizadoCentavos'])),
-                            ]),
-                          ])),
-                    ],
-                    const SizedBox(height: 24),
-                    _tituloSecao('Resultado por evento'),
-                    const SizedBox(height: 8),
-                    if ((d['resultados'] as List).isEmpty)
-                      const Text('Nenhum resultado neste período de eventos.')
-                    else ...[
-                      _observacao(
-                          'O resultado considera os custos informados. Impostos e outras despesas podem alterar o valor.'),
-                      const SizedBox(height: 8),
-                      for (final r in d['resultados']) _resultadoEvento(r),
-                    ],
-                    const SizedBox(height: 16),
-                    _tituloSecao('Contas a receber e a pagar'),
-                    const SizedBox(height: 12),
-                    if ((d['contas'] as List).isEmpty)
-                      const Text('Nenhuma conta neste filtro.'),
-                    for (final a in d['contas']) _cardConta(a),
-                    ExpansionTile(
-                        title: const Text('Movimentos de caixa e origem'),
-                        children: [
-                          for (final m in d['movimentos'])
-                            ListTile(
-                                title: Text(
-                                    '${_dataVencimento(m['data'], ausente: 'Sem data')} · ${moeda(m['valorCentavos'])}'),
-                                subtitle: Text(
-                                    '${m['descricao'] ?? _origemConta(m['origem'])} · ${_nomeEvento(m)}'))
-                        ]),
-                  ]
-                ]);
+                            _tituloSecao('Contas a receber e a pagar'),
+                            const SizedBox(height: 12),
+                            if ((d['contas'] as List).isEmpty)
+                              const Text('Nenhuma conta neste filtro.'),
+                            for (final a in d['contas']) _cardConta(a),
+                            ExpansionTile(
+                                title:
+                                    const Text('Movimentos de caixa e origem'),
+                                children: [
+                                  for (final m in d['movimentos'])
+                                    ListTile(
+                                        title: Text(
+                                            '${_dataVencimento(m['data'], ausente: 'Sem data')} · ${moeda(m['valorCentavos'])}'),
+                                        subtitle: Text(
+                                            '${m['descricao'] ?? _origemConta(m['origem'])} · ${_nomeEvento(m)}'))
+                                ]),
+                          ]
+                        ]));
               }))));
   Widget _tituloSecao(String titulo) => Text(titulo,
       style: Theme.of(context)

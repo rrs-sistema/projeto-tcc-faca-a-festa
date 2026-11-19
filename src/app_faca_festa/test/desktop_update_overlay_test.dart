@@ -25,6 +25,9 @@ void main() {
           body: Column(
               children: [DesktopUpdateMenuButton(), Text('Página original')])));
 
+  final visibleBarrier = find.byWidgetPredicate(
+      (widget) => widget is ModalBarrier && widget.color != null);
+
   testWidgets('operator must confirm and can cancel without launching helper',
       (tester) async {
     await tester.pumpWidget(app());
@@ -53,8 +56,7 @@ void main() {
     expect(find.textContaining('Aguarde as operações'), findsOneWidget);
     expect(find.text('Página original'), findsOneWidget);
   }, variant: TargetPlatformVariant.only(TargetPlatform.windows));
-  testWidgets(
-      'failure is shown only inside the update panel above navigator dialog',
+  testWidgets('failure remains accessible globally and inside the update panel',
       (tester) async {
     await tester.pumpWidget(app());
     final navigator = tester.state<NavigatorState>(find.byType(Navigator));
@@ -66,7 +68,7 @@ void main() {
         .reportError('Falha de preparação. Feche e reabra o aplicativo.');
     await tester.pump();
     expect(find.byType(CircularProgressIndicator), findsNothing);
-    expect(find.textContaining('Falha de preparação'), findsNothing);
+    expect(find.textContaining('Falha de preparação'), findsOneWidget);
     DesktopUpdateMenuButton.requests.value++;
     await tester.pump();
     expect(find.textContaining('Falha de preparação'), findsOneWidget);
@@ -84,18 +86,46 @@ void main() {
     expect(find.text('1.0.7 • build 9'), findsNothing);
   }, variant: TargetPlatformVariant.only(TargetPlatform.windows));
 
-  testWidgets('passive offline checks do not cover the dashboard',
+  testWidgets('offline error leaves dashboard usable with access to details',
       (tester) async {
     DesktopUpdateService.instance.reportError('Sem acesso às atualizações.');
     await tester.pumpWidget(app());
-    expect(find.textContaining('Sem acesso'), findsNothing);
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Sem acesso'), findsOneWidget);
+    expect(visibleBarrier, findsNothing);
     expect(find.text('Página original'), findsOneWidget);
     await tester.tap(find.byType(DesktopUpdateMenuButton));
     await tester.pump();
     expect(find.textContaining('Sem acesso'), findsOneWidget);
     await tester.tap(find.byIcon(Icons.close));
     await tester.pump();
-    expect(find.textContaining('Sem acesso'), findsNothing);
+    expect(find.textContaining('Sem acesso'), findsOneWidget);
+    expect(visibleBarrier, findsNothing);
+  }, variant: TargetPlatformVariant.only(TargetPlatform.windows));
+
+  testWidgets('authentication screen can install without a dashboard menu',
+      (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      builder: (_, child) => DesktopUpdateOverlay(child: child!),
+      home: const Scaffold(body: Text('Código do autenticador')),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.byType(DesktopUpdateMenuButton), findsNothing);
+    expect(find.text('Versão 1.0.8 pronta para instalar'), findsOneWidget);
+    expect(visibleBarrier, findsNothing);
+    await tester.tap(find.text('Revisar e instalar atualização'));
+    await tester.pump();
+    await tester.tap(find.text('Atualizar para 1.0.8 e reiniciar'));
+    await tester.pump();
+    expect(find.text('Atualizar e reiniciar?'), findsOneWidget);
+    await tester.tap(find.text('Cancelar'));
+    await tester.pump();
+    await tester.tap(find.byIcon(Icons.close));
+    await tester.pump();
+    expect(find.text('Versão 1.0.8 pronta para instalar'), findsOneWidget);
+    expect(DesktopUpdateService.instance.state.value.status,
+        DesktopUpdateStatus.ready);
+    expect(find.text('Código do autenticador'), findsOneWidget);
   }, variant: TargetPlatformVariant.only(TargetPlatform.windows));
 
   testWidgets('mobile has no Windows update controls or notices',

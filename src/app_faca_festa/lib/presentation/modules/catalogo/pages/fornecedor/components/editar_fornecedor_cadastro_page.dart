@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/presentation/widgets/festa_scroll_area.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
@@ -242,114 +243,141 @@ class _EditarFornecedorCadastroPageState
               onBack: () {
                 if (c?.carregando.value != true) Navigator.pop(context, false);
               }),
-          body: _carregando
-              ? const Center(child: CircularProgressIndicator())
-              : _erro != null
-                  ? Center(
-                      child: AdminEmptyState(
-                          icon: Icons.error_outline,
-                          title: 'Cadastro indisponível',
-                          message: _erro!,
-                          actionLabel: 'Tentar novamente',
-                          onAction: _carregar))
-                  : Obx(() => PopScope(
-                      canPop: !c!.carregando.value,
-                      child: AbsorbPointer(
-                          absorbing: c.carregando.value,
-                          child: SingleChildScrollView(
-                            controller: _scroll,
-                            padding: EdgeInsets.all(
-                                MediaQuery.sizeOf(context).width < 600
-                                    ? 12
-                                    : 24),
-                            keyboardDismissBehavior:
-                                ScrollViewKeyboardDismissBehavior.onDrag,
-                            child: Center(
-                                child: ConstrainedBox(
-                                    constraints: BoxConstraints(
-                                        maxWidth: _etapa == 3 ? 1040 : 760),
-                                    child: Container(
-                                      padding: EdgeInsets.all(
-                                          MediaQuery.sizeOf(context).width < 600
-                                              ? 16
-                                              : 28),
-                                      decoration: BoxDecoration(
-                                          color: Colors.white,
-                                          borderRadius:
-                                              BorderRadius.circular(22)),
-                                      child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.stretch,
-                                          children: [
-                                            ExpansionTile(
-                                              tilePadding: EdgeInsets.zero,
-                                              shape: const Border(),
-                                              collapsedShape: const Border(),
-                                              leading: const Icon(
-                                                  Icons
-                                                      .manage_accounts_outlined,
-                                                  color: AdminPalette.primary),
-                                              title: const Text(
-                                                  'Conta de acesso',
-                                                  style: TextStyle(
-                                                      fontSize: 13,
-                                                      fontWeight:
-                                                          FontWeight.w600)),
-                                              subtitle: Text(
-                                                  _origem!.usuario.email,
-                                                  style: const TextStyle(
-                                                      color: AdminPalette.muted,
-                                                      fontSize: 12)),
-                                              children: const [
-                                                Padding(
-                                                    padding: EdgeInsets.only(
-                                                        bottom: 12),
-                                                    child: Text(
-                                                        'Atualize o e-mail comercial no formulário. A conta e a senha de acesso são preservadas.',
-                                                        style: TextStyle(
-                                                            color: AdminPalette
-                                                                .muted,
-                                                            fontSize: 12)))
-                                              ],
-                                            ),
-                                            const SizedBox(height: 24),
-                                            RegisterFornecedorForm(
-                                              controller: c,
-                                              fornecedorController:
-                                                  widget.controller,
-                                              picker: ImagePicker(),
-                                              bannerBytes: _banner,
-                                              bannerInicialUrl:
-                                                  _origem!.fornecedor.bannerUrl,
-                                              onBannerSelected:
-                                                  (arquivo, bytes) async {
-                                                if (mounted) {
-                                                  setState(() {
-                                                    _banner = bytes;
-                                                    _nomeBanner = arquivo.name;
-                                                    _bannerEnviado = null;
-                                                  });
-                                                }
-                                              },
-                                              primary: AdminPalette.primary,
-                                              categoriaController:
-                                                  widget.categorias,
-                                              subcategoriaController:
-                                                  widget.subcategorias,
-                                              servicoController:
-                                                  widget.servicos,
-                                              modoEdicao: true,
-                                              onSalvarEdicao: _salvar,
-                                              onPassoAlterado: (etapa) {
-                                                setState(() => _etapa = etapa);
-                                                if (_scroll.hasClients) {
-                                                  _scroll.jumpTo(0);
-                                                }
-                                              },
-                                            ),
-                                          ]),
-                                    ))),
-                          )))),
+          body: FestaContent(
+              child: _carregando
+                  ? const Center(child: CircularProgressIndicator())
+                  : _erro != null
+                      ? Center(
+                          child: AdminEmptyState(
+                              icon: Icons.error_outline,
+                              title: 'Cadastro indisponível',
+                              message: _erro!,
+                              actionLabel: 'Tentar novamente',
+                              onAction: _carregar))
+                      : Obx(() => PopScope(
+                          canPop: !c!.carregando.value,
+                          child: AbsorbPointer(
+                              absorbing: c.carregando.value,
+                              child: FestaScrollArea(
+                                  color: Theme.of(context).colorScheme.primary,
+                                  maxWidth: double.infinity,
+                                  scrollDirection: Axis.vertical,
+                                  controller: _scroll,
+                                  child: SingleChildScrollView(
+                                    controller: _scroll,
+                                    padding: EdgeInsets.all(
+                                        MediaQuery.sizeOf(context).width < 600
+                                            ? 12
+                                            : 24),
+                                    keyboardDismissBehavior:
+                                        ScrollViewKeyboardDismissBehavior
+                                            .onDrag,
+                                    child: Center(
+                                        child: ConstrainedBox(
+                                            constraints: BoxConstraints(
+                                                maxWidth:
+                                                    _etapa == 3 ? 1040 : 760),
+                                            child: Container(
+                                              padding: EdgeInsets.all(
+                                                  MediaQuery.sizeOf(context)
+                                                              .width <
+                                                          600
+                                                      ? 16
+                                                      : 28),
+                                              decoration: BoxDecoration(
+                                                  color: Colors.white,
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                          22)),
+                                              child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment
+                                                          .stretch,
+                                                  children: [
+                                                    ExpansionTile(
+                                                      tilePadding:
+                                                          EdgeInsets.zero,
+                                                      shape: const Border(),
+                                                      collapsedShape:
+                                                          const Border(),
+                                                      leading: const Icon(
+                                                          Icons
+                                                              .manage_accounts_outlined,
+                                                          color: AdminPalette
+                                                              .primary),
+                                                      title: const Text(
+                                                          'Conta de acesso',
+                                                          style: TextStyle(
+                                                              fontSize: 13,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w600)),
+                                                      subtitle: Text(
+                                                          _origem!
+                                                              .usuario.email,
+                                                          style: const TextStyle(
+                                                              color:
+                                                                  AdminPalette
+                                                                      .muted,
+                                                              fontSize: 12)),
+                                                      children: const [
+                                                        Padding(
+                                                            padding:
+                                                                EdgeInsets.only(
+                                                                    bottom: 12),
+                                                            child: Text(
+                                                                'Atualize o e-mail comercial no formulário. A conta e a senha de acesso são preservadas.',
+                                                                style: TextStyle(
+                                                                    color: AdminPalette
+                                                                        .muted,
+                                                                    fontSize:
+                                                                        12)))
+                                                      ],
+                                                    ),
+                                                    const SizedBox(height: 24),
+                                                    RegisterFornecedorForm(
+                                                      controller: c,
+                                                      fornecedorController:
+                                                          widget.controller,
+                                                      picker: ImagePicker(),
+                                                      bannerBytes: _banner,
+                                                      bannerInicialUrl: _origem!
+                                                          .fornecedor.bannerUrl,
+                                                      onBannerSelected:
+                                                          (arquivo,
+                                                              bytes) async {
+                                                        if (mounted) {
+                                                          setState(() {
+                                                            _banner = bytes;
+                                                            _nomeBanner =
+                                                                arquivo.name;
+                                                            _bannerEnviado =
+                                                                null;
+                                                          });
+                                                        }
+                                                      },
+                                                      primary:
+                                                          AdminPalette.primary,
+                                                      categoriaController:
+                                                          widget.categorias,
+                                                      subcategoriaController:
+                                                          widget.subcategorias,
+                                                      servicoController:
+                                                          widget.servicos,
+                                                      modoEdicao: true,
+                                                      onSalvarEdicao: _salvar,
+                                                      onPassoAlterado: (etapa) {
+                                                        setState(() =>
+                                                            _etapa = etapa);
+                                                        if (_scroll
+                                                            .hasClients) {
+                                                          _scroll.jumpTo(0);
+                                                        }
+                                                      },
+                                                    ),
+                                                  ]),
+                                            ))),
+                                  )))))),
         ));
   }
 }

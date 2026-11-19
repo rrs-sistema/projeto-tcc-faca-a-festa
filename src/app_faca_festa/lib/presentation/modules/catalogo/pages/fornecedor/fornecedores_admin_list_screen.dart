@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/presentation/widgets/festa_scroll_area.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -195,7 +196,8 @@ class _FornecedoresAdminListScreenState
             ),
           ],
         ),
-        body: Column(
+        body: FestaContent(
+            child: Column(
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
@@ -408,37 +410,42 @@ class _FornecedoresAdminListScreenState
                 return RefreshIndicator(
                   color: AdminPalette.primary,
                   onRefresh: _atualizarLista,
-                  child: ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-                    itemCount: fornecedores.length,
-                    itemBuilder: (_, i) {
-                      final f = fornecedores[i];
-                      return FornecedorListTile(
-                        fornecedor: f,
-                        triagem: _sinais(f),
-                        carregandoTriagem: _carregandoTriagem,
-                        aoVoltarDaFicha: _carregarTriagem,
-                        controller: controller,
-                        localizacaoController: localizacaoController,
-                        adminTerritorioController: adminTerritorioController,
-                        themeController: theme,
-                        appController: appController,
-                        categoriaController: categoriaController,
-                        subcategoriaController: subcategoriaController,
-                        avaliacaoController: avaliacaoController,
-                        servicoProdutoController:
-                            widget.servicoProdutoController,
-                        servicoFotoController: widget.servicoFotoController,
-                        isCelular: isCelular,
-                        primary: AdminPalette.primary,
-                      );
-                    },
-                  ),
+                  child: FestaScrollArea(
+                      color: AdminPalette.primary,
+                      maxWidth: double.infinity,
+                      child: ListView.builder(
+                        primary: true,
+                        padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+                        itemCount: fornecedores.length,
+                        itemBuilder: (_, i) {
+                          final f = fornecedores[i];
+                          return FornecedorListTile(
+                            fornecedor: f,
+                            triagem: _sinais(f),
+                            carregandoTriagem: _carregandoTriagem,
+                            aoVoltarDaFicha: _carregarTriagem,
+                            controller: controller,
+                            localizacaoController: localizacaoController,
+                            adminTerritorioController:
+                                adminTerritorioController,
+                            themeController: theme,
+                            appController: appController,
+                            categoriaController: categoriaController,
+                            subcategoriaController: subcategoriaController,
+                            avaliacaoController: avaliacaoController,
+                            servicoProdutoController:
+                                widget.servicoProdutoController,
+                            servicoFotoController: widget.servicoFotoController,
+                            isCelular: isCelular,
+                            primary: AdminPalette.primary,
+                          );
+                        },
+                      )),
                 );
               }),
             ),
           ],
-        ),
+        )),
       ),
     );
   }

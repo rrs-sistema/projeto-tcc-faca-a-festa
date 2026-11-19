@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/presentation/widgets/festa_scroll_area.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -51,9 +52,10 @@ class OrcamentosScreen extends StatelessWidget {
           ),
         ),
       ),
-      body: SafeArea(
+      body: FestaContent(
+          child: SafeArea(
         child: _ListaOrcamentosFornecedor(controller: controller),
-      ),
+      )),
     );
   }
 }
@@ -66,21 +68,25 @@ class _ListaOrcamentosFornecedor extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-          final lista = controller.orcamentos;
+      final lista = controller.orcamentos;
 
-          if (lista.isEmpty) {
-            return Center(
-              child: Text(
-                "Nenhum orçamento recebido ainda.",
-                style: GoogleFonts.poppins(
-                  color: Colors.grey.shade600,
-                  fontSize: 14,
-                ),
-              ),
-            );
-          }
+      if (lista.isEmpty) {
+        return Center(
+          child: Text(
+            "Nenhum orçamento recebido ainda.",
+            style: GoogleFonts.poppins(
+              color: Colors.grey.shade600,
+              fontSize: 14,
+            ),
+          ),
+        );
+      }
 
-          return ListView.separated(
+      return FestaScrollArea(
+          color: Theme.of(context).colorScheme.primary,
+          maxWidth: double.infinity,
+          child: ListView.separated(
+            primary: true,
             padding: const EdgeInsets.all(16),
             separatorBuilder: (_, __) =>
                 const Divider(height: 1, thickness: 0.6),
@@ -92,7 +98,7 @@ class _ListaOrcamentosFornecedor extends StatelessWidget {
                 controller: controller,
               );
             },
-          );
+          ));
     });
   }
 }

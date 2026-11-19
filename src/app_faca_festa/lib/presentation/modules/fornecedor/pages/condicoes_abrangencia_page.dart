@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/presentation/widgets/festa_scroll_area.dart';
 import 'package:flutter/material.dart';
 
 import 'package:app_faca_festa/presentation/widgets/festa_app_bar.dart';
@@ -63,26 +64,31 @@ class CondicoesAbrangenciaPage extends StatelessWidget {
 
     return Scaffold(
       appBar: const FestaAppBar(titulo: 'Condições de abrangência'),
-      body: Center(
+      body: FestaContent(
+          child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 760),
-          child: ListView(
-            padding: const EdgeInsets.all(24),
-            children: [
-              Text('Condições de Abrangência do Fornecedor',
-                  style: texto.headlineSmall),
-              const SizedBox(height: 8),
-              Text('Versão 1', style: texto.bodySmall),
-              for (final (titulo, corpo) in condicoes) ...[
-                const SizedBox(height: 24),
-                Text(titulo, style: texto.titleMedium),
-                const SizedBox(height: 6),
-                Text(corpo, style: texto.bodyMedium),
-              ],
-            ],
-          ),
+          child: FestaScrollArea(
+              color: Theme.of(context).colorScheme.primary,
+              maxWidth: double.infinity,
+              child: ListView(
+                primary: true,
+                padding: const EdgeInsets.all(24),
+                children: [
+                  Text('Condições de Abrangência do Fornecedor',
+                      style: texto.headlineSmall),
+                  const SizedBox(height: 8),
+                  Text('Versão 1', style: texto.bodySmall),
+                  for (final (titulo, corpo) in condicoes) ...[
+                    const SizedBox(height: 24),
+                    Text(titulo, style: texto.titleMedium),
+                    const SizedBox(height: 6),
+                    Text(corpo, style: texto.bodyMedium),
+                  ],
+                ],
+              )),
         ),
-      ),
+      )),
     );
   }
 }

@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/presentation/widgets/festa_scroll_area.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
@@ -68,7 +69,8 @@ class CategoriaServicoListScreen extends StatelessWidget {
             controller: controller,
           ),
         ),
-        body: Column(
+        body: FestaContent(
+            child: Column(
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
@@ -149,48 +151,52 @@ class CategoriaServicoListScreen extends StatelessWidget {
                 return RefreshIndicator(
                   color: AdminPalette.primary,
                   onRefresh: controller.carregarCategorias,
-                  child: ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(12, 4, 12, 88),
-                    itemCount: lista.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 8),
-                    itemBuilder: (_, i) {
-                      final c = lista[i];
-                      return _CategoriaAdminCard(
-                        categoria: c,
-                        subcategorias: controller.subcategoriasDe(c.id),
-                        onEditar: () => showCategoriaServicoBottomSheet(
-                          context,
-                          controller: controller,
-                          categoria: c,
-                        ),
-                        onSubcategorias: () => Get.to(
-                          () => SubcategoriaServicoListScreen(
+                  child: FestaScrollArea(
+                      color: AdminPalette.primary,
+                      maxWidth: double.infinity,
+                      child: ListView.separated(
+                        primary: true,
+                        padding: const EdgeInsets.fromLTRB(12, 4, 12, 88),
+                        itemCount: lista.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 8),
+                        itemBuilder: (_, i) {
+                          final c = lista[i];
+                          return _CategoriaAdminCard(
                             categoria: c,
-                            categoriaController: controller,
-                            subcategoriaController: subcategoriaController,
-                            themeController: theme,
-                          ),
-                        ),
-                        onToggle: (v) => controller.atualizarStatus(c, v),
-                        onExcluir: () async {
-                          final n = controller.subcategoriasDe(c.id);
-                          final ok = await confirmarAcaoAdmin(
-                            context,
-                            titulo: 'Excluir categoria',
-                            mensagem: n > 0
-                                ? 'Excluir "${c.nome}" também remove $n subcategoria(s) vinculada(s).'
-                                : 'Deseja realmente excluir "${c.nome}"?',
+                            subcategorias: controller.subcategoriasDe(c.id),
+                            onEditar: () => showCategoriaServicoBottomSheet(
+                              context,
+                              controller: controller,
+                              categoria: c,
+                            ),
+                            onSubcategorias: () => Get.to(
+                              () => SubcategoriaServicoListScreen(
+                                categoria: c,
+                                categoriaController: controller,
+                                subcategoriaController: subcategoriaController,
+                                themeController: theme,
+                              ),
+                            ),
+                            onToggle: (v) => controller.atualizarStatus(c, v),
+                            onExcluir: () async {
+                              final n = controller.subcategoriasDe(c.id);
+                              final ok = await confirmarAcaoAdmin(
+                                context,
+                                titulo: 'Excluir categoria',
+                                mensagem: n > 0
+                                    ? 'Excluir "${c.nome}" também remove $n subcategoria(s) vinculada(s).'
+                                    : 'Deseja realmente excluir "${c.nome}"?',
+                              );
+                              if (ok) await controller.excluirCategoria(c.id);
+                            },
                           );
-                          if (ok) await controller.excluirCategoria(c.id);
                         },
-                      );
-                    },
-                  ),
+                      )),
                 );
               }),
             ),
           ],
-        ),
+        )),
       ),
     );
   }

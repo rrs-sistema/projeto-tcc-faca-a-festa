@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/presentation/widgets/festa_scroll_area.dart';
 import 'package:app_faca_festa/presentation/modules/financeiro/widgets/financeiro_contexto.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -197,86 +198,98 @@ class _CentralMediacaoDetalhePageState
           titulo: tituloApp == '—' ? 'Contratação' : tituloApp,
           themeController: widget.themeController,
         ),
-        body: busy && d == null
-            ? const Center(child: CircularProgressIndicator())
-            : LayoutBuilder(
-                builder: (context, constraints) {
-                  final w = constraints.maxWidth;
-                  final pad = w >= 1100 ? 28.0 : (w >= 720 ? 22.0 : 16.0);
-                  final maxW = w >= 1280 ? 1320.0 : w;
-                  return Align(
-                    alignment: Alignment.topCenter,
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(maxWidth: maxW),
-                      child: ListView(
-                        padding: EdgeInsets.fromLTRB(
-                          pad,
-                          FestaPageInsets.belowAppBar,
-                          pad,
-                          40,
+        body: FestaContent(
+            child: busy && d == null
+                ? const Center(child: CircularProgressIndicator())
+                : LayoutBuilder(
+                    builder: (context, constraints) {
+                      final w = constraints.maxWidth;
+                      final pad = w >= 1100 ? 28.0 : (w >= 720 ? 22.0 : 16.0);
+                      final maxW = w >= 1280 ? 1320.0 : w;
+                      return Align(
+                        alignment: Alignment.topCenter,
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(maxWidth: maxW),
+                          child: FestaScrollArea(
+                              color: AdminPalette.primary,
+                              maxWidth: double.infinity,
+                              child: ListView(
+                                primary: true,
+                                padding: EdgeInsets.fromLTRB(
+                                  pad,
+                                  FestaPageInsets.belowAppBar,
+                                  pad,
+                                  40,
+                                ),
+                                children: [
+                                  if (err.isNotEmpty)
+                                    _banner(err, AdminPalette.danger),
+                                  if (aviso.isNotEmpty) ...[
+                                    if (err.isNotEmpty)
+                                      const SizedBox(height: 8),
+                                    _banner(aviso, AdminPalette.warning),
+                                  ],
+                                  if (resumo != null) ...[
+                                    _hero(resumo, d!),
+                                    const SizedBox(height: 14),
+                                    _kpisFinanceiros(resumo, d, w),
+                                    const SizedBox(height: 14),
+                                    const FinanceiroAjuda(itens: {
+                                      ...ajudaFinanceira,
+                                      ...ajudaMediacao
+                                    }),
+                                    const SizedBox(height: 16),
+                                    Wrap(spacing: 8, runSpacing: 8, children: [
+                                      for (final secao in [
+                                        'Resumo',
+                                        'Financeiro',
+                                        'Mediação e histórico'
+                                      ])
+                                        ChoiceChip(
+                                            label: Text(secao),
+                                            selected: _secao == secao,
+                                            onSelected: (_) =>
+                                                setState(() => _secao = secao)),
+                                    ]),
+                                    const SizedBox(height: 16),
+                                    if (_secao == 'Resumo') ...[
+                                      if (w >= 1200 &&
+                                          MediaQuery.textScalerOf(context)
+                                                  .scale(1) <=
+                                              1.3)
+                                        Row(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Expanded(
+                                                  child: _secaoContrato(
+                                                      d, resumo)),
+                                              const SizedBox(width: 16),
+                                              Expanded(child: _secaoPartes(d)),
+                                            ])
+                                      else ...[
+                                        _secaoContrato(d, resumo),
+                                        const SizedBox(height: 14),
+                                        _secaoPartes(d),
+                                      ],
+                                    ],
+                                    if (_secao == 'Financeiro')
+                                      _secaoFinanceiro(d),
+                                    if (_secao == 'Mediação e histórico')
+                                      Obx(() => _secaoMediacao(d, resumo)),
+                                  ] else if (err.isEmpty)
+                                    const AdminEmptyState(
+                                      icon: Icons.description_outlined,
+                                      title: 'Sem detalhe',
+                                      message:
+                                          'Não foi possível carregar esta contratação.',
+                                    ),
+                                ],
+                              )),
                         ),
-                        children: [
-                          if (err.isNotEmpty) _banner(err, AdminPalette.danger),
-                          if (aviso.isNotEmpty) ...[
-                            if (err.isNotEmpty) const SizedBox(height: 8),
-                            _banner(aviso, AdminPalette.warning),
-                          ],
-                          if (resumo != null) ...[
-                            _hero(resumo, d!),
-                            const SizedBox(height: 14),
-                            _kpisFinanceiros(resumo, d, w),
-                            const SizedBox(height: 14),
-                            const FinanceiroAjuda(
-                                itens: {...ajudaFinanceira, ...ajudaMediacao}),
-                            const SizedBox(height: 16),
-                            Wrap(spacing: 8, runSpacing: 8, children: [
-                              for (final secao in [
-                                'Resumo',
-                                'Financeiro',
-                                'Mediação e histórico'
-                              ])
-                                ChoiceChip(
-                                    label: Text(secao),
-                                    selected: _secao == secao,
-                                    onSelected: (_) =>
-                                        setState(() => _secao = secao)),
-                            ]),
-                            const SizedBox(height: 16),
-                            if (_secao == 'Resumo') ...[
-                              if (w >= 1200 &&
-                                  MediaQuery.textScalerOf(context).scale(1) <=
-                                      1.3)
-                                Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Expanded(
-                                          child: _secaoContrato(d, resumo)),
-                                      const SizedBox(width: 16),
-                                      Expanded(child: _secaoPartes(d)),
-                                    ])
-                              else ...[
-                                _secaoContrato(d, resumo),
-                                const SizedBox(height: 14),
-                                _secaoPartes(d),
-                              ],
-                            ],
-                            if (_secao == 'Financeiro') _secaoFinanceiro(d),
-                            if (_secao == 'Mediação e histórico')
-                              Obx(() => _secaoMediacao(d, resumo)),
-                          ] else if (err.isEmpty)
-                            const AdminEmptyState(
-                              icon: Icons.description_outlined,
-                              title: 'Sem detalhe',
-                              message:
-                                  'Não foi possível carregar esta contratação.',
-                            ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
+                      );
+                    },
+                  )),
       );
     });
   }

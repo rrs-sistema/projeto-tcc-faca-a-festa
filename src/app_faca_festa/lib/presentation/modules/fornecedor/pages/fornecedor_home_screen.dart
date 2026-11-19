@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/presentation/widgets/festa_scroll_area.dart';
 import '../controllers/painel_operacional_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -164,7 +165,8 @@ class _FornecedorHomeScreenState extends State<FornecedorHomeScreen> {
         ),
         child: Scaffold(
           backgroundColor: const Color(0xFFF6F7FB),
-          body: SafeArea(
+          body: FestaContent(
+              child: SafeArea(
             bottom: false,
             child: RefreshIndicator(
               onRefresh: () => _operacional?.carregar() ?? Future<void>.value(),
@@ -177,109 +179,118 @@ class _FornecedorHomeScreenState extends State<FornecedorHomeScreen> {
                           ? 20.0
                           : 12.0;
 
-                  return CustomScrollView(
-                    controller: _scroll,
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    slivers: [
-                      SliverPadding(
-                        padding: EdgeInsets.fromLTRB(
-                            horizontalPadding, 8, horizontalPadding, 12),
-                        sliver: SliverToBoxAdapter(
-                          child: Center(
-                            child: ConstrainedBox(
-                              constraints: const BoxConstraints(maxWidth: 1180),
-                              child: HeaderSection(
-                                controller: controller,
-                                appController: widget.appController,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      if (desktop)
-                        PinnedHeaderSliver(
-                          child: ColoredBox(
-                            color: FornecedorPremiumPalette.background,
-                            child: Padding(
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: horizontalPadding),
+                  return FestaScrollArea(
+                      color: widget.themeController.primaryColor.value,
+                      controller: _scroll,
+                      maxWidth: 1250,
+                      child: CustomScrollView(
+                        controller: _scroll,
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        slivers: [
+                          SliverPadding(
+                            padding: EdgeInsets.fromLTRB(
+                                horizontalPadding, 8, horizontalPadding, 12),
+                            sliver: SliverToBoxAdapter(
                               child: Center(
                                 child: ConstrainedBox(
                                   constraints:
                                       const BoxConstraints(maxWidth: 1180),
-                                  child: atalhos,
+                                  child: HeaderSection(
+                                    controller: controller,
+                                    appController: widget.appController,
+                                  ),
                                 ),
                               ),
                             ),
                           ),
-                        ),
-                      SliverPadding(
-                        padding: EdgeInsets.fromLTRB(
-                          horizontalPadding,
-                          desktop ? 8 : 0,
-                          horizontalPadding,
-                          24,
-                        ),
-                        sliver: SliverToBoxAdapter(
-                          child: Center(
-                            child: ConstrainedBox(
-                              constraints: const BoxConstraints(maxWidth: 1180),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  ResumoSection(
-                                    controller: controller,
-                                    appController: widget.appController,
-                                    themeController: widget.themeController,
-                                    cotacoes: widget.cotacoes,
-                                    servicoController: widget.servicoController,
-                                    fotoController: widget.fotoController,
-                                    categoriaController:
-                                        widget.categoriaController,
-                                    subcategoriaController:
-                                        widget.subcategoriaController,
-                                    avaliacaoController:
-                                        widget.avaliacaoController,
-                                    onAbrirPedidos: _scrollToCotacoes,
-                                    onAbrirPerfil: _scrollToCatalogo,
-                                    onController: (c) => _operacional = c,
-                                    pedidos: SolicitacoesSection(
-                                      key: _cotacoesKey,
-                                      fornecedorController: controller,
-                                      solicitacoesController:
-                                          widget.solicitacoesController,
-                                      themeController: widget.themeController,
-                                      cotacoes: widget.cotacoes,
+                          if (desktop)
+                            PinnedHeaderSliver(
+                              child: ColoredBox(
+                                color: FornecedorPremiumPalette.background,
+                                child: Padding(
+                                  padding: EdgeInsets.symmetric(
+                                      horizontal: horizontalPadding),
+                                  child: Center(
+                                    child: ConstrainedBox(
+                                      constraints:
+                                          const BoxConstraints(maxWidth: 1180),
+                                      child: atalhos,
                                     ),
                                   ),
-                                  const SizedBox(height: 20),
-                                  Container(
-                                    key: _catalogoKey,
-                                    child: PerfilSection(
-                                      controller: controller,
-                                    ),
+                                ),
+                              ),
+                            ),
+                          SliverPadding(
+                            padding: EdgeInsets.fromLTRB(
+                              horizontalPadding,
+                              desktop ? 8 : 0,
+                              horizontalPadding,
+                              24,
+                            ),
+                            sliver: SliverToBoxAdapter(
+                              child: Center(
+                                child: ConstrainedBox(
+                                  constraints:
+                                      const BoxConstraints(maxWidth: 1180),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      ResumoSection(
+                                        controller: controller,
+                                        appController: widget.appController,
+                                        themeController: widget.themeController,
+                                        cotacoes: widget.cotacoes,
+                                        servicoController:
+                                            widget.servicoController,
+                                        fotoController: widget.fotoController,
+                                        categoriaController:
+                                            widget.categoriaController,
+                                        subcategoriaController:
+                                            widget.subcategoriaController,
+                                        avaliacaoController:
+                                            widget.avaliacaoController,
+                                        onAbrirPedidos: _scrollToCotacoes,
+                                        onAbrirPerfil: _scrollToCatalogo,
+                                        onController: (c) => _operacional = c,
+                                        pedidos: SolicitacoesSection(
+                                          key: _cotacoesKey,
+                                          fornecedorController: controller,
+                                          solicitacoesController:
+                                              widget.solicitacoesController,
+                                          themeController:
+                                              widget.themeController,
+                                          cotacoes: widget.cotacoes,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 20),
+                                      Container(
+                                        key: _catalogoKey,
+                                        child: PerfilSection(
+                                          controller: controller,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 20),
+                                      Container(
+                                        key: _avaliacoesKey,
+                                        child: AvaliacoesSection(
+                                          fornecedorController: controller,
+                                          avaliacaoController:
+                                              widget.avaliacaoController,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  const SizedBox(height: 20),
-                                  Container(
-                                    key: _avaliacoesKey,
-                                    child: AvaliacoesSection(
-                                      fornecedorController: controller,
-                                      avaliacaoController:
-                                          widget.avaliacaoController,
-                                    ),
-                                  ),
-                                ],
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ),
-                    ],
-                  );
+                        ],
+                      ));
                 },
               ),
             ),
-          ),
+          )),
           bottomNavigationBar: desktop ? null : atalhos,
         ),
       );

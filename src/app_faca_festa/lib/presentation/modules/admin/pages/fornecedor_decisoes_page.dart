@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/presentation/widgets/festa_scroll_area.dart';
 import 'package:app_faca_festa/data/services/functions/callable_sessao_gateway.dart';
 import 'package:app_faca_festa/presentation/modules/tema/admin_theme.dart';
 import 'package:app_faca_festa/presentation/widgets/admin/admin_kit.dart';
@@ -178,7 +179,8 @@ class _FornecedorDecisoesPageState extends State<FornecedorDecisoesPage> {
               icon: const Icon(Icons.refresh)),
         ],
       ),
-      body: FutureBuilder<_Dados>(
+      body: FestaContent(
+          child: FutureBuilder<_Dados>(
         future: _consulta,
         builder: (context, snapshot) {
           final atualizando = snapshot.connectionState != ConnectionState.done;
@@ -231,12 +233,16 @@ class _FornecedorDecisoesPageState extends State<FornecedorDecisoesPage> {
                   final margem = constraints.maxWidth >= 900 ? 32.0 : 16.0;
                   return Stack(
                     children: [
-                      ListView(
-                        controller: _rolagem,
-                        padding:
-                            EdgeInsets.fromLTRB(margem, margem, margem, 32),
-                        children: secoes,
-                      ),
+                      FestaScrollArea(
+                          color: AdminPalette.primary,
+                          controller: _rolagem,
+                          maxWidth: double.infinity,
+                          child: ListView(
+                            controller: _rolagem,
+                            padding:
+                                EdgeInsets.fromLTRB(margem, margem, margem, 32),
+                            children: secoes,
+                          )),
                       if (atualizando)
                         const Positioned(
                           top: 0,
@@ -253,7 +259,7 @@ class _FornecedorDecisoesPageState extends State<FornecedorDecisoesPage> {
             ),
           );
         },
-      ),
+      )),
     );
   }
 

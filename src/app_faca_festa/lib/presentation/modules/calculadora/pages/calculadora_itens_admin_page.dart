@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/presentation/widgets/festa_scroll_area.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -87,7 +88,7 @@ class CalculadoraItensAdminPage extends StatelessWidget {
             ],
           ),
         ),
-        body: Obx(
+        body: FestaContent(child: Obx(
           () {
             if (controller.loading.value &&
                 controller.itensBase.isEmpty &&
@@ -102,7 +103,7 @@ class CalculadoraItensAdminPage extends StatelessWidget {
               ],
             );
           },
-        ),
+        )),
       ),
     );
   }
@@ -153,17 +154,23 @@ class _ItensBaseTab extends StatelessWidget {
 
                   return RefreshIndicator(
                     onRefresh: controller.carregarTudo,
-                    child: ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(10, 8, 10, 80),
-                      itemCount: itens.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 6),
-                      itemBuilder: (context, index) {
-                        return _ItemBaseCard(
-                          item: itens[index],
-                          controller: controller,
-                        );
-                      },
-                    ),
+                    child: FestaScrollArea(
+                        color: Theme.of(context).colorScheme.primary,
+                        maxWidth: double.infinity,
+                        scrollDirection: Axis.vertical,
+                        child: ListView.separated(
+                          primary: true,
+                          padding: const EdgeInsets.fromLTRB(10, 8, 10, 80),
+                          itemCount: itens.length,
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(height: 6),
+                          itemBuilder: (context, index) {
+                            return _ItemBaseCard(
+                              item: itens[index],
+                              controller: controller,
+                            );
+                          },
+                        )),
                   );
                 },
               ),
@@ -219,17 +226,23 @@ class _ItensEventoTab extends StatelessWidget {
 
                   return RefreshIndicator(
                     onRefresh: controller.carregarTudo,
-                    child: ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(10, 8, 10, 80),
-                      itemCount: itens.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 6),
-                      itemBuilder: (context, index) {
-                        return _ItemEventoCard(
-                          item: itens[index],
-                          controller: controller,
-                        );
-                      },
-                    ),
+                    child: FestaScrollArea(
+                        color: Theme.of(context).colorScheme.primary,
+                        maxWidth: double.infinity,
+                        scrollDirection: Axis.vertical,
+                        child: ListView.separated(
+                          primary: true,
+                          padding: const EdgeInsets.fromLTRB(10, 8, 10, 80),
+                          itemCount: itens.length,
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(height: 6),
+                          itemBuilder: (context, index) {
+                            return _ItemEventoCard(
+                              item: itens[index],
+                              controller: controller,
+                            );
+                          },
+                        )),
                   );
                 },
               ),
@@ -407,80 +420,91 @@ class _ItensBaseTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scrollbar(
+    return FestaScrollArea(
+      color: Theme.of(context).colorScheme.primary,
+      maxWidth: double.infinity,
+      contentPadding: EdgeInsets.zero,
+      scrollDirection: Axis.vertical,
       child: SingleChildScrollView(
+        primary: true,
         padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: DataTable(
-            headingRowHeight: 36, // Muito mais compacto
-            dataRowMinHeight: 38,
-            dataRowMaxHeight: 44,
-            headingTextStyle:
-                GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700),
-            dataTextStyle:
-                GoogleFonts.poppins(fontSize: 11.5, color: Colors.black87),
-            columns: const [
-              DataColumn(label: Text('Ordem')),
-              DataColumn(label: Text('Nome')),
-              DataColumn(label: Text('Categoria')),
-              DataColumn(label: Text('Unidade')),
-              DataColumn(label: Text('Público')),
-              DataColumn(label: Text('Status')),
-              DataColumn(label: Text('Ações')),
-            ],
-            rows: itens
-                .map(
-                  (item) => DataRow(
-                    cells: [
-                      DataCell(Text('${item.ordem}')),
-                      DataCell(
-                        SizedBox(
-                          width: 200,
-                          child: Text(item.nome,
-                              overflow: TextOverflow.ellipsis,
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.w600)),
-                        ),
-                      ),
-                      DataCell(Text(item.categoriaPadrao)),
-                      DataCell(Text(item.unidadePadrao)),
-                      DataCell(Text(_labelPublico(item.publicoAlvo))),
-                      DataCell(_StatusChip(active: item.ativo)),
-                      DataCell(
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              tooltip: 'Editar',
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(
-                                  minWidth: 32, minHeight: 32),
-                              onPressed: () =>
-                                  CalculadoraItemBaseFormDialog.show(
-                                context: context,
-                                controller: controller,
-                                item: item,
-                              ),
-                              icon: const Icon(Icons.edit_outlined, size: 16),
+        child: FestaScrollArea(
+            color: Theme.of(context).colorScheme.primary,
+            maxWidth: double.infinity,
+            scrollDirection: Axis.horizontal,
+            child: SingleChildScrollView(
+              primary: true,
+              scrollDirection: Axis.horizontal,
+              child: DataTable(
+                headingRowHeight: 36, // Muito mais compacto
+                dataRowMinHeight: 38,
+                dataRowMaxHeight: 44,
+                headingTextStyle: GoogleFonts.poppins(
+                    fontSize: 12, fontWeight: FontWeight.w700),
+                dataTextStyle:
+                    GoogleFonts.poppins(fontSize: 11.5, color: Colors.black87),
+                columns: const [
+                  DataColumn(label: Text('Ordem')),
+                  DataColumn(label: Text('Nome')),
+                  DataColumn(label: Text('Categoria')),
+                  DataColumn(label: Text('Unidade')),
+                  DataColumn(label: Text('Público')),
+                  DataColumn(label: Text('Status')),
+                  DataColumn(label: Text('Ações')),
+                ],
+                rows: itens
+                    .map(
+                      (item) => DataRow(
+                        cells: [
+                          DataCell(Text('${item.ordem}')),
+                          DataCell(
+                            SizedBox(
+                              width: 200,
+                              child: Text(item.nome,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w600)),
                             ),
-                            Transform.scale(
-                              scale: 0.75, // Não deforma a altura da linha
-                              child: Switch.adaptive(
-                                value: item.ativo,
-                                onChanged: (value) => controller
-                                    .ativarDesativarItemBase(item, value),
-                              ),
+                          ),
+                          DataCell(Text(item.categoriaPadrao)),
+                          DataCell(Text(item.unidadePadrao)),
+                          DataCell(Text(_labelPublico(item.publicoAlvo))),
+                          DataCell(_StatusChip(active: item.ativo)),
+                          DataCell(
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  tooltip: 'Editar',
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(
+                                      minWidth: 32, minHeight: 32),
+                                  onPressed: () =>
+                                      CalculadoraItemBaseFormDialog.show(
+                                    context: context,
+                                    controller: controller,
+                                    item: item,
+                                  ),
+                                  icon:
+                                      const Icon(Icons.edit_outlined, size: 16),
+                                ),
+                                Transform.scale(
+                                  scale: 0.75, // Não deforma a altura da linha
+                                  child: Switch.adaptive(
+                                    value: item.ativo,
+                                    onChanged: (value) => controller
+                                        .ativarDesativarItemBase(item, value),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                )
-                .toList(),
-          ),
-        ),
+                    )
+                    .toList(),
+              ),
+            )),
       ),
     );
   }
@@ -497,104 +521,117 @@ class _ItensEventoTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scrollbar(
+    return FestaScrollArea(
+      color: Theme.of(context).colorScheme.primary,
+      maxWidth: double.infinity,
+      contentPadding: EdgeInsets.zero,
+      scrollDirection: Axis.vertical,
       child: SingleChildScrollView(
+        primary: true,
         padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: DataTable(
-            headingRowHeight: 36, // Compacto
-            dataRowMinHeight: 38,
-            dataRowMaxHeight: 44,
-            headingTextStyle:
-                GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700),
-            dataTextStyle:
-                GoogleFonts.poppins(fontSize: 11.5, color: Colors.black87),
-            columns: const [
-              DataColumn(label: Text('Evento')),
-              DataColumn(label: Text('Ord.')),
-              DataColumn(label: Text('Item')),
-              DataColumn(label: Text('Categoria')),
-              DataColumn(label: Text('Qtd.')),
-              DataColumn(label: Text('Valor')),
-              DataColumn(label: Text('Perfis')),
-              DataColumn(label: Text('Status')),
-              DataColumn(label: Text('Ações')),
-            ],
-            rows: itens
-                .map(
-                  (item) => DataRow(
-                    cells: [
-                      DataCell(
-                          Text(controller.labelTipoEvento(item.tipoEvento))),
-                      DataCell(Text('${item.ordem}')),
-                      DataCell(
-                        SizedBox(
-                          width: 160,
-                          child: Text(item.nome,
-                              overflow: TextOverflow.ellipsis,
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.w600)),
-                        ),
-                      ),
-                      DataCell(Text(item.categoria)),
-                      DataCell(Text(_formatDouble(
-                          item.quantidadePorConvidadoEquivalente))),
-                      DataCell(
-                          Text('R\$ ${_formatMoney(item.valorUnitarioMedio)}')),
-                      DataCell(
-                        SizedBox(
-                          width: 120,
-                          child: Text(
-                              item.perfisFesta.map(_labelPerfil).join(', '),
-                              overflow: TextOverflow.ellipsis),
-                        ),
-                      ),
-                      DataCell(_StatusChip(active: item.ativo)),
-                      DataCell(
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              tooltip: 'Editar',
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(
-                                  minWidth: 28, minHeight: 28),
-                              onPressed: () =>
-                                  CalculadoraEventoItemFormDialog.show(
-                                controller: controller,
-                                item: item,
-                              ),
-                              icon: const Icon(Icons.edit_outlined, size: 16),
+        child: FestaScrollArea(
+            color: Theme.of(context).colorScheme.primary,
+            maxWidth: double.infinity,
+            scrollDirection: Axis.horizontal,
+            child: SingleChildScrollView(
+              primary: true,
+              scrollDirection: Axis.horizontal,
+              child: DataTable(
+                headingRowHeight: 36, // Compacto
+                dataRowMinHeight: 38,
+                dataRowMaxHeight: 44,
+                headingTextStyle: GoogleFonts.poppins(
+                    fontSize: 12, fontWeight: FontWeight.w700),
+                dataTextStyle:
+                    GoogleFonts.poppins(fontSize: 11.5, color: Colors.black87),
+                columns: const [
+                  DataColumn(label: Text('Evento')),
+                  DataColumn(label: Text('Ord.')),
+                  DataColumn(label: Text('Item')),
+                  DataColumn(label: Text('Categoria')),
+                  DataColumn(label: Text('Qtd.')),
+                  DataColumn(label: Text('Valor')),
+                  DataColumn(label: Text('Perfis')),
+                  DataColumn(label: Text('Status')),
+                  DataColumn(label: Text('Ações')),
+                ],
+                rows: itens
+                    .map(
+                      (item) => DataRow(
+                        cells: [
+                          DataCell(Text(
+                              controller.labelTipoEvento(item.tipoEvento))),
+                          DataCell(Text('${item.ordem}')),
+                          DataCell(
+                            SizedBox(
+                              width: 160,
+                              child: Text(item.nome,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w600)),
                             ),
-                            IconButton(
-                              tooltip: 'Duplicar',
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(
-                                  minWidth: 28, minHeight: 28),
-                              onPressed: () => _DuplicarEventoItemSheet.show(
-                                controller: controller,
-                                item: item,
-                              ),
-                              icon: const Icon(Icons.copy_outlined, size: 16),
+                          ),
+                          DataCell(Text(item.categoria)),
+                          DataCell(Text(_formatDouble(
+                              item.quantidadePorConvidadoEquivalente))),
+                          DataCell(Text(
+                              'R\$ ${_formatMoney(item.valorUnitarioMedio)}')),
+                          DataCell(
+                            SizedBox(
+                              width: 120,
+                              child: Text(
+                                  item.perfisFesta.map(_labelPerfil).join(', '),
+                                  overflow: TextOverflow.ellipsis),
                             ),
-                            Transform.scale(
-                              scale: 0.75,
-                              child: Switch.adaptive(
-                                value: item.ativo,
-                                onChanged: (value) => controller
-                                    .ativarDesativarItemEvento(item, value),
-                              ),
+                          ),
+                          DataCell(_StatusChip(active: item.ativo)),
+                          DataCell(
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  tooltip: 'Editar',
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(
+                                      minWidth: 28, minHeight: 28),
+                                  onPressed: () =>
+                                      CalculadoraEventoItemFormDialog.show(
+                                    controller: controller,
+                                    item: item,
+                                  ),
+                                  icon:
+                                      const Icon(Icons.edit_outlined, size: 16),
+                                ),
+                                IconButton(
+                                  tooltip: 'Duplicar',
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(
+                                      minWidth: 28, minHeight: 28),
+                                  onPressed: () =>
+                                      _DuplicarEventoItemSheet.show(
+                                    controller: controller,
+                                    item: item,
+                                  ),
+                                  icon:
+                                      const Icon(Icons.copy_outlined, size: 16),
+                                ),
+                                Transform.scale(
+                                  scale: 0.75,
+                                  child: Switch.adaptive(
+                                    value: item.ativo,
+                                    onChanged: (value) => controller
+                                        .ativarDesativarItemEvento(item, value),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                )
-                .toList(),
-          ),
-        ),
+                    )
+                    .toList(),
+              ),
+            )),
       ),
     );
   }

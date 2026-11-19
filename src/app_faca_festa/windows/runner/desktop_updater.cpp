@@ -1,5 +1,6 @@
 #include "desktop_updater.h"
 #include "update_file.h"
+#include "update_cache.h"
 #include "updater_public_key.h"
 #include <winsparkle.h>
 #include <shlobj.h>
@@ -37,6 +38,34 @@ DesktopUpdater::DesktopUpdater(HWND window, flutter::BinaryMessenger* messenger)
         initialized_ = true;
       }
       result->Success();
+    } else if (call.method_name() == "restoreDownload" && initialized_) {
+      const auto* args = std::get_if<flutter::EncodableMap>(call.arguments());
+      if (!args) { result->Error("invalid_cache_request", "Catálogo inválido."); return; }
+      const auto build_entry = args->find(flutter::EncodableValue("build"));
+      const auto hash_entry = args->find(flutter::EncodableValue("sha256"));
+      if (build_entry == args->end() || hash_entry == args->end() ||
+          !std::holds_alternative<int32_t>(build_entry->second) ||
+          !std::holds_alternative<std::string>(hash_entry->second)) {
+        result->Error("invalid_cache_request", "Catálogo inválido."); return;
+      }
+      const int build = std::get<int32_t>(build_entry->second);
+      const auto hash = std::get<std::string>(hash_entry->second);
+      const std::wstring digest(hash.begin(), hash.end());
+      const auto path = CachePath();
+      const auto info = build > FLUTTER_VERSION_BUILD
+          ? ReadCachedUpdate(path, build, digest) : UpdatePackageInfo{};
+      if (info.build == 0) { result->Success(); return; }
+      {
+        std::lock_guard<std::mutex> guard(mutex_);
+        installer_ = path;
+        checksum_ = digest;
+        build_ = info.build;
+        version_ = info.version;
+      }
+      result->Success(flutter::EncodableValue(flutter::EncodableMap{
+        {flutter::EncodableValue("version"), flutter::EncodableValue(info.version)},
+        {flutter::EncodableValue("build"), flutter::EncodableValue(info.build)}
+      }));
     } else if (call.method_name() == "download" && initialized_) {
       win_sparkle_check_update_with_ui_and_install();
       result->Success();
@@ -58,31 +87,36 @@ int __cdecl DesktopUpdater::CaptureInstaller(const wchar_t* path) {
   auto* self = instance_;
   if (!self) return -1;
   // Evita downgrade mesmo se os números do appcast forem alterados.
-  DWORD ignored = 0;
-  DWORD size = GetFileVersionInfoSizeW(path, &ignored);
-  std::vector<BYTE> info(size);
-  VS_FIXEDFILEINFO* fixed = nullptr;
-  UINT fixed_size = 0;
-  if (!size || !GetFileVersionInfoW(path, 0, size, info.data()) || !VerQueryValueW(info.data(), L"\\", reinterpret_cast<void**>(&fixed), &fixed_size) || !fixed || fixed_size < sizeof(VS_FIXEDFILEINFO)) return -1;
-  const int build = LOWORD(fixed->dwFileVersionLS);
+  const auto info = ReadUpdatePackage(path);
+  const int build = info.build;
   if (build <= FLUTTER_VERSION_BUILD) return -1;
-  wchar_t temp[MAX_PATH];
-  wchar_t name[MAX_PATH];
-  if (!GetTempPathW(MAX_PATH, temp) || !GetTempFileNameW(temp, L"rpd", 0, name)) return -1;
-  const std::wstring destination = std::wstring(name) + L".exe";
-  DeleteFileW(name);
-  if (!CopyFileW(path, destination.c_str(), TRUE)) return -1;
-  HANDLE file = CreateFileW(destination.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+  const auto destination = self->CachePath();
+  if (destination.empty()) return -1;
+  const auto staging = destination + L".download";
+  if (!CopyFileW(path, staging.c_str(), FALSE)) return -1;
+  HANDLE file = CreateFileW(staging.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
   if (file == INVALID_HANDLE_VALUE) return -1;
   const auto digest = UpdateHash(file);
   CloseHandle(file);
-  if (digest.empty()) return -1;
+  if (digest.empty() || !MoveFileExW(staging.c_str(), destination.c_str(),
+                                   MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH)) {
+    DeleteFileW(staging.c_str());
+    return -1;
+  }
   std::lock_guard<std::mutex> guard(self->mutex_);
   self->installer_ = destination;
   self->checksum_ = digest;
   self->build_ = build;
-  self->version_ = std::to_string(HIWORD(fixed->dwFileVersionMS)) + "." + std::to_string(LOWORD(fixed->dwFileVersionMS)) + "." + std::to_string(HIWORD(fixed->dwFileVersionLS));
+  self->version_ = info.version;
   return 1;
+}
+std::wstring DesktopUpdater::CachePath() {
+  wchar_t local[MAX_PATH];
+  if (FAILED(SHGetFolderPathW(nullptr, CSIDL_LOCAL_APPDATA, nullptr, 0, local))) return {};
+  const auto directory = std::wstring(local) + L"\\FacaFesta\\Updates";
+  if (SHCreateDirectoryExW(nullptr, directory.c_str(), nullptr) != ERROR_SUCCESS &&
+      GetFileAttributesW(directory.c_str()) == INVALID_FILE_ATTRIBUTES) return {};
+  return directory + L"\\pending.exe";
 }
 void __cdecl DesktopUpdater::OnError() { if (instance_) PostMessage(instance_->window_, kEventMessage, 1, 0); }
 void __cdecl DesktopUpdater::OnNoUpdate() { if (instance_) PostMessage(instance_->window_, kEventMessage, 2, 0); }

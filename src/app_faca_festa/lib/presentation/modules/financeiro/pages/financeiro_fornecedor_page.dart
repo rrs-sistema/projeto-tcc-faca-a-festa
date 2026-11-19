@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/presentation/widgets/festa_scroll_area.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -68,7 +69,7 @@ class _FinanceiroFornecedorPageState extends State<FinanceiroFornecedorPage> {
             ),
           ],
         ),
-        body: LayoutBuilder(
+        body: FestaContent(child: LayoutBuilder(
           builder: (context, constraints) {
             final w = constraints.maxWidth;
             final pad = FornecedorBreakpoints.padding(w).clamp(12.0, 20.0);
@@ -82,101 +83,108 @@ class _FinanceiroFornecedorPageState extends State<FinanceiroFornecedorPage> {
               alignment: Alignment.topCenter,
               child: ConstrainedBox(
                 constraints: BoxConstraints(maxWidth: maxW),
-                child: ListView(
-                  padding: EdgeInsets.fromLTRB(pad, 12, pad, 24),
-                  children: [
-                    _cabecalho(c, w),
-                    if (c.custoPendente.value != null)
-                      ListTile(
-                          title: const Text('Custo com envio pendente'),
-                          trailing: TextButton(
-                              onPressed: c.enviando.value
-                                  ? null
-                                  : c.retomarCustoPendente,
-                              child: const Text('Retomar custo original'))),
-                    Align(
-                        alignment: Alignment.centerLeft,
-                        child: OutlinedButton.icon(
-                            onPressed: () =>
-                                Get.toNamed('/fornecedor/planejamento'),
-                            icon: const Icon(Icons.insights),
-                            label: const Text(
-                                'Planejar recebimentos e despesas'))),
-                    if (temPendente) ...[
-                      const SizedBox(height: 8),
-                      Card(
-                          child: Padding(
-                              padding: const EdgeInsets.all(12),
-                              child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                        'Recebimento com resultado desconhecido. A mesma operação será conciliada antes de qualquer novo lançamento.'),
-                                    TextButton(
-                                        onPressed: c.enviando.value
-                                            ? null
-                                            : c.retomarRecebimentoPendente,
-                                        child: const Text(
-                                            'Retomar recebimento pendente')),
-                                  ]))),
-                    ],
-                    if (erro.isNotEmpty) ...[
-                      const SizedBox(height: 8),
-                      _bannerErro(erro),
-                      if (c.diagnosticoConsulta.value != null)
-                        ExpansionTile(
-                          title: const Text('Detalhes da consulta'),
-                          children: [
-                            ListTile(
-                                title: Text(
-                                    'Código: ${c.diagnosticoConsulta.value!.codigo}'),
-                                subtitle:
-                                    Text(c.diagnosticoConsulta.value!.detalhe))
-                          ],
-                        ),
-                    ],
-                    const SizedBox(height: 8),
-                    _barraContextual(c, w),
-                    if (mostrarEmpty)
-                      PremiumEmptyState(
-                        icon: Icons.account_balance_wallet_outlined,
-                        title: c.erro.value.isNotEmpty
-                            ? 'Consulta indisponível'
-                            : 'Sem resumo ainda',
-                        message: c.autorizado
-                            ? 'Atualize para consultar os valores. Dados indisponíveis não são apresentados como zero.'
-                            : 'Sem autorização para o financeiro privado.',
-                      )
-                    else ...[
-                      if (loading && r != null) ...[
+                child: FestaScrollArea(
+                    color: widget.themeController.primaryColor.value,
+                    maxWidth: double.infinity,
+                    child: ListView(
+                      primary: true,
+                      padding: EdgeInsets.fromLTRB(pad, 12, pad, 24),
+                      children: [
+                        _cabecalho(c, w),
+                        if (c.custoPendente.value != null)
+                          ListTile(
+                              title: const Text('Custo com envio pendente'),
+                              trailing: TextButton(
+                                  onPressed: c.enviando.value
+                                      ? null
+                                      : c.retomarCustoPendente,
+                                  child: const Text('Retomar custo original'))),
+                        Align(
+                            alignment: Alignment.centerLeft,
+                            child: OutlinedButton.icon(
+                                onPressed: () =>
+                                    Get.toNamed('/fornecedor/planejamento'),
+                                icon: const Icon(Icons.insights),
+                                label: const Text(
+                                    'Planejar recebimentos e despesas'))),
+                        if (temPendente) ...[
+                          const SizedBox(height: 8),
+                          Card(
+                              child: Padding(
+                                  padding: const EdgeInsets.all(12),
+                                  child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        const Text(
+                                            'Recebimento com resultado desconhecido. A mesma operação será conciliada antes de qualquer novo lançamento.'),
+                                        TextButton(
+                                            onPressed: c.enviando.value
+                                                ? null
+                                                : c.retomarRecebimentoPendente,
+                                            child: const Text(
+                                                'Retomar recebimento pendente')),
+                                      ]))),
+                        ],
+                        if (erro.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          _bannerErro(erro),
+                          if (c.diagnosticoConsulta.value != null)
+                            ExpansionTile(
+                              title: const Text('Detalhes da consulta'),
+                              children: [
+                                ListTile(
+                                    title: Text(
+                                        'Código: ${c.diagnosticoConsulta.value!.codigo}'),
+                                    subtitle: Text(
+                                        c.diagnosticoConsulta.value!.detalhe))
+                              ],
+                            ),
+                        ],
                         const SizedBox(height: 8),
-                        _bannerAtualizando(),
+                        _barraContextual(c, w),
+                        if (mostrarEmpty)
+                          PremiumEmptyState(
+                            icon: Icons.account_balance_wallet_outlined,
+                            title: c.erro.value.isNotEmpty
+                                ? 'Consulta indisponível'
+                                : 'Sem resumo ainda',
+                            message: c.autorizado
+                                ? 'Atualize para consultar os valores. Dados indisponíveis não são apresentados como zero.'
+                                : 'Sem autorização para o financeiro privado.',
+                          )
+                        else ...[
+                          if (loading && r != null) ...[
+                            const SizedBox(height: 8),
+                            _bannerAtualizando(),
+                          ],
+                          const SizedBox(height: 10),
+                          _situacaoAgora(c, display, loading: loading),
+                          const SizedBox(height: 10),
+                          _listaContratos(c, loading: loading),
+                          if (!loading && temRecebimentos)
+                            _recebimentosProprios(c),
+                          const SizedBox(height: 10),
+                          _painelResumo(display, w, loading: loading),
+                          const SizedBox(height: 10),
+                          _resultadoECaixa(display, w, loading: loading),
+                          if (!loading && c.alertasAgrupados.isNotEmpty) ...[
+                            const SizedBox(height: 10),
+                            _alertas(c),
+                          ],
+                          if (!loading &&
+                              (c.custos.isNotEmpty ||
+                                  c.movimentos.isNotEmpty)) ...[
+                            const SizedBox(height: 10),
+                            _lancamentos(c, w),
+                          ],
+                        ],
                       ],
-                      const SizedBox(height: 10),
-                      _situacaoAgora(c, display, loading: loading),
-                      const SizedBox(height: 10),
-                      _listaContratos(c, loading: loading),
-                      if (!loading && temRecebimentos) _recebimentosProprios(c),
-                      const SizedBox(height: 10),
-                      _painelResumo(display, w, loading: loading),
-                      const SizedBox(height: 10),
-                      _resultadoECaixa(display, w, loading: loading),
-                      if (!loading && c.alertasAgrupados.isNotEmpty) ...[
-                        const SizedBox(height: 10),
-                        _alertas(c),
-                      ],
-                      if (!loading &&
-                          (c.custos.isNotEmpty || c.movimentos.isNotEmpty)) ...[
-                        const SizedBox(height: 10),
-                        _lancamentos(c, w),
-                      ],
-                    ],
-                  ],
-                ),
+                    )),
               ),
             );
           },
-        ),
+        )),
       );
     });
   }

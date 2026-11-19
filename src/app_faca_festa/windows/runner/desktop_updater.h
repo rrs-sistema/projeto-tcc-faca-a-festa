@@ -20,6 +20,7 @@ class DesktopUpdater {
   static void __cdecl OnNoUpdate();
   static void __cdecl OnReady();
   bool LaunchHelper();
+  std::wstring CachePath();
   HWND window_;
   bool initialized_ = false;
   std::mutex mutex_;

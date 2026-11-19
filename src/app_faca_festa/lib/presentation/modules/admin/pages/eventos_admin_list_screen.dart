@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/presentation/widgets/festa_scroll_area.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -41,7 +42,8 @@ class EventosAdminListScreen extends StatelessWidget {
             ),
           ],
         ),
-        body: Column(
+        body: FestaContent(
+            child: Column(
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
@@ -110,8 +112,8 @@ class EventosAdminListScreen extends StatelessWidget {
                             value: '${controller.totalFollowUp}',
                             color: AdminPalette.primary,
                             icon: Icons.flag_outlined,
-                            onTap: () => controller.definirFiltro(
-                                FiltroComercialEvento.followUp),
+                            onTap: () => controller
+                                .definirFiltro(FiltroComercialEvento.followUp),
                           ),
                         ],
                       ),
@@ -166,8 +168,8 @@ class EventosAdminListScreen extends StatelessWidget {
                           _FiltroChip(
                             label: 'Follow-up',
                             selected: filtro == FiltroComercialEvento.followUp,
-                            onTap: () => controller.definirFiltro(
-                                FiltroComercialEvento.followUp),
+                            onTap: () => controller
+                                .definirFiltro(FiltroComercialEvento.followUp),
                           ),
                         ],
                       ),
@@ -204,37 +206,42 @@ class EventosAdminListScreen extends StatelessWidget {
                 return RefreshIndicator(
                   color: AdminPalette.primary,
                   onRefresh: controller.carregarEventosComTipo,
-                  child: ListView.separated(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.fromLTRB(12, 4, 12, 20),
-                    itemCount: lista.isEmpty ? 2 : lista.length + 1,
-                    separatorBuilder: (_, __) => const SizedBox(height: 8),
-                    itemBuilder: (_, i) {
-                      if (i == 0) {
-                        return _HeatmapDemanda(
-                          celulas: heatmap,
-                          expandido: controller.mostrarHeatmap.value,
-                          onToggle: () => controller.mostrarHeatmap.toggle(),
-                        );
-                      }
-                      if (lista.isEmpty) {
-                        return AdminEmptyState(
-                          icon: Icons.filter_alt_off_rounded,
-                          title: 'Nenhum evento neste filtro',
-                          message: 'Ajuste a busca ou o filtro comercial.',
-                        );
-                      }
-                      return _EventoAdminCard(
-                        evento: lista[i - 1],
-                        controller: controller,
-                      );
-                    },
-                  ),
+                  child: FestaScrollArea(
+                      color: AdminPalette.primary,
+                      maxWidth: double.infinity,
+                      child: ListView.separated(
+                        primary: true,
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.fromLTRB(12, 4, 12, 20),
+                        itemCount: lista.isEmpty ? 2 : lista.length + 1,
+                        separatorBuilder: (_, __) => const SizedBox(height: 8),
+                        itemBuilder: (_, i) {
+                          if (i == 0) {
+                            return _HeatmapDemanda(
+                              celulas: heatmap,
+                              expandido: controller.mostrarHeatmap.value,
+                              onToggle: () =>
+                                  controller.mostrarHeatmap.toggle(),
+                            );
+                          }
+                          if (lista.isEmpty) {
+                            return AdminEmptyState(
+                              icon: Icons.filter_alt_off_rounded,
+                              title: 'Nenhum evento neste filtro',
+                              message: 'Ajuste a busca ou o filtro comercial.',
+                            );
+                          }
+                          return _EventoAdminCard(
+                            evento: lista[i - 1],
+                            controller: controller,
+                          );
+                        },
+                      )),
                 );
               }),
             ),
           ],
-        ),
+        )),
       ),
     );
   }
@@ -302,7 +309,8 @@ class _HeatmapDemanda extends StatelessWidget {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                     decoration: BoxDecoration(
-                      color: AdminPalette.warning.withValues(alpha: intensidade),
+                      color:
+                          AdminPalette.warning.withValues(alpha: intensidade),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: AdminPalette.border),
                     ),
@@ -405,9 +413,7 @@ class _EventoAdminCard extends StatelessWidget {
                 : Icons.event_available_rounded,
             color: evento.semCotacao
                 ? AdminPalette.warning
-                : (evento.emCurso
-                    ? AdminPalette.success
-                    : AdminPalette.muted),
+                : (evento.emCurso ? AdminPalette.success : AdminPalette.muted),
           ),
           const SizedBox(width: 10),
           Expanded(
