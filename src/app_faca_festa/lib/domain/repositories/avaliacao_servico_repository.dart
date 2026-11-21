@@ -5,7 +5,9 @@ abstract class AvaliacaoServicoRepository {
   Future<List<Map<String, dynamic>>> contratosAvaliaveis(
       {required String idFornecedor,
       required String idEvento,
-      String? idServico});
+      String? idServico,
+      String? idOrcamento,
+      bool detalhar = false});
   Stream<List<AvaliacaoServico>> observarAvaliacoesServico({
     required String idFornecedor,
     required String idServico,

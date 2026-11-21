@@ -37,6 +37,7 @@ class EventoController extends GetxController {
   StreamSubscription<Evento?>? _eventoDocSub;
   StreamSubscription<List<Evento>>? _eventosUsuarioSub;
   String? _idUsuarioListado;
+  String? _idEventoComModulos;
   int _geracaoSessao = 0;
   DateTime? _protegerEventoAtualAte;
 
@@ -173,7 +174,8 @@ class EventoController extends GetxController {
   Future<void> selecionarEvento(Evento evento) async {
     if (evento.idEvento.trim().isEmpty) return;
 
-    if (eventoAtual.value?.idEvento == evento.idEvento) {
+    if (eventoAtual.value?.idEvento == evento.idEvento &&
+        _idEventoComModulos == evento.idEvento) {
       _eventoAtivoStore.salvar(evento.idUsuario, evento.idEvento);
       return;
     }
@@ -323,6 +325,7 @@ class EventoController extends GetxController {
 
       await _sessionCoordinator.inicializarModulosRelacionados(evento);
       if (geracao != _geracaoSessao) return;
+      _idEventoComModulos = evento.idEvento;
 
       debugPrint(
           "✅ [EventoController] Evento '${evento.nomeEvento}' inicializado com sucesso e escutando alterações.");
@@ -335,6 +338,7 @@ class EventoController extends GetxController {
   /// 🔹 Cancela todas as escutas anteriores
   /// =====================================================
   Future<void> _cancelarEscutas() async {
+    _idEventoComModulos = null;
     await _eventoDocSub?.cancel();
     await _sessionCoordinator.cancelar();
 

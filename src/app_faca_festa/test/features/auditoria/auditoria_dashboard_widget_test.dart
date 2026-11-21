@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 
@@ -63,6 +64,55 @@ void main() {
     expect(find.text('Ver painel completo'), findsOneWidget);
     expect(find.text('Atividade nos últimos 7 dias'), findsNothing);
   });
+
+  for (final width in [390.0, 900.0, 1360.0]) {
+    testWidgets('expanded panel preserves full labels at width $width',
+        (tester) async {
+      await tester.binding.setSurfaceSize(Size(width, 1000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      final controller = AuditoriaController(
+        gerenciarAuditoria: GerenciarAuditoria(_AuditoriaRepositoryFake()),
+        escopoAdmin: true,
+      );
+      controller.dashboardExpandido.value = true;
+      controller.eventos.value = [
+        AuditoriaEvento(
+          id: 'long-label',
+          nivel: 'INFO',
+          resumo: 'Login realizado',
+          acao: 'LOGIN_REALIZADO',
+          area: 'ORCAMENTO',
+          atorNome: 'Administrador com nome completo muito extenso',
+          criadoEm: DateTime.now(),
+        ),
+      ];
+      await tester.pumpWidget(MaterialApp(
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context).copyWith(
+            textScaler: const TextScaler.linear(1.5),
+          ),
+          child: child!,
+        ),
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child:
+                AuditoriaDashboardPanel(controller: controller, theme: _theme),
+          ),
+        ),
+      ));
+      await tester.pump();
+      expect(tester.takeException(), isNull);
+      for (final paragraph in tester.renderObjectList<RenderParagraph>(
+        find.descendant(
+          of: find.byType(AuditoriaDashboardPanel),
+          matching: find.byType(RichText),
+        ),
+      )) {
+        expect(paragraph.didExceedMaxLines, isFalse,
+            reason: paragraph.text.toPlainText());
+      }
+    });
+  }
 
   testWidgets('event card opens full detail with copy evidence action',
       (tester) async {
@@ -142,6 +192,8 @@ void main() {
   });
 
   testWidgets('dedicated dashboard renders audit indicators', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1360, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
     final repository = _AuditoriaRepositoryFake()
       ..eventos = [
         AuditoriaEvento(
@@ -171,6 +223,12 @@ void main() {
 
     await tester.pumpWidget(
       GetMaterialApp(
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context).copyWith(
+            textScaler: const TextScaler.linear(1.5),
+          ),
+          child: child!,
+        ),
         getPages: [
           GetPage(
             name: '/admin/auditoria',
@@ -188,6 +246,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(tester.takeException(), isNull);
     expect(find.text('Dashboard de auditoria'), findsOneWidget);
     expect(find.text('Últimos 15 dias'), findsOneWidget);
     expect(find.text('Saúde operacional'), findsOneWidget);

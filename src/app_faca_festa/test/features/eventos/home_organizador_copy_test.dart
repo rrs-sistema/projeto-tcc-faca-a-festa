@@ -17,6 +17,25 @@ void main() {
       expect(HomeOrganizadorCopy.convidadosValor(3, 12), '3 de 12');
     });
 
+    test('não inventa resposta pendente sem gente na lista', () {
+      expect(
+        HomeOrganizadorCopy.convidadosPendentes(0, naLista: 0),
+        isNull,
+      );
+      expect(
+        HomeOrganizadorCopy.convidadosPendentes(null, naLista: null),
+        isNull,
+      );
+      expect(
+        HomeOrganizadorCopy.convidadosPendentes(0, naLista: 4),
+        'Nenhuma resposta pendente',
+      );
+      expect(
+        HomeOrganizadorCopy.convidadosPendentes(2, naLista: 5),
+        '2 aguardando resposta',
+      );
+    });
+
     test('pedidos de preço no plural', () {
       expect(HomeOrganizadorCopy.cotacoesValor(0), 'Nenhum pedido');
       expect(HomeOrganizadorCopy.cotacoesValor(1), '1 pedido');

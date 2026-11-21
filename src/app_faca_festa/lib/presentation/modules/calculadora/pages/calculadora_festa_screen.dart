@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/domain/services/jornada_cadastro_festa.dart';
 import 'package:app_faca_festa/presentation/widgets/festa_scroll_area.dart';
 import '../widgets/calculadora_planejador_dialog.dart';
 import '../widgets/calculadora_contexto_card.dart';
@@ -202,8 +203,14 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen>
       .toList();
   int _passo = 0;
   bool _preparada = false;
-  static const _titulosPassos = ['Pessoas', 'A festa', 'Sugestões'];
   final GlobalKey _chavePublico = GlobalKey(debugLabel: 'base_calculo_publico');
+
+  bool get _estimativaDoCadastro =>
+      calculadoraController.estimativaSemEvento.value;
+
+  List<String> get _titulosPassos => JornadaCadastroFesta.passosDaCalculadora(
+        estimativaSemEvento: _estimativaDoCadastro,
+      );
 
   @override
   void initState() {
@@ -956,34 +963,45 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen>
                                               _buildDuracaoCard(primary),
                                             ],
                                             if (_passo == 2) ...[
-                                              CalculadoraPlanoEventoCard(
-                                                controller:
-                                                    calculadoraController,
-                                                cardapios: cardapioController,
-                                                onPublico: _mostrarPessoas,
-                                                onCriarInicial:
-                                                    _criarCardapioInicial,
-                                                onAjustar: (item) {
-                                                  idCardapioSelecionado.value =
-                                                      item.idCardapio;
-                                                  _sincronizarCardapio();
-                                                  _editarRegra(item: item);
-                                                },
-                                                onAbrirDestino: (id) {
-                                                  idCardapioSelecionado.value =
-                                                      id;
-                                                  _sincronizarCardapio();
-                                                  showDialog<void>(
-                                                      context: context,
-                                                      builder: (_) => Theme(
-                                                          data: themeController
-                                                              .materialTheme,
-                                                          child: CalculadoraPropostaDialog(
-                                                              controller:
-                                                                  calculadoraController)));
-                                                },
-                                              ),
-                                              const SizedBox(height: 10),
+                                              if (JornadaCadastroFesta
+                                                  .mostraCardapioNaCalculadora(
+                                                estimativaSemEvento:
+                                                    _estimativaDoCadastro,
+                                              ))
+                                                CalculadoraPlanoEventoCard(
+                                                  controller:
+                                                      calculadoraController,
+                                                  cardapios: cardapioController,
+                                                  onPublico: _mostrarPessoas,
+                                                  onCriarInicial:
+                                                      _criarCardapioInicial,
+                                                  onAjustar: (item) {
+                                                    idCardapioSelecionado
+                                                            .value =
+                                                        item.idCardapio;
+                                                    _sincronizarCardapio();
+                                                    _editarRegra(item: item);
+                                                  },
+                                                  onAbrirDestino: (id) {
+                                                    idCardapioSelecionado
+                                                        .value = id;
+                                                    _sincronizarCardapio();
+                                                    showDialog<void>(
+                                                        context: context,
+                                                        builder: (_) => Theme(
+                                                            data: themeController
+                                                                .materialTheme,
+                                                            child: CalculadoraPropostaDialog(
+                                                                controller:
+                                                                    calculadoraController)));
+                                                  },
+                                                ),
+                                              if (JornadaCadastroFesta
+                                                  .mostraCardapioNaCalculadora(
+                                                estimativaSemEvento:
+                                                    _estimativaDoCadastro,
+                                              ))
+                                                const SizedBox(height: 10),
                                               if (calculadoraController
                                                   .usandoContextoHistorico
                                                   .value) ...[
@@ -1007,30 +1025,44 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen>
                                                         ])),
                                                 const SizedBox(height: 14),
                                               ],
-                                              _buildCardapioCard(primary),
-                                              if (!calculadoraController
-                                                      .estimativaSemEvento
-                                                      .value &&
-                                                  !calculadoraController
-                                                      .usandoContextoHistorico
-                                                      .value &&
-                                                  _cardapiosDaFesta.isNotEmpty)
-                                                Padding(
-                                                    padding:
-                                                        const EdgeInsets.symmetric(
-                                                            vertical: 8),
-                                                    child: FilledButton.tonalIcon(
-                                                        onPressed: () => showDialog<bool>(
-                                                            context: context,
-                                                            barrierDismissible:
-                                                                false,
-                                                            builder: (_) => Theme(
-                                                                data: themeController
-                                                                    .materialTheme,
-                                                                child: CalculadoraExecucaoDialog(
-                                                                    controller: calculadoraController))),
-                                                        icon: const Icon(Icons.playlist_add_check),
-                                                        label: const Text('Organizar compras e tarefas'))),
+                                              if (JornadaCadastroFesta
+                                                  .mostraCardapioNaCalculadora(
+                                                estimativaSemEvento:
+                                                    _estimativaDoCadastro,
+                                              )) ...[
+                                                _buildCardapioCard(primary),
+                                                if (!calculadoraController
+                                                        .usandoContextoHistorico
+                                                        .value &&
+                                                    _cardapiosDaFesta
+                                                        .isNotEmpty)
+                                                  Padding(
+                                                      padding: const EdgeInsets
+                                                          .symmetric(
+                                                          vertical: 8),
+                                                      child: FilledButton.tonalIcon(
+                                                          onPressed: () => showDialog<bool>(
+                                                              context: context,
+                                                              barrierDismissible:
+                                                                  false,
+                                                              builder: (_) => Theme(
+                                                                  data: themeController
+                                                                      .materialTheme,
+                                                                  child: CalculadoraExecucaoDialog(
+                                                                      controller:
+                                                                          calculadoraController))),
+                                                          icon: const Icon(Icons
+                                                              .playlist_add_check),
+                                                          label: const Text(
+                                                              'Organizar compras e tarefas'))),
+                                              ] else
+                                                const Padding(
+                                                  padding: EdgeInsets.only(
+                                                      bottom: 10),
+                                                  child: Text(
+                                                    'Esta estimativa usa o número de pessoas. O cardápio da festa é criado depois, quando a festa já estiver salva.',
+                                                  ),
+                                                ),
                                               const SizedBox(height: 10),
                                               _buildDiagnostico(primary),
                                               const SizedBox(height: 14),
@@ -1051,7 +1083,12 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen>
                                                   calculadoraController
                                                       .compromissosOrcamento
                                                       .isNotEmpty)
-                                                _buildProximasAcoes(primary),
+                                                if (JornadaCadastroFesta
+                                                    .mostraCardapioNaCalculadora(
+                                                  estimativaSemEvento:
+                                                      _estimativaDoCadastro,
+                                                ))
+                                                  _buildProximasAcoes(primary),
                                               const SizedBox(height: 10),
                                               if (calculadoraController
                                                       .analisandoIA.value ||
@@ -1066,10 +1103,12 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen>
                                                 const SizedBox(height: 10),
                                               ],
                                               Text(
-                                                calculadoraController
-                                                        .possuiResultado
-                                                    ? 'Confira as porções antes de aplicar ao cardápio.'
-                                                    : 'Adicione ou selecione um item para liberar as ações.',
+                                                _estimativaDoCadastro
+                                                    ? 'Guarde a estimativa e volte ao cadastro para salvar a festa.'
+                                                    : calculadoraController
+                                                            .possuiResultado
+                                                        ? 'Confira as porções antes de aplicar ao cardápio.'
+                                                        : 'Adicione ou selecione um item para liberar as ações.',
                                                 style: GoogleFonts.poppins(
                                                   fontSize: 12,
                                                   height: 1.35,
@@ -1079,8 +1118,14 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen>
                                               ),
                                               const SizedBox(height: 12),
                                               _buildAcoes(primary),
-                                              const SizedBox(height: 10),
-                                              _buildSimulacoesCard(primary),
+                                              if (JornadaCadastroFesta
+                                                  .mostraCardapioNaCalculadora(
+                                                estimativaSemEvento:
+                                                    _estimativaDoCadastro,
+                                              )) ...[
+                                                const SizedBox(height: 10),
+                                                _buildSimulacoesCard(primary),
+                                              ],
                                             ],
                                             const SizedBox(height: 12),
                                             if (_passo < 2)

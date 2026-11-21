@@ -146,7 +146,9 @@ class _AvaliacaoServicoRepositoryFake implements AvaliacaoServicoRepository {
   Future<List<Map<String, dynamic>>> contratosAvaliaveis(
           {required String idFornecedor,
           required String idEvento,
-          String? idServico}) async =>
+          String? idServico,
+          String? idOrcamento,
+          bool detalhar = false}) async =>
       [];
 
   final _servicoController = StreamController<List<AvaliacaoServico>>();

@@ -398,9 +398,20 @@ void main() {
   testWidgets('fila exige autorização específica', (t) async {
     final g = _Gateway(), s = _Store(), c = _criar(g, s, mod: true);
     await montar(t, c, mod: true);
-    expect(find.text('Permissão específica de moderação necessária.'),
-        findsOneWidget);
+    expect(find.text('Acesso restrito à moderação'), findsOneWidget);
+    expect(find.textContaining('Solicite essa permissão'), findsOneWidget);
+    expect(find.byIcon(Icons.lock_outline_rounded), findsOneWidget);
+    expect(find.text('Tentar novamente'), findsNothing);
     expect(c.casos, isEmpty);
+    g.moderar = true;
+    await t.runAsync(() async {
+      await t.tap(find.text('Verificar acesso'));
+      await Future<void>.delayed(Duration.zero);
+    });
+    await t.pumpAndSettle();
+    expect(c.autorizado.value, true);
+    expect(c.permissaoModeracaoAusente.value, false);
+    expect(find.text('Acesso restrito à moderação'), findsNothing);
   });
   testWidgets(
       'loading e semântica informam amostra sem ocultar indisponibilidade',

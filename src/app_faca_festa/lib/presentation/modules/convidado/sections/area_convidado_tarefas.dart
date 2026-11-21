@@ -20,10 +20,10 @@ extension _AreaConvidadoTarefasSection on _AreaConvidadoHomeScreenState {
       if (tarefas.isEmpty) {
         return FestaEmptyState(
           icon: Icons.task_alt_rounded,
-          title: 'Nenhuma tarefa sua',
+          title: 'Ainda não há nada para você nesta festa',
           message: visita
-              ? 'Quando o anfitrião atribuir algo a você, aparece aqui. Entre para marcar o andamento.'
-              : 'Se o anfitrião atribuir algo a você, aparece aqui.',
+              ? 'Quando o anfitrião atribuir uma tarefa, ela aparece aqui. Entre se quiser marcar o andamento.'
+              : 'Quando o anfitrião atribuir uma tarefa, ela aparece aqui.',
           actionLabel: visita ? 'Entrar ou criar conta' : null,
           actionIcon: Icons.login_rounded,
           onAction: visita ? _abrirContaConvidado : null,
@@ -66,10 +66,10 @@ extension _AreaConvidadoTarefasSection on _AreaConvidadoHomeScreenState {
     };
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 10), // 🔹 Margem reduzida
+      margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16), // 🔹 Raio menor
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: primary.withValues(alpha: 0.1)),
         boxShadow: [
           BoxShadow(
@@ -80,7 +80,7 @@ extension _AreaConvidadoTarefasSection on _AreaConvidadoHomeScreenState {
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(12), // 🔹 Padding reduzido
+        padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -93,8 +93,7 @@ extension _AreaConvidadoTarefasSection on _AreaConvidadoHomeScreenState {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   padding: const EdgeInsets.all(8),
-                  child: Icon(iconeStatus,
-                      color: corStatus, size: 20), // 🔹 Ícone menor
+                  child: Icon(iconeStatus, color: corStatus, size: 20),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -104,7 +103,7 @@ extension _AreaConvidadoTarefasSection on _AreaConvidadoHomeScreenState {
                       Text(
                         tarefa.titulo,
                         style: GoogleFonts.poppins(
-                          fontSize: 14, // 🔹 Fonte menor
+                          fontSize: 14,
                           fontWeight: FontWeight.w700,
                           color: Colors.black87,
                         ),
@@ -112,7 +111,7 @@ extension _AreaConvidadoTarefasSection on _AreaConvidadoHomeScreenState {
                       Text(
                         tarefa.status.label,
                         style: GoogleFonts.poppins(
-                          fontSize: 11, // 🔹 Fonte menor
+                          fontSize: 11,
                           fontWeight: FontWeight.w600,
                           color: corStatus,
                         ),

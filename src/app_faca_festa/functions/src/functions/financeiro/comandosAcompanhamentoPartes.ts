@@ -31,8 +31,14 @@ function inteiro(v: unknown, nome: string): number {
   return v;
 }
 
-/** Sem gateway/saque/garantia nesta entrega. */
-const INTEGRACAO = {
+/** Pix Asaas cobra o organizador. Saque e garantia continuam fora. */
+const INTEGRACAO_ORGANIZADOR = {
+  temGatewayPagamento: true,
+  temSaque: false,
+  temGarantia: false,
+};
+
+const INTEGRACAO_FORNECEDOR = {
   temGatewayPagamento: false,
   temSaque: false,
   temGarantia: false,
@@ -50,7 +56,7 @@ export const consultarAcompanhamentoOrganizadorFn = onCall(
       idEvento,
       uid: perfil.uid,
     });
-    const acoes = rotulosAcaoPermitidos(INTEGRACAO);
+    const acoes = rotulosAcaoPermitidos(INTEGRACAO_ORGANIZADOR);
     return {
       ok: true,
       ...r,
@@ -59,7 +65,7 @@ export const consultarAcompanhamentoOrganizadorFn = onCall(
         (a) => !acaoExibidaEhSegura(a, acoes),
       ),
       aviso_integracao:
-        "Não há cobrança/saque automático. Use declaração e comprovante; upload não confirma sozinho.",
+        "O Pix Asaas confirma o pagamento à plataforma. Declaração manual não confirma recebimento nem libera repasse.",
     };
   },
 );
@@ -80,7 +86,7 @@ export const consultarAcompanhamentoFornecedorFn = onCall(
     const r = await listarAcompanhamentoFornecedor(admin.firestore(), {
       idFornecedor,
     });
-    const acoes = rotulosAcaoPermitidos(INTEGRACAO);
+    const acoes = rotulosAcaoPermitidos(INTEGRACAO_FORNECEDOR);
     return {
       ok: true,
       ...r,

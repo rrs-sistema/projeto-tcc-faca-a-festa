@@ -36,7 +36,7 @@ enum StatusCotacao {
       case StatusCotacao.parcial:
         return 'Já há preço. Abra Ver detalhes para comparar e contratar, ou aguarde mais respostas.';
       case StatusCotacao.concluida:
-        return 'Contrato criado. Toque em Declarar pagamento / acompanhar.';
+        return 'Contrato criado. Toque em Pagar com Pix / acompanhar.';
       case StatusCotacao.cancelada:
         return 'Este pedido foi cancelado.';
       case StatusCotacao.perdeuCotacao:

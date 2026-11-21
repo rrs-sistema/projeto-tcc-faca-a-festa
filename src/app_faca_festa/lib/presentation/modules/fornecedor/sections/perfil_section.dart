@@ -11,9 +11,15 @@ class PerfilSection extends StatelessWidget {
   const PerfilSection({
     super.key,
     required this.controller,
+    this.resumido = false,
+    this.onDetalhes,
+    this.onGerenciarCatalogo,
   });
 
   final FornecedorController controller;
+  final bool resumido;
+  final VoidCallback? onDetalhes;
+  final VoidCallback? onGerenciarCatalogo;
 
   @override
   Widget build(BuildContext context) {
@@ -39,6 +45,32 @@ class PerfilSection extends StatelessWidget {
       final comPreco = servicos.length - (avaliacao?.semPreco ?? 0);
       final semDescricao = avaliacao?.semDescricao ?? 0;
       final score = indisponivel ? null : avaliacao?.score;
+
+      if (resumido) {
+        return PremiumSectionShell(
+          title: 'Prepare seu catálogo',
+          subtitle:
+              'Mantenha seu perfil e suas ofertas prontos para os clientes.',
+          icon: Icons.storefront_outlined,
+          color: FornecedorPremiumPalette.primary,
+          trailing: _ScoreBadge(score: score),
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(
+                indisponivel
+                    ? 'Aguardando os dados do catálogo.'
+                    : avaliacao!.pendentes.isEmpty
+                        ? 'Seu catálogo atende a todos os critérios de preparação.'
+                        : avaliacao.pendentes.first.acao,
+                style: Theme.of(context).textTheme.bodyMedium),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+                onPressed: onDetalhes,
+                icon: const Icon(Icons.arrow_forward_rounded, size: 18),
+                label: const Text('Revisar catálogo')),
+          ]),
+        );
+      }
 
       final cards = [
         _CatalogMetric(
@@ -72,11 +104,22 @@ class PerfilSection extends StatelessWidget {
       ];
 
       return PremiumSectionShell(
-        title: 'Catálogo inteligente',
+        title: 'Qualidade do catálogo',
         subtitle: 'Preparação do perfil comercial e das ofertas ativas.',
         icon: Icons.storefront_outlined,
         color: FornecedorPremiumPalette.purple,
-        trailing: _ScoreBadge(score: score),
+        trailing: Wrap(
+            spacing: 12,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              _ScoreBadge(score: score),
+              if (onGerenciarCatalogo != null)
+                OutlinedButton.icon(
+                    onPressed: onGerenciarCatalogo,
+                    icon: const Icon(Icons.edit_outlined, size: 18),
+                    label: const Text('Gerenciar ofertas')),
+            ]),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -249,15 +292,23 @@ class _ServicoMiniCard extends StatelessWidget {
                   : FornecedorPremiumPalette.rose.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(15),
             ),
-            child: Icon(
-              possuiFoto
-                  ? Icons.image_rounded
-                  : Icons.image_not_supported_outlined,
-              color: possuiFoto
-                  ? FornecedorPremiumPalette.primary
-                  : FornecedorPremiumPalette.rose,
-              size: 20,
-            ),
+            child: possuiFoto
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(15),
+                    child: Image.network(imagem,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => const Icon(
+                            Icons.broken_image_outlined,
+                            color: FornecedorPremiumPalette.muted)))
+                : Icon(
+                    possuiFoto
+                        ? Icons.image_rounded
+                        : Icons.image_not_supported_outlined,
+                    color: possuiFoto
+                        ? FornecedorPremiumPalette.primary
+                        : FornecedorPremiumPalette.rose,
+                    size: 20,
+                  ),
           ),
           const SizedBox(width: 10),
           Expanded(

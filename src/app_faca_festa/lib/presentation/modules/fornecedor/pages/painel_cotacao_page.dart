@@ -533,7 +533,7 @@ class PainelCotacaoPage extends StatelessWidget {
                         border: Border.all(color: Colors.blue.shade200),
                       ),
                       child: Text(
-                        'Contrato fechado. Declare o pagamento à plataforma '
+                        'Contrato fechado. Pague o serviço à plataforma com Pix '
                         'e acompanhe a execução.',
                         style: GoogleFonts.poppins(
                           fontSize: 11.5,
@@ -545,8 +545,8 @@ class PainelCotacaoPage extends StatelessWidget {
                     ),
                     _buildAcaoCotacao(
                       Colors.blue.shade700,
-                      'Declarar pagamento / acompanhar',
-                      Icons.account_balance_wallet_outlined,
+                      'Pagar com Pix / acompanhar',
+                      Icons.pix_rounded,
                       () {
                         final idEvento = cotacao.idEvento.trim().isNotEmpty
                             ? cotacao.idEvento.trim()

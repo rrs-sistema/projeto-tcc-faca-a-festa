@@ -5,12 +5,10 @@ import 'package:get/get.dart';
 
 import 'package:app_faca_festa/core/utils/biblioteca.dart';
 import 'package:app_faca_festa/core/utils/numeric_input.dart';
-import 'package:app_faca_festa/domain/entities/avaliacao.dart';
-import 'package:app_faca_festa/domain/entities/cotacao.dart';
+import 'package:app_faca_festa/presentation/modules/avaliacao/pages/avaliar_contratacao_sheet.dart';
 import 'package:app_faca_festa/domain/entities/cotacao_chat.dart';
-import 'package:app_faca_festa/domain/entities/fornecedor.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_cotacoes.dart';
-import 'package:app_faca_festa/presentation/modules/avaliacao/pages/enviar_avaliacao_dialog.dart';
+import 'package:app_faca_festa/domain/entities/cotacao.dart';
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
 import 'package:app_faca_festa/presentation/modules/avaliacao/controllers/avaliacao_servico_controller.dart';
 import 'package:app_faca_festa/presentation/modules/cotacao/controllers/cotacao_controller.dart';
@@ -319,8 +317,8 @@ class _DetalhesCotacaoContent extends StatelessWidget {
                                     const SizedBox(width: 8),
                                     Expanded(
                                       child: Text(
-                                        'Contrato criado. Declare o pagamento '
-                                        'à plataforma e acompanhe a execução.',
+                                        'Contrato criado. Pague com Pix à '
+                                        'plataforma e acompanhe a execução.',
                                         style: GoogleFonts.poppins(
                                           fontSize: 12,
                                           height: 1.35,
@@ -338,11 +336,9 @@ class _DetalhesCotacaoContent extends StatelessWidget {
                                     cotacao: cotacao,
                                     eventoController: eventoController,
                                   ),
-                                  icon: const Icon(
-                                      Icons.account_balance_wallet_outlined,
-                                      size: 18),
+                                  icon: const Icon(Icons.pix_rounded, size: 18),
                                   label: const Text(
-                                      'Declarar pagamento / acompanhar'),
+                                      'Pagar com Pix / acompanhar'),
                                   style: FilledButton.styleFrom(
                                     backgroundColor: Colors.blue.shade700,
                                     foregroundColor: Colors.white,
@@ -613,44 +609,6 @@ class _DetalhesCotacaoContent extends StatelessWidget {
                                         runSpacing: 8,
                                         alignment: WrapAlignment.end,
                                         children: [
-                                          if ([
-                                            'respondido',
-                                            'respondida',
-                                            'recusado',
-                                            'cancelado'
-                                          ].contains(status))
-                                            FutureBuilder<bool>(
-                                              future: avaliacaoController
-                                                  .podeAvaliarCotacao(
-                                                idFornecedor: idFornecedor,
-                                                idEvento: cotacao.idEvento,
-                                                idUsuario: appController
-                                                    .usuarioLogado
-                                                    .value!
-                                                    .idUsuario,
-                                              ),
-                                              builder: (context, snap) {
-                                                if (snap.data == true) {
-                                                  return _btnAcao(
-                                                      Icons.star_rounded,
-                                                      "Avaliar",
-                                                      Colors.amber.shade700,
-                                                      () =>
-                                                          getDialogAvaliacaoFornecedor(
-                                                            fornecedor:
-                                                                fornecedor,
-                                                            appController:
-                                                                appController,
-                                                            eventoController:
-                                                                eventoController,
-                                                            avaliacaoController:
-                                                                avaliacaoController,
-                                                            theme: theme,
-                                                          ));
-                                                }
-                                                return const SizedBox.shrink();
-                                              },
-                                            ),
                                           if (status == 'respondido' ||
                                               status == 'respondida')
                                             _btnAcao(
@@ -667,10 +625,27 @@ class _DetalhesCotacaoContent extends StatelessWidget {
                                           if (status == 'fechado' ||
                                               status == 'fechada' ||
                                               status == 'concluida' ||
-                                              status == 'concluido')
+                                              status == 'concluido') ...[
                                             _btnAcao(
-                                                Icons.payments_outlined,
-                                                'Declarar pagamento',
+                                                Icons.star_rounded,
+                                                'Avaliar contratação',
+                                                Colors.amber.shade700, () {
+                                              final idEvento =
+                                                  cotacao.idEvento.trim();
+                                              if (idEvento.isEmpty) return;
+                                              mostrarAvaliarContratacao(
+                                                context,
+                                                idFornecedor: idFornecedor,
+                                                idEvento: idEvento,
+                                                nomeFornecedor:
+                                                    fornecedor.razaoSocial,
+                                                controller: avaliacaoController,
+                                                themeController: theme,
+                                              );
+                                            }),
+                                            _btnAcao(
+                                                Icons.pix_rounded,
+                                                'Pagar com Pix',
                                                 Colors.blue.shade700,
                                                 () =>
                                                     _abrirAcompanhamentoOrganizador(
@@ -678,6 +653,7 @@ class _DetalhesCotacaoContent extends StatelessWidget {
                                                   eventoController:
                                                       eventoController,
                                                 )),
+                                          ],
                                           if (data.chatAberto)
                                             _btnAcao(
                                                 Icons.chat_rounded,
@@ -867,31 +843,6 @@ Widget _buildStatusBadge(StatusCotacao status, {bool invertColors = false}) {
                 color: invertColors ? Colors.white : cor,
                 fontWeight: FontWeight.w700)),
       ],
-    ),
-  );
-}
-
-void getDialogAvaliacaoFornecedor({
-  required Fornecedor fornecedor,
-  required AppController appController,
-  required EventoController eventoController,
-  required AvaliacaoServicoController avaliacaoController,
-  required EventThemeController theme,
-}) {
-  final usuario = appController.usuarioLogado.value!;
-  final evento = eventoController.eventoAtualEntidade!;
-
-  Get.dialog(
-    EnviarAvaliacaoDialog(
-      idFornecedor: fornecedor.idFornecedor,
-      tipo: TipoAvaliacao.fornecedor,
-      idServico: null,
-      idCliente: usuario.idUsuario,
-      nomeCliente: usuario.nome,
-      idEvento: evento.idEvento,
-      nomeEventoAtual: evento.nomeEvento,
-      controller: avaliacaoController,
-      themeController: theme,
     ),
   );
 }

@@ -1,3 +1,4 @@
+import 'pedido_resumo_card.dart';
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
 import 'package:app_faca_festa/presentation/modules/fornecedor/pages/chat/chat_mensagens_page.dart';
 import 'package:app_faca_festa/presentation/modules/fornecedor/components/acesso_atendimento.dart';
@@ -34,12 +35,18 @@ class SolicitacoesSection extends StatefulWidget {
     required this.solicitacoesController,
     required this.themeController,
     required this.cotacoes,
+    this.resumido = false,
+    this.onVerTodos,
+    this.clock,
   });
 
   final FornecedorController fornecedorController;
   final SolicitacoesController solicitacoesController;
   final EventThemeController themeController;
   final GerenciarCotacoes cotacoes;
+  final bool resumido;
+  final VoidCallback? onVerTodos;
+  final DateTime Function()? clock;
 
   @override
   State<SolicitacoesSection> createState() => _SolicitacoesSectionState();
@@ -48,6 +55,36 @@ class SolicitacoesSection extends StatefulWidget {
 class _SolicitacoesSectionState extends State<SolicitacoesSection> {
   String? _fornecedorInicializado;
   _FiltroPedidos _filtro = _FiltroPedidos.todos;
+
+  final _buscaController = TextEditingController();
+  String _busca = '';
+  String _categoria = '';
+  int _periodo = 0;
+  int _ordenacao = 0;
+  int _pagina = 0;
+  static const _porPagina = 20;
+
+  @override
+  void dispose() {
+    _buscaController.dispose();
+    super.dispose();
+  }
+
+  void _alterar(VoidCallback alteracao) => setState(() {
+        alteracao();
+        _pagina = 0;
+      });
+
+  void _mudarPagina(int pagina) {
+    setState(() => _pagina = pagina);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      Scrollable.ensureVisible(context,
+          alignment: .12,
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOut);
+    });
+  }
 
   FornecedorController get fornecedorController => widget.fornecedorController;
   SolicitacoesController get solicitacoesController =>
@@ -111,7 +148,47 @@ class _SolicitacoesSectionState extends State<SolicitacoesSection> {
       }
 
       final todas = solicitacoesController.solicitacoes.toList();
-      final lista = _filtrar(todas);
+      final categorias = todas
+          .map((c) => c.categoriaNome ?? '')
+          .where((c) => c.isNotEmpty)
+          .toSet()
+          .toList()
+        ..sort();
+      final categoriaAtiva = categorias.contains(_categoria) ? _categoria : '';
+      final limiteData = _periodo == 0
+          ? null
+          : DateTime.now().subtract(Duration(days: _periodo));
+      final lista = (widget.resumido
+              ? todas.where(_pedidoNovo)
+              : _filtrar(todas))
+          .where((c) =>
+              widget.resumido ||
+              (('${c.nomeUsuarioSolicitante} ${c.id} ${c.descricao ?? ''} ${c.categoriaNome ?? ''} '
+                          '${c.servicos.map((s) => s.nome).join(' ')}')
+                      .toLowerCase()
+                      .contains(_busca) &&
+                  (categoriaAtiva.isEmpty ||
+                      c.categoriaNome == categoriaAtiva) &&
+                  (limiteData == null || !c.dataCadastro.isBefore(limiteData))))
+          .toList();
+      lista.sort((a, b) {
+        if (widget.resumido || _ordenacao == 1) {
+          final data = a.dataCadastro.compareTo(b.dataCadastro);
+          return data != 0 ? data : a.id.compareTo(b.id);
+        }
+        if (_ordenacao == 2) {
+          final valor =
+              (b.valorEstimadoTotal ?? 0).compareTo(a.valorEstimadoTotal ?? 0);
+          if (valor != 0) return valor;
+        }
+        final data = b.dataCadastro.compareTo(a.dataCadastro);
+        return data != 0 ? data : a.id.compareTo(b.id);
+      });
+      final paginas = ((lista.length / _porPagina).ceil()).clamp(1, 1000000);
+      final pagina = _pagina.clamp(0, paginas - 1);
+      final visiveis = widget.resumido
+          ? lista.take(5).toList()
+          : lista.skip(pagina * _porPagina).take(_porPagina).toList();
       final aguardando = todas.where(_pedidoNovo).length;
       final finalizadas = todas
           .where((c) => ['perdido', 'recusado', 'cancelado']
@@ -125,66 +202,223 @@ class _SolicitacoesSectionState extends State<SolicitacoesSection> {
         total: todas.length,
         aguardando: aguardando,
         finalizadas: finalizadas,
-        quentes: quentes,
-        onAtualizarIa: todas.isEmpty
+        quentes: widget.resumido ? 0 : quentes,
+        resumido: widget.resumido,
+        onAtualizarIa: widget.resumido || todas.isEmpty
             ? null
             : () => fornecedorController.ai
                 .carregarAiDasSolicitacoesPendentes(forceRefresh: true),
-        filtro: _filtro,
-        onFiltro: (f) => setState(() => _filtro = f),
-        child: lista.isEmpty
-            ? _MensagemEstado(
-                icon: Icons.inbox_outlined,
-                title: todas.isEmpty
-                    ? 'Nenhum pedido de preço'
-                    : 'Nenhum pedido neste filtro',
-                message: todas.isEmpty
-                    ? 'Quando um organizador pedir preço, as oportunidades aparecem aqui.'
-                    : 'Troque o filtro acima para ver outros pedidos.',
-                color: const Color(0xFF6366F1),
-              )
-            : LayoutBuilder(
-                builder: (context, constraints) {
-                  final usarDuasColunas = constraints.maxWidth >= 860;
-
-                  if (!usarDuasColunas) {
-                    return ListView.separated(
-                      itemCount: lista.length,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      separatorBuilder: (_, __) => const SizedBox(height: 9),
-                      itemBuilder: (context, index) =>
-                          _buildCotacaoCard(context, lista[index], index),
-                    );
-                  }
-
-                  // Grid 2 colunas com altura mínima comum (sem IntrinsicHeight:
-                  // LayoutBuilder no card não calcula intrínseco).
-                  const gap = 12.0;
-                  final itemWidth = (constraints.maxWidth - gap) / 2;
-                  return Wrap(
-                    spacing: gap,
-                    runSpacing: gap,
-                    alignment: WrapAlignment.start,
-                    crossAxisAlignment: WrapCrossAlignment.start,
-                    children: List.generate(lista.length, (index) {
-                      return SizedBox(
-                        width: itemWidth,
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(minHeight: 168),
-                          child: _buildCotacaoCard(
-                            context,
-                            lista[index],
-                            index,
-                          ),
-                        ),
-                      );
-                    }),
-                  );
-                },
+        filtro: widget.resumido ? null : _filtro,
+        onFiltro: (f) => _alterar(() => _filtro = f),
+        child:
+            Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          if (!widget.resumido) ...[
+            TextField(
+              controller: _buscaController,
+              onChanged: (v) => _alterar(() => _busca = v.trim().toLowerCase()),
+              decoration: InputDecoration(
+                labelText: 'Buscar por cliente, serviço ou pedido',
+                prefixIcon: const Icon(Icons.search_rounded),
+                suffixIcon: _busca.isEmpty
+                    ? null
+                    : IconButton(
+                        tooltip: 'Limpar busca',
+                        icon: const Icon(Icons.close_rounded),
+                        onPressed: () => _alterar(() {
+                              _busca = '';
+                              _buscaController.clear();
+                            })),
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
               ),
+            ),
+            const SizedBox(height: 12),
+            LayoutBuilder(builder: (context, constraints) {
+              final largura = constraints.maxWidth < 620 ||
+                      MediaQuery.textScalerOf(context).scale(14) > 21
+                  ? constraints.maxWidth
+                  : (constraints.maxWidth - 24) / 3;
+              return Wrap(spacing: 12, runSpacing: 12, children: [
+                SizedBox(
+                    width: largura,
+                    child: DropdownButtonFormField<String>(
+                      value: categorias.contains(_categoria) ? _categoria : '',
+                      isExpanded: true,
+                      decoration: const InputDecoration(labelText: 'Categoria'),
+                      items: [
+                        const DropdownMenuItem(
+                            value: '', child: Text('Todas as categorias')),
+                        for (final c in categorias)
+                          DropdownMenuItem(value: c, child: Text(c))
+                      ],
+                      onChanged: (v) => _alterar(() => _categoria = v ?? ''),
+                    )),
+                SizedBox(
+                    width: largura,
+                    child: DropdownButtonFormField<int>(
+                      value: _periodo,
+                      isExpanded: true,
+                      decoration:
+                          const InputDecoration(labelText: 'Recebimento'),
+                      items: const [
+                        DropdownMenuItem(
+                            value: 0, child: Text('Todo o período')),
+                        DropdownMenuItem(
+                            value: 7, child: Text('Últimos 7 dias')),
+                        DropdownMenuItem(
+                            value: 30, child: Text('Últimos 30 dias')),
+                        DropdownMenuItem(
+                            value: 90, child: Text('Últimos 90 dias'))
+                      ],
+                      onChanged: (v) => _alterar(() => _periodo = v ?? 0),
+                    )),
+                SizedBox(
+                    width: largura,
+                    child: DropdownButtonFormField<int>(
+                      value: _ordenacao,
+                      isExpanded: true,
+                      decoration:
+                          const InputDecoration(labelText: 'Ordenar por'),
+                      items: const [
+                        DropdownMenuItem(
+                            value: 0, child: Text('Mais recentes')),
+                        DropdownMenuItem(value: 1, child: Text('Mais antigos')),
+                        DropdownMenuItem(value: 2, child: Text('Maior valor'))
+                      ],
+                      onChanged: (v) => _alterar(() => _ordenacao = v ?? 0),
+                    )),
+              ]);
+            }),
+            const SizedBox(height: 16),
+          ],
+          if (lista.isEmpty)
+            _MensagemEstado(
+              icon: Icons.inbox_outlined,
+              title: widget.resumido && todas.isNotEmpty
+                  ? 'Nenhum pedido aguardando resposta'
+                  : todas.isEmpty
+                      ? 'Nenhum pedido de preço'
+                      : 'Nenhum pedido neste filtro',
+              message: widget.resumido && todas.isNotEmpty
+                  ? 'Consulte os demais atendimentos em Todos os pedidos.'
+                  : todas.isEmpty
+                      ? 'Quando um organizador pedir preço, as oportunidades aparecem aqui.'
+                      : 'Troque o filtro acima para ver outros pedidos.',
+              color: const Color(0xFF6366F1),
+            )
+          else
+            for (final item in visiveis) ...[
+              _buildResumo(context, item),
+              const SizedBox(height: 10),
+            ],
+          if (widget.resumido)
+            Align(
+                alignment: Alignment.centerRight,
+                child: TextButton.icon(
+                  onPressed: widget.onVerTodos,
+                  icon: const Icon(Icons.arrow_forward_rounded),
+                  label: const Text('Ver todos os pedidos'),
+                ))
+          else if (lista.isNotEmpty)
+            Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 16,
+                runSpacing: 8,
+                children: [
+                  Text(
+                      '${pagina * _porPagina + 1}–${pagina * _porPagina + visiveis.length} de ${lista.length} pedidos'),
+                  Wrap(
+                      spacing: 8,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        IconButton(
+                            tooltip: 'Página anterior',
+                            onPressed: pagina == 0
+                                ? null
+                                : () => _mudarPagina(pagina - 1),
+                            icon: const Icon(Icons.chevron_left_rounded)),
+                        Text('Página ${pagina + 1} de $paginas'),
+                        IconButton(
+                            tooltip: 'Próxima página',
+                            onPressed: pagina + 1 >= paginas
+                                ? null
+                                : () => _mudarPagina(pagina + 1),
+                            icon: const Icon(Icons.chevron_right_rounded)),
+                      ]),
+                ]),
+        ]),
       );
     });
+  }
+
+  Widget _buildResumo(BuildContext context, Cotacao item) {
+    final estado = estadoComercialCotacao(item);
+    final idFornecedor = fornecedorController.fornecedor.value?.idFornecedor;
+    final jornada = switch (estado) {
+      'ganho' => 'Acompanhar execução',
+      'proposta_enviada' => 'Revisar proposta',
+      'negociacao' => 'Abrir negociação',
+      _ => null,
+    };
+    return PedidoResumoCard(
+      pedido: item,
+      agora: widget.clock?.call(),
+      onDetalhes: () => _abrirDetalhes(context, item),
+      acao: jornada ??
+          (item.status == StatusCotacao.pendente
+              ? 'Responder'
+              : 'Ver atendimento'),
+      onAcao: jornada != null && idFornecedor != null
+          ? () => Get.toNamed('/jornada-atendimento', arguments: {
+                'idCotacao': item.id,
+                'idFornecedor': idFornecedor,
+              })
+          : item.status == StatusCotacao.pendente
+              ? () => _abrirResponderCotacao(context, item)
+              : () => _abrirAtendimento(item),
+    );
+  }
+
+  void _abrirDetalhes(BuildContext context, Cotacao item) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.white,
+      constraints: const BoxConstraints(maxWidth: 760),
+      builder: (ctx) => FractionallySizedBox(
+          heightFactor: .9,
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 8, 4),
+                child: Row(children: [
+                  Expanded(
+                      child: Text('Detalhes do pedido',
+                          style: Theme.of(ctx).textTheme.titleMedium)),
+                  IconButton(
+                      tooltip: 'Fechar detalhes',
+                      onPressed: () => Navigator.pop(ctx),
+                      icon: const Icon(Icons.close_rounded)),
+                ])),
+            Expanded(
+                child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(20),
+                    child: Obx(() {
+                      final atual = solicitacoesController.solicitacoes
+                          .firstWhere((c) => c.id == item.id,
+                              orElse: () => item);
+                      return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Text(atual.descricao ?? 'Sem descrição adicional.'),
+                            const SizedBox(height: 16),
+                            _buildCotacaoCard(ctx, atual, 0),
+                          ]);
+                    }))),
+          ])),
+    );
   }
 
   Widget _buildCotacaoCard(BuildContext context, Cotacao item, int index) {
@@ -834,6 +1068,7 @@ class _BottomSheetHeader extends StatelessWidget {
 
 class _CotacoesShell extends StatelessWidget {
   final Widget child;
+  final bool resumido;
   final int? total;
   final int aguardando;
   final int finalizadas;
@@ -844,6 +1079,7 @@ class _CotacoesShell extends StatelessWidget {
 
   const _CotacoesShell({
     required this.child,
+    this.resumido = false,
     this.total,
     this.aguardando = 0,
     this.finalizadas = 0,
@@ -894,9 +1130,9 @@ class _CotacoesShell extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Lista de pedidos',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                          resumido
+                              ? 'Pedidos que precisam de resposta'
+                              : 'Todos os pedidos',
                           style: GoogleFonts.poppins(
                             fontSize: compact ? 15 : 16,
                             fontWeight: FontWeight.w900,
@@ -905,7 +1141,9 @@ class _CotacoesShell extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'Comercial e execução separados. Contratar não registra entrega.',
+                          resumido
+                              ? 'Até 5 pendências, começando pelas mais antigas.'
+                              : 'Busque e acompanhe seus pedidos, propostas e entregas.',
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.poppins(
@@ -921,7 +1159,7 @@ class _CotacoesShell extends StatelessWidget {
                 spacing: 7,
                 runSpacing: 7,
                 children: [
-                  if (total != null)
+                  if (total != null && !resumido)
                     _Chip(
                         text: '$total pedido${total == 1 ? '' : 's'} no total',
                         color: const Color(0xFF4F46E5)),
@@ -933,7 +1171,7 @@ class _CotacoesShell extends StatelessWidget {
                         color: aguardando == 0
                             ? const Color(0xFF475569)
                             : const Color(0xFF92400E)),
-                  if (finalizadas > 0)
+                  if (!resumido && finalizadas > 0)
                     _Chip(
                         text:
                             '$finalizadas encerrada${finalizadas == 1 ? '' : 's'} sem contrato',
@@ -1119,8 +1357,8 @@ class _CotacaoInteligenteCard extends StatelessWidget {
     final color = _scoreColor(score);
     final scoreLabel = score == null ? 'IA' : score!.toStringAsFixed(0);
     final reasons = [
-      ...motivos.take(1),
-      ...alertas.take(1).map((e) => 'Atenção: $e'),
+      ...motivos,
+      ...alertas.map((e) => 'Atenção: $e'),
     ].where((e) => e.trim().isNotEmpty).toList();
 
     final aiButton = _CompactActionButton(
@@ -1268,7 +1506,9 @@ class _CotacaoInteligenteCard extends StatelessWidget {
           else
             Align(
               alignment: Alignment.centerRight,
-              child: responderButton,
+              child: Text(solicitacao.status.label,
+                  style: TextStyle(
+                      color: statusColor, fontWeight: FontWeight.w600)),
             ),
         ],
       ),
@@ -1342,7 +1582,7 @@ class _CompactActionButton extends StatelessWidget {
     );
 
     final button = SizedBox(
-      height: 36,
+      height: 48,
       child: outlined
           ? OutlinedButton(
               onPressed: onTap,
@@ -1676,15 +1916,13 @@ class _ReasonPill extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: color.withValues(alpha: 0.18)),
       ),
       child: Text(
         text,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
         style: GoogleFonts.poppins(
-          fontSize: 10.4,
+          fontSize: 12,
           color: const Color(0xFF475569),
           fontWeight: FontWeight.w700,
         ),

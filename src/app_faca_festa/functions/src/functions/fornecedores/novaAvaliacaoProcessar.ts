@@ -112,7 +112,7 @@ async function enviarNotificacaoNovaAvaliacao(params: {
 // Agregados são atualizados na mesma transação que a avaliação/moderação.
 // Este trigger só invalida caches derivados; entrega repetida não altera reputação.
 export const novaAvaliacaoProcessar = onDocumentWritten({
-  document: "fornecedor/{idFornecedor}/avaliacoes/{idAvaliacao}", region: "us-central1",
+  document: "fornecedor/{idFornecedor}/avaliacoes/{idAvaliacao}", region: "southamerica-east1",
 }, async event => {
   const db = admin.firestore();
   for (const campo of ["fornecedorId", "idFornecedor", "id_fornecedor"]) {

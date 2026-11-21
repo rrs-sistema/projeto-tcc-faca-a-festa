@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/core/services/desktop_update_service.dart';
 import 'package:app_faca_festa/presentation/widgets/desktop_update_overlay.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -41,9 +42,9 @@ class HeaderSection extends StatelessWidget {
 
       return Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(26),
+          borderRadius: BorderRadius.circular(22),
           gradient: const LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -55,153 +56,98 @@ class HeaderSection extends StatelessWidget {
           ),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF111827).withValues(alpha: 0.22),
-              blurRadius: 28,
+              color: const Color(0xFF111827).withValues(alpha: 0.12),
+              blurRadius: 20,
               offset: const Offset(0, 12),
             ),
           ],
         ),
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final compact = constraints.maxWidth < 660;
-            final verySmall = constraints.maxWidth < 380;
-
+            final compact = constraints.maxWidth < 620 ||
+                MediaQuery.textScalerOf(context).scale(14) > 21;
+            final conta = _menuConta(context);
             final identity = Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _LogoFornecedor(
-                    url: fornecedor?.bannerUrl, size: compact ? 54 : 64),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        nome,
-                        maxLines: compact ? 2 : 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontSize: verySmall
-                              ? 14.5
-                              : compact
-                                  ? 16
-                                  : 19,
-                          fontWeight: FontWeight.w900,
-                          height: 1.08,
-                          letterSpacing: -0.35,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        contato,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.poppins(
-                          color: Colors.white.withValues(alpha: 0.72),
-                          fontSize: compact ? 11.5 : 12.5,
-                          height: 1.15,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            );
-
-            final chips = Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                _StatusChip(text: status, color: statusColor),
-                _InfoChip(text: categoria, icon: Icons.category_outlined),
-                ActionChip(
-                  avatar: const Icon(Icons.map_outlined, size: 16),
-                  label: const Text('Território de atendimento'),
-                  onPressed: () => Navigator.of(context).push<void>(
-                    MaterialPageRoute(
-                      builder: (_) => const AbrangenciaFornecedorPage(),
-                    ),
-                  ),
-                ),
-                ActionChip(
-                  avatar: const Icon(Icons.gavel_outlined, size: 16),
-                  label: const Text('Comunicados de operação'),
-                  onPressed: () =>
-                      Get.toNamed('/fornecedor/comunicados-operacao'),
-                ),
-              ],
-            );
-
-            final logout = _HeaderIconButton(
-              tooltip: 'Sair',
-              icon: Icons.logout_rounded,
-              onPressed: () => _confirmarLogout(context, appController),
-            );
-            final auditoria = _HeaderIconButton(
-              tooltip: 'Auditoria dos serviços',
-              icon: Icons.policy_outlined,
-              onPressed: () => Get.toNamed('/fornecedor/auditoria'),
-            );
-            final dadosProtegidos = _HeaderIconButton(
-              tooltip: 'Dados protegidos',
-              icon: Icons.privacy_tip_outlined,
-              onPressed: () => Get.to(() => const CentralPrivacidadeScreen()),
-            );
-            final avisos = _HeaderIconButton(
-              tooltip: 'Avisos',
-              icon: Icons.notifications_none_rounded,
-              onPressed: () => Get.to(
-                () => PreferenciasNotificacaoScreen(
-                  idUsuario: appController.usuarioLogado.value?.idUsuario ?? '',
-                ),
-              ),
-            );
-
-            if (compact) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(child: identity),
-                      const SizedBox(width: 8),
-                      dadosProtegidos,
-                      const SizedBox(width: 8),
-                      avisos,
-                      const SizedBox(width: 8),
-                      auditoria,
-                      const SizedBox(width: 8),
-                      const DesktopUpdateMenuButton(color: Colors.white),
-                      logout,
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  chips,
-                ],
-              );
-            }
-
-            return Row(
-              children: [
-                Expanded(flex: 5, child: identity),
+                    url: fornecedor?.bannerUrl, size: compact ? 52 : 60),
                 const SizedBox(width: 14),
                 Expanded(
-                    flex: 4,
-                    child:
-                        Align(alignment: Alignment.centerRight, child: chips)),
-                const SizedBox(width: 12),
-                dadosProtegidos,
-                const SizedBox(width: 8),
-                avisos,
-                const SizedBox(width: 8),
-                auditoria,
-                const SizedBox(width: 8),
-                const DesktopUpdateMenuButton(color: Colors.white),
-                logout,
+                    child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(nome,
+                        style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontSize: compact ? 18 : 21,
+                            fontWeight: FontWeight.w700,
+                            height: 1.3)),
+                    const SizedBox(height: 4),
+                    Text(contato,
+                        style: GoogleFonts.poppins(
+                            color: Colors.white.withValues(alpha: .8),
+                            fontSize: 13,
+                            height: 1.4)),
+                    const SizedBox(height: 10),
+                    Wrap(
+                        spacing: 12,
+                        runSpacing: 8,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          _StatusChip(text: status, color: statusColor),
+                          Text(categoria,
+                              style: GoogleFonts.poppins(
+                                  color: Colors.white.withValues(alpha: .8),
+                                  fontSize: 12)),
+                        ]),
+                  ],
+                )),
+              ],
+            );
+            final botoes = [
+              _HeaderAction(
+                label: 'Área de atendimento',
+                icon: Icons.map_outlined,
+                onPressed: () => Navigator.of(context).push<void>(
+                    MaterialPageRoute(
+                        builder: (_) => const AbrangenciaFornecedorPage())),
+              ),
+              _HeaderAction(
+                label: 'Comunicados',
+                icon: Icons.campaign_outlined,
+                onPressed: () =>
+                    Get.toNamed('/fornecedor/comunicados-operacao'),
+              ),
+              if (compact) conta,
+            ];
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (compact)
+                  identity
+                else
+                  Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Expanded(child: identity),
+                    const SizedBox(width: 24),
+                    conta,
+                  ]),
+                const SizedBox(height: 16),
+                Divider(height: 1, color: Colors.white.withValues(alpha: .14)),
+                const SizedBox(height: 12),
+                if (compact)
+                  Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        for (final botao in botoes) ...[
+                          botao,
+                          const SizedBox(height: 8),
+                        ]
+                      ])
+                else
+                  Wrap(spacing: 12, runSpacing: 8, children: botoes),
               ],
             );
           },
@@ -209,6 +155,69 @@ class HeaderSection extends StatelessWidget {
       );
     });
   }
+
+  Widget _menuConta(BuildContext context) => PopupMenuButton<String>(
+        tooltip: 'Abrir opções da conta',
+        position: PopupMenuPosition.under,
+        onSelected: (opcao) {
+          switch (opcao) {
+            case 'privacidade':
+              Get.to(() => const CentralPrivacidadeScreen());
+            case 'notificacoes':
+              Get.to(() => PreferenciasNotificacaoScreen(
+                  idUsuario:
+                      appController.usuarioLogado.value?.idUsuario ?? ''));
+            case 'auditoria':
+              Get.toNamed('/fornecedor/auditoria');
+            case 'atualizacoes':
+              DesktopUpdateMenuButton.requests.value++;
+            case 'sair':
+              _confirmarLogout(context, appController);
+          }
+        },
+        itemBuilder: (_) => [
+          _opcaoConta(
+              'privacidade', 'Privacidade e dados', Icons.privacy_tip_outlined),
+          _opcaoConta('notificacoes', 'Preferências de notificações',
+              Icons.notifications_outlined),
+          _opcaoConta(
+              'auditoria', 'Auditoria dos serviços', Icons.policy_outlined),
+          if (DesktopUpdateService.supported)
+            _opcaoConta('atualizacoes', 'Atualizações do aplicativo',
+                Icons.system_update_alt_rounded),
+          const PopupMenuDivider(),
+          _opcaoConta('sair', 'Sair da conta', Icons.logout_rounded),
+        ],
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 48),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: .08),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.white.withValues(alpha: .22)),
+          ),
+          child: const Row(mainAxisSize: MainAxisSize.min, children: [
+            Icon(Icons.account_circle_outlined, color: Colors.white, size: 20),
+            SizedBox(width: 8),
+            Flexible(
+                child: Text('Minha conta',
+                    style: TextStyle(color: Colors.white, fontSize: 13))),
+            SizedBox(width: 8),
+            Icon(Icons.expand_more_rounded, color: Colors.white, size: 20),
+          ]),
+        ),
+      );
+
+  PopupMenuItem<String> _opcaoConta(
+          String valor, String rotulo, IconData icone) =>
+      PopupMenuItem(
+          value: valor,
+          height: 52,
+          child: Row(children: [
+            Icon(icone, size: 20),
+            const SizedBox(width: 12),
+            Expanded(child: Text(rotulo)),
+          ]));
 
   static String _contatoPrincipal(String? email, String? telefone) {
     final e = email?.trim() ?? '';
@@ -318,11 +327,7 @@ class _LogoFornecedor extends StatelessWidget {
                 ),
                 errorWidget: (_, __, ___) => _placeholder(),
               )
-            : Image.asset(
-                'assets/images/fornecedor_logo.png',
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => _placeholder(),
-              ),
+            : _placeholder(),
       ),
     );
   }
@@ -337,40 +342,31 @@ class _LogoFornecedor extends StatelessWidget {
       );
 }
 
-class _HeaderIconButton extends StatelessWidget {
-  final String tooltip;
+class _HeaderAction extends StatelessWidget {
+  const _HeaderAction(
+      {required this.label, required this.icon, required this.onPressed});
+  final String label;
   final IconData icon;
   final VoidCallback onPressed;
 
-  const _HeaderIconButton({
-    required this.tooltip,
-    required this.icon,
-    required this.onPressed,
-  });
-
   @override
-  Widget build(BuildContext context) {
-    return Tooltip(
-      message: tooltip,
-      child: Material(
-        color: Colors.white.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(14),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(14),
-          onTap: onPressed,
-          child: SizedBox(
-            height: 40,
-            width: 40,
-            child: Icon(
-              icon,
-              color: Colors.white.withValues(alpha: 0.86),
-              size: 20,
-            ),
-          ),
+  Widget build(BuildContext context) => OutlinedButton(
+        onPressed: onPressed,
+        style: OutlinedButton.styleFrom(
+          foregroundColor: Colors.white,
+          backgroundColor: Colors.white.withValues(alpha: .06),
+          side: BorderSide(color: Colors.white.withValues(alpha: .22)),
+          minimumSize: const Size(0, 48),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
-      ),
-    );
-  }
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(icon, size: 20, color: Colors.white),
+          const SizedBox(width: 10),
+          Flexible(child: Text(label, style: const TextStyle(fontSize: 13))),
+        ]),
+      );
 }
 
 class _StatusChip extends StatelessWidget {
@@ -382,44 +378,5 @@ class _StatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PremiumPill(text: text, color: color, icon: Icons.verified_rounded);
-  }
-}
-
-class _InfoChip extends StatelessWidget {
-  final String text;
-  final IconData icon;
-
-  const _InfoChip({required this.text, required this.icon});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      constraints: const BoxConstraints(maxWidth: 220),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: Colors.white.withValues(alpha: 0.82)),
-          const SizedBox(width: 6),
-          Flexible(
-            child: Text(
-              text,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.poppins(
-                color: Colors.white,
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }

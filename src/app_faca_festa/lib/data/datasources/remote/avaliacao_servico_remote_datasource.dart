@@ -23,32 +23,18 @@ class AvaliacaoServicoRemoteDatasource {
       identidade: _auth.currentUser?.uid,
       vazio: vazio);
 
-  Future<Map<String, dynamic>> _comprovar(
+  Future<Map<String, dynamic>> _paraExibicao(
       QueryDocumentSnapshot<Map<String, dynamic>> doc) async {
     final d = doc.data();
-    var comprovada = false;
-    if (d['schema'] == 2 &&
-        d['id_contrato'] is String &&
-        (d['id_contrato'] as String).isNotEmpty) {
-      final h =
-          await doc.reference.collection('historico').doc('criacao').get();
-      comprovada = h.data()?['acao'] == 'criar' &&
-          [
-            'id_contrato',
-            'id_cliente',
-            'id_fornecedor',
-            'id_servico',
-            'tipo',
-            'nota',
-            'comentario'
-          ].every((k) => h.data()?[k] == d[k]);
-    }
-    final resposta=await doc.reference.collection('respostas_publicas').doc('atual').get();
+    final resposta =
+        await doc.reference.collection('respostas_publicas').doc('atual').get();
+    final confiavel = d['schema'] == 2 &&
+        d['verificada'] == true &&
+        d['moderacao'] != 'oculta';
     return {
       ...d,
-      '_resposta_publica':resposta.data(),
-      '_integridade_confirmada': comprovada,
-      'verificada': d['verificada'] == true && comprovada
+      '_resposta_publica': resposta.data(),
+      '_integridade_confirmada': confiavel,
     };
   }
 
@@ -77,19 +63,20 @@ class AvaliacaoServicoRemoteDatasource {
 
   Stream<List<AvaliacaoServicoModel>> observarAvaliacoesServico(
       {required String idFornecedor, required String idServico}) {
-    // Uma consulta canônica, sem espelho da avaliação do fornecedor.
+    final legado = _historico(idFornecedor, servico: idServico);
+    final antigos = _db
+        .collection('fornecedor_servico')
+        .doc('${idFornecedor}_$idServico')
+        .collection('avaliacoes')
+        .get();
     final fonte = _db
         .collection('fornecedor')
         .doc(idFornecedor)
         .collection('avaliacoes')
         .snapshots()
         .asyncMap((s) async {
-      final historico = await _historico(idFornecedor, servico: idServico);
-      final antigos = await _db
-          .collection('fornecedor_servico')
-          .doc('${idFornecedor}_$idServico')
-          .collection('avaliacoes')
-          .get();
+      final historico = await legado;
+      final velhos = await antigos;
       final novos = s.docs.where((d) =>
           d.data()['tipo'] == 'servico' &&
           d.data()['id_servico'] == idServico &&
@@ -98,10 +85,10 @@ class AvaliacaoServicoRemoteDatasource {
         ...historico.map((d) => AvaliacaoServicoModel.fromMap(d,
             idFornecedorServico: '${idFornecedor}_$idServico')),
         ...await Future.wait(novos.map((d) async =>
-            AvaliacaoServicoModel.fromMap(await _comprovar(d),
+            AvaliacaoServicoModel.fromMap(await _paraExibicao(d),
                 documentId: d.id,
                 idFornecedorServico: '${idFornecedor}_$idServico'))),
-        ...antigos.docs.map((d) => AvaliacaoServicoModel.fromMap(
+        ...velhos.docs.map((d) => AvaliacaoServicoModel.fromMap(
             {...d.data(), 'verificada': false},
             documentId: d.id,
             idFornecedorServico: '${idFornecedor}_$idServico'))
@@ -123,12 +110,16 @@ class AvaliacaoServicoRemoteDatasource {
   Future<List<Map<String, dynamic>>> contratosAvaliaveis(
       {required String idFornecedor,
       required String idEvento,
-      String? idServico}) async {
+      String? idServico,
+      String? idOrcamento,
+      bool detalhar = false}) async {
     final r =
         await _functions.httpsCallable('consultarContratosAvaliaveis').call({
       'idFornecedor': idFornecedor,
       'idEvento': idEvento,
-      if (idServico != null) 'idServico': idServico
+      if (idServico != null) 'idServico': idServico,
+      if (idOrcamento != null) 'idOrcamento': idOrcamento,
+      if (detalhar) 'detalhar': true,
     });
     return (r.data['contratos'] as List)
         .map((v) => Map<String, dynamic>.from(v as Map))
@@ -153,11 +144,15 @@ class AvaliacaoServicoRemoteDatasource {
       }
       idOrcamento = contratos.single['idOrcamento'] as String;
     }
+    final inteira = nota.round();
+    if (inteira < 1 || inteira > 5 || (nota - inteira).abs() > 0.001) {
+      throw StateError('Escolha uma nota inteira de 1 a 5.');
+    }
     await _functions.httpsCallable('registrarAvaliacaoVerificada').call({
       'idFornecedor': idFornecedor,
       'idOrcamento': idOrcamento,
       if (idServico != null) 'idServico': idServico,
-      'nota': nota,
+      'nota': inteira,
       'comentario': comentario
     });
   }
@@ -195,26 +190,28 @@ class AvaliacaoServicoRemoteDatasource {
           idEvento: idEvento,
           idOrcamento: idOrcamento);
   Stream<List<AvaliacaoModel>> observarAvaliacoesFornecedor(
-          String idFornecedor) =>
-      _sessao(
-          _db
-              .collection('fornecedor')
-              .doc(idFornecedor)
-              .collection('avaliacoes')
-              .snapshots()
-              .asyncMap((s) async {
-            final historico = await _historico(idFornecedor);
-            final lista = await Future.wait(s.docs
-                .where((d) =>
-                    d.data()['tipo'] != 'servico' &&
-                    d.data()['moderacao'] != 'oculta')
-                .map((d) async => AvaliacaoModel.fromMap(
-                    {...await _comprovar(d), 'id': d.id})));
-            lista.addAll(historico.map(AvaliacaoModel.fromMap));
-            lista.sort((a, b) => b.data.compareTo(a.data));
-            return lista;
-          }),
-          <AvaliacaoModel>[]);
+          String idFornecedor) {
+    final legado = _historico(idFornecedor);
+    return _sessao(
+        _db
+            .collection('fornecedor')
+            .doc(idFornecedor)
+            .collection('avaliacoes')
+            .snapshots()
+            .asyncMap((s) async {
+          final historico = await legado;
+          final lista = await Future.wait(s.docs
+              .where((d) =>
+                  d.data()['tipo'] != 'servico' &&
+                  d.data()['moderacao'] != 'oculta')
+              .map((d) async => AvaliacaoModel.fromMap(
+                  {...await _paraExibicao(d), 'id': d.id})));
+          lista.addAll(historico.map(AvaliacaoModel.fromMap));
+          lista.sort((a, b) => b.data.compareTo(a.data));
+          return lista;
+        }),
+        <AvaliacaoModel>[]);
+  }
   Future<bool> podeAvaliarFornecedor(
           {required String idFornecedor,
           required String idEvento,

@@ -43,9 +43,8 @@ class _DemandaLatenteSectionState extends State<DemandaLatenteSection> {
       final erro = controller.erro.value;
 
       return PremiumSectionShell(
-        title: 'Demanda latente na sua cobertura',
-        subtitle:
-            'Eventos em planejamento alinhados ao seu território — antes da cotação.',
+        title: 'Oportunidades na sua região',
+        subtitle: 'Eventos em planejamento na sua área de atendimento.',
         icon: Icons.radar_rounded,
         color: FornecedorPremiumPalette.primary,
         child: Column(
@@ -108,7 +107,7 @@ class _DemandaLatenteSectionState extends State<DemandaLatenteSection> {
                       ),
                 )
               else
-                ...resumo.buckets.take(6).map((b) {
+                ...resumo.buckets.take(3).map((b) {
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 8),
                     child: Material(

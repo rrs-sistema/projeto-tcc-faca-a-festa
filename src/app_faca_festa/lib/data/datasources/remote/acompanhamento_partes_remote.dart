@@ -101,4 +101,26 @@ class AcompanhamentoPartesRemote {
       'categoria': categoria,
     });
   }
+
+  Future<Map<String, dynamic>> criarCobrancaPix({
+    required String idEvento,
+    required String idOrcamento,
+    required int valorCentavos,
+    String? cpf,
+  }) {
+    return _gateway.call('criarCobrancaPixServico', {
+      'idEvento': idEvento,
+      'idOrcamento': idOrcamento,
+      'valorCentavos': valorCentavos,
+      if (cpf != null && cpf.isNotEmpty) 'cpf': cpf,
+    });
+  }
+
+  Future<Map<String, dynamic>> consultarCobrancaPix({
+    required String cobrancaId,
+  }) {
+    return _gateway.call('consultarCobrancaPixServico', {
+      'cobrancaId': cobrancaId,
+    });
+  }
 }

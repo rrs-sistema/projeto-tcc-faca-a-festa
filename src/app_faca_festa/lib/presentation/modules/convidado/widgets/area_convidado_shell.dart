@@ -62,31 +62,31 @@ extension _AreaConvidadoShell on _AreaConvidadoHomeScreenState {
   }
 
   Widget _bannerContaParaTarefas() {
+    final cor = theme.primaryColor.value;
     return Material(
-      color: const Color(0xFFFFF3E0),
-      borderRadius: BorderRadius.circular(12),
+      color: cor.withValues(alpha: 0.08),
+      borderRadius: BorderRadius.circular(14),
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         onTap: _abrirContaConvidado,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           child: Row(
             children: [
-              Icon(Icons.person_add_alt_1_rounded,
-                  color: Colors.orange.shade800, size: 22),
+              Icon(Icons.person_add_alt_1_rounded, color: cor, size: 22),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Entre para marcar o que você vai fazer nesta festa.',
+                  'Entre para marcar o andamento das suas tarefas.',
                   style: GoogleFonts.poppins(
-                    fontSize: 12,
+                    fontSize: 12.5,
                     fontWeight: FontWeight.w600,
-                    color: Colors.orange.shade900,
+                    color: cor,
                     height: 1.3,
                   ),
                 ),
               ),
-              Icon(Icons.chevron_right_rounded, color: Colors.orange.shade800),
+              Icon(Icons.chevron_right_rounded, color: cor),
             ],
           ),
         ),
@@ -107,10 +107,9 @@ extension _AreaConvidadoShell on _AreaConvidadoHomeScreenState {
         color: Colors.transparent,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.10),
-            blurRadius: 26,
-            spreadRadius: 0,
-            offset: const Offset(0, -10),
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 18,
+            offset: const Offset(0, -6),
           ),
         ],
       ),
@@ -118,114 +117,75 @@ extension _AreaConvidadoShell on _AreaConvidadoHomeScreenState {
         top: false,
         minimum: const EdgeInsets.fromLTRB(12, 0, 12, 10),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(28),
+          borderRadius: BorderRadius.circular(24),
           child: Container(
-            height: 76,
-            padding: const EdgeInsets.all(7),
+            height: 64,
+            padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.96),
-              borderRadius: BorderRadius.circular(28),
+              color: Colors.white.withValues(alpha: 0.97),
+              borderRadius: BorderRadius.circular(24),
               border: Border.all(
-                color: cor.withValues(alpha: 0.18),
-                width: 1.1,
+                color: cor.withValues(alpha: 0.14),
               ),
             ),
             child: Row(
-                children: List.generate(itens.length, (i) {
-                  final selected = _selectedIndex == i;
-                  final item = itens[i];
+              children: List.generate(itens.length, (i) {
+                final selected = _selectedIndex == i;
+                final item = itens[i];
 
-                  return Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 2),
-                      child: Semantics(
-                        button: true,
-                        selected: selected,
-                        label: selected
-                            ? '${item['label']}, selecionado'
-                            : item['label'] as String,
-                        child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(22),
-                          splashColor: cor.withValues(alpha: 0.10),
-                          highlightColor: cor.withValues(alpha: 0.06),
-                          onTap: () => _atualizarTela(() => _selectedIndex = i),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 300),
-                            curve: Curves.easeOutCubic,
-                            height: double.infinity,
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 4, vertical: 6),
-                            decoration: BoxDecoration(
-                              gradient: selected
-                                  ? LinearGradient(
-                                      colors: [
-                                        cor.withValues(alpha: 1),
-                                        cor.withValues(alpha: 0.78),
-                                      ],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                    )
-                                  : null,
-                              color: selected ? null : Colors.transparent,
-                              borderRadius: BorderRadius.circular(22),
-                              border: Border.all(
-                                color: selected
-                                    ? Colors.white.withValues(alpha: 0.45)
-                                    : Colors.transparent,
-                              ),
-                              boxShadow: selected
-                                  ? [
-                                      BoxShadow(
-                                        color: cor.withValues(alpha: 0.28),
-                                        blurRadius: 14,
-                                        offset: const Offset(0, 6),
-                                      ),
-                                    ]
-                                  : null,
-                            ),
+                return Expanded(
+                  child: Semantics(
+                    button: true,
+                    selected: selected,
+                    label: selected
+                        ? '${item['label']}, selecionado'
+                        : item['label'] as String,
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(18),
+                        splashColor: cor.withValues(alpha: 0.10),
+                        highlightColor: cor.withValues(alpha: 0.06),
+                        onTap: () => _atualizarTela(() => _selectedIndex = i),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 220),
+                          curve: Curves.easeOutCubic,
+                          alignment: Alignment.center,
+                          margin: const EdgeInsets.symmetric(horizontal: 2),
+                          decoration: BoxDecoration(
+                            color: selected
+                                ? cor.withValues(alpha: 0.12)
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(18),
+                          ),
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                AnimatedContainer(
-                                  duration: const Duration(milliseconds: 250),
-                                  curve: Curves.easeOutCubic,
-                                  width: selected ? 30 : 28,
-                                  height: selected ? 30 : 28,
-                                  decoration: BoxDecoration(
-                                    color: selected
-                                        ? Colors.white.withValues(alpha: 0.18)
-                                        : cor.withValues(alpha: 0.10),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Icon(
-                                    item['icon'] as IconData,
-                                    size: selected ? 20 : 19,
-                                    color: selected
-                                        ? Colors.white
-                                        : cor.withValues(alpha: 0.92),
-                                  ),
+                                Icon(
+                                  item['icon'] as IconData,
+                                  size: 22,
+                                  color: selected
+                                      ? cor
+                                      : cor.withValues(alpha: 0.55),
                                 ),
-                                const SizedBox(height: 4),
-                                AnimatedDefaultTextStyle(
-                                  duration: const Duration(milliseconds: 250),
-                                  curve: Curves.easeOutCubic,
-                                  style: GoogleFonts.poppins(
-                                    fontSize: selected ? 11.2 : 10.4,
-                                    height: 1.0,
-                                    fontWeight: selected
-                                        ? FontWeight.w800
-                                        : FontWeight.w700,
-                                    color: selected
-                                        ? Colors.white
-                                        : Colors.grey.shade800,
-                                    letterSpacing: selected ? 0.1 : 0,
-                                  ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  item['label'] as String,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  child: Text(item['label'] as String),
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 10.5,
+                                    height: 1.0,
+                                    fontWeight: selected
+                                        ? FontWeight.w700
+                                        : FontWeight.w600,
+                                    color: selected
+                                        ? cor
+                                        : Colors.grey.shade700,
+                                  ),
                                 ),
                               ],
                             ),
@@ -233,13 +193,13 @@ extension _AreaConvidadoShell on _AreaConvidadoHomeScreenState {
                         ),
                       ),
                     ),
-                    ),
-                  );
-                }),
-              ),
+                  ),
+                );
+              }),
             ),
           ),
         ),
-      );
+      ),
+    );
   }
 }

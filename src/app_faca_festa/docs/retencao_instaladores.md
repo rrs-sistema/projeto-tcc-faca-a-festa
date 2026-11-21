@@ -3,6 +3,16 @@
 Gerar um build sem `--deploy` cria somente arquivos locais. O upload ao Cloud
 Storage acontece com `--deploy` (ou `--publish` nos scripts de release).
 
+## LGPD
+
+Instaladores Windows, APK e artefatos do Firebase Hosting **não são dados
+pessoais** (Lei nº 13.709/2018). A retenção abaixo existe para custo, rollback e
+atualização segura — não substitui a exclusão/retenção de titulares.
+
+Dados de conta, eventos, convidados, cotações, mensagens e fotos seguem a
+política de privacidade e o fluxo de Protocolos LGPD no aplicativo (exclusão sob
+demanda; logs de auditoria por 365 dias via `expurgarAuditoriaAntiga`).
+
 Depois de um deploy do Hosting bem-sucedido, `build_production.py` executa a
 retenção dos instaladores Windows e Android:
 

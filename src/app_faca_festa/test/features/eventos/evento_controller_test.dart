@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_controller.dart';
 import 'package:app_faca_festa/domain/entities/evento.dart';
 import 'package:app_faca_festa/domain/entities/tipo_evento.dart';
 import 'package:app_faca_festa/domain/repositories/evento_repository.dart';
 import 'package:app_faca_festa/domain/services/evento_ativo_store.dart';
+import 'package:app_faca_festa/domain/services/evento_leitura_confirmada.dart';
 import 'package:app_faca_festa/presentation/coordinators/evento_session_coordinator.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -22,6 +25,7 @@ void main() {
 
   tearDown(() {
     controller.onClose();
+    unawaited(repository.consultas?.close() ?? Future<void>.value());
   });
 
   test('buscar por id delegates and returns the existing model', () async {
@@ -326,12 +330,98 @@ void main() {
   test('empty user list does not clear a freshly selected event', () async {
     final evento = _evento(id: 'evento-novo', nome: 'Formatura do Rivaldo');
     await controller.selecionarEvento(evento);
+    final cancelamentos = sessionCoordinator.cancelamentos;
     repository.eventos = const [];
 
     await controller.carregarEventosDoUsuario('usuario-1');
 
     expect(controller.eventoAtual.value?.idEvento, 'evento-novo');
     expect(controller.eventoAtual.value?.nomeEvento, 'Formatura do Rivaldo');
+    expect(sessionCoordinator.cancelamentos, cancelamentos);
+    expect(sessionCoordinator.eventoInicializado, same(evento));
+  });
+
+  test('evento em tela sem módulos ainda abre orçamento e convidados',
+      () async {
+    final evento = _evento(id: 'evento-novo', nome: 'Formatura do Rivaldo');
+    controller.eventoAtual.value = evento;
+
+    await controller.selecionarEvento(evento);
+
+    expect(sessionCoordinator.eventoInicializado, same(evento));
+    expect(sessionCoordinator.cancelamentos, 1);
+  });
+
+  test(
+      'escrita pendente não abre módulos; o commit seguinte abre uma vez',
+      () async {
+    final consultas = StreamController<ConsultaEventos<Evento>>();
+    repository.consultas = consultas;
+    final evento = _evento(id: 'evento-novo', nome: 'Formatura do Rivaldo');
+    final carga = controller.carregarEventosDoUsuario('usuario-1');
+
+    consultas.add(
+      ConsultaEventos(
+        escritaPendente: true,
+        documentos: [
+          EventoEmTransito(valor: evento, escritaPendente: true),
+        ],
+      ),
+    );
+    await Future<void>.delayed(Duration.zero);
+    expect(sessionCoordinator.eventoInicializado, isNull);
+    expect(controller.eventoAtual.value, isNull);
+
+    consultas.add(
+      ConsultaEventos(
+        escritaPendente: false,
+        documentos: [
+          EventoEmTransito(valor: evento, escritaPendente: false),
+        ],
+      ),
+    );
+    await carga;
+
+    expect(sessionCoordinator.eventoInicializado, same(evento));
+    expect(sessionCoordinator.cancelamentos, 1);
+    expect(controller.eventoAtual.value?.idEvento, 'evento-novo');
+    await consultas.close();
+  });
+
+  test(
+      'seleção após o salvamento não é desfeita pela lista que ainda estava pendente',
+      () async {
+    final consultas = StreamController<ConsultaEventos<Evento>>();
+    repository.consultas = consultas;
+    final evento = _evento(id: 'evento-novo', nome: 'Formatura do Rivaldo');
+    final carga = controller.carregarEventosDoUsuario('usuario-1');
+
+    consultas.add(
+      ConsultaEventos(
+        escritaPendente: true,
+        documentos: [
+          EventoEmTransito(valor: evento, escritaPendente: true),
+        ],
+      ),
+    );
+    await Future<void>.delayed(Duration.zero);
+    await controller.selecionarEvento(evento);
+    final cancelamentos = sessionCoordinator.cancelamentos;
+
+    consultas.add(
+      ConsultaEventos(
+        escritaPendente: false,
+        documentos: [
+          EventoEmTransito(valor: evento, escritaPendente: false),
+        ],
+      ),
+    );
+    await carga;
+
+    expect(sessionCoordinator.eventoInicializado, same(evento));
+    expect(sessionCoordinator.cancelamentos, cancelamentos);
+    expect(controller.eventoAtual.value?.nomeEvento, 'Formatura do Rivaldo');
+    await consultas.close();
   });
 }
 
@@ -373,6 +463,7 @@ class _EventoRepositoryFake implements EventoRepository {
   String? usuarioListado;
   List<Evento> eventos = const [];
   Evento? eventoObservadoRetorno;
+  StreamController<ConsultaEventos<Evento>>? consultas;
 
   @override
   Future<Evento?> buscarPorId(String idEvento) async {
@@ -452,6 +543,10 @@ class _EventoRepositoryFake implements EventoRepository {
   @override
   Stream<List<Evento>> listarPorUsuario(String idUsuario) {
     usuarioListado = idUsuario;
+    final consultas = this.consultas;
+    if (consultas != null) {
+      return EventoLeituraConfirmada.listasConfirmadas(consultas.stream);
+    }
     return Stream.value(eventos);
   }
 }

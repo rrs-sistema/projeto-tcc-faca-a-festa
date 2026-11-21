@@ -19,6 +19,7 @@ import 'package:app_faca_festa/presentation/modules/usuario/components/endereco/
 import './evento_preview_titulo_widget.dart';
 import './tema_festa_selector.dart';
 import 'package:app_faca_festa/domain/entities/evento.dart';
+import 'package:app_faca_festa/domain/services/jornada_cadastro_festa.dart';
 import 'package:app_faca_festa/presentation/modules/calculadora/controllers/calculadora_festa_controller.dart';
 import 'package:app_faca_festa/presentation/modules/calculadora/controllers/fornecedor_migracao_admin_controller.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/controllers/cardapio_controller.dart';
@@ -238,37 +239,18 @@ class _CadastroEventoSheetState extends State<_CadastroEventoSheet>
     }
   }
 
+  /// A estimativa já foi gravada no evento. Festa nova abre a home;
+  /// edição volta para a tela de onde o cadastro foi aberto.
   Future<void> _continuar(Evento evento, RascunhoCalculadora? rascunho) async {
     if (!mounted) return;
     setState(() => _permitirSaida = true);
     await WidgetsBinding.instance.endOfFrame;
     if (!mounted) return;
+    final destino = JornadaCadastroFesta.depoisDeSalvar(
+      criando: widget.eventoParaEdicao == null,
+    );
     Navigator.pop(context);
-    if (rascunho == null) {
-      if (widget.eventoParaEdicao == null) {
-        controller.app.abrirHomeOrganizador();
-      }
-      return;
-    }
-    final rotaRetorno = Get.currentRoute;
-    await Get.to(() => CalculadoraFestaScreen(
-        idEvento: evento.idEvento,
-        idSimulacaoInicial: rascunho
-            .calculoPara(
-                evento.idEvento, evento.idUsuario, evento.custoEstimado)
-            .idCalculo,
-        tipoEvento: rascunho.tipoEvento,
-        orcamentoInicial: evento.custoEstimado,
-        calculadoraController: widget.calculadoraController,
-        eventoController: widget.eventoController,
-        themeController: widget.theme,
-        cardapioController: widget.cardapioController,
-        fornecedorMigracaoAdminController:
-            widget.fornecedorMigracaoAdminController));
-    if (controller.app.usuarioLogado.value?.idUsuario == evento.idUsuario &&
-        widget.eventoController.eventoAtualEntidade?.idEvento ==
-            evento.idEvento &&
-        Get.currentRoute == rotaRetorno) {
+    if (destino == DestinoCadastroEvento.home) {
       controller.app.abrirHomeOrganizador();
     }
   }
@@ -446,60 +428,52 @@ class _CadastroEventoSheetState extends State<_CadastroEventoSheet>
                                   fornecedorMigracaoAdminController:
                                       widget.fornecedorMigracaoAdminController,
                                 ),
-                                const SizedBox(height: 10),
-                                if (_passo < 2)
-                                  CadastroPassosAcoes(
-                                    cor: primary,
-                                    continuarLabel: 'Continuar',
-                                    onContinuar: _avancar,
-                                    onVoltar: _passo == 0 ? null : _voltar,
-                                  )
-                                else
-                                  Column(
-                                    children: [
-                                      SizedBox(
-                                        width: double.infinity,
-                                        child: OutlinedButton(
-                                          onPressed: _voltar,
-                                          style: OutlinedButton.styleFrom(
-                                            foregroundColor: primary,
-                                            iconColor: primary,
-                                            side: BorderSide(
-                                              color: primary.withValues(
-                                                  alpha: 0.45),
-                                            ),
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
-                                            ),
-                                          ),
-                                          child: Text(
-                                            'Voltar',
-                                            style: GoogleFonts.poppins(
-                                              fontWeight: FontWeight.w700,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 10),
-                                      if (controller.rascunhoCalculadora !=
-                                              null &&
-                                          controller.idEvento.value.isNotEmpty)
-                                        const Padding(
-                                            padding:
-                                                EdgeInsets.only(bottom: 12),
-                                            child: Text(
-                                                'Há uma estimativa pendente de vínculo. Salve para concluir, preservando suas escolhas.',
-                                                style:
-                                                    TextStyle(fontSize: 12))),
-                                      _buildAcoes(primary, controller,
-                                          widget.calculadoraController,
-                                          onCancelar: _fechar,
-                                          aoConcluir: _continuar),
-                                    ],
-                                  ),
                               ],
                             ),
+                          ),
+                        ),
+                      ),
+                      DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          border: Border(
+                            top: BorderSide(color: Colors.grey.shade200),
+                          ),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (_passo == 2 &&
+                                  controller.rascunhoCalculadora != null &&
+                                  controller.idEvento.value.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 10),
+                                  child: Text(
+                                    'A estimativa será guardada nesta festa. O cardápio você monta depois.',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 12,
+                                      color: Colors.grey.shade700,
+                                    ),
+                                  ),
+                                ),
+                              if (_passo < 2)
+                                CadastroPassosAcoes(
+                                  cor: primary,
+                                  continuarLabel: 'Continuar',
+                                  onContinuar: _avancar,
+                                  onVoltar: _passo == 0 ? null : _voltar,
+                                )
+                              else
+                                _buildAcoes(
+                                  primary,
+                                  controller,
+                                  widget.calculadoraController,
+                                  onVoltar: _voltar,
+                                  aoConcluir: _continuar,
+                                ),
+                            ],
                           ),
                         ),
                       ),
@@ -1180,7 +1154,6 @@ Widget _buildSecaoConvidadosEstimados(
     controller.atualizarPreview();
   }
 
-  // Atualiza assim que constrói a view
   atualizarTotal();
 
   return _SectionCard(
@@ -1190,101 +1163,302 @@ Widget _buildSecaoConvidadosEstimados(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Estimativa opcional. Você pode informar os convidados depois.',
+          'Opcional. A idade muda a conta de comida e bebida. A lista de convidados fica para depois.',
           style: GoogleFonts.poppins(
             color: Colors.grey.shade600,
-            fontSize: 11,
+            fontSize: 12,
+            height: 1.35,
           ),
         ),
-        const SizedBox(height: 10),
-        FormField<int>(
-          builder: (state) {
-            void aoMudar() {
-              atualizarTotal();
-              final total = _parseIntText(controller.totalAdultos.text) +
-                  _parseIntText(controller.totalCriancas.text) +
-                  _parseIntText(controller.totalBebes.text);
-              state.didChange(total);
-            }
-
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+        const SizedBox(height: 12),
+        _LinhaContagem(
+          label: 'Adultos',
+          campo: 'os adultos',
+          icon: Icons.person_rounded,
+          primary: primary,
+          controller: controller.totalAdultos,
+          onChanged: atualizarTotal,
+        ),
+        const SizedBox(height: 8),
+        _LinhaContagem(
+          label: 'Crianças',
+          campo: 'as crianças',
+          icon: Icons.child_care_rounded,
+          primary: primary,
+          controller: controller.totalCriancas,
+          onChanged: atualizarTotal,
+        ),
+        const SizedBox(height: 8),
+        _LinhaContagem(
+          label: 'Bebês',
+          campo: 'os bebês',
+          icon: Icons.baby_changing_station_rounded,
+          primary: primary,
+          controller: controller.totalBebes,
+          onChanged: atualizarTotal,
+        ),
+        const SizedBox(height: 12),
+        ListenableBuilder(
+          listenable: Listenable.merge([
+            controller.totalAdultos,
+            controller.totalCriancas,
+            controller.totalBebes,
+          ]),
+          builder: (context, _) {
+            atualizarTotal();
+            final informou = [
+              controller.totalAdultos,
+              controller.totalCriancas,
+              controller.totalBebes,
+            ].any((campo) => campo.text.trim().isNotEmpty);
+            final total = _parseIntText(controller.totalAdultos.text) +
+                _parseIntText(controller.totalCriancas.text) +
+                _parseIntText(controller.totalBebes.text);
+            final legado = controller.totalConvidados.text.trim();
+            final mostraLegado = !informou && legado.isNotEmpty;
+            final exibido = informou
+                ? '$total'
+                : (mostraLegado ? legado : '—');
+            final unidade = total == 1 ? 'pessoa' : 'pessoas';
+            return Semantics(
+              label: informou
+                  ? 'Total previsto: $total $unidade'
+                  : mostraLegado
+                      ? 'Total previsto: $legado, sem divisão por idade'
+                      : 'Total previsto: nada informado',
+              child: Container(
+                width: double.infinity,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                decoration: BoxDecoration(
+                  color: primary.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
                   children: [
                     Expanded(
-                      child: _CompactInputField(
-                        label: 'Adultos',
-                        icon: Icons.person_rounded,
-                        controller: controller.totalAdultos,
-                        keyboardType: TextInputType.number,
-                        inputFormatters: FormMasks.inteiro(maxDigits: 5),
-                        validator: (v) => FormValidators.inteiroNaoNegativo(
-                          v,
-                          campo: 'os adultos',
-                        ),
-                        onChanged: (_) => aoMudar(),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Total previsto',
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF111827),
+                            ),
+                          ),
+                          Text(
+                            informou
+                                ? 'Adultos, crianças e bebês'
+                                : mostraLegado
+                                    ? 'Sem divisão por idade'
+                                    : 'Nada informado ainda',
+                            style: GoogleFonts.poppins(
+                              fontSize: 11,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _CompactInputField(
-                        label: 'Crianças',
-                        icon: Icons.child_care_rounded,
-                        controller: controller.totalCriancas,
-                        keyboardType: TextInputType.number,
-                        inputFormatters: FormMasks.inteiro(maxDigits: 5),
-                        validator: (v) => FormValidators.inteiroNaoNegativo(
-                          v,
-                          campo: 'as crianças',
-                        ),
-                        onChanged: (_) => aoMudar(),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _CompactInputField(
-                        label: 'Bebês',
-                        icon: Icons.baby_changing_station_rounded,
-                        controller: controller.totalBebes,
-                        keyboardType: TextInputType.number,
-                        inputFormatters: FormMasks.inteiro(maxDigits: 5),
-                        validator: (v) => FormValidators.inteiroNaoNegativo(
-                          v,
-                          campo: 'os bebês',
-                        ),
-                        onChanged: (_) => aoMudar(),
+                    Text(
+                      exibido,
+                      style: GoogleFonts.poppins(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        color: primary,
                       ),
                     ),
                   ],
                 ),
-                if (state.hasError) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    state.errorText!,
-                    style: GoogleFonts.poppins(
-                      color: Colors.red.shade700,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ],
+              ),
             );
           },
-        ),
-        const SizedBox(height: 10),
-        _CompactInputField(
-          label: 'Total previsto (informe as idades para calcular consumo)',
-          icon: Icons.summarize_rounded,
-          controller: controller.totalConvidados,
-          readOnly: true,
-          enabled: false,
         ),
       ],
     ),
   );
+}
+
+class _LinhaContagem extends StatelessWidget {
+  const _LinhaContagem({
+    required this.label,
+    required this.campo,
+    required this.icon,
+    required this.primary,
+    required this.controller,
+    required this.onChanged,
+  });
+
+  final String label;
+  final String campo;
+  final IconData icon;
+  final Color primary;
+  final TextEditingController controller;
+  final VoidCallback onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return FormField<String>(
+      validator: (_) => FormValidators.inteiroNaoNegativo(
+        controller.text,
+        campo: campo,
+        maximo: 9999,
+      ),
+      builder: (state) {
+        final atual = _parseIntText(controller.text);
+
+        void definir(int valor) {
+          final limitado = valor.clamp(0, 9999);
+          controller.text = limitado.toString();
+          state.didChange(controller.text);
+          onChanged();
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.fromLTRB(10, 6, 4, 6),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: state.hasError
+                      ? Colors.red.shade400
+                      : const Color(0xFFE5E7EB),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: primary.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(icon, size: 18, color: primary),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ExcludeSemantics(
+                      child: Text(
+                        label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF111827),
+                        ),
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Diminuir $label',
+                    onPressed: atual <= 0 ? null : () => definir(atual - 1),
+                    icon: const Icon(Icons.remove_rounded, size: 22),
+                    color: primary,
+                    disabledColor: Colors.grey.shade400,
+                    constraints:
+                        const BoxConstraints(minWidth: 48, minHeight: 48),
+                    padding: EdgeInsets.zero,
+                  ),
+                  SizedBox(
+                    width: 64,
+                    height: 48,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        ListenableBuilder(
+                          listenable: controller,
+                          builder: (context, _) {
+                            if (controller.text.trim().isNotEmpty) {
+                              return const SizedBox.shrink();
+                            }
+                            return IgnorePointer(
+                              child: Text(
+                                '0',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.grey.shade400,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                        Positioned.fill(
+                          child: TextField(
+                            controller: controller,
+                            textAlign: TextAlign.center,
+                            textAlignVertical: TextAlignVertical.center,
+                            keyboardType: TextInputType.number,
+                            textInputAction: TextInputAction.done,
+                            inputFormatters: FormMasks.inteiro(maxDigits: 4),
+                            style: GoogleFonts.poppins(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              color: const Color(0xFF111827),
+                            ),
+                            decoration: InputDecoration(
+                              labelText: label,
+                              floatingLabelBehavior:
+                                  FloatingLabelBehavior.never,
+                              labelStyle: const TextStyle(
+                                fontSize: 0.01,
+                                height: 0.01,
+                                color: Colors.transparent,
+                              ),
+                              border: InputBorder.none,
+                              enabledBorder: InputBorder.none,
+                              focusedBorder: InputBorder.none,
+                              errorBorder: InputBorder.none,
+                              focusedErrorBorder: InputBorder.none,
+                              isCollapsed: true,
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                            onChanged: (valor) {
+                              state.didChange(valor);
+                              onChanged();
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Aumentar $label',
+                    onPressed: atual >= 9999 ? null : () => definir(atual + 1),
+                    icon: const Icon(Icons.add_rounded, size: 22),
+                    color: primary,
+                    disabledColor: Colors.grey.shade400,
+                    constraints:
+                        const BoxConstraints(minWidth: 48, minHeight: 48),
+                    padding: EdgeInsets.zero,
+                  ),
+                ],
+              ),
+            ),
+            if (state.hasError)
+              Padding(
+                padding: const EdgeInsets.only(top: 4, left: 4),
+                child: Text(
+                  state.errorText!,
+                  style: GoogleFonts.poppins(
+                    color: Colors.red.shade700,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
 }
 
 Widget _buildBotaoCalculadoraFesta(
@@ -1302,16 +1476,31 @@ Widget _buildBotaoCalculadoraFesta(
   final estimativaPendente = controller.rascunhoCalculadora != null;
   final estimativaIsolada = !eventoJaSalvo || estimativaPendente;
 
+  if (!JornadaCadastroFesta.mostraCalculadoraNoFormulario(
+    festaJaSalva: eventoJaSalvo,
+  )) {
+    if (!estimativaPendente) return const SizedBox.shrink();
+    return Text(
+      'A estimativa que você já fez será guardada ao salvar a festa. Quantidades e cardápio ficam na festa, depois.',
+      style: GoogleFonts.poppins(
+        color: Colors.grey.shade600,
+        fontSize: 11,
+      ),
+    );
+  }
+
   return _SectionCard(
-    title: 'Assistente de Quantidades',
+    title: eventoJaSalvo && !estimativaPendente
+        ? 'Calculadora da festa'
+        : 'Estimativa de comes e bebes',
     icon: Icons.auto_graph_rounded,
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          eventoJaSalvo
-              ? 'Recalcule os itens baseados na sua lista de convidados.'
-              : 'Faça uma estimativa de comes e bebes para o evento.',
+          eventoJaSalvo && !estimativaPendente
+              ? 'Ajuste as quantidades com os convidados e o cardápio desta festa.'
+              : 'Opcional. Usa o número de pessoas que você informou, sem cardápio. Ao salvar a festa, a estimativa fica guardada. O cardápio você monta depois.',
           style: GoogleFonts.poppins(
             color: Colors.grey.shade600,
             fontSize: 11,
@@ -1384,7 +1573,7 @@ Widget _buildBotaoCalculadoraFesta(
                   ? 'Retomar estimativa'
                   : eventoJaSalvo
                       ? 'Abrir calculadora da festa'
-                      : 'Calcular estimativa',
+                      : 'Estimar quantidades',
               style: GoogleFonts.poppins(
                   fontWeight: FontWeight.w800, fontSize: 12),
             ),
@@ -1397,34 +1586,90 @@ Widget _buildBotaoCalculadoraFesta(
 
 Widget _buildAcoes(Color primary, EventoCadastroController controller,
     CalculadoraFestaController calculadora,
-    {required Future<void> Function() onCancelar,
+    {required VoidCallback onVoltar,
     required Future<void> Function(Evento, RascunhoCalculadora?) aoConcluir}) {
   return Obx(() {
     final salvando = controller.carregando.value;
-
-    return CadastroPassosAcoes(
-        cor: primary,
-        continuarLabel: controller.eventoJaConfirmado &&
-                controller.rascunhoCalculadora != null
-            ? 'Concluir vínculo'
+    final continuarLabel =
+        controller.eventoJaConfirmado && controller.rascunhoCalculadora != null
+            ? 'Guardar estimativa na festa'
             : controller.isEditando
                 ? 'Atualizar evento'
-                : 'Salvar evento',
-        voltarLabel: 'Guardar e sair',
-        onVoltar: onCancelar,
-        carregando: salvando,
-        onContinuar: () async {
-          final valido = controller.formKey.currentState?.validate() ?? false;
-          if (!valido) return;
-          EasyLoading.show(status: 'Salvando evento…');
-          try {
-            await controller.salvarEvento(
-                vincularRascunho: calculadora.vincularRascunho,
-                aoConcluir: aoConcluir);
-          } finally {
-            EasyLoading.dismiss();
-          }
-        });
+                : 'Salvar evento';
+    final frente =
+        primary.computeLuminance() > .179 ? Colors.black : Colors.white;
+
+    Future<void> salvar() async {
+      final valido = controller.formKey.currentState?.validate() ?? false;
+      if (!valido) return;
+      EasyLoading.show(status: 'Salvando evento…');
+      try {
+        await controller.salvarEvento(
+            vincularRascunho: calculadora.vincularRascunho,
+            aoConcluir: (evento, rascunho) async {
+              EasyLoading.dismiss();
+              await aoConcluir(evento, rascunho);
+            });
+      } finally {
+        EasyLoading.dismiss();
+      }
+    }
+
+    final voltar = OutlinedButton(
+      onPressed: salvando ? null : onVoltar,
+      style: OutlinedButton.styleFrom(
+        foregroundColor: primary,
+        minimumSize: const Size(48, 48),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      ),
+      child: Text(
+        'Voltar',
+        textAlign: TextAlign.center,
+        style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+      ),
+    );
+    final confirmar = ElevatedButton(
+      onPressed: salvando ? null : salvar,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: primary,
+        foregroundColor: frente,
+        minimumSize: const Size(48, 48),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      ),
+      child: salvando
+          ? SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(color: frente, strokeWidth: 2),
+            )
+          : Text(
+              continuarLabel,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+            ),
+    );
+
+    return LayoutBuilder(builder: (context, _) {
+      final escalaGrande = MediaQuery.textScalerOf(context).scale(14) > 18;
+      if (escalaGrande) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            confirmar,
+            const SizedBox(height: 8),
+            voltar,
+          ],
+        );
+      }
+      return Row(
+        children: [
+          Expanded(child: voltar),
+          const SizedBox(width: 10),
+          Expanded(flex: 2, child: confirmar),
+        ],
+      );
+    });
   });
 }
 
@@ -1485,7 +1730,6 @@ class _CompactInputField extends StatelessWidget {
   final TextEditingController controller;
   final String label;
   final IconData icon;
-  final bool enabled;
   final bool readOnly;
   final VoidCallback? onTap;
   final ValueChanged<String>? onChanged;
@@ -1498,7 +1742,6 @@ class _CompactInputField extends StatelessWidget {
     required this.controller,
     required this.label,
     required this.icon,
-    this.enabled = true,
     this.readOnly = false,
     this.onTap,
     this.onChanged,
@@ -1512,7 +1755,6 @@ class _CompactInputField extends StatelessWidget {
   Widget build(BuildContext context) {
     return TextFormField(
       controller: controller,
-      enabled: enabled,
       readOnly: readOnly,
       onTap: onTap,
       keyboardType: keyboardType,
@@ -1530,7 +1772,7 @@ class _CompactInputField extends StatelessWidget {
             const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
         filled: true,
-        fillColor: enabled ? Colors.grey.shade50 : Colors.grey.shade100,
+        fillColor: Colors.grey.shade50,
         errorStyle: const TextStyle(fontSize: 11, height: 1.2),
         errorMaxLines: 2,
       ),

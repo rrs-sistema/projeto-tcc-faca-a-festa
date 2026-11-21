@@ -15,6 +15,7 @@ class VisaoOperacionalFornecedor extends StatefulWidget {
       {super.key,
       this.controller,
       this.pedidos,
+      this.acessosRapidosKey,
       this.onController,
       this.onPedidos,
       this.onMensagens,
@@ -27,6 +28,7 @@ class VisaoOperacionalFornecedor extends StatefulWidget {
       this.onNavegar});
   final PainelOperacionalController? controller;
   final Widget? pedidos;
+  final Key? acessosRapidosKey;
   final ValueChanged<PainelOperacionalController>? onController;
   final VoidCallback? onPedidos, onCatalogo, onPerfil;
   final VoidCallback? onMensagens;
@@ -93,19 +95,37 @@ class _VisaoOperacionalFornecedorState
                   child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(children: [
-                          Icon(icone,
-                              color: FornecedorPremiumPalette.muted, size: 20),
-                          const SizedBox(width: 8),
-                          Expanded(
-                              child: Text(titulo,
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 13))),
-                          if (acao != null)
-                            const Icon(Icons.chevron_right_rounded,
-                                size: 18, color: FornecedorPremiumPalette.muted)
-                        ]),
+                        LayoutBuilder(builder: (context, constraints) {
+                          final tituloWidget = Text(titulo,
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.w600, fontSize: 13));
+                          final iconeWidget = Icon(icone,
+                              color: FornecedorPremiumPalette.muted, size: 20);
+                          final seta = acao == null
+                              ? const SizedBox.shrink()
+                              : const Icon(Icons.chevron_right_rounded,
+                                  size: 18,
+                                  color: FornecedorPremiumPalette.muted);
+                          if (constraints.maxWidth < 180) {
+                            return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(children: [
+                                    iconeWidget,
+                                    const Spacer(),
+                                    seta
+                                  ]),
+                                  const SizedBox(height: 8),
+                                  tituloWidget
+                                ]);
+                          }
+                          return Row(children: [
+                            iconeWidget,
+                            const SizedBox(width: 8),
+                            Expanded(child: tituloWidget),
+                            seta
+                          ]);
+                        }),
                         const SizedBox(height: 14),
                         Text(valor,
                             style: Theme.of(context)
@@ -188,8 +208,6 @@ class _VisaoOperacionalFornecedorState
         final mensagens = lerMensagensNaoLidas == null
             ? (atendimento?['mensagensNaoLidas'] as int?)
             : lerMensagensNaoLidas();
-        final perfil = widget.perfilCompleto?.call();
-        final ia = widget.analiseIa?.call();
         final carregando = c.carregando.value;
         final data = instantePainel(prioridade?['enviadoEm']);
         final idade = data == null ? null : c.clock().difference(data).inHours;
@@ -200,7 +218,9 @@ class _VisaoOperacionalFornecedorState
               title: 'Atenção agora',
               subtitle: prioridade != null
                   ? idade != null && idade > 0
-                      ? 'Solicitação aguardando resposta há $idade h.'
+                      ? idade >= 24
+                          ? 'Pedido sem resposta há ${idade ~/ 24} ${idade ~/ 24 == 1 ? 'dia' : 'dias'}.'
+                          : 'Pedido sem resposta há $idade h.'
                       : 'Você tem uma solicitação aguardando resposta.'
                   : 'Acompanhe suas mensagens e a agenda de trabalho.',
               icon: Icons.today_outlined,
@@ -214,6 +234,9 @@ class _VisaoOperacionalFornecedorState
                     spacing: 8,
                     runSpacing: 4,
                     children: [
+                      if (prioridade == null && mensagens == 0)
+                        const Text(
+                            'Nenhuma pendência de resposta ou mensagem não lida.'),
                       if (prioridade != null)
                         FilledButton.icon(
                           onPressed: widget.onAtendimento == null
@@ -222,58 +245,134 @@ class _VisaoOperacionalFornecedorState
                                   Map<String, dynamic>.from(prioridade)),
                           icon:
                               const Icon(Icons.arrow_forward_rounded, size: 18),
-                          label: const Text('Abrir atendimento'),
+                          label: const Text('Responder pedido'),
                         ),
-                      OutlinedButton.icon(
-                        onPressed: widget.onMensagens ?? widget.onPedidos,
-                        icon: const Icon(Icons.mark_chat_unread_outlined,
-                            size: 18),
-                        label: Semantics(
-                          liveRegion: true,
-                          child: Text(switch (mensagens) {
-                            null => 'Consultar mensagens',
-                            0 => 'Nenhuma mensagem não lida',
-                            1 => '1 mensagem não lida',
-                            _ => '$mensagens mensagens não lidas',
-                          }),
+                      if (mensagens == null || mensagens > 0)
+                        OutlinedButton.icon(
+                          onPressed: widget.onMensagens ?? widget.onPedidos,
+                          icon: const Icon(Icons.mark_chat_unread_outlined,
+                              size: 18),
+                          label: Semantics(
+                            liveRegion: true,
+                            child: Text(switch (mensagens) {
+                              null => 'Consultar mensagens',
+                              0 => 'Nenhuma mensagem não lida',
+                              1 => '1 mensagem não lida',
+                              _ => '$mensagens mensagens não lidas',
+                            }),
+                          ),
+                          style: mensagens != null && mensagens > 0
+                              ? OutlinedButton.styleFrom(
+                                  foregroundColor: const Color(0xFF92400E))
+                              : null,
                         ),
-                        style: mensagens != null && mensagens > 0
-                            ? OutlinedButton.styleFrom(
-                                foregroundColor: const Color(0xFF92400E))
-                            : null,
-                      ),
-                      OutlinedButton.icon(
-                        onPressed: () => abrir('/fornecedor/agenda'),
-                        icon:
-                            const Icon(Icons.calendar_month_outlined, size: 18),
-                        label: Text(compromisso == null
-                            ? 'Agenda e capacidade'
-                            : 'Próximo compromisso'),
-                      ),
                     ],
                   ),
-                  if (compromisso != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: Text(
-                        '${compromisso['servico']} · ${horarioAtualizacaoPainel(compromisso['inicio'])}',
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodySmall
-                            ?.copyWith(color: FornecedorPremiumPalette.muted),
-                      ),
-                    ),
                 ],
               ),
             ),
             const SizedBox(height: 16),
-            DemandaLatenteSection(gateway: c.gateway),
+            PremiumSectionShell(
+              title: 'Indicadores do negócio',
+              subtitle: 'Acompanhe seu atendimento e desempenho comercial.',
+              icon: Icons.dashboard_customize_outlined,
+              color: FornecedorPremiumPalette.primary,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  ResponsiveWrapGrid(
+                    minTileWidth:
+                        MediaQuery.textScalerOf(context).scale(14) > 20
+                            ? 220
+                            : 140,
+                    maxColumns: 4,
+                    children: [
+                      indicador(
+                          'Aguardando resposta',
+                          atendimento?['aguardando']?.toString() ?? '—',
+                          'Pedidos novos pendentes de resposta',
+                          Icons.mark_email_unread_outlined,
+                          widget.onPedidos),
+                      indicador(
+                          'Primeira resposta',
+                          duracao(resposta?['media'] as num?),
+                          resposta?['amostra'] == null
+                              ? 'Dados de resposta indisponíveis'
+                              : 'Média · ${resposta!['amostra']} ${resposta['amostra'] == 1 ? 'resposta' : 'respostas'} · últimos 30 dias',
+                          Icons.timer_outlined,
+                          widget.onPedidos),
+                      indicador(
+                          'Reputação',
+                          reputacao == null
+                              ? 'Sem amostra'
+                              : (reputacao['media'] as num)
+                                  .toStringAsFixed(1)
+                                  .replaceAll('.', ','),
+                          reputacao == null
+                              ? reputacaoIndisponivel
+                                  ? 'Dados de reputação indisponíveis'
+                                  : 'Sem avaliações verificadas'
+                              : '${reputacao['quantidade']} ${reputacao['quantidade'] == 1 ? 'avaliação verificada' : 'avaliações verificadas'}',
+                          Icons.star_outline_rounded,
+                          () => abrir('/fornecedor/reputacao')),
+                      indicador(
+                          'Contratações',
+                          locais?['contratos']?.toString() ?? '—',
+                          'Contratos confirmados, sem cancelados',
+                          Icons.handshake_outlined,
+                          () => abrir('/acompanhamento-fornecedor')),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  AtualizacaoIndicadores(
+                    compacto: true,
+                    dados: locais,
+                    periodo: remoto?['periodo'] as Map?,
+                    complementoIndisponivel: c.erro.value.isNotEmpty,
+                    onRefresh: c.carregar,
+                    carregando: carregando,
+                  ),
+                  if (carregando)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 8),
+                      child: LinearProgressIndicator(),
+                    ),
+                  const SizedBox(height: 12),
+                ],
+              ),
+            ),
             const SizedBox(height: 16),
             if (widget.pedidos != null) ...[
               widget.pedidos!,
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
             ],
             PremiumSectionShell(
+              title: 'Agenda e próximos compromissos',
+              subtitle: compromisso == null
+                  ? 'Consulte sua disponibilidade e organize as próximas entregas.'
+                  : 'Seu próximo compromisso nos próximos 7 dias.',
+              icon: Icons.calendar_month_outlined,
+              color: FornecedorPremiumPalette.primary,
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (compromisso != null) ...[
+                      Text('${compromisso['servico']}',
+                          style: Theme.of(context).textTheme.titleSmall),
+                      const SizedBox(height: 4),
+                      Text(horarioAtualizacaoPainel(compromisso['inicio'])),
+                      const SizedBox(height: 8),
+                    ],
+                    OutlinedButton.icon(
+                        onPressed: () => abrir('/fornecedor/agenda'),
+                        icon:
+                            const Icon(Icons.calendar_month_outlined, size: 18),
+                        label: const Text('Abrir agenda')),
+                  ]),
+            ),
+            const SizedBox(height: 16),
+            PremiumSectionShell(
+              key: widget.acessosRapidosKey,
               title: 'Acessos rápidos',
               subtitle: 'Gerencie sua operação.',
               icon: Icons.apps_rounded,
@@ -282,6 +381,8 @@ class _VisaoOperacionalFornecedorState
                 minTileWidth: 235,
                 maxColumns: 3,
                 children: [
+                  atalho('Mensagens', 'Abrir conversas', Icons.chat_outlined,
+                      widget.onMensagens ?? widget.onPedidos),
                   atalho(
                       'Financeiro',
                       'Ver resumo',
@@ -307,86 +408,7 @@ class _VisaoOperacionalFornecedorState
               ),
             ),
             const SizedBox(height: 16),
-            PremiumSectionShell(
-              title: 'Indicadores do negócio',
-              subtitle: 'Acompanhe seu atendimento e desempenho comercial.',
-              icon: Icons.dashboard_customize_outlined,
-              color: FornecedorPremiumPalette.primary,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  AtualizacaoIndicadores(
-                    dados: locais,
-                    periodo: remoto?['periodo'] as Map?,
-                    complementoIndisponivel: c.erro.value.isNotEmpty,
-                    onRefresh: c.carregar,
-                    carregando: carregando,
-                  ),
-                  if (carregando)
-                    const Padding(
-                      padding: EdgeInsets.only(top: 8),
-                      child: LinearProgressIndicator(),
-                    ),
-                  const SizedBox(height: 12),
-                  ResponsiveWrapGrid(
-                    minTileWidth: 220,
-                    maxColumns: 3,
-                    children: [
-                      indicador(
-                          'Tempo médio de primeira resposta',
-                          duracao(resposta?['media'] as num?),
-                          resposta?['amostra'] == null
-                              ? 'Dados de resposta indisponíveis'
-                              : '${resposta!['amostra']} ${resposta['amostra'] == 1 ? 'resposta' : 'respostas'} · últimos 30 dias',
-                          Icons.timer_outlined,
-                          widget.onPedidos),
-                      indicador(
-                          'Reputação',
-                          reputacao == null
-                              ? 'Sem amostra'
-                              : (reputacao['media'] as num)
-                                  .toStringAsFixed(1)
-                                  .replaceAll('.', ','),
-                          reputacao == null
-                              ? reputacaoIndisponivel
-                                  ? 'Dados de reputação indisponíveis'
-                                  : 'Sem avaliações verificadas'
-                              : '${reputacao['quantidade']} ${reputacao['quantidade'] == 1 ? 'avaliação verificada' : 'avaliações verificadas'}',
-                          Icons.star_outline_rounded,
-                          () => abrir('/fornecedor/reputacao')),
-                      indicador(
-                          'Contratações',
-                          locais?['contratos']?.toString() ?? '—',
-                          'Contratos ativos únicos · histórico',
-                          Icons.handshake_outlined,
-                          () => abrir('/acompanhamento-fornecedor')),
-                      indicador(
-                          'Ofertas ativas',
-                          locais?['catalogo']?.toString() ?? '—',
-                          'Catálogo de venda',
-                          Icons.storefront_outlined,
-                          widget.onCatalogo),
-                      indicador(
-                          'Preparação do catálogo',
-                          perfil == null
-                              ? '—'
-                              : "${perfil.toStringAsFixed(1).replaceAll('.', ',')}%",
-                          'Perfil comercial e ofertas ativas',
-                          Icons.verified_user_outlined,
-                          widget.onPerfil),
-                      indicador(
-                          'Oportunidades em análise',
-                          ia == null ? 'Sem análise' : '${ia['quentes']}',
-                          ia == null
-                              ? 'Índice de IA ainda não calculado'
-                              : '${ia['amostra']} solicitações analisadas · heurística',
-                          Icons.auto_awesome_outlined,
-                          widget.onPedidos),
-                    ],
-                  ),
-                ],
-              ),
-            ),
+            DemandaLatenteSection(gateway: c.gateway),
           ],
         );
       });

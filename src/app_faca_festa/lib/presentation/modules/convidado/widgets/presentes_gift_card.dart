@@ -157,7 +157,7 @@ class PremiumGiftCard extends StatelessWidget {
                     ],
                   ),
                   if (descricao.isNotEmpty) ...[
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 8),
                     Text(
                       descricao,
                       maxLines: 2,
@@ -169,21 +169,19 @@ class PremiumGiftCard extends StatelessWidget {
                       ),
                     ),
                   ],
-                  const SizedBox(height: 12),
-                  if (isColetivo)
+                  if (isColetivo) ...[
+                    const SizedBox(height: 10),
                     _CollectiveProgress(
                       primary: primary,
                       meta: meta,
                       arrecadado: arrecadado,
                       percent: percent,
-                    )
-                  else if (valor > 0 || isPix)
-                    _PriceRow(primary: primary, value: valor, isPix: isPix)
-                  else
-                    _EmotionHint(
-                        primary: primary,
-                        text: 'Escolha este carinho e faça parte da festa'),
-                  const SizedBox(height: 12),
+                    ),
+                  ] else if (valor > 0 || isPix) ...[
+                    const SizedBox(height: 10),
+                    _PriceRow(primary: primary, value: valor, isPix: isPix),
+                  ],
+                  const SizedBox(height: 10),
                   _GiftActionButton(
                     primary: primary,
                     data: cta,
@@ -588,7 +586,9 @@ class _PriceRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  isPix ? 'Valor sugerido' : 'Valor do presente',
+                  isPix
+                      ? (value > 0 ? 'Valor sugerido' : 'Contribuição')
+                      : 'Valor do presente',
                   style: GoogleFonts.poppins(
                     fontSize: 10.5,
                     color: Colors.grey.shade600,
@@ -608,40 +608,6 @@ class _PriceRow extends StatelessWidget {
           ),
           Icon(Icons.auto_awesome_rounded,
               color: primary.withValues(alpha: 0.65), size: 18),
-        ],
-      ),
-    );
-  }
-}
-
-class _EmotionHint extends StatelessWidget {
-  final Color primary;
-  final String text;
-
-  const _EmotionHint({required this.primary, required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: primary.withValues(alpha: 0.055),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.favorite_border_rounded, color: primary, size: 17),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              text,
-              style: GoogleFonts.poppins(
-                color: Colors.grey.shade700,
-                fontSize: 11.5,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
         ],
       ),
     );

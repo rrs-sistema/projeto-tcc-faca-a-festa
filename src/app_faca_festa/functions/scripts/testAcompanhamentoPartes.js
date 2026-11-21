@@ -151,6 +151,25 @@ const {
   });
   assert.strictEqual(v.nivelPagamentoPlataforma, "declarado");
   assert.strictEqual(v.aPagarPlataformaCentavos, 1_000_000);
+  assert.strictEqual(v.limitePagamentos, 2);
+  const estourado = montarVisaoOrganizador({
+    idContrato: "c",
+    idOrcamento: "o",
+    idEvento: "e",
+    nomeEvento: "Festa Ana",
+    nomeFornecedor: "Débora Festas",
+    nomeServico: "Decoração",
+    escopo: "salão",
+    valorContratadoCentavos: 315_000,
+    declaradoCentavos: 165_750,
+    confirmadoAlocadoCentavos: 598_500,
+    estadoRepasse: "sem_repasse",
+    estadoExecucao: "nao_iniciado",
+    parcelasConhecidas: true,
+    politicaLiberacaoAtiva: false,
+  });
+  assert.strictEqual(estourado.valorConfirmadoPlataformaAlocadoCentavos, 315_000);
+  assert.strictEqual(estourado.aPagarPlataformaCentavos, 0);
   assert.strictEqual(v.nomeFornecedor, "Débora Festas");
   assert.ok(v.proximoPasso.rotulo.length > 0);
   console.log("✓ organizador: declaração ≠ confirmação; próximo passo útil");

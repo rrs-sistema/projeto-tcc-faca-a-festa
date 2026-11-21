@@ -27,6 +27,10 @@ Requisitos:
   - Inno Setup 6 (ISCC.exe) para o Setup Windows
   - firebase-tools (firebase) no PATH se usar --deploy
   - android/key.properties configurado para assinar APK/AAB
+
+Com --deploy, após o Hosting: tool/release_retention.cjs --apply
+(mantém build atual + 2 anteriores; ver docs/retencao_instaladores.md).
+Instaladores não são dados pessoais sob a LGPD.
 """
 
 from __future__ import annotations

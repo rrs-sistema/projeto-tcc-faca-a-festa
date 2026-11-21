@@ -38,6 +38,7 @@ import 'package:app_faca_festa/presentation/modules/usuario/controllers/usuario_
 import 'package:app_faca_festa/domain/entities/evento.dart';
 import 'package:app_faca_festa/domain/entities/tipo_evento.dart';
 import 'package:app_faca_festa/presentation/widgets/menu_drawer_faca_festa.dart';
+import 'package:app_faca_festa/presentation/widgets/rotulo_inteiro.dart';
 import 'package:app_faca_festa/presentation/widgets/festa_bottom_bar.dart';
 import 'package:app_faca_festa/presentation/widgets/festa_app_bar.dart';
 import 'package:app_faca_festa/presentation/widgets/festa_leitura.dart';
@@ -181,10 +182,6 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
     if (pageController.hasClients) {
       pageController.jumpToPage(index);
     }
-  }
-
-  void _abrirMenu() {
-    _scaffoldKey.currentState?.openEndDrawer();
   }
 
   void _abrirListaTarefas(EventThemeController theme) {
@@ -567,7 +564,6 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
                     context,
                     eventoController: eventoController,
                     theme: theme,
-                    onAbrirMenu: _abrirMenu,
                     contador: resumoLadoALado
                         ? _contadorEvento(eventoModel, tipoEventoModel, theme)
                         : null,
@@ -579,7 +575,6 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
                 context,
                 eventoController: eventoController,
                 theme: theme,
-                onAbrirMenu: _abrirMenu,
               ),
             Expanded(
               child: FestaScrollArea(
@@ -873,10 +868,8 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
+                          RotuloInteiro(
                             item.titulo,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                             style: GoogleFonts.poppins(
                               fontSize: 15,
                               height: 1.15,
@@ -1028,9 +1021,12 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
             const SizedBox(height: 6),
             _linhaStatus(
               titulo: HomeOrganizadorCopy.resumoConvidados,
-              detalhe: publico.cadastrados == null
-                  ? HomeOrganizadorCopy.convidadosPendentes(null)
-                  : '${HomeOrganizadorCopy.convidadosDetalhe(conf, totConv)} · ${HomeOrganizadorCopy.convidadosPendentes(publico.pendentes)}',
+              detalhe: _detalheConfirmados(
+                cadastrados: publico.cadastrados,
+                confirmados: conf,
+                total: totConv,
+                pendentes: publico.pendentes,
+              ),
               valor: publico.cadastrados == null ? '—' : '$conf/$totConv',
               progresso: progConv,
               cor: cor,
@@ -1200,21 +1196,46 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
               ),
             ),
             const SizedBox(height: 10),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: agruparIndicadores
-                  ? MainAxisAlignment.start
-                  : MainAxisAlignment.spaceAround,
-              children: [
-                for (final indicador in <Widget>[
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final estiloTitulo = GoogleFonts.poppins(
+                  fontSize: 12,
+                  height: 1.15,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF1F2937),
+                );
+                final maior = _maiorLargura(context, estiloTitulo, [
+                  HomeOrganizadorCopy.resumoConvidados,
+                  HomeOrganizadorCopy.resumoOrcamento,
+                  HomeOrganizadorCopy.resumoTarefas,
+                ]);
+                final disponivel = constraints.maxWidth / 3 - 13;
+                final empilhado = RotuloInteiro.pedeMaisLargura(
+                  natural: maior,
+                  disponivel: disponivel,
+                );
+                final tamanho = empilhado
+                    ? null
+                    : RotuloInteiro.tamanhoCompartilhado(
+                        larguraNatural: maior,
+                        disponivel: disponivel,
+                        tamanhoVisual:
+                            MediaQuery.textScalerOf(context).scale(12),
+                      );
+                final indicadores = [
                   _MiniCircularIndicator(
                     title: HomeOrganizadorCopy.resumoConvidados,
                     value: publico.cadastrados == null ? '—' : '$conf/$totConv',
                     subtitle: HomeOrganizadorCopy.convidadosPendentes(
-                        publico.pendentes),
+                      publico.pendentes,
+                      naLista: publico.cadastrados,
+                    ),
                     progress: progConv,
                     color: cor,
                     onTap: homeEventNavController.irParaConvidados,
+                    emLinha: empilhado,
+                    estiloTitulo: estiloTitulo,
+                    tamanhoVisual: tamanho,
                   ),
                   _MiniCircularIndicator(
                     title: HomeOrganizadorCopy.resumoOrcamento,
@@ -1222,6 +1243,9 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
                     progress: progOrc,
                     color: destaqueOrcamento,
                     onTap: homeEventNavController.irParaOrcamento,
+                    emLinha: empilhado,
+                    estiloTitulo: estiloTitulo,
+                    tamanhoVisual: tamanho,
                   ),
                   _MiniCircularIndicator(
                     title: HomeOrganizadorCopy.resumoTarefas,
@@ -1229,12 +1253,30 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
                     progress: progTar,
                     color: Color.lerp(cor, destaqueOrcamento, 0.45)!,
                     onTap: () => _abrirListaTarefas(theme),
+                    emLinha: empilhado,
+                    estiloTitulo: estiloTitulo,
+                    tamanhoVisual: tamanho,
                   ),
-                ])
-                  agruparIndicadores
-                      ? Expanded(child: indicador)
-                      : Flexible(child: indicador),
-              ],
+                ];
+                if (empilhado) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: indicadores,
+                  );
+                }
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: agruparIndicadores
+                      ? MainAxisAlignment.start
+                      : MainAxisAlignment.spaceAround,
+                  children: [
+                    for (final indicador in indicadores)
+                      agruparIndicadores
+                          ? Expanded(child: indicador)
+                          : Flexible(child: indicador),
+                  ],
+                );
+              },
             ),
           ],
         );
@@ -1253,15 +1295,6 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
         padding: const EdgeInsets.fromLTRB(28, 24, 28, 16),
         child: Column(
           children: [
-            Align(
-              alignment: Alignment.centerRight,
-              child: IconButton(
-                tooltip: 'Mais opções',
-                onPressed: _abrirMenu,
-                icon: Icon(Icons.more_horiz_rounded, color: primary),
-              ),
-            ),
-            const Spacer(),
             Container(
               width: 72,
               height: 72,
@@ -1397,17 +1430,60 @@ Widget _buildQuickActions({
         return LayoutBuilder(
           builder: (context, constraints) {
             final larga = constraints.maxWidth >= 600;
-            final quatro = constraints.maxWidth >= 760;
+            final estiloTitulo = GoogleFonts.poppins(
+              fontSize: 12.5,
+              height: 1.15,
+              color: const Color(0xFF1F2937),
+              fontWeight: FontWeight.w700,
+            );
+            final maior = _maiorLargura(
+              context,
+              estiloTitulo,
+              itens.map((item) => item['label'] as String),
+            );
+            final espacamento = larga ? 10.0 : 8.0;
+            var colunas = constraints.maxWidth >= 760 ? 4 : 2;
+            double disponivel(int n) => _textoAtalhoDisponivel(
+                  larguraGrade: constraints.maxWidth,
+                  colunas: n,
+                  espacamento: espacamento,
+                  mostraSeta: larga,
+                );
+            if (colunas == 4 &&
+                RotuloInteiro.pedeMaisLargura(
+                  natural: maior,
+                  disponivel: disponivel(4),
+                )) {
+              colunas = 2;
+            }
+            if (colunas == 2 &&
+                RotuloInteiro.pedeMaisLargura(
+                  natural: maior,
+                  disponivel: disponivel(2),
+                )) {
+              colunas = 1;
+            }
+            final tamanho = RotuloInteiro.tamanhoCompartilhado(
+              larguraNatural: maior,
+              disponivel: disponivel(colunas),
+              tamanhoVisual: MediaQuery.textScalerOf(context).scale(12.5),
+            );
+            final tituloPx =
+                tamanho ?? MediaQuery.textScalerOf(context).scale(12.5);
+            final dicaPx = MediaQuery.textScalerOf(context).scale(11);
+            final minima = larga ? (colunas >= 4 ? 108.0 : 96.0) : 72.0;
+            final altura = (tituloPx * 1.25 + dicaPx * 1.35 + 36)
+                .clamp(minima, 160.0)
+                .toDouble();
             return GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: itens.length,
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: quatro ? 4 : 2,
-                crossAxisSpacing: larga ? 10 : 8,
-                mainAxisSpacing: larga ? 10 : 8,
-                mainAxisExtent: larga ? (quatro ? 108 : 96) : null,
-                childAspectRatio: 2.05,
+                crossAxisCount: colunas,
+                crossAxisSpacing: espacamento,
+                mainAxisSpacing: espacamento,
+                mainAxisExtent: altura,
               ),
               itemBuilder: (context, i) {
                 final item = itens[i];
@@ -1490,14 +1566,11 @@ Widget _buildQuickActions({
                               mainAxisAlignment: MainAxisAlignment.center,
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(item['label'] as String,
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: GoogleFonts.poppins(
-                                        fontSize: 12.5,
-                                        height: 1.15,
-                                        color: const Color(0xFF1F2937),
-                                        fontWeight: FontWeight.w700)),
+                                RotuloInteiro(
+                                  item['label'] as String,
+                                  style: estiloTitulo,
+                                  tamanhoVisual: tamanho,
+                                ),
                                 Text(item['val'] as String,
                                     style: GoogleFonts.poppins(
                                         fontSize: 11,
@@ -1544,6 +1617,50 @@ class _AtalhoDesktop {
   final Color cor;
 }
 
+String _detalheConfirmados({
+  required int? cadastrados,
+  required int confirmados,
+  required int total,
+  required int? pendentes,
+}) {
+  if (cadastrados == null) return 'Lista indisponível';
+  final base = HomeOrganizadorCopy.convidadosDetalhe(confirmados, total);
+  final aguardando = HomeOrganizadorCopy.convidadosPendentes(
+    pendentes,
+    naLista: cadastrados,
+  );
+  if (aguardando == null) return base;
+  return '$base · $aguardando';
+}
+
+double _maiorLargura(
+  BuildContext context,
+  TextStyle estilo,
+  Iterable<String> textos,
+) {
+  var maior = 0.0;
+  for (final texto in textos) {
+    final largura = RotuloInteiro.largura(context, texto, estilo);
+    if (largura > maior) maior = largura;
+  }
+  return maior;
+}
+
+double _textoAtalhoDisponivel({
+  required double larguraGrade,
+  required int colunas,
+  required double espacamento,
+  required bool mostraSeta,
+}) {
+  final celula =
+      (larguraGrade - espacamento * (colunas - 1)) / colunas;
+  const padding = 24.0;
+  const icone = 34.0;
+  const folga = 8.0;
+  final seta = mostraSeta ? 22.0 : 0.0;
+  return celula - padding - icone - folga - seta;
+}
+
 class _MiniCircularIndicator extends StatelessWidget {
   final String title;
   final String value;
@@ -1551,18 +1668,77 @@ class _MiniCircularIndicator extends StatelessWidget {
   final double progress;
   final Color color;
   final VoidCallback? onTap;
+  final bool emLinha;
+  final TextStyle estiloTitulo;
+  final double? tamanhoVisual;
 
   const _MiniCircularIndicator({
     required this.title,
     required this.value,
     required this.progress,
     required this.color,
+    required this.estiloTitulo,
     this.subtitle,
     this.onTap,
+    this.emLinha = false,
+    this.tamanhoVisual,
   });
+
+  Widget _circulo(double lado) {
+    return SizedBox(
+      height: lado,
+      width: lado,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          CircularProgressIndicator(
+            value: progress.clamp(0.0, 1.0).toDouble(),
+            strokeWidth: lado > 48 ? 5 : 4.5,
+            color: color,
+            backgroundColor: color.withValues(alpha: 0.15),
+          ),
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.all(5),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  value,
+                  style: GoogleFonts.poppins(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF1F2937),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    final titulo = RotuloInteiro(
+      title,
+      style: estiloTitulo,
+      alinhamento: emLinha ? TextAlign.start : TextAlign.center,
+      tamanhoVisual: tamanhoVisual,
+    );
+    final detalhe = subtitle == null
+        ? null
+        : Text(
+            subtitle!,
+            textAlign: emLinha ? TextAlign.start : TextAlign.center,
+            maxLines: emLinha ? 2 : 3,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.poppins(
+              fontSize: 10,
+              height: 1.25,
+              color: const Color(0xFF6B7280),
+            ),
+          );
     return Semantics(
       button: onTap != null,
       label: [title, value, if (subtitle != null) subtitle].join('. '),
@@ -1574,53 +1750,40 @@ class _MiniCircularIndicator extends StatelessWidget {
           child: ConstrainedBox(
             constraints: const BoxConstraints(minWidth: 72, minHeight: 72),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-              child: Column(
-                children: [
-                  SizedBox(
-                    height: 52,
-                    width: 52,
-                    child: Stack(
-                      fit: StackFit.expand,
+              padding: EdgeInsets.symmetric(
+                horizontal: emLinha ? 4 : 6,
+                vertical: 4,
+              ),
+              child: emLinha
+                  ? Row(
                       children: [
-                        CircularProgressIndicator(
-                            value: progress.clamp(0.0, 1.0).toDouble(),
-                            strokeWidth: 5,
-                            color: color,
-                            backgroundColor: color.withValues(alpha: 0.15)),
-                        Center(
-                            child: Padding(
-                          padding: const EdgeInsets.all(5),
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Text(value,
-                                style: GoogleFonts.poppins(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w800,
-                                    color: const Color(0xFF1F2937))),
+                        _circulo(46),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              titulo,
+                              if (detalhe != null) ...[
+                                const SizedBox(height: 2),
+                                detalhe,
+                              ],
+                            ],
                           ),
-                        )),
+                        ),
+                      ],
+                    )
+                  : Column(
+                      children: [
+                        _circulo(52),
+                        const SizedBox(height: 4),
+                        titulo,
+                        if (detalhe != null) ...[
+                          const SizedBox(height: 2),
+                          detalhe,
+                        ],
                       ],
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(title,
-                      style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF1F2937))),
-                  if (subtitle != null) ...[
-                    const SizedBox(height: 2),
-                    SizedBox(
-                      width: 88,
-                      child: Text(subtitle!,
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.poppins(
-                              fontSize: 10, color: const Color(0xFF6B7280))),
-                    ),
-                  ],
-                ],
-              ),
             ),
           ),
         ),
@@ -1786,6 +1949,7 @@ Widget _buildSuppliersCarousel(
               final largura =
                   ((constraints.maxWidth - espaco * (colunas - 1)) / colunas)
                       .clamp(148.0, 230.0);
+              final altura = _alturaCartaoFornecedor(context);
               if (fornecedorController.carregando.value) {
                 return Padding(
                   padding: margemLista,
@@ -1799,7 +1963,7 @@ Widget _buildSuppliersCarousel(
                         highlightColor: Colors.grey.shade100,
                         child: Container(
                           width: largura,
-                          height: 168,
+                          height: altura,
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(18),
@@ -1828,6 +1992,7 @@ Widget _buildSuppliersCarousel(
                         appController: appController,
                         cotacaoController: cotacaoController,
                         largura: largura,
+                        altura: altura,
                       ),
                   ],
                 ),
@@ -1836,44 +2001,64 @@ Widget _buildSuppliersCarousel(
           );
         }
 
-        return SizedBox(
-          height: 176,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: margemLista,
-            itemCount:
-                fornecedorController.carregando.value ? 3 : fornecedores.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 12),
-            itemBuilder: (_, index) {
-              if (fornecedorController.carregando.value) {
-                return Shimmer.fromColors(
-                    baseColor: Colors.grey.shade300,
-                    highlightColor: Colors.grey.shade100,
-                    child: Container(
+        return LayoutBuilder(
+          builder: (context, _) {
+            final altura = _alturaCartaoFornecedor(context);
+            return SizedBox(
+              height: altura,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                padding: margemLista,
+                itemCount: fornecedorController.carregando.value
+                    ? 3
+                    : fornecedores.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 12),
+                itemBuilder: (_, index) {
+                  if (fornecedorController.carregando.value) {
+                    return Shimmer.fromColors(
+                      baseColor: Colors.grey.shade300,
+                      highlightColor: Colors.grey.shade100,
+                      child: Container(
                         width: 150,
+                        height: altura,
                         decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(18))));
-              }
-              return _fornecedorCard(
-                fornecedorDetalhe: fornecedores[index],
-                cor: cor,
-                themeController: theme,
-                fornecedorController: fornecedorCadastroController,
-                fornecedorLocalizacaoController: fornecedorController,
-                avaliacaoController: avaliacaoController,
-                eventoController: eventoController,
-                appController: appController,
-                cotacaoController: cotacaoController,
-              );
-            },
-          ),
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                      ),
+                    );
+                  }
+                  return _fornecedorCard(
+                    fornecedorDetalhe: fornecedores[index],
+                    cor: cor,
+                    themeController: theme,
+                    fornecedorController: fornecedorCadastroController,
+                    fornecedorLocalizacaoController: fornecedorController,
+                    avaliacaoController: avaliacaoController,
+                    eventoController: eventoController,
+                    appController: appController,
+                    cotacaoController: cotacaoController,
+                    altura: altura,
+                  );
+                },
+              ),
+            );
+          },
         );
       }),
     ],
   );
   if (!comoSliver) return corpo;
   return SliverToBoxAdapter(child: corpo);
+}
+
+double _alturaCartaoFornecedor(BuildContext context) {
+  final escala = MediaQuery.textScalerOf(context);
+  const imagem = 88.0;
+  const padding = 16.0;
+  final titulo = escala.scale(13) * 1.2 * 2;
+  final contexto = 2 + escala.scale(11) * 1.25;
+  return (imagem + padding + titulo + contexto).clamp(168.0, 236.0);
 }
 
 Widget _fornecedorCard({
@@ -1887,6 +2072,7 @@ Widget _fornecedorCard({
   required AppController appController,
   required CotacaoController cotacaoController,
   double largura = 150,
+  double? altura,
 }) {
   final fornecedor = fornecedorDetalhe.fornecedor;
   final contexto = _contextoFornecedor(fornecedorDetalhe);
@@ -1896,121 +2082,135 @@ Widget _fornecedorCard({
     if (contexto.isNotEmpty) contexto,
     if (nota.isNotEmpty) 'nota $nota',
   ].join('. ');
-  return Semantics(
-    button: true,
-    label: legenda,
-    child: Material(
-      color: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
-        side: const BorderSide(color: Color(0xFFE5E7EB)),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () => Get.to(() => FornecedorDetalheScreen(
-              fornecedorDetalhado: fornecedorDetalhe,
-              selecionouCategoria: false,
-              themeController: themeController,
-              fornecedorController: fornecedorController,
-              fornecedorLocalizacaoController: fornecedorLocalizacaoController,
-              avaliacaoController: avaliacaoController,
-              eventoController: eventoController,
-              appController: appController,
-              cotacoes: cotacaoController.gerenciarCotacoes,
-            )),
-        child: Ink(
-          width: largura,
-          height: 168,
+  return Builder(
+    builder: (context) {
+      final alturaCartao = altura ?? _alturaCartaoFornecedor(context);
+      return Semantics(
+        button: true,
+        label: legenda,
+        child: Material(
           color: Colors.white,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                height: 88,
-                width: double.infinity,
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    TemaCapaImagem(
-                      url: fornecedor.bannerUrl,
-                      fit: BoxFit.cover,
-                      fallback: ColoredBox(
-                        color: cor.withValues(alpha: 0.08),
-                        child: Icon(Icons.storefront_outlined,
-                            color: cor, size: 28),
-                      ),
-                    ),
-                    if (nota.isNotEmpty)
-                      Positioned(
-                        top: 8,
-                        right: 8,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(99),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+            side: const BorderSide(color: Color(0xFFE5E7EB)),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: () => Get.to(() => FornecedorDetalheScreen(
+                  fornecedorDetalhado: fornecedorDetalhe,
+                  selecionouCategoria: false,
+                  themeController: themeController,
+                  fornecedorController: fornecedorController,
+                  fornecedorLocalizacaoController:
+                      fornecedorLocalizacaoController,
+                  avaliacaoController: avaliacaoController,
+                  eventoController: eventoController,
+                  appController: appController,
+                  cotacoes: cotacaoController.gerenciarCotacoes,
+                )),
+            child: Ink(
+              width: largura,
+              height: alturaCartao,
+              color: Colors.white,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    height: 88,
+                    width: double.infinity,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        TemaCapaImagem(
+                          url: fornecedor.bannerUrl,
+                          fit: BoxFit.cover,
+                          fallback: ColoredBox(
+                            color: cor.withValues(alpha: 0.08),
+                            child: Icon(Icons.storefront_outlined,
+                                color: cor, size: 28),
                           ),
-                          child: Row(
+                        ),
+                        if (nota.isNotEmpty)
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(99),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.star_rounded,
+                                      size: 13, color: Color(0xFFF59E0B)),
+                                  const SizedBox(width: 2),
+                                  Text(
+                                    nota,
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: const Color(0xFF1F2937),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.topLeft,
+                        child: SizedBox(
+                          width: largura - 20,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.star_rounded,
-                                  size: 13, color: Color(0xFFF59E0B)),
-                              const SizedBox(width: 2),
                               Text(
-                                nota,
+                                fornecedor.razaoSocial,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
                                 style: GoogleFonts.poppins(
-                                  fontSize: 11,
+                                  fontSize: 13,
                                   fontWeight: FontWeight.w700,
+                                  height: 1.2,
                                   color: const Color(0xFF1F2937),
                                 ),
                               ),
+                              if (contexto.isNotEmpty) ...[
+                                const SizedBox(height: 2),
+                                Text(
+                                  contexto,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: cor,
+                                  ),
+                                ),
+                              ],
                             ],
                           ),
                         ),
                       ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        fornecedor.razaoSocial,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.poppins(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          height: 1.2,
-                          color: const Color(0xFF1F2937),
-                        ),
-                      ),
-                      if (contexto.isNotEmpty) ...[
-                        const SizedBox(height: 2),
-                        Text(
-                          contexto,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.poppins(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: cor,
-                          ),
-                        ),
-                      ],
-                    ],
+                    ),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
-      ),
-    ),
+      );
+    },
   );
 }
 

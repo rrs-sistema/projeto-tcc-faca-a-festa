@@ -19,6 +19,9 @@ import {
   VisaoContratoFornecedor,
   VisaoContratoOrganizador,
 } from "./acompanhamentoPartesService";
+import { entradaSugerida } from "./asaasPixRegras";
+
+const COL_COBRANCAS_PIX = "plataforma_cobrancas_pix";
 import {
   COL_ALOCACOES,
   COL_LIBERACAO,
@@ -58,6 +61,7 @@ async function agregadosContrato(
 ): Promise<{
   declarado: number;
   alocado: number;
+  fonteExterna: number;
   repasseAutorizado: number;
   repasseConfirmado: number;
   estadoRepasse: string;
@@ -98,9 +102,12 @@ async function agregadosContrato(
   declarado += Number(od.pagamento_declarado_centavos ?? 0);
 
   let alocado = 0;
+  let fonteExterna = 0;
   if (alocSnap) {
     for (const d of alocSnap.docs) {
-      alocado += Number(d.data().valor_centavos ?? 0);
+      const valor = Number(d.data().valor_centavos ?? 0);
+      alocado += valor;
+      if (String(d.data().origem ?? "") === "asaas_pix") fonteExterna += valor;
     }
   }
 
@@ -124,7 +131,14 @@ async function agregadosContrato(
     }
   }
 
-  return { declarado, alocado, repasseAutorizado, repasseConfirmado, estadoRepasse };
+  return {
+    declarado,
+    alocado,
+    fonteExterna,
+    repasseAutorizado,
+    repasseConfirmado,
+    estadoRepasse,
+  };
 }
 
 function nomeUsuario(u: Record<string, unknown> | null): string | null {
@@ -135,6 +149,29 @@ function nomeUsuario(u: Record<string, unknown> | null): string | null {
     texto(u.display_name) ||
     null
   );
+}
+
+async function condicaoPagamentoContrato(
+  db: Firestore,
+  orcamento: FirebaseFirestore.DocumentData,
+): Promise<string | null> {
+  const direta = texto(orcamento.condicao_pagamento);
+  if (direta) return direta;
+  const idCotacao = texto(orcamento.id_cotacao);
+  const idFornecedor = texto(orcamento.id_fornecedor);
+  if (!idCotacao || !idFornecedor) return null;
+  const participacao = await db
+    .collection("cotacao")
+    .doc(idCotacao)
+    .collection("fornecedores")
+    .doc(idFornecedor)
+    .get();
+  if (!participacao.exists) return null;
+  const dados = participacao.data() ?? {};
+  return texto(dados.condicao_pagamento)
+    || texto(dados.proposta_aceita?.condicoes)
+    || texto(dados.proposta_atual?.condicoes)
+    || null;
 }
 
 function nomeForn(f: Record<string, unknown> | null): string | null {
@@ -198,6 +235,19 @@ export async function listarAcompanhamentoOrganizador(
         ? (d.contrato_financeiro as { estado_execucao?: string }).estado_execucao
         : d.estado_execucao,
     ) as EstadoExecucaoParte;
+    const valorContratado =
+      Number(d.valor_contratado_centavos ?? 0) ||
+      Math.round(Number(d.valor_contratado ?? d.valor ?? 0) * 100);
+    const condicao = await condicaoPagamentoContrato(db, d);
+    const entrada = entradaSugerida(condicao, valorContratado);
+    const pagamentos = await db.collection(COL_COBRANCAS_PIX)
+      .where("id_orcamento", "==", doc.id)
+      .limit(20)
+      .get();
+    const pagamentosRegistrados = pagamentos.docs.filter((p) => {
+      const status = texto(p.data().status);
+      return status === "PENDING" || status === "APPROVED" || status === "CRIANDO";
+    }).length;
 
     linhas.push(
       montarVisaoOrganizador({
@@ -205,21 +255,29 @@ export async function listarAcompanhamentoOrganizador(
         idOrcamento: doc.id,
         idEvento: params.idEvento,
         nomeEvento,
-        nomeFornecedor: nomeForn(forn as Record<string, unknown> | null),
+        nomeFornecedor: nomeForn(forn as Record<string, unknown> | null) || texto(d.nome_fornecedor) || null,
         nomeServico:
           texto(d.nome_servico) ||
           texto(d.nome) ||
           null,
+        idFornecedor: idForn || null,
+        idServico:
+          texto(d.id_servico) ||
+          texto(d.id_produto_servico) ||
+          texto(d.id_servico_fornecido) ||
+          null,
         escopo: texto(d.anotacoes) || null,
-        valorContratadoCentavos:
-          Number(d.valor_contratado_centavos ?? 0) ||
-          Math.round(Number(d.valor_contratado ?? d.valor ?? 0) * 100),
+        valorContratadoCentavos: valorContratado,
         declaradoCentavos: agg.declarado,
         confirmadoAlocadoCentavos: agg.alocado,
+        confirmadoFonteExternaCentavos: agg.fonteExterna,
         estadoRepasse: agg.estadoRepasse as "sem_repasse",
         estadoExecucao: exec,
         parcelasConhecidas: true,
         politicaLiberacaoAtiva: politicaAtiva,
+        entradaSugeridaCentavos: entrada?.centavos ?? null,
+        percentualEntradaSugerido: entrada?.percentual ?? null,
+        pagamentosRegistrados,
       }),
     );
   }

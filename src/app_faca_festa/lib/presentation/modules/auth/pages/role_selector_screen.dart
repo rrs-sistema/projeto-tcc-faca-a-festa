@@ -27,14 +27,19 @@ class RoleSelectorScreen extends StatelessWidget {
         body: AuthFestaShell(
           title: 'Como você quer participar?',
           titleHighlight: 'participar?',
+          subtitle: 'Escolha um caminho. Você pode mudar depois.',
           mostrarProvaSocial: false,
           mostrarCreditos: false,
+          footerLink: AuthFestaContaButton(
+            prefixo: 'Já tem uma conta? ',
+            acao: 'Entrar',
+            onTap: () => Get.toNamed('/login'),
+          ),
           child: Column(
             children: [
               _RoleChoiceCard(
                 title: 'Sou Organizador',
-                description:
-                    'Crie sua conta para planejar listas, orçamentos e fornecedores',
+                description: 'Planeje listas, orçamento e fornecedores',
                 icon: Icons.event_available_rounded,
                 accent: AuthFestaBrand.rosaIcone,
                 onTap: () {
@@ -48,8 +53,7 @@ class RoleSelectorScreen extends StatelessWidget {
               const SizedBox(height: 10),
               _RoleChoiceCard(
                 title: 'Sou Fornecedor',
-                description:
-                    'Crie sua conta para oferecer buffet, decoração, foto e música',
+                description: 'Ofereça buffet, decoração, foto e música',
                 icon: Icons.storefront_rounded,
                 accent: AuthFestaBrand.roxoIcone,
                 onTap: () {
@@ -60,13 +64,11 @@ class RoleSelectorScreen extends StatelessWidget {
                   );
                 },
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 18),
+              const _SeparadorSecao(rotulo: 'Foi convidado?'),
+              const SizedBox(height: 10),
               _ConviteAcao(
                 onTap: () => _abrirDialogoConvite(context),
-              ),
-              const SizedBox(height: 4),
-              _EntrarContaButton(
-                onTap: () => Get.toNamed('/login'),
               ),
             ],
           ),
@@ -84,6 +86,31 @@ Future<void> _abrirDialogoConvite(BuildContext context) async {
   if (token == null || token.isEmpty) return;
   Get.find<AppController>().guardarTokenConvite(token);
   await Get.offAllNamed(ConviteLink.rotaConvite(token));
+}
+
+class _SeparadorSecao extends StatelessWidget {
+  const _SeparadorSecao({required this.rotulo});
+
+  final String rotulo;
+
+  @override
+  Widget build(BuildContext context) {
+    final estilo = GoogleFonts.poppins(
+      fontSize: 12,
+      fontWeight: FontWeight.w600,
+      color: const Color(0xFF9CA3AF),
+    );
+    return Row(
+      children: [
+        const Expanded(child: Divider(color: Color(0xFFE5E7EB), height: 1)),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          child: Text(rotulo, style: estilo),
+        ),
+        const Expanded(child: Divider(color: Color(0xFFE5E7EB), height: 1)),
+      ],
+    );
+  }
 }
 
 class _RoleChoiceCard extends StatelessWidget {
@@ -134,7 +161,7 @@ class _RoleChoiceCard extends StatelessWidget {
                   color: accent.withValues(alpha: 0.55),
                 ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(14, 14, 8, 14),
+                  padding: const EdgeInsets.fromLTRB(14, 14, 10, 14),
                   child: Row(
                     children: [
                       Container(
@@ -172,10 +199,11 @@ class _RoleChoiceCard extends StatelessWidget {
                           ],
                         ),
                       ),
-                      const Icon(
+                      const SizedBox(width: 4),
+                      Icon(
                         Icons.chevron_right_rounded,
-                        color: Color(0xFFD1D5DB),
-                        size: 22,
+                        color: accent.withValues(alpha: 0.55),
+                        size: 24,
                       ),
                     ],
                   ),
@@ -196,84 +224,80 @@ class _ConviteAcao extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: TextButton(
-        onPressed: onTap,
-        style: TextButton.styleFrom(
-          minimumSize: const Size.fromHeight(48),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          foregroundColor: AuthFestaBrand.titulo,
-          iconColor: AuthFestaBrand.titulo,
-        ),
-        child: Text.rich(
-          TextSpan(
-            text: 'Recebeu o convite por e-mail? ',
-            style: GoogleFonts.poppins(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: const Color(0xFF6B7280),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        splashColor: AuthFestaBrand.rosa.withValues(alpha: 0.08),
+        child: Ink(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: AuthFestaBrand.rosa.withValues(alpha: 0.28),
             ),
-            children: [
-              TextSpan(
-                text: 'Colar o link',
-                style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: AuthFestaBrand.rosa,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: AuthFestaBrand.rosa.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Icon(
+                    Icons.mail_outline_rounded,
+                    color: AuthFestaBrand.rosa,
+                    size: 22,
+                  ),
                 ),
-              ),
-            ],
-          ),
-          textAlign: TextAlign.center,
-        ),
-      ),
-    );
-  }
-}
-
-class _EntrarContaButton extends StatelessWidget {
-  const _EntrarContaButton({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: OutlinedButton(
-        onPressed: onTap,
-        style: OutlinedButton.styleFrom(
-          minimumSize: const Size.fromHeight(48),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          side: const BorderSide(color: Color(0xFFF0E6EC)),
-          foregroundColor: AuthFestaBrand.rosa,
-          iconColor: AuthFestaBrand.rosa,
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-        ),
-        child: Text.rich(
-          TextSpan(
-            text: 'Já tem uma conta? ',
-            style: GoogleFonts.poppins(
-              fontSize: 13.5,
-              fontWeight: FontWeight.w500,
-              color: const Color(0xFF6B7280),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Recebi um convite',
+                        style: GoogleFonts.poppins(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          height: 1.2,
+                          color: AuthFestaBrand.titulo,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Cole o link do e-mail para abrir a festa',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          height: 1.3,
+                          color: const Color(0xFF6B7280),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: AuthFestaBrand.rosa.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.content_paste_rounded,
+                    color: AuthFestaBrand.rosa,
+                    size: 18,
+                  ),
+                ),
+              ],
             ),
-            children: [
-              TextSpan(
-                text: 'Entrar',
-                style: GoogleFonts.poppins(
-                  fontSize: 13.5,
-                  fontWeight: FontWeight.w700,
-                  color: AuthFestaBrand.rosa,
-                ),
-              ),
-            ],
           ),
-          textAlign: TextAlign.center,
         ),
       ),
     );

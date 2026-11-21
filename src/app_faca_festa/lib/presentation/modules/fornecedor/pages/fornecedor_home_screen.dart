@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/presentation/modules/catalogo/pages/servico/servico_produto_list_screen.dart';
 import 'package:app_faca_festa/presentation/widgets/festa_scroll_area.dart';
 import '../controllers/painel_operacional_controller.dart';
 import 'package:flutter/material.dart';
@@ -54,9 +55,8 @@ class FornecedorHomeScreen extends StatefulWidget {
 }
 
 class _FornecedorHomeScreenState extends State<FornecedorHomeScreen> {
-  final GlobalKey _cotacoesKey = GlobalKey();
-  final GlobalKey _catalogoKey = GlobalKey();
-  final GlobalKey _avaliacoesKey = GlobalKey();
+  final Set<int> _areasVisitadas = {0};
+  final GlobalKey _acessosRapidosKey = GlobalKey();
   final ScrollController _scroll = ScrollController();
   int _atalhoAtivo = 0;
   PainelOperacionalController? _operacional;
@@ -69,69 +69,62 @@ class _FornecedorHomeScreenState extends State<FornecedorHomeScreen> {
     super.dispose();
   }
 
-  Future<void> _scrollToCotacoes() async {
-    setState(() => _atalhoAtivo = 0);
-    await _scrollToSection(
-      key: _cotacoesKey,
-      title: 'Pedidos de preço',
-      fallbackMessage: 'Não foi possível localizar os pedidos agora.',
-    );
+  void _selecionarArea(int area) {
+    setState(() {
+      _atalhoAtivo = area;
+      _areasVisitadas.add(area);
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _scroll.hasClients) _scroll.jumpTo(0);
+    });
   }
 
-  Future<void> _scrollToCatalogo() async {
-    setState(() => _atalhoAtivo = 1);
-    await _scrollToSection(
-      key: _catalogoKey,
-      title: 'Catálogo',
-      fallbackMessage: 'Não foi possível localizar a seção de catálogo agora.',
-    );
-  }
+  void _scrollToCotacoes() => _selecionarArea(1);
+  void _scrollToCatalogo() => _selecionarArea(2);
+  void _scrollToAvaliacoes() => _selecionarArea(4);
 
-  Future<void> _scrollToAvaliacoes() async {
-    setState(() => _atalhoAtivo = 2);
-    await _scrollToSection(
-      key: _avaliacoesKey,
-      title: 'Avaliações',
-      fallbackMessage:
-          'Não foi possível localizar a seção de avaliações agora.',
-    );
-  }
-
-  Future<void> _scrollToSection({
-    required GlobalKey key,
-    required String title,
-    required String fallbackMessage,
-  }) async {
-    BuildContext? sectionContext = key.currentContext;
-
-    // Em algumas reconstruções do Obx, a key pode ficar disponível apenas
-    // no próximo frame. Esse pequeno retry evita cair no snackbar sem tentar rolar.
-    if (sectionContext == null) {
-      await Future<void>.delayed(const Duration(milliseconds: 80));
+  void _abrirAcessosRapidos() {
+    _selecionarArea(3);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      sectionContext = key.currentContext;
-    }
+      final sectionContext = _acessosRapidosKey.currentContext;
+      if (sectionContext == null) return;
+      Scrollable.ensureVisible(sectionContext,
+          alignment: .12,
+          duration: const Duration(milliseconds: 350),
+          curve: Curves.easeOutCubic);
+    });
+  }
 
-    if (sectionContext == null) {
-      Get.snackbar(
-        title,
-        fallbackMessage,
-        backgroundColor: const Color(0xFF111827),
-        colorText: Colors.white,
-      );
+  Future<void> _abrirCatalogoDeVenda() async {
+    final fornecedor = controller.fornecedor.value;
+    if (fornecedor == null) return;
+    await controller.escutarServicosFornecedor(fornecedor.idFornecedor);
+    if (!mounted ||
+        controller.fornecedor.value?.idFornecedor != fornecedor.idFornecedor) {
       return;
     }
-
-    if (!sectionContext.mounted) return;
-
-    await Scrollable.ensureVisible(
-      sectionContext,
-      duration: const Duration(milliseconds: 560),
-      curve: Curves.easeOutCubic,
-      alignment: 0.04,
-      alignmentPolicy: ScrollPositionAlignmentPolicy.explicit,
-    );
+    await Get.to(() => ServicoProdutoListScreen(
+          fornecedorId: fornecedor.idFornecedor,
+          servicoController: widget.servicoController,
+          fotoController: widget.fotoController,
+          fornecedorController: controller,
+          appController: widget.appController,
+          categoriaController: widget.categoriaController,
+          subcategoriaController: widget.subcategoriaController,
+          avaliacaoController: widget.avaliacaoController,
+          theme: widget.themeController,
+        ));
   }
+
+  Widget _pedidos({bool resumido = false}) => SolicitacoesSection(
+        fornecedorController: controller,
+        solicitacoesController: widget.solicitacoesController,
+        themeController: widget.themeController,
+        cotacoes: widget.cotacoes,
+        resumido: resumido,
+        onVerTodos: _scrollToCotacoes,
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -147,11 +140,13 @@ class _FornecedorHomeScreenState extends State<FornecedorHomeScreen> {
 
       final desktop =
           FornecedorBreakpoints.desktop(MediaQuery.sizeOf(context).width);
-      final atalhos = _FornecedorAtalhosBar(
+      final atalhos = FornecedorNavegacao(
         compacto: desktop,
         ativo: _atalhoAtivo,
+        onVisaoGeral: () => _selecionarArea(0),
         onPedidos: _scrollToCotacoes,
         onCatalogo: _scrollToCatalogo,
+        onAcessosRapidos: _abrirAcessosRapidos,
         onAvaliacoes: _scrollToAvaliacoes,
       );
 
@@ -209,7 +204,8 @@ class _FornecedorHomeScreenState extends State<FornecedorHomeScreen> {
                                 color: FornecedorPremiumPalette.background,
                                 child: Padding(
                                   padding: EdgeInsets.symmetric(
-                                      horizontal: horizontalPadding),
+                                      horizontal: horizontalPadding,
+                                      vertical: 8),
                                   child: Center(
                                     child: ConstrainedBox(
                                       constraints:
@@ -236,49 +232,63 @@ class _FornecedorHomeScreenState extends State<FornecedorHomeScreen> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      ResumoSection(
-                                        controller: controller,
-                                        appController: widget.appController,
-                                        themeController: widget.themeController,
-                                        cotacoes: widget.cotacoes,
-                                        servicoController:
-                                            widget.servicoController,
-                                        fotoController: widget.fotoController,
-                                        categoriaController:
-                                            widget.categoriaController,
-                                        subcategoriaController:
-                                            widget.subcategoriaController,
-                                        avaliacaoController:
-                                            widget.avaliacaoController,
-                                        onAbrirPedidos: _scrollToCotacoes,
-                                        onAbrirPerfil: _scrollToCatalogo,
-                                        onController: (c) => _operacional = c,
-                                        pedidos: SolicitacoesSection(
-                                          key: _cotacoesKey,
-                                          fornecedorController: controller,
-                                          solicitacoesController:
-                                              widget.solicitacoesController,
-                                          themeController:
-                                              widget.themeController,
-                                          cotacoes: widget.cotacoes,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 20),
-                                      Container(
-                                        key: _catalogoKey,
-                                        child: PerfilSection(
-                                          controller: controller,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 20),
-                                      Container(
-                                        key: _avaliacoesKey,
-                                        child: AvaliacoesSection(
-                                          fornecedorController: controller,
-                                          avaliacaoController:
-                                              widget.avaliacaoController,
-                                        ),
-                                      ),
+                                      Offstage(
+                                          offstage: _atalhoAtivo != 0 &&
+                                              _atalhoAtivo != 3,
+                                          child: Column(children: [
+                                            ResumoSection(
+                                              controller: controller,
+                                              appController:
+                                                  widget.appController,
+                                              themeController:
+                                                  widget.themeController,
+                                              cotacoes: widget.cotacoes,
+                                              servicoController:
+                                                  widget.servicoController,
+                                              fotoController:
+                                                  widget.fotoController,
+                                              categoriaController:
+                                                  widget.categoriaController,
+                                              subcategoriaController:
+                                                  widget.subcategoriaController,
+                                              avaliacaoController:
+                                                  widget.avaliacaoController,
+                                              onAbrirPedidos: _scrollToCotacoes,
+                                              onAbrirPerfil: _scrollToCatalogo,
+                                              acessosRapidosKey:
+                                                  _acessosRapidosKey,
+                                              onController: (c) =>
+                                                  _operacional = c,
+                                              pedidos: _pedidos(resumido: true),
+                                            ),
+                                            const SizedBox(height: 20),
+                                            PerfilSection(
+                                                controller: controller,
+                                                resumido: true,
+                                                onDetalhes: _scrollToCatalogo),
+                                          ])),
+                                      Offstage(
+                                          offstage: _atalhoAtivo != 1,
+                                          child: _areasVisitadas.contains(1)
+                                              ? _pedidos()
+                                              : const SizedBox.shrink()),
+                                      Offstage(
+                                          offstage: _atalhoAtivo != 2,
+                                          child: _areasVisitadas.contains(2)
+                                              ? PerfilSection(
+                                                  controller: controller,
+                                                  onGerenciarCatalogo:
+                                                      _abrirCatalogoDeVenda)
+                                              : const SizedBox.shrink()),
+                                      Offstage(
+                                          offstage: _atalhoAtivo != 4,
+                                          child: _areasVisitadas.contains(4)
+                                              ? AvaliacoesSection(
+                                                  fornecedorController:
+                                                      controller,
+                                                  avaliacaoController: widget
+                                                      .avaliacaoController)
+                                              : const SizedBox.shrink()),
                                     ],
                                   ),
                                 ),
@@ -298,27 +308,34 @@ class _FornecedorHomeScreenState extends State<FornecedorHomeScreen> {
   }
 }
 
-class _FornecedorAtalhosBar extends StatelessWidget {
-  const _FornecedorAtalhosBar({
+class FornecedorNavegacao extends StatelessWidget {
+  const FornecedorNavegacao({
+    super.key,
     required this.compacto,
     required this.ativo,
+    required this.onVisaoGeral,
     required this.onPedidos,
     required this.onCatalogo,
+    required this.onAcessosRapidos,
     required this.onAvaliacoes,
   });
 
   final int ativo;
   final bool compacto;
+  final VoidCallback onVisaoGeral;
   final VoidCallback onPedidos;
   final VoidCallback onCatalogo;
+  final VoidCallback onAcessosRapidos;
   final VoidCallback onAvaliacoes;
 
   @override
   Widget build(BuildContext context) {
     const cor = Color(0xFF4F46E5);
     final itens = [
+      (Icons.dashboard_outlined, 'Visão geral', onVisaoGeral),
       (Icons.receipt_long_rounded, 'Pedidos', onPedidos),
       (Icons.inventory_2_rounded, 'Catálogo', onCatalogo),
+      (Icons.apps_rounded, 'Acessos rápidos', onAcessosRapidos),
       (Icons.star_rate_rounded, 'Avaliações', onAvaliacoes),
     ];
 
@@ -367,29 +384,33 @@ class _FornecedorAtalhosBar extends StatelessWidget {
             children: [
               for (var i = 0; i < itens.length; i++)
                 Expanded(
-                  child: InkWell(
-                    onTap: itens[i].$3,
-                    borderRadius: BorderRadius.circular(14),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            itens[i].$1,
-                            size: 22,
-                            color: i == ativo ? cor : const Color(0xFF9CA3AF),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            itens[i].$2,
-                            style: GoogleFonts.poppins(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: i == ativo ? cor : const Color(0xFF6B7280),
+                  child: Semantics(
+                    selected: i == ativo,
+                    child: InkWell(
+                      onTap: itens[i].$3,
+                      borderRadius: BorderRadius.circular(14),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              itens[i].$1,
+                              size: 22,
+                              color: i == ativo ? cor : const Color(0xFF9CA3AF),
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 4),
+                            Text(
+                              itens[i].$2,
+                              style: GoogleFonts.poppins(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color:
+                                    i == ativo ? cor : const Color(0xFF6B7280),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),

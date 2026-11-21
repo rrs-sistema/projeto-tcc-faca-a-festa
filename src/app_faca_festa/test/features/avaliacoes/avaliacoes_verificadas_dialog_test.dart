@@ -24,7 +24,9 @@ class _Controller extends AvaliacaoServicoController {
   Future<List<Map<String, dynamic>>> contratosAvaliaveis(
           {required String idFornecedor,
           required String idEvento,
-          String? idServico}) async =>
+          String? idServico,
+          String? idOrcamento,
+          bool detalhar = false}) async =>
       lista;
 }
 

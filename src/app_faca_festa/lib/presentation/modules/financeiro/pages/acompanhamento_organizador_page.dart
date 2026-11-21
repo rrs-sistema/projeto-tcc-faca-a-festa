@@ -1,13 +1,18 @@
-import 'package:app_faca_festa/presentation/modules/financeiro/widgets/ajuda_fluxo_financeiro.dart';
+import 'package:app_faca_festa/presentation/modules/avaliacao/pages/avaliar_contratacao_sheet.dart';
+import 'package:app_faca_festa/presentation/modules/avaliacao/controllers/avaliacao_servico_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 
+import 'package:app_faca_festa/core/utils/form_validators.dart';
 import 'package:app_faca_festa/core/utils/numeric_input.dart';
 import 'package:app_faca_festa/domain/services/acompanhamento_partes_service.dart';
 import 'package:app_faca_festa/presentation/modules/financeiro/controllers/acompanhamento_partes_controller.dart';
+import 'package:app_faca_festa/presentation/modules/financeiro/widgets/pix_pagamento_sheet.dart';
+import 'package:app_faca_festa/presentation/modules/usuario/controllers/usuario_controller.dart';
+import 'package:app_faca_festa/presentation/modules/financeiro/widgets/ajuda_fluxo_financeiro.dart';
 import 'package:app_faca_festa/presentation/modules/financeiro/widgets/abrir_mediacao_sheet.dart';
 import 'package:app_faca_festa/presentation/modules/financeiro/widgets/autorizacao_repasse_modal.dart';
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
@@ -38,6 +43,35 @@ class AcompanhamentoOrganizadorPage extends StatefulWidget {
 class _AcompanhamentoOrganizadorPageState
     extends State<AcompanhamentoOrganizadorPage> {
   AcompanhamentoPartesController get c => widget.controller;
+
+  Future<void> _avaliar(VisaoOrganizadorContrato l, {bool aposAceite = false}) async {
+    final idFornecedor = l.idFornecedor?.trim() ?? '';
+    if (idFornecedor.isEmpty || l.idOrcamento.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text(
+            'A contratação ainda não trouxe o fornecedor para a avaliação.'),
+      ));
+      return;
+    }
+    final enviou = await mostrarAvaliarContratacao(
+      context,
+      idFornecedor: idFornecedor,
+      idEvento: widget.idEvento,
+      idOrcamento: l.idOrcamento,
+      idServico: l.idServico,
+      nomeFornecedor: l.nomeFornecedor,
+      nomeServico: l.nomeServico,
+      nomeEvento: widget.nomeEvento,
+      aposAceite: aposAceite,
+      controller: Get.find<AvaliacaoServicoController>(),
+      themeController: widget.themeController,
+    );
+    if (!mounted || enviou != true) return;
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+      content: Text(
+          'Notas enviadas. A do fornecedor entra na reputação pública. A do serviço fica neste item.'),
+    ));
+  }
 
   Future<void> _autorizarRepasse(
       VisaoOrganizadorContrato contrato, bool autorizar) async {
@@ -115,6 +149,33 @@ class _AcompanhamentoOrganizadorPageState
       default:
         return primary;
     }
+  }
+
+  String? _cpfPerfil() {
+    if (!Get.isRegistered<UsuarioController>()) return null;
+    final digitos = FormValidators.somenteDigitos(
+      Get.find<UsuarioController>().usuario.value?.cpf,
+    );
+    if (FormValidators.cpf(digitos, obrigatorio: true) != null) return null;
+    return digitos;
+  }
+
+  Future<void> _pagarPix(VisaoOrganizadorContrato l) async {
+    final pago = await mostrarPixPagamento(
+      context: context,
+      primary: widget.themeController.primaryColor.value,
+      contrato: l,
+      controller: c,
+      cpfPerfil: _cpfPerfil(),
+    );
+    if (!mounted || !pago) return;
+    Get.snackbar(
+      'Pagamento confirmado',
+      'O Asaas confirmou o Pix deste serviço.',
+      backgroundColor: Colors.green.shade600,
+      colorText: Colors.white,
+      snackPosition: SnackPosition.BOTTOM,
+    );
   }
 
   Future<void> _declarar(VisaoOrganizadorContrato l) async {
@@ -274,8 +335,9 @@ class _AcompanhamentoOrganizadorPageState
                     const SizedBox(height: 4),
                   ],
                   Text(
-                    'Cada card é um fornecedor/serviço. Declare o valor pago '
-                    'à plataforma Faça a Festa — não há cobrança automática.',
+                    'Cada card é um fornecedor/serviço. O pagamento à plataforma '
+                    'é por Pix, em até duas vezes. A entrada pedida pelo fornecedor '
+                    'é só uma garantia, não é obrigatória.',
                     style: GoogleFonts.poppins(
                       fontSize: 13,
                       height: 1.4,
@@ -586,7 +648,7 @@ class _AcompanhamentoOrganizadorPageState
                 ajuda:
                     'Quanto ainda falta você pagar à plataforma Faça a Festa '
                     '(não é pagamento direto ao fornecedor). '
-                    'Use “Declarar pagamento” após transferir.',
+                    'Use “Pagar com Pix”.',
               ),
             ],
           ),
@@ -692,24 +754,80 @@ class _AcompanhamentoOrganizadorPageState
             ),
           ),
           const SizedBox(height: 8),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              onPressed: c.enviando.value ? null : () => _declarar(l),
-              icon: const Icon(Icons.payments_outlined, size: 18),
-              label: Text(
-                l.valorDeclaradoCentavos > 0
-                    ? 'Atualizar declaração'
-                    : 'Declarar pagamento',
-                style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
-              ),
-              style: FilledButton.styleFrom(
-                backgroundColor: primary,
-                foregroundColor: Colors.white,
-                minimumSize: const Size(48, 48),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+          if (l.percentualEntradaSugerido != null &&
+              l.entradaSugeridaCentavos != null &&
+              l.pagamentosRegistrados == 0 &&
+              l.aPagarCentavos > 0)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text(
+                'O fornecedor pediu ${l.percentualEntradaSugerido}% '
+                '(${_reais(l.entradaSugeridaCentavos!)}) para segurar a data. '
+                'Isso não é obrigatório: você pode pagar outro valor, '
+                'em uma ou duas vezes.',
+                style: GoogleFonts.poppins(
+                  fontSize: 12.5,
+                  height: 1.35,
+                  color: const Color(0xFF334155),
                 ),
+              ),
+            ),
+          if (l.aPagarCentavos > 0 &&
+              l.pagamentosRegistrados < l.limitePagamentos)
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: c.enviando.value ? null : () => _pagarPix(l),
+                icon: const Icon(Icons.pix_rounded, size: 18),
+                label: Text(
+                  l.pagamentosRegistrados == 0
+                      ? 'Pagar com Pix'
+                      : 'Pagar a segunda parcela',
+                  style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+                ),
+                style: FilledButton.styleFrom(
+                  backgroundColor: primary,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(48, 48),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            )
+          else
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: l.aPagarCentavos > 0
+                    ? const Color(0xFFFFFBEB)
+                    : const Color(0xFFECFDF5),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                l.aPagarCentavos > 0
+                    ? 'As duas parcelas deste serviço já foram usadas. '
+                        'O saldo de ${_reais(l.aPagarCentavos)} continua em aberto.'
+                    : 'O valor deste serviço já foi confirmado na plataforma.',
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: l.aPagarCentavos > 0
+                      ? const Color(0xFFB45309)
+                      : const Color(0xFF047857),
+                ),
+              ),
+            ),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton(
+              onPressed: c.enviando.value ? null : () => _declarar(l),
+              child: Text(
+                l.valorDeclaradoCentavos > 0
+                    ? 'Atualizar declaração por fora'
+                    : 'Já paguei por fora',
+                style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
               ),
             ),
           ),
@@ -739,8 +857,15 @@ class _AcompanhamentoOrganizadorPageState
                   child: FilledButton(
                     onPressed: c.enviando.value
                         ? null
-                        : () => c.aceitarOuContestar(l.idOrcamento,
-                            contestar: false),
+                        : () async {
+                            final ok = await c.aceitarOuContestar(
+                                l.idOrcamento,
+                                contestar: false);
+                            if (!ok || !mounted) return;
+                            if (l.idFornecedor?.trim().isNotEmpty == true) {
+                              await _avaliar(l, aposAceite: true);
+                            }
+                          },
                     style: FilledButton.styleFrom(
                       backgroundColor: const Color(0xFF10B981),
                       minimumSize: const Size(48, 44),
@@ -771,6 +896,38 @@ class _AcompanhamentoOrganizadorPageState
                   ),
                 ),
               ],
+            ),
+          ],
+          if (l.estadoExecucao == 'aceito' &&
+              (l.idFornecedor?.trim().isNotEmpty ?? false)) ...[
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: FilledButton.icon(
+                onPressed: c.enviando.value ? null : () => _avaliar(l),
+                icon: const Icon(Icons.star_rounded, size: 18),
+                label: Text(
+                  'Avaliar fornecedor e serviço',
+                  style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+                ),
+                style: FilledButton.styleFrom(
+                  backgroundColor: primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Duas notas separadas. A do fornecedor entra na reputação pública. A do serviço fica neste item.',
+              style: GoogleFonts.poppins(
+                fontSize: 12,
+                height: 1.35,
+                color: const Color(0xFF64748B),
+              ),
             ),
           ],
           Align(
@@ -919,8 +1076,8 @@ class _DeclararPagamentoSheetState extends State<_DeclararPagamentoSheet> {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
-                'Isto é só uma declaração — não confirma recebimento nem libera '
-                'repasse. Não há cobrança automática (“Pagar agora”).',
+                'Isto registra apenas a sua informação. Não confirma o Pix '
+                'nem libera o repasse ao fornecedor.',
                 style: GoogleFonts.poppins(
                   fontSize: 13,
                   height: 1.35,

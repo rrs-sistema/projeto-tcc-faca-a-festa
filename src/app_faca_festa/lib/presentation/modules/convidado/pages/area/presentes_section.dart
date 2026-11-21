@@ -1,4 +1,5 @@
 import 'package:app_faca_festa/core/utils/numeric_input.dart';
+import 'package:app_faca_festa/core/utils/pix_br_code.dart';
 import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
@@ -62,36 +63,46 @@ class _PresentesSectionState extends State<PresentesSection> {
 
         final presentes = List<Gift>.from(gifts)..sort(_sortPresentes);
 
-        final filtered = presentes.where(_matchesFilter).toList();
         final disponiveis =
             presentes.where((item) => !_isIndisponivel(item)).length;
-        final escolhidos = presentes.length - disponiveis;
-        final pixCount =
-            presentes.where((item) => item.tipo == GiftType.pix).length;
-        final coletivoCount =
-            presentes.where((item) => item.tipo == GiftType.coletivo).length;
+        final temLoja =
+            presentes.any((item) => item.tipo == GiftType.fisico);
+        final temPix = presentes.any((item) => item.tipo == GiftType.pix);
+        final temCotas =
+            presentes.any((item) => item.tipo == GiftType.coletivo);
+        final filtros = <_FilterOption>[
+          const _FilterOption(_GiftFilter.todos, 'Todos'),
+          if (disponiveis > 0 && disponiveis < presentes.length)
+            const _FilterOption(_GiftFilter.disponiveis, 'Disponíveis'),
+          if (temLoja) const _FilterOption(_GiftFilter.loja, 'Loja'),
+          if (temPix) const _FilterOption(_GiftFilter.pix, 'PIX'),
+          if (temCotas) const _FilterOption(_GiftFilter.coletivo, 'Cotas'),
+        ];
+        final filtroAtivo = filtros.any((f) => f.filter == _filter)
+            ? _filter
+            : _GiftFilter.todos;
+        final filtered =
+            presentes.where((item) => _matchesFilter(item, filtroAtivo)).toList();
 
         return CustomScrollView(
           physics: const BouncingScrollPhysics(
               parent: AlwaysScrollableScrollPhysics()),
           slivers: [
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(14, 8, 14, 0),
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 0),
               sliver: SliverToBoxAdapter(
                 child: _GiftHeroCard(
                   primary: primary,
                   total: presentes.length,
                   disponiveis: disponiveis,
-                  escolhidos: escolhidos,
-                  pixCount: pixCount,
-                  coletivoCount: coletivoCount,
                 ),
               ),
             ),
             SliverToBoxAdapter(
               child: _FilterBar(
                 primary: primary,
-                selected: _filter,
+                selected: filtroAtivo,
+                options: filtros,
                 onChanged: (filter) {
                   HapticFeedback.selectionClick();
                   setState(() => _filter = filter);
@@ -105,11 +116,11 @@ class _PresentesSectionState extends State<PresentesSection> {
               )
             else
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(14, 6, 14, 18),
+                padding: const EdgeInsets.fromLTRB(14, 8, 14, 24),
                 sliver: SliverList.builder(
                   itemCount: filtered.length * 2 - 1,
                   itemBuilder: (context, index) {
-                    if (index.isOdd) return const SizedBox(height: 12);
+                    if (index.isOdd) return const SizedBox(height: 10);
 
                     final item = filtered[index ~/ 2];
                     return PremiumGiftCard(
@@ -120,6 +131,8 @@ class _PresentesSectionState extends State<PresentesSection> {
                         valorInicial: item.valor,
                         chavePix: item.pix ?? '',
                         primary: primary,
+                        nomeRecebedor: _nomeRecebedorPix(),
+                        cidadeRecebedor: widget.evento.nomeCidade,
                       ),
                       onContributeTap: () => _mostrarPixQrModal(
                         nome: item.nome.trim().isEmpty
@@ -128,6 +141,8 @@ class _PresentesSectionState extends State<PresentesSection> {
                         valorInicial: item.valor,
                         chavePix: item.pix ?? '',
                         primary: primary,
+                        nomeRecebedor: _nomeRecebedorPix(),
+                        cidadeRecebedor: widget.evento.nomeCidade,
                       ),
                       onReserveTap: () => _showReserveSoon(primary),
                     );
@@ -140,6 +155,21 @@ class _PresentesSectionState extends State<PresentesSection> {
     );
   }
 
+  String _nomeRecebedorPix() {
+    final evento = widget.evento;
+    final candidatos = <String?>[
+      evento.nomePessoalPrincipal,
+      evento.nomeResponsavel,
+      evento.nomeAniversariante,
+      evento.nomeEvento,
+    ];
+    for (final nome in candidatos) {
+      final t = nome?.trim() ?? '';
+      if (t.isNotEmpty) return t;
+    }
+    return 'Presente';
+  }
+
   int _sortPresentes(Gift a, Gift b) {
     final unavailableA = _isIndisponivel(a) ? 1 : 0;
     final unavailableB = _isIndisponivel(b) ? 1 : 0;
@@ -150,8 +180,8 @@ class _PresentesSectionState extends State<PresentesSection> {
     return a.nome.toLowerCase().compareTo(b.nome.toLowerCase());
   }
 
-  bool _matchesFilter(Gift item) {
-    switch (_filter) {
+  bool _matchesFilter(Gift item, _GiftFilter filtro) {
+    switch (filtro) {
       case _GiftFilter.todos:
         return true;
       case _GiftFilter.disponiveis:

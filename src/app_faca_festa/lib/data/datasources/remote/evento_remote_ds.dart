@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:typed_data';
 
+import 'package:app_faca_festa/domain/services/evento_leitura_confirmada.dart';
+
 import '../../models/evento/evento_model.dart';
 import '../../models/evento/tipo_evento.dart';
 
@@ -47,16 +49,14 @@ class EventoRemoteDatasource {
   }
 
   Stream<EventoModel?> observarUltimoPorUsuario(String idUsuario) {
-    return _eventos
-        .where('id_usuario', isEqualTo: idUsuario)
-        .orderBy('data_cadastro', descending: true)
-        .limit(1)
-        .snapshots()
-        .map(
-          (snapshot) => snapshot.docs.isEmpty
-              ? null
-              : EventoModel.fromMap(snapshot.docs.first.data()),
-        );
+    return EventoLeituraConfirmada.ultimosConfirmados(
+      _eventos
+          .where('id_usuario', isEqualTo: idUsuario)
+          .orderBy('data_cadastro', descending: true)
+          .limit(1)
+          .snapshots()
+          .map(_consultaDeEventos),
+    );
   }
 
   Stream<EventoModel?> observarPorId(String idEvento) {
@@ -164,11 +164,27 @@ class EventoRemoteDatasource {
   }
 
   Stream<List<EventoModel>> listarPorUsuario(String idUsuario) {
-    return _eventos.where('id_usuario', isEqualTo: idUsuario).snapshots().map(
-          (snapshot) => snapshot.docs
-              .map((document) => EventoModel.fromMap(document.data()))
-              .toList(),
-        );
+    return EventoLeituraConfirmada.listasConfirmadas(
+      _eventos
+          .where('id_usuario', isEqualTo: idUsuario)
+          .snapshots()
+          .map(_consultaDeEventos),
+    );
+  }
+
+  ConsultaEventos<EventoModel> _consultaDeEventos(
+    QuerySnapshot<Map<String, dynamic>> snapshot,
+  ) {
+    return ConsultaEventos(
+      escritaPendente: snapshot.metadata.hasPendingWrites,
+      documentos: [
+        for (final document in snapshot.docs)
+          EventoEmTransito(
+            valor: EventoModel.fromMap(document.data()),
+            escritaPendente: document.metadata.hasPendingWrites,
+          ),
+      ],
+    );
   }
 
   String _contentTypeCapa(Uint8List bytes) {

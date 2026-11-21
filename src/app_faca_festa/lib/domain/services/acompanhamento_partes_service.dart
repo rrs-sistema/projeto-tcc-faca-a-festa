@@ -29,24 +29,52 @@ class VisaoOrganizadorContrato {
     required this.proximoPasso,
     this.nomeFornecedor,
     this.nomeServico,
+    this.idFornecedor,
+    this.idServico,
     this.statusRepasse,
+    this.entradaSugeridaCentavos,
+    this.percentualEntradaSugerido,
+    this.pagamentosRegistrados = 0,
+    this.limitePagamentos = 2,
   });
 
   final String idContrato;
   final String idOrcamento;
   final String? nomeFornecedor;
   final String? nomeServico;
+  final String? idFornecedor;
+  final String? idServico;
   final int valorContratadoCentavos;
   final String nivelPagamento;
   final int valorDeclaradoCentavos;
   final int valorConfirmadoCentavos;
   final int aPagarCentavos;
+  /// Garantia pedida pelo fornecedor. Não é valor mínimo.
+  final int? entradaSugeridaCentavos;
+  final int? percentualEntradaSugerido;
+  final int pagamentosRegistrados;
+  final int limitePagamentos;
   final String estadoExecucao;
   final String? statusRepasse;
   final ProximoPassoAcompanhamento proximoPasso;
 
   factory VisaoOrganizadorContrato.fromMap(Map<String, dynamic> m) {
     int c(dynamic v) => (v is num) ? v.toInt() : 0;
+    int? opcional(dynamic v) => v is num ? v.toInt() : null;
+    final contratado =
+        c(m['valorContratadoCentavos'] ?? m['valor_contratado_centavos']);
+    final confirmadoBruto = c(m['valorConfirmadoPlataformaAlocadoCentavos'] ??
+        m['valor_confirmado_plataforma_alocado_centavos']);
+    final confirmado = contratado > 0 && confirmadoBruto > contratado
+        ? contratado
+        : confirmadoBruto;
+    final int aPagar = contratado > 0
+        ? (contratado - confirmado).clamp(0, contratado).toInt()
+        : c(m['aPagarPlataformaCentavos'] ?? m['a_pagar_plataforma_centavos']);
+    final limiteBruto = m['limitePagamentos'] ?? m['limite_pagamentos'];
+    final int limite = limiteBruto is num
+        ? limiteBruto.toInt().clamp(1, 2).toInt()
+        : 2;
     final pp = m['proximoPasso'] ?? m['proximo_passo'];
     ProximoPassoAcompanhamento passo = const ProximoPassoAcompanhamento(
       codigo: 'acompanhar',
@@ -67,19 +95,24 @@ class VisaoOrganizadorContrato {
       idOrcamento: (m['idOrcamento'] ?? m['id_orcamento'] ?? '').toString(),
       nomeFornecedor: (m['nomeFornecedor'] ?? m['nome_fornecedor'])?.toString(),
       nomeServico: (m['nomeServico'] ?? m['nome_servico'])?.toString(),
-      valorContratadoCentavos:
-          c(m['valorContratadoCentavos'] ?? m['valor_contratado_centavos']),
+      idFornecedor: (m['idFornecedor'] ?? m['id_fornecedor'])?.toString(),
+      idServico: (m['idServico'] ?? m['id_servico'])?.toString(),
+      valorContratadoCentavos: contratado,
       nivelPagamento: (m['nivelPagamentoPlataforma'] ??
               m['nivel_pagamento_plataforma'] ??
               'nao_informado')
           .toString(),
       valorDeclaradoCentavos:
           c(m['valorDeclaradoCentavos'] ?? m['valor_declarado_centavos']),
-      valorConfirmadoCentavos: c(
-          m['valorConfirmadoPlataformaAlocadoCentavos'] ??
-              m['valor_confirmado_plataforma_alocado_centavos']),
-      aPagarCentavos:
-          c(m['aPagarPlataformaCentavos'] ?? m['a_pagar_plataforma_centavos']),
+      valorConfirmadoCentavos: confirmado,
+      aPagarCentavos: aPagar,
+      entradaSugeridaCentavos: opcional(
+          m['entradaSugeridaCentavos'] ?? m['entrada_sugerida_centavos']),
+      percentualEntradaSugerido: opcional(
+          m['percentualEntradaSugerido'] ?? m['percentual_entrada_sugerido']),
+      pagamentosRegistrados: c(
+          m['pagamentosRegistrados'] ?? m['pagamentos_registrados']),
+      limitePagamentos: limite,
       estadoExecucao:
           (m['estadoExecucao'] ?? m['estado_execucao'] ?? '').toString(),
       statusRepasse:

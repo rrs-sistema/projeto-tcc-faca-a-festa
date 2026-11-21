@@ -6,8 +6,6 @@ extension _FornecedorDetalheServicos on FornecedorDetalheScreen {
     FornecedorController controller,
     FornecedorLocalizacaoController controllerLocalizacao,
     Color primary,
-    Gradient gradient,
-    BuildContext context,
   ) {
     return Obx(() {
       final categorias = controller.categorias;
@@ -83,14 +81,9 @@ extension _FornecedorDetalheServicos on FornecedorDetalheScreen {
       // 8️⃣ Exibe o card
       return _cardServicoCarrossel(
         servico: servico,
-        categoria: categoriasEncontradas.isNotEmpty
-            ? categoriasEncontradas.first
-            : const CategoriaServico(id: '', nome: ''),
         fotoUrl: fotosUrls.isNotEmpty ? fotosUrls.first : '',
         primary: primary,
-        gradient: gradient,
-        fornecedorId: detalhe.fornecedor.idFornecedor,
-        context: context,
+        detalhe: detalhe,
         controllerLocalizacao: controllerLocalizacao,
         themeController: themeController,
         appController: appController,
@@ -282,36 +275,20 @@ extension _FornecedorDetalheServicos on FornecedorDetalheScreen {
                                   elevation: 5,
                                 ),
                                 onPressed: () {
-                                  final serviceComplet = controllerLocalizacao
-                                      .allService
-                                      .firstWhereOrNull(
-                                    (sev) =>
-                                        sev.idProdutoServico == s.id &&
-                                        sev.idFornecedor ==
-                                            fornecedor.idFornecedor,
+                                  HapticFeedback.mediumImpact();
+                                  _abrirCotacaoDoFornecedor(
+                                    fornecedorController: fornecedorController,
+                                    controllerLocalizacao:
+                                        controllerLocalizacao,
+                                    fornecedor: fornecedor,
+                                    idCategoria: detalhe.categoriaId,
+                                    nomeCategoria: detalhe.categoriaNome,
+                                    idProdutoServicoDestaque: s.id,
+                                    themeController: themeController,
+                                    appController: appController,
+                                    eventoController: eventoController,
+                                    cotacoes: cotacoes,
                                   );
-
-                                  if (serviceComplet == null) return;
-
-                                  controllerLocalizacao.servicosFornecedor
-                                    ..clear()
-                                    ..add(serviceComplet);
-
-                                  Get.to(() => ServicosParaCotacaoScreen(
-                                        idCategoria: "",
-                                        nomeCategoria: "",
-                                        fornecedoresSelecionados: [
-                                          fornecedor.idFornecedor
-                                        ],
-                                        themeController: themeController,
-                                        fornecedorController:
-                                            controllerLocalizacao,
-                                        appController: appController,
-                                        fornecedorCadastroController:
-                                            fornecedorController,
-                                        eventoController: eventoController,
-                                        cotacoes: cotacoes,
-                                      ));
                                 },
                               ),
                             ),
@@ -693,36 +670,20 @@ extension _FornecedorDetalheServicos on FornecedorDetalheScreen {
                             elevation: 6,
                           ),
                           onPressed: () {
-                            final serviceComplet = controllerLocalizacao
-                                .allService
-                                .firstWhereOrNull(
-                              (sev) =>
-                                  sev.idProdutoServico ==
-                                      detalhe.idProdutoServico &&
-                                  sev.idFornecedor == detalhe.idFornecedor,
+                            HapticFeedback.mediumImpact();
+                            _abrirCotacaoDoFornecedor(
+                              fornecedorController: fornecedorController,
+                              controllerLocalizacao: controllerLocalizacao,
+                              fornecedor: fornecedor,
+                              idCategoria: fornecedorDetalhado.categoriaId,
+                              nomeCategoria: fornecedorDetalhado.categoriaNome,
+                              idProdutoServicoDestaque:
+                                  detalhe.idProdutoServico,
+                              themeController: themeController,
+                              appController: appController,
+                              eventoController: eventoController,
+                              cotacoes: cotacoes,
                             );
-
-                            if (serviceComplet == null) return;
-
-                            controllerLocalizacao.servicosFornecedor
-                              ..clear()
-                              ..add(serviceComplet);
-
-                            Get.to(() => ServicosParaCotacaoScreen(
-                                  idCategoria: fornecedorDetalhado.categoriaId,
-                                  nomeCategoria:
-                                      fornecedorDetalhado.categoriaNome,
-                                  fornecedoresSelecionados: [
-                                    detalhe.idFornecedor
-                                  ],
-                                  themeController: themeController,
-                                  fornecedorController: controllerLocalizacao,
-                                  appController: appController,
-                                  fornecedorCadastroController:
-                                      fornecedorController,
-                                  eventoController: eventoController,
-                                  cotacoes: cotacoes,
-                                ));
                           },
                         ),
                       ),

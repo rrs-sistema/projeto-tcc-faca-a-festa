@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'package:app_faca_festa/presentation/modules/auditoria/controllers/auditoria_controller.dart';
 import 'auditoria_evento_card.dart';
+import 'auditoria_distribuicao_bar.dart';
 
 class AuditoriaFiltrosBar extends StatelessWidget {
   const AuditoriaFiltrosBar({
@@ -483,7 +484,7 @@ class AuditoriaDashboardPanel extends StatelessWidget {
                 theme.danger,
               ),
               _AuditHealthData(
-                'Cotações/orç.',
+                'Cotações/orçamentos',
                 '${controller.totalFluxoComercial}',
                 Icons.receipt_long_rounded,
                 theme.muted,
@@ -500,16 +501,12 @@ class AuditoriaDashboardPanel extends StatelessWidget {
 
             final indicadoresWidget = _MetricGrid(
               items: indicadores,
-              itemWidth: compacto
-                  ? (constraints.maxWidth - 8) / 2
-                  : (constraints.maxWidth * 0.34 - 16) / 3,
+              maxColumns: 3,
               theme: theme,
             );
             final operacaoWidget = _MetricGrid(
               items: operacao,
-              itemWidth: compacto
-                  ? (constraints.maxWidth - 8) / 2
-                  : (constraints.maxWidth * 0.34 - 16) / 3,
+              maxColumns: 3,
               theme: theme,
             );
 
@@ -530,9 +527,7 @@ class AuditoriaDashboardPanel extends StatelessWidget {
             );
             final resumoWidget = _MetricGrid(
               items: resumo,
-              itemWidth: compacto
-                  ? (constraints.maxWidth - 8) / 2
-                  : (constraints.maxWidth - 40) / 6,
+              maxColumns: 6,
               theme: theme,
               dense: true,
             );
@@ -690,32 +685,35 @@ class AuditoriaLoadMoreButton extends StatelessWidget {
 class _MetricGrid extends StatelessWidget {
   const _MetricGrid({
     required this.items,
-    required this.itemWidth,
+    required this.maxColumns,
     required this.theme,
     this.dense = false,
   });
 
   final List<_AuditHealthData> items;
-  final double itemWidth;
+  final int maxColumns;
   final AuditoriaVisualTheme theme;
   final bool dense;
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        for (final item in items)
-          SizedBox(
-            width: itemWidth,
-            child: _AuditHealthCard(
-              data: item,
-              theme: theme,
-              dense: dense,
-            ),
-          ),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns =
+            (constraints.maxWidth / 180).floor().clamp(1, maxColumns);
+        final width = (constraints.maxWidth - 8 * (columns - 1)) / columns;
+        return Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final item in items)
+              SizedBox(
+                width: width,
+                child: _AuditHealthCard(data: item, theme: theme, dense: dense),
+              ),
+          ],
+        );
+      },
     );
   }
 }
@@ -763,8 +761,6 @@ class _AuditHealthCard extends StatelessWidget {
                 children: [
                   Text(
                     data.value,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.poppins(
                       fontSize: dense ? 14 : 16,
                       fontWeight: FontWeight.w800,
@@ -773,8 +769,6 @@ class _AuditHealthCard extends StatelessWidget {
                   ),
                   Text(
                     data.label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.poppins(
                       fontSize: dense ? 10 : 10.5,
                       color: theme.muted,
@@ -906,7 +900,7 @@ class _TopActorsDistribution extends StatelessWidget {
       child: Column(
         children: [
           for (final ator in atores) ...[
-            _AreaBar(
+            AuditoriaDistribuicaoBar(
               label: ator.key,
               value: ator.value,
               percent: ator.value / maiorAtor,
@@ -980,7 +974,7 @@ class _AreaDistribution extends StatelessWidget {
           child: Column(
             children: [
               for (final area in areas) ...[
-                _AreaBar(
+                AuditoriaDistribuicaoBar(
                   label: area.key,
                   value: area.value,
                   percent: area.value / maiorArea,
@@ -989,66 +983,6 @@ class _AreaDistribution extends StatelessWidget {
                 if (area != areas.last) const SizedBox(height: 6),
               ],
             ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _AreaBar extends StatelessWidget {
-  const _AreaBar({
-    required this.label,
-    required this.value,
-    required this.percent,
-    required this.theme,
-  });
-
-  final String label;
-  final int value;
-  final double percent;
-  final AuditoriaVisualTheme theme;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        SizedBox(
-          width: 92,
-          child: Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.poppins(
-              fontSize: 11.5,
-              fontWeight: FontWeight.w600,
-              color: theme.ink,
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(999),
-            child: LinearProgressIndicator(
-              value: percent.clamp(0.0, 1.0),
-              minHeight: 6,
-              color: theme.primary,
-              backgroundColor: theme.border.withValues(alpha: 0.55),
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
-        SizedBox(
-          width: 32,
-          child: Text(
-            '$value',
-            textAlign: TextAlign.right,
-            style: GoogleFonts.poppins(
-              fontSize: 11.5,
-              fontWeight: FontWeight.w700,
-              color: theme.muted,
-            ),
           ),
         ),
       ],

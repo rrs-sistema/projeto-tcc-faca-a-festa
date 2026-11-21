@@ -11,6 +11,7 @@ extension _AreaConvidadoPresencaSection on _AreaConvidadoHomeScreenState {
     final confirmado = statusAtual == StatusConvidado.confirmado;
     final naoVai = statusAtual == StatusConvidado.recusado;
     final aguardando = !confirmado && !naoVai;
+    final visita = _visitaPorLink;
 
     final statusLinha = confirmado
         ? 'Presença confirmada'
@@ -20,25 +21,25 @@ extension _AreaConvidadoPresencaSection on _AreaConvidadoHomeScreenState {
 
     return Padding(
       key: ValueKey('confirmacao_${statusAtual.name}'),
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
       child: Column(
         children: [
           Text(
             'Você vai à festa?',
             textAlign: TextAlign.center,
             style: GoogleFonts.poppins(
-              fontSize: 18,
+              fontSize: 20,
               fontWeight: FontWeight.w800,
               height: 1.2,
               color: const Color(0xFF111827),
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           Text(
             statusLinha,
             textAlign: TextAlign.center,
             style: GoogleFonts.poppins(
-              fontSize: 12,
+              fontSize: 13,
               fontWeight: FontWeight.w600,
               color: confirmado
                   ? Colors.green.shade700
@@ -47,7 +48,19 @@ extension _AreaConvidadoPresencaSection on _AreaConvidadoHomeScreenState {
                       : primary,
             ),
           ),
-          const SizedBox(height: 16),
+          if (visita) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Pode responder agora, sem criar conta.',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(
+                fontSize: 12,
+                color: Colors.grey.shade600,
+                height: 1.3,
+              ),
+            ),
+          ],
+          const SizedBox(height: 20),
           _presencaChoiceTile(
             selected: confirmado,
             icon: Icons.celebration_rounded,
@@ -65,7 +78,7 @@ extension _AreaConvidadoPresencaSection on _AreaConvidadoHomeScreenState {
               );
             },
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           _presencaChoiceTile(
             selected: aguardando,
             icon: Icons.help_outline_rounded,
@@ -83,7 +96,7 @@ extension _AreaConvidadoPresencaSection on _AreaConvidadoHomeScreenState {
               );
             },
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           _presencaChoiceTile(
             selected: naoVai,
             icon: Icons.event_busy_rounded,
@@ -102,11 +115,11 @@ extension _AreaConvidadoPresencaSection on _AreaConvidadoHomeScreenState {
               );
             },
           ),
-          const Spacer(),
+          const SizedBox(height: 16),
           Text(
             'Pode alterar depois.',
             style: GoogleFonts.poppins(
-              fontSize: 11,
+              fontSize: 12,
               color: Colors.grey.shade500,
               fontWeight: FontWeight.w500,
             ),
@@ -130,31 +143,42 @@ extension _AreaConvidadoPresencaSection on _AreaConvidadoHomeScreenState {
         borderRadius: BorderRadius.circular(16),
         child: Ink(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           decoration: BoxDecoration(
-            color: selected ? cor : cor.withValues(alpha: 0.08),
+            color: selected ? cor.withValues(alpha: 0.14) : Colors.white,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: selected ? cor : cor.withValues(alpha: 0.18),
+              color: selected ? cor : cor.withValues(alpha: 0.16),
+              width: selected ? 1.6 : 1,
             ),
           ),
           child: Row(
             children: [
-              Icon(icon, color: selected ? Colors.white : cor, size: 22),
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: selected
+                      ? cor.withValues(alpha: 0.18)
+                      : cor.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: cor, size: 22),
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   titulo,
                   style: GoogleFonts.poppins(
-                    fontSize: 15,
+                    fontSize: 15.5,
                     fontWeight: FontWeight.w700,
-                    color: selected ? Colors.white : Colors.black87,
+                    color: const Color(0xFF111827),
                   ),
                 ),
               ),
               Icon(
-                selected ? Icons.check_rounded : Icons.chevron_right_rounded,
-                color: selected ? Colors.white : cor,
+                selected ? Icons.check_circle_rounded : Icons.circle_outlined,
+                color: selected ? cor : Colors.grey.shade400,
                 size: 22,
               ),
             ],

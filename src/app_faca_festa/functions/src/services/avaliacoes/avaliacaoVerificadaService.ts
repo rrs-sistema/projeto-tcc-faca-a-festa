@@ -55,25 +55,72 @@ async function elegivel(db: Firestore, tx: Transaction, uid: string, ref: Fireba
       o.id_fornecedor_servico !== `${fornecedor}_${servico}`) throw new HttpsError("failed-precondition", "O objeto não corresponde ao serviço contratado.");
   return { o, evento: ev.data()!, contrato: String(o.contrato_financeiro?.id_contrato || snap.id) };
 }
+function textoId(v: unknown): string | null {
+  if (typeof v !== "string") return null;
+  const t = v.trim();
+  if (!t || t.length > 200 || t.includes("/")) return null;
+  return t;
+}
+
+/** Id que a gravação da nota do serviço aceita de volta. */
+export function idServicoContratado(o: Record<string, any>, fornecedor: string): string | null {
+  const aceitos = [o.id_servico, o.id_produto_servico, o.id_fornecedor_servico]
+    .map(textoId)
+    .filter((v): v is string => v != null);
+  for (const candidato of [o.id_servico, o.id_produto_servico, o.id_servico_fornecido]) {
+    const s = textoId(candidato);
+    if (!s) continue;
+    if (aceitos.includes(s) || o.id_fornecedor_servico === `${fornecedor}_${s}`) return s;
+  }
+  const composto = textoId(o.id_fornecedor_servico);
+  const prefixo = `${fornecedor}_`;
+  if (composto?.startsWith(prefixo)) return textoId(composto.slice(prefixo.length));
+  return null;
+}
+
 export async function listarContratosAvaliaveis(db: Firestore, uid: string, data: any) {
-  const fornecedor = id(data.idFornecedor), evento = id(data.idEvento);
+  const fornecedor = id(data.idFornecedor);
+  const orcamentoAlvo = data.idOrcamento == null || data.idOrcamento === "" ? undefined : id(data.idOrcamento);
+  const evento = data.idEvento == null || data.idEvento === "" ? undefined : id(data.idEvento);
+  if (!orcamentoAlvo && !evento) throw new HttpsError("invalid-argument", "Informe o evento ou a contratação.");
   const servico = data.idServico ? id(data.idServico) : undefined;
+  const detalhar = data.detalhar === true;
   return db.runTransaction(async tx => {
-    const e = await tx.get(db.collection("evento").doc(evento));
-    if (!e.exists || uid === fornecedor) return [];
-    const docs = await tx.get(db.collection("orcamento").where("id_evento", "==", evento));
-    const unicos = new Map<string, {idContrato:string; idOrcamento:string; nome:string}>();
-    for (const doc of docs.docs) {
-      if (doc.data().id_fornecedor !== fornecedor) continue;
+    if (!orcamentoAlvo && evento) {
+      const e = await tx.get(db.collection("evento").doc(evento));
+      if (!e.exists || uid === fornecedor) return [];
+    }
+    const docs = orcamentoAlvo
+      ? [await tx.get(db.collection("orcamento").doc(orcamentoAlvo))].filter(d => d.exists)
+      : (await tx.get(db.collection("orcamento").where("id_evento", "==", evento))).docs;
+    const unicos = new Map<string, Record<string, unknown>>();
+    for (const doc of docs) {
+      const dados = doc.data();
+      if (!dados || dados.id_fornecedor !== fornecedor) continue;
+      if (evento && dados.id_evento !== evento) continue;
       try {
-        const c = await elegivel(db, tx, uid, doc.ref, fornecedor, servico);
-        const objeto = servico ? `servico:${servico}` : "fornecedor";
-        const a = await tx.get(db.doc(`fornecedor/${fornecedor}/avaliacoes/${identidadeAvaliacao(uid,c.contrato,objeto)}`));
-        if (!a.exists) unicos.set(c.contrato, {idContrato:c.contrato,idOrcamento:doc.id,nome:String(c.o.nome_servico || c.o.nome || c.contrato)});
+        const c = await elegivel(db, tx, uid, doc.ref, fornecedor, detalhar ? undefined : servico);
+        const nome = String(c.o.nome_servico || c.o.nome || c.contrato);
+        if (!detalhar) {
+          const objeto = servico ? `servico:${servico}` : "fornecedor";
+          const a = await tx.get(db.doc(`fornecedor/${fornecedor}/avaliacoes/${identidadeAvaliacao(uid, c.contrato, objeto)}`));
+          if (!a.exists) unicos.set(c.contrato, { idContrato: c.contrato, idOrcamento: doc.id, nome });
+          continue;
+        }
+        const idServico = idServicoContratado(c.o, fornecedor);
+        const pendenteFornecedor = !(await tx.get(db.doc(`fornecedor/${fornecedor}/avaliacoes/${identidadeAvaliacao(uid, c.contrato, "fornecedor")}`))).exists;
+        const pendenteServico = idServico
+          ? !(await tx.get(db.doc(`fornecedor/${fornecedor}/avaliacoes/${identidadeAvaliacao(uid, c.contrato, `servico:${idServico}`)}`))).exists
+          : false;
+        if (!orcamentoAlvo && !pendenteFornecedor && !pendenteServico) continue;
+        unicos.set(c.contrato, {
+          idContrato: c.contrato, idOrcamento: doc.id, nome, idServico,
+          pendenteFornecedor, pendenteServico, elegivel: true,
+        });
       } catch (e) { if (!(e instanceof HttpsError)) throw e; }
     }
     return [...unicos.values()];
-  }, {readOnly:true});
+  }, { readOnly: true });
 }
 export async function registrarAvaliacao(db: Firestore, uid: string, data: any) {
   const permitidos = ["idFornecedor","idOrcamento","idServico","nota","comentario"];

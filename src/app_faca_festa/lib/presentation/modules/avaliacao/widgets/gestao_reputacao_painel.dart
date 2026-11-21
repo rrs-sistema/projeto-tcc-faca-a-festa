@@ -31,10 +31,12 @@ class GestaoReputacaoPainel extends StatefulWidget {
       this.idFornecedor,
       this.idAvaliacao,
       this.controller,
-      this.moderacao = false});
+      this.moderacao = false,
+      this.recolherFiltrosQuandoVazio = false});
   final String? idFornecedor, idAvaliacao;
   final GestaoReputacaoController? controller;
   final bool moderacao;
+  final bool recolherFiltrosQuandoVazio;
   @override
   State<GestaoReputacaoPainel> createState() => _GestaoReputacaoPainelState();
 }
@@ -109,14 +111,24 @@ class _GestaoReputacaoPainelState extends State<GestaoReputacaoPainel> {
                               tooltip: 'Atualizar',
                               onPressed: c.carregando.value
                                   ? null
-                                  : () => c.carregar(),
+                                  : () => c.autorizado.value
+                                      ? c.carregar()
+                                      : c.iniciar(),
                               icon: const Icon(Icons.refresh_rounded))),
                       const SizedBox(height: 16),
                       if (c.erro.value.isNotEmpty)
                         OperacaoFalha(
-                            titulo: widget.moderacao
-                                ? 'Não foi possível carregar a fila de moderação'
-                                : 'Não foi possível carregar as avaliações',
+                            titulo: c.permissaoModeracaoAusente.value
+                                ? 'Acesso restrito à moderação'
+                                : widget.moderacao
+                                    ? 'Não foi possível carregar a fila de moderação'
+                                    : 'Não foi possível carregar as avaliações',
+                            icone: c.permissaoModeracaoAusente.value
+                                ? Icons.lock_outline_rounded
+                                : Icons.cloud_off_outlined,
+                            textoAcao: c.permissaoModeracaoAusente.value
+                                ? 'Verificar acesso'
+                                : 'Tentar novamente',
                             mensagem: c.erro.value,
                             onRetry: () => c.autorizado.value
                                 ? c.carregar()
@@ -150,7 +162,20 @@ class _GestaoReputacaoPainelState extends State<GestaoReputacaoPainel> {
                             titulo: 'Suas avaliações',
                             icon: Icons.star_outline_rounded),
                       if (c.autorizado.value) ...[
-                        if (consultaConcluida || c.carregando.value) _filtros(),
+                        if (consultaConcluida || c.carregando.value)
+                          if (widget.recolherFiltrosQuandoVazio &&
+                              !widget.moderacao &&
+                              !c.carregando.value &&
+                              c.itens.isEmpty &&
+                              !_filtrosAlterados &&
+                              !c.temMais.value)
+                            ExpansionTile(
+                              title: const Text('Filtrar avaliações'),
+                              tilePadding: EdgeInsets.zero,
+                              children: [_filtros()],
+                            )
+                          else
+                            _filtros(),
                         if (c.resumo.value != null &&
                             (c.resumo.value!['quantidade'] as num) > 0)
                           _resumo(c.resumo.value!),

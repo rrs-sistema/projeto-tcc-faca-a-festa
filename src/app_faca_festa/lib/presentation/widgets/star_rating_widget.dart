@@ -5,6 +5,7 @@ class StarRatingWidget extends StatelessWidget {
   final double size;
   final void Function(double)? onChanged;
   final Gradient? gradient;
+  final bool apenasInteiras;
 
   const StarRatingWidget({
     super.key,
@@ -12,6 +13,7 @@ class StarRatingWidget extends StatelessWidget {
     this.onChanged,
     this.size = 34,
     this.gradient,
+    this.apenasInteiras = false,
   });
 
   @override
@@ -44,6 +46,10 @@ class StarRatingWidget extends StatelessWidget {
           onTapDown: onChanged == null
               ? null
               : (details) {
+                  if (apenasInteiras) {
+                    onChanged!(starValue.toDouble());
+                    return;
+                  }
                   final localX = details.localPosition.dx;
                   final fraction = localX / size;
 

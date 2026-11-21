@@ -1057,6 +1057,13 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Pix Asaas do organizador. O QR fica na cobrança; escrita só via Functions.
+    match /plataforma_cobrancas_pix/{id} {
+      allow read: if isAdmin()
+        || (signedIn() && resource.data.id_pagador == uid());
+      allow write: if false;
+    }
+
     // Declarações de pagamento do cliente (Prompt 04) — escrita só Functions.
     match /plataforma_pagamentos_declarados/{id} {
       allow read: if isAdmin()

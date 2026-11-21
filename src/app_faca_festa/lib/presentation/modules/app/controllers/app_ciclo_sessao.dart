@@ -424,10 +424,17 @@ class AppCicloSessao {
     return usuarioComEndereco;
   }
 
-  Future<void> encerrar({bool limparFornecedorAntes = false}) async {
+  /// Encerra a sessão. Se [preservarTokenConvite] vier preenchido, o link de
+  /// convidado sobrevive ao logout (conta de fornecedor/organizador não se
+  /// mistura com o convite) e a navegação reabre `/convite/:token`.
+  Future<void> encerrar({
+    bool limparFornecedorAntes = false,
+    String? preservarTokenConvite,
+  }) async {
     if (_encerrandoSessao?.value == true) return;
     _encerrandoSessao?.value = true;
     final iniciadoEm = DateTime.now();
+    final tokenPreservar = (preservarTokenConvite ?? '').trim();
     try {
       await _sessaoSub?.cancel();
       _sessaoSub = null;
@@ -455,10 +462,17 @@ class AppCicloSessao {
       _enderecosUsuario?.clear();
       _carrinho.limpar();
       _convite.limpar();
+      if (tokenPreservar.isNotEmpty) {
+        _convite.guardarTokenConvite(tokenPreservar);
+      }
       _totp.limpar();
       _theme.definirPapelSessao(null);
       _theme.aplicarTemaProduto();
-      Get.offAllNamed('/role');
+      if (tokenPreservar.isNotEmpty) {
+        Get.offAllNamed(ConviteLink.rotaConvite(tokenPreservar));
+      } else {
+        Get.offAllNamed('/role');
+      }
       monitorar();
     } finally {
       _encerrandoSessao?.value = false;

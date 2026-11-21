@@ -13,6 +13,54 @@ import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_c
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import 'package:app_faca_festa/domain/entities/convidado.dart';
 
+/// Conta logada não é de convidado; o link exige outra sessão.
+class ConflitoPapelConvite {
+  const ConflitoPapelConvite({
+    required this.token,
+    required this.tipo,
+    required this.email,
+    required this.nome,
+  });
+
+  final String token;
+  final String tipo;
+  final String email;
+  final String nome;
+
+  String get nomePapel {
+    switch (tipo) {
+      case 'F':
+        return 'fornecedor';
+      case 'O':
+        return 'organizador';
+      case 'A':
+        return 'administrador';
+      case 'C':
+        return 'convidado';
+      default:
+        return 'outra conta';
+    }
+  }
+}
+
+class ResultadoAbrirConvite {
+  const ResultadoAbrirConvite._({this.args, this.conflito});
+
+  final AreaConvidadoArgs? args;
+  final ConflitoPapelConvite? conflito;
+
+  bool get aberto => args != null;
+  bool get temConflitoPapel => conflito != null;
+
+  factory ResultadoAbrirConvite.aberto(AreaConvidadoArgs args) =>
+      ResultadoAbrirConvite._(args: args);
+
+  factory ResultadoAbrirConvite.conflitoPapel(ConflitoPapelConvite conflito) =>
+      ResultadoAbrirConvite._(conflito: conflito);
+
+  factory ResultadoAbrirConvite.falha() => const ResultadoAbrirConvite._();
+}
+
 class AppConviteController extends GetxController {
   AppConviteController({
     required AutenticacaoRepository autenticacao,
@@ -102,10 +150,11 @@ class AppConviteController extends GetxController {
   }
 
   /// Abre o convite. Sem conta real, entra como visitante (auth anônimo).
-  /// Conta tipo C vincula o token ao UID. Outros papéis são recusados.
-  Future<AreaConvidadoArgs?> abrirConvite(String token) async {
+  /// Conta tipo C vincula o token ao UID. Outros papéis não se misturam:
+  /// a UI oferece sair da conta atual e reabrir o link como convidado.
+  Future<ResultadoAbrirConvite> abrirConvite(String token) async {
     final tokenLimpo = token.trim();
-    if (tokenLimpo.isEmpty) return null;
+    if (tokenLimpo.isEmpty) return ResultadoAbrirConvite.falha();
 
     conviteToken.value = tokenLimpo;
     conviteProcessado = false;
@@ -121,28 +170,31 @@ class AppConviteController extends GetxController {
       }
 
       if (usuario.tipo != 'C') {
-        Get.snackbar(
-          'Convite de convidado',
-          'Este link deve ser acessado por uma conta de convidado.',
-          backgroundColor: Colors.orange.shade600,
-          colorText: Colors.white,
+        return ResultadoAbrirConvite.conflitoPapel(
+          ConflitoPapelConvite(
+            token: tokenLimpo,
+            tipo: usuario.tipo ?? '',
+            email: usuario.email,
+            nome: usuario.nome,
+          ),
         );
-        return null;
       }
 
       acessoPorLink.value = false;
       final destinoRota =
           await resolverDestinoConvidado(usuario, token: tokenLimpo);
       if (destinoRota.nome == '/conviteNaoEncontrado') {
-        return null;
+        return ResultadoAbrirConvite.falha();
       }
-      return AreaConvidadoArgs.atual();
+      final args = AreaConvidadoArgs.atual();
+      if (args == null) return ResultadoAbrirConvite.falha();
+      return ResultadoAbrirConvite.aberto(args);
     }
 
     return _abrirConviteComoVisitante(tokenLimpo);
   }
 
-  Future<AreaConvidadoArgs?> _abrirConviteComoVisitante(String token) async {
+  Future<ResultadoAbrirConvite> _abrirConviteComoVisitante(String token) async {
     acessoPorLink.value = true;
     try {
       if (_autenticacao.idUsuarioAtual == null) {
@@ -168,7 +220,7 @@ class AppConviteController extends GetxController {
       conviteProcessado = true;
       conviteTokenProcessado = token;
       _convidados.convidadoAtual.value = convidado;
-      return destino;
+      return ResultadoAbrirConvite.aberto(destino);
     } on AutenticacaoException catch (e) {
       acessoPorLink.value = false;
       debugPrint('$_logTag Auth ao abrir convite: ${e.codigo}');
@@ -187,7 +239,7 @@ class AppConviteController extends GetxController {
       debugPrint('$_logTag Erro ao abrir convite como visitante: $e\n$s');
       Get.offAllNamed('/conviteNaoEncontrado');
     }
-    return null;
+    return ResultadoAbrirConvite.falha();
   }
 
   /// Usado também pelo cadastro: depois de criar uma conta do tipo convidado,

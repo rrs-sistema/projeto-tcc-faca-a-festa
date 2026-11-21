@@ -63,8 +63,8 @@ extension _CalculadoraFestaLayout on _CalculadoraFestaScreenState {
                 padding: const EdgeInsets.only(top: 6),
                 child: Text(
                     widget.persistirRascunho != null
-                        ? 'Esta estimativa acompanha o cadastro. Volte para concluir os dados e salvar o evento; confira acima a confirmação de armazenamento no aparelho.'
-                        : 'Estimativa nesta tela. Volte ao cadastro para salvar o evento e continuar o planejamento.',
+                        ? 'Esta estimativa usa o número de pessoas e fica no cadastro. Volte e salve a festa. O cardápio é criado depois.'
+                        : 'Estimativa nesta tela. Volte ao cadastro para salvar a festa. O cardápio é criado depois.',
                     style: const TextStyle(fontSize: 14, color: Colors.white))),
         ],
       ),
@@ -321,7 +321,11 @@ extension _CalculadoraFestaLayout on _CalculadoraFestaScreenState {
             ),
           ),
           const SizedBox(height: 10),
-          SizedBox(
+          if (JornadaCadastroFesta.mostraCardapioNaCalculadora(
+            estimativaSemEvento:
+                calculadoraController.estimativaSemEvento.value,
+          ))
+            SizedBox(
             width: double.infinity,
             child: SizedBox(
               width: double.infinity,

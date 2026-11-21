@@ -16,9 +16,15 @@ class AvaliacaoServicoController extends GetxController {
   Future<List<Map<String, dynamic>>> contratosAvaliaveis(
           {required String idFornecedor,
           required String idEvento,
-          String? idServico}) =>
+          String? idServico,
+          String? idOrcamento,
+          bool detalhar = false}) =>
       _avaliacoes.repository.contratosAvaliaveis(
-          idFornecedor: idFornecedor, idEvento: idEvento, idServico: idServico);
+          idFornecedor: idFornecedor,
+          idEvento: idEvento,
+          idServico: idServico,
+          idOrcamento: idOrcamento,
+          detalhar: detalhar);
   int get quantidadeFornecedorVerificada =>
       avaliacoesFornecedor.where((a) => a.verificada).length;
   int get quantidadeServicoVerificada =>
@@ -171,6 +177,43 @@ class AvaliacaoServicoController extends GetxController {
       comentario: comentario,
       idEvento: idEvento,
       nomeEvento: nomeEvento,
+      idOrcamento: idOrcamento,
+    );
+  }
+
+  /// Uma gravação. Com [idServico], a nota fica no serviço. Sem ele, na reputação do fornecedor.
+  Future<void> registrarAvaliacao({
+    required String idFornecedor,
+    required String idOrcamento,
+    required int nota,
+    required String comentario,
+    String? idServico,
+    String? idEvento,
+  }) async {
+    if (nota < 1 || nota > 5) {
+      throw StateError('Escolha uma nota inteira de 1 a 5.');
+    }
+    final servico = idServico?.trim();
+    if (servico == null || servico.isEmpty) {
+      await adicionarAvaliacaoFornecedor(
+        idFornecedor: idFornecedor,
+        idCliente: '',
+        nomeCliente: '',
+        nota: nota.toDouble(),
+        comentario: comentario,
+        idEvento: idEvento,
+        idOrcamento: idOrcamento,
+      );
+      return;
+    }
+    await adicionarAvaliacaoServico(
+      idFornecedor: idFornecedor,
+      idServico: servico,
+      idCliente: '',
+      nomeCliente: '',
+      nota: nota.toDouble(),
+      comentario: comentario,
+      idEvento: idEvento,
       idOrcamento: idOrcamento,
     );
   }

@@ -323,6 +323,7 @@ class _EnviarAvaliacaoDialogState extends State<EnviarAvaliacaoDialog> {
                                   const SizedBox(height: 10),
                                   StarRatingWidget(
                                     rating: nota,
+                                    apenasInteiras: true,
                                     onChanged: (v) {
                                       setState(() => nota = v);
                                       state.didChange(v);

@@ -33,6 +33,7 @@ class ResumoSection extends StatelessWidget {
     this.onAbrirPedidos,
     this.onAbrirPerfil,
     this.onController,
+    this.acessosRapidosKey,
   });
 
   final FornecedorController controller;
@@ -45,12 +46,14 @@ class ResumoSection extends StatelessWidget {
   final SubcategoriaServicoController subcategoriaController;
   final AvaliacaoServicoController avaliacaoController;
   final Widget pedidos;
+  final Key? acessosRapidosKey;
   final VoidCallback? onAbrirPedidos, onAbrirPerfil;
   final ValueChanged<PainelOperacionalController>? onController;
 
   @override
   Widget build(BuildContext context) => VisaoOperacionalFornecedor(
       pedidos: pedidos,
+      acessosRapidosKey: acessosRapidosKey,
       onController: onController,
       onPedidos: onAbrirPedidos,
       lerMensagensNaoLidas: () => controller.mensagensNaoLidas.value,

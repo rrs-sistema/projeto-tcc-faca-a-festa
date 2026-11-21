@@ -1,200 +1,414 @@
 part of '../pages/area/area_convidado_home_screen.dart';
 
 extension _AreaConvidadoEventoSection on _AreaConvidadoHomeScreenState {
-  Widget _buildInformacoesPage(Evento evento) {
+  Widget _buildInformacoesPage(Evento evento, Convidado convidado) {
     return Obx(() {
       final eventoObservado = eventoController.eventoAtual.value;
       final eventoAtual = eventoObservado?.idEvento == evento.idEvento
           ? eventoObservado!
           : evento;
+      final cor = theme.primaryColor.value;
+      final nome = convidado.nome.split(' ').first;
+      final pendente = _statusPresencaAtual == StatusConvidado.pendente;
+      final titulo = eventoAtual.nomeEvento.trim().isEmpty
+          ? theme.tituloCabecalho.value
+          : eventoAtual.nomeEvento.trim();
+      final tipo = theme.tituloCabecalho.value.trim();
 
-      return SingleChildScrollView(
+      return Padding(
         key: const ValueKey('info'),
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            if (_statusPresencaAtual == StatusConvidado.pendente)
-              _cartaoConfirmarPresenca(),
-            _infoTileDataHora(
-              eventoAtual.data,
-              eventoAtual.hora,
-            ),
-            _infoTileComAcao(
-              Icons.location_on,
-              'Local',
-              eventoAtual.localEvento.isNotEmpty
-                  ? eventoAtual.localEvento
-                  : (eventoAtual.logradouro?.isNotEmpty == true
-                      ? '${eventoAtual.logradouro}, ${eventoAtual.numero ?? ''}'
-                      : 'Local a definir'),
-              acaoLabel: 'Abrir mapa',
-              onTap: () => _abrirNoMapa(eventoAtual),
-            ),
-            if ((eventoAtual.tema ?? '').trim().isNotEmpty)
-              _infoTile(
-                Icons.palette_outlined,
-                'Tema',
-                eventoAtual.tema!.trim(),
+        padding: const EdgeInsets.fromLTRB(10, 6, 10, 6),
+        child: LayoutBuilder(
+          builder: (context, limites) {
+            return Align(
+              alignment: Alignment.center,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: SizedBox(
+                  width: limites.maxWidth,
+                  child: _cartaoConvite(
+                    cor: cor,
+                    nomeConvidado: nome,
+                    tipoEvento: tipo,
+                    titulo: titulo,
+                    evento: eventoAtual,
+                    pendente: pendente,
+                    compacto: limites.maxHeight < 620,
+                  ),
+                ),
               ),
-            if ((eventoAtual.dressCode ?? '').trim().isNotEmpty)
-              _infoTile(
-                Icons.checkroom_outlined,
-                'Traje',
-                eventoAtual.dressCode!.trim(),
-              ),
-            _infoTile(
-                Icons.message,
-                'Mensagem',
-                eventoAtual.mensagemConvidado ??
-                    'Prepare-se para uma celebração especial! 💖'),
-            const SizedBox(height: 8),
-            Text(
-              'Organizado com o Faça a Festa',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.poppins(
-                fontSize: 11,
-                color: Colors.grey.shade500,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
+            );
+          },
         ),
       );
     });
   }
 
-  Widget _cartaoConfirmarPresenca() {
-    final color = theme.primaryColor.value;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Material(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(14),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(14),
-          onTap: _irParaPresenca,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            child: Row(
-              children: [
-                Icon(Icons.how_to_reg_rounded, color: color, size: 22),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
+  Widget _cartaoConvite({
+    required Color cor,
+    required String nomeConvidado,
+    required String tipoEvento,
+    required String titulo,
+    required Evento evento,
+    required bool pendente,
+    required bool compacto,
+  }) {
+    final dia = DateFormat('d', 'pt_BR').format(evento.data);
+    final mesAno = DateFormat("MMMM y", 'pt_BR').format(evento.data);
+    final diaSemana = DateFormat('EEEE', 'pt_BR').format(evento.data);
+    final hora = (evento.hora != null && evento.hora!.trim().isNotEmpty)
+        ? evento.hora!.trim()
+        : null;
+    final local = evento.localEvento.isNotEmpty
+        ? evento.localEvento
+        : (evento.logradouro?.isNotEmpty == true
+            ? '${evento.logradouro}, ${evento.numero ?? ''}'.trim()
+            : 'Local a definir');
+    final tema = (evento.tema ?? '').trim();
+    final traje = (evento.dressCode ?? '').trim();
+    final mensagem = (evento.mensagemConvidado ?? '').trim();
+    final tinta = Color.lerp(cor, const Color(0xFF1F2937), 0.42)!;
+    final papel = Color.lerp(const Color(0xFFFFFBF5), cor, 0.03)!;
+    final tipoLimpo = _textoTipoConvite(tipoEvento);
+    final gap = compacto ? 8.0 : 12.0;
+    final padV = compacto ? 16.0 : 22.0;
+
+    return Semantics(
+      label: 'Convite: $titulo. $dia de $mesAno. $local',
+      child: Container(
+        width: double.infinity,
+        constraints: const BoxConstraints(maxWidth: 440),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(18),
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              papel,
+              Color.lerp(papel, Colors.white, 0.35)!,
+            ],
+          ),
+          border: Border.all(color: cor.withValues(alpha: 0.28), width: 1.3),
+          boxShadow: [
+            BoxShadow(
+              color: cor.withValues(alpha: 0.12),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(18),
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: CustomPaint(
+                  painter: _ConviteCantosPainter(
+                    cor: cor.withValues(alpha: 0.45),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.fromLTRB(18, padV, 18, compacto ? 12 : 14),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'COM CARINHO PARA',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.poppins(
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 2.4,
+                        color: cor.withValues(alpha: 0.75),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      nomeConvidado,
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.cormorantGaramond(
+                        fontSize: compacto ? 22 : 24,
+                        fontWeight: FontWeight.w600,
+                        color: tinta,
+                        height: 1.05,
+                      ),
+                    ),
+                    SizedBox(height: gap),
+                    _ornamento(cor),
+                    SizedBox(height: gap),
+                    Text(
+                      'Você está convidado(a)',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.cormorantGaramond(
+                        fontSize: compacto ? 18 : 20,
+                        fontWeight: FontWeight.w500,
+                        fontStyle: FontStyle.italic,
+                        height: 1.15,
+                        color: tinta.withValues(alpha: 0.88),
+                      ),
+                    ),
+                    if (tipoLimpo.isNotEmpty) ...[
+                      const SizedBox(height: 4),
                       Text(
-                        'Confirme se você vai',
+                        tipoLimpo.toUpperCase(),
+                        textAlign: TextAlign.center,
                         style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 13,
-                          color: color,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 1.5,
+                          color: Colors.grey.shade600,
                         ),
                       ),
-                      Text(
-                        'Ajuda a organizar lugares, comida e o ritmo da festa.',
+                    ],
+                    const SizedBox(height: 4),
+                    Text(
+                      titulo,
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.cormorantGaramond(
+                        fontSize: compacto ? 26 : 30,
+                        fontWeight: FontWeight.w700,
+                        height: 1.08,
+                        color: tinta,
+                      ),
+                    ),
+                    SizedBox(height: gap + 2),
+                    _blocoData(
+                      cor: cor,
+                      tinta: tinta,
+                      dia: dia,
+                      mesAno: mesAno,
+                      diaSemana: diaSemana,
+                      hora: hora,
+                      compacto: compacto,
+                    ),
+                    SizedBox(height: gap),
+                    _ornamento(cor),
+                    SizedBox(height: gap - 2),
+                    Text(
+                      local,
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.cormorantGaramond(
+                        fontSize: compacto ? 15 : 17,
+                        fontWeight: FontWeight.w600,
+                        height: 1.25,
+                        color: tinta,
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () => _abrirNoMapa(evento),
+                      style: TextButton.styleFrom(
+                        foregroundColor: cor,
+                        visualDensity: VisualDensity.compact,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 0),
+                        minimumSize: const Size(0, 28),
+                      ),
+                      child: Text(
+                        'Ver no mapa',
                         style: GoogleFonts.poppins(
                           fontSize: 11.5,
-                          height: 1.3,
+                          fontWeight: FontWeight.w700,
+                          decoration: TextDecoration.underline,
+                          decorationColor: cor.withValues(alpha: 0.45),
+                        ),
+                      ),
+                    ),
+                    if (tema.isNotEmpty || traje.isNotEmpty) ...[
+                      SizedBox(height: gap - 4),
+                      _ornamento(cor),
+                      SizedBox(height: gap - 2),
+                      if (tema.isNotEmpty)
+                        _linhaCerimonial(
+                            rotulo: 'Tema', valor: tema, cor: tinta),
+                      if (tema.isNotEmpty && traje.isNotEmpty)
+                        const SizedBox(height: 2),
+                      if (traje.isNotEmpty)
+                        _linhaCerimonial(
+                            rotulo: 'Traje', valor: traje, cor: tinta),
+                    ],
+                    if (mensagem.isNotEmpty) ...[
+                      SizedBox(height: gap),
+                      Text(
+                        '“$mensagem”',
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.cormorantGaramond(
+                          fontSize: 14,
+                          fontStyle: FontStyle.italic,
+                          height: 1.25,
                           color: Colors.grey.shade700,
                         ),
                       ),
                     ],
-                  ),
+                    if (pendente) ...[
+                      SizedBox(height: gap + 2),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton(
+                          onPressed: _irParaPresenca,
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: cor,
+                            side: BorderSide(color: cor, width: 1.3),
+                            padding: EdgeInsets.symmetric(
+                                vertical: compacto ? 10 : 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                          ),
+                          child: Text(
+                            'Confirmar presença',
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 8),
+                    Text(
+                      'Faça a Festa',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.poppins(
+                        fontSize: 9,
+                        letterSpacing: 1.2,
+                        fontWeight: FontWeight.w500,
+                        color: cor.withValues(alpha: 0.38),
+                      ),
+                    ),
+                  ],
                 ),
-                Icon(Icons.chevron_right_rounded, color: color),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _infoTile(IconData icon, String title, String value) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10), // 🔹 Compacto
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
-      ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 0),
-        dense: true,
-        leading: Icon(icon, color: theme.primaryColor.value, size: 20),
-        title: Text(title,
-            style: GoogleFonts.poppins(
+  Widget _blocoData({
+    required Color cor,
+    required Color tinta,
+    required String dia,
+    required String mesAno,
+    required String diaSemana,
+    required String? hora,
+    required bool compacto,
+  }) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Text(
+          dia,
+          style: GoogleFonts.cormorantGaramond(
+            fontSize: compacto ? 40 : 44,
+            fontWeight: FontWeight.w600,
+            height: 1,
+            color: cor,
+          ),
+        ),
+        Container(
+          width: 1,
+          height: compacto ? 40 : 44,
+          margin: const EdgeInsets.symmetric(horizontal: 12),
+          color: cor.withValues(alpha: 0.25),
+        ),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              diaSemana,
+              style: GoogleFonts.poppins(
+                fontSize: 10.5,
                 fontWeight: FontWeight.w600,
-                fontSize: 13,
-                color: Colors.black87)),
-        subtitle: Text(value,
-            style:
-                GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade700)),
-      ),
+                letterSpacing: 0.7,
+                color: Colors.grey.shade600,
+              ),
+            ),
+            Text(
+              mesAno,
+              style: GoogleFonts.cormorantGaramond(
+                fontSize: compacto ? 16 : 17,
+                fontWeight: FontWeight.w600,
+                color: tinta,
+                height: 1.1,
+              ),
+            ),
+            if (hora != null)
+              Text(
+                'às $hora',
+                style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.grey.shade700,
+                ),
+              ),
+          ],
+        ),
+      ],
     );
   }
 
-  Widget _infoTileDataHora(DateTime? data, String? hora) {
-    final color = theme.primaryColor.value;
-    final dataFormatada =
-        data != null ? DateFormat('dd/MM/yyyy').format(data) : '--/--/----';
-    final horaFormatada =
-        (hora != null && hora.isNotEmpty) ? hora : 'a definir';
+  Widget _linhaCerimonial({
+    required String rotulo,
+    required String valor,
+    required Color cor,
+  }) {
+    return Text.rich(
+      TextSpan(
+        children: [
+          TextSpan(
+            text: '$rotulo  ·  ',
+            style: GoogleFonts.poppins(
+              fontSize: 10.5,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.5,
+              color: Colors.grey.shade600,
+            ),
+          ),
+          TextSpan(
+            text: valor,
+            style: GoogleFonts.cormorantGaramond(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: cor,
+            ),
+          ),
+        ],
+      ),
+      textAlign: TextAlign.center,
+    );
+  }
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10), // 🔹 Compacto
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        child: Row(
-          children: [
-            Container(
-              decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.10),
-                  borderRadius: BorderRadius.circular(10)),
-              padding: const EdgeInsets.all(8),
-              child: Icon(Icons.event_rounded, color: color, size: 20),
+  String _textoTipoConvite(String valor) {
+    final limpo = valor
+        .replaceAll(RegExp(r'[\u{1F300}-\u{1FAFF}]', unicode: true), '')
+        .replaceAll(RegExp(r'[\u{2600}-\u{27BF}]', unicode: true), '')
+        .trim();
+    return limpo.isEmpty ? valor.trim() : limpo;
+  }
+
+  Widget _ornamento(Color cor) {
+    return Row(
+      children: [
+        Expanded(child: Divider(color: cor.withValues(alpha: 0.18), height: 1)),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: Container(
+            width: 4,
+            height: 4,
+            decoration: BoxDecoration(
+              color: cor.withValues(alpha: 0.45),
+              shape: BoxShape.circle,
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Data e Hora',
-                      style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 11,
-                          color: Colors.grey.shade600)),
-                  const SizedBox(height: 2),
-                  Row(
-                    children: [
-                      Icon(Icons.calendar_today_rounded,
-                          size: 14, color: color.withValues(alpha: 0.8)),
-                      const SizedBox(width: 4),
-                      Text(dataFormatada,
-                          style: GoogleFonts.poppins(
-                              fontSize: 12, fontWeight: FontWeight.w600)),
-                      const SizedBox(width: 12),
-                      Icon(Icons.access_time_rounded,
-                          size: 14, color: color.withValues(alpha: 0.8)),
-                      const SizedBox(width: 4),
-                      Text(horaFormatada,
-                          style: GoogleFonts.poppins(
-                              fontSize: 12, fontWeight: FontWeight.w600)),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
+          ),
         ),
-      ),
+        Expanded(child: Divider(color: cor.withValues(alpha: 0.18), height: 1)),
+      ],
     );
   }
 
@@ -218,82 +432,36 @@ extension _AreaConvidadoEventoSection on _AreaConvidadoHomeScreenState {
       await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
     }
   }
+}
 
-  Widget _infoTileComAcao(IconData icon, String titulo, String valor,
-      {VoidCallback? onTap, String? acaoLabel}) {
-    final color = theme.primaryColor.value;
-    return Semantics(
-      button: onTap != null,
-      label: acaoLabel == null ? '$titulo, $valor' : '$titulo, $valor. $acaoLabel',
-      child: Container(
-      margin: const EdgeInsets.only(bottom: 10), // 🔹 Compacto
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
-        color: Colors.white,
-        border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
-      ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          child: Row(
-            children: [
-              Container(
-                width: 36, height: 36, // 🔹 Ícone menor
-                decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(10)),
-                child: Icon(icon, color: color, size: 20),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(titulo.toUpperCase(),
-                        style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 10,
-                            color: Colors.grey.shade600)),
-                    const SizedBox(height: 2),
-                    Text(valor,
-                        style: GoogleFonts.poppins(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black87)),
-                  ],
-                ),
-              ),
-              if (onTap != null)
-                Column(
-                  children: [
-                    Container(
-                      decoration: BoxDecoration(
-                          color: color.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(8)),
-                      padding: const EdgeInsets.all(6),
-                      child: Icon(Icons.navigation_rounded,
-                          color: color, size: 16),
-                    ),
-                    if (acaoLabel != null) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        acaoLabel,
-                        style: GoogleFonts.poppins(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w700,
-                          color: color,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-            ],
-          ),
-        ),
-      ),
-    ),
-    );
+class _ConviteCantosPainter extends CustomPainter {
+  _ConviteCantosPainter({required this.cor});
+
+  final Color cor;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = cor
+      ..strokeWidth = 1.2
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.square;
+
+    const reach = 16.0;
+    const inset = 10.0;
+
+    void canto(double x, double y, double dx, double dy) {
+      canvas.drawLine(Offset(x, y), Offset(x + dx * reach, y), paint);
+      canvas.drawLine(Offset(x, y), Offset(x, y + dy * reach), paint);
+    }
+
+    canto(inset, inset, 1, 1);
+    canto(size.width - inset, inset, -1, 1);
+    canto(inset, size.height - inset, 1, -1);
+    canto(size.width - inset, size.height - inset, -1, -1);
   }
+
+  @override
+  bool shouldRepaint(covariant _ConviteCantosPainter oldDelegate) =>
+      oldDelegate.cor != cor;
 }

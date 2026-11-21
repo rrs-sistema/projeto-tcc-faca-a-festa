@@ -644,6 +644,8 @@ class _TipoCamposDinamicos extends StatelessWidget {
       );
     }
 
+    final isPixLivre = tipo == GiftType.pix;
+
     return Column(
       children: [
         _PremiumTextField(
@@ -651,15 +653,25 @@ class _TipoCamposDinamicos extends StatelessWidget {
           primary: primary,
           label: tipo == GiftType.coletivo
               ? 'Valor sugerido por contribuição'
-              : 'Valor sugerido',
-          hint: 'Ex.: 50,00',
+              : (isPixLivre
+                  ? 'Valor sugerido (opcional)'
+                  : 'Valor sugerido'),
+          hint: isPixLivre
+              ? 'Deixe vazio para valor livre'
+              : 'Ex.: 50,00',
           icon: Icons.payments_rounded,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           validator: (value) => FormValidators.dinheiro(
             value,
+            // PIX simples: valor livre — o convidado escolhe no banco.
+            obrigatorio: !isPixLivre,
             campo: 'o valor',
           ),
         ),
+        if (isPixLivre) ...[
+          const SizedBox(height: 8),
+          _PixValorLivreHint(primary: primary),
+        ],
         const SizedBox(height: 10),
         _PremiumTextField(
           controller: pixCtrl,
@@ -1025,7 +1037,44 @@ String _tipoLabel(GiftType tipo) {
 }
 
 String _tipoDescricao(GiftType tipo) {
-  if (tipo == GiftType.pix) return 'Valor direto para contribuição';
+  if (tipo == GiftType.pix) return 'Contribuição com valor livre ou sugerido';
   if (tipo == GiftType.coletivo) return 'Meta dividida entre convidados';
   return 'Produto, loja, foto e link';
+}
+
+class _PixValorLivreHint extends StatelessWidget {
+  final Color primary;
+
+  const _PixValorLivreHint({required this.primary});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: primary.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: primary.withValues(alpha: 0.12)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.pix_rounded, color: primary, size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Com valor livre, o QR/copia-e-cola não trava o montante: cada convidado informa o valor no app do banco.',
+              style: GoogleFonts.poppins(
+                color: const Color(0xFF475569),
+                fontSize: 11,
+                height: 1.35,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

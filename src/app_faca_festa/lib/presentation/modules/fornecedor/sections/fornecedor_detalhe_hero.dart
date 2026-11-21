@@ -121,52 +121,14 @@ extension _FornecedorDetalheHero on FornecedorDetalheScreen {
               );
             },
           ),
-          Obx(() {
-            final podeAvaliar =
-                avaliacaoController.permitidoAvaliarFornecedor.value;
-
-            if (!podeAvaliar) return const SizedBox.shrink();
-
-            return Padding(
-              padding: const EdgeInsets.only(top: 12),
-              child: SizedBox(
-                width: double.infinity,
-                height: 42,
-                child: OutlinedButton.icon(
-                  icon: Icon(Icons.star_rounded,
-                      color: Colors.amber.shade700, size: 18),
-                  label: Text(
-                    'Avaliar este fornecedor',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 12.8,
-                    ),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.amber.shade800,
-                    iconColor: Colors.amber.shade800,
-                    side: BorderSide(
-                        color: Colors.amber.shade700.withValues(alpha: 0.35)),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14)),
-                    visualDensity: VisualDensity.compact,
-                  ),
-                  onPressed: () {
-                    HapticFeedback.lightImpact();
-                    getDialogAvaliacaoFornecedor(
-                      fornecedor: fornecedor,
-                      appController: appController,
-                      eventoController: eventoController,
-                      avaliacaoController: avaliacaoController,
-                      theme: themeController,
-                    );
-                  },
-                ),
-              ),
-            );
-          }),
+          BotaoAvaliarContratacaoEvento(
+            idFornecedor: fornecedor.idFornecedor,
+            idEvento: eventoController.eventoAtualEntidade?.idEvento ?? '',
+            nomeEvento: eventoController.eventoAtualEntidade?.nomeEvento,
+            nomeFornecedor: fornecedor.razaoSocial,
+            controller: avaliacaoController,
+            themeController: themeController,
+          ),
         ],
       ),
     );

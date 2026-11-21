@@ -3,6 +3,7 @@ import { carregarContextoRepasse, COL_AUTORIZACOES, contratado, divisaoContrato,
 import { FieldValue, Firestore } from "firebase-admin/firestore";
 import { HttpsError } from "firebase-functions/v2/https";
 import { dinheiro } from "./dinheiro";
+import { valorContratadoDoOrcamento } from "./asaasPixRegras";
 import { centavosDeOrcamento } from "./dashboardAdminService";
 import {
   CriterioAlocacao,
@@ -181,7 +182,9 @@ export async function alocarRecebimentoAContratos(
       throw new HttpsError("failed-precondition", validacao.motivo);
     }
 
-    // Verifica contratos no mesmo evento.
+    // Verifica contratos no mesmo evento e o teto do valor contratado.
+    const jaAlocado = new Map<string, number>();
+    const tetoContrato = new Map<string, number>();
     for (const a of entrada.alocacoes) {
       const orcRef = db.collection("orcamento").doc(a.idOrcamento);
       const orcSnap = await tx.get(orcRef);
@@ -200,11 +203,31 @@ export async function alocarRecebimentoAContratos(
           "Contrato de outro evento/pedido.",
         );
       }
+      if (!jaAlocado.has(a.idOrcamento)) {
+        const alocSnap = await tx.get(
+          db.collection(COL_ALOCACOES).where("id_orcamento", "==", a.idOrcamento).limit(50),
+        );
+        let somaAtual = 0;
+        for (const doc of alocSnap.docs) {
+          somaAtual += Number(doc.data().valor_centavos ?? 0);
+        }
+        jaAlocado.set(a.idOrcamento, somaAtual);
+        tetoContrato.set(a.idOrcamento, valorContratadoDoOrcamento(orc));
+      }
     }
 
     const ids: string[] = [];
     let soma = alocado;
     for (const a of entrada.alocacoes) {
+      const atual = jaAlocado.get(a.idOrcamento) ?? 0;
+      const teto = tetoContrato.get(a.idOrcamento) ?? 0;
+      if (atual + a.valorCentavos > teto) {
+        throw new HttpsError(
+          "failed-precondition",
+          "A alocação passaria do valor contratado.",
+        );
+      }
+      jaAlocado.set(a.idOrcamento, atual + a.valorCentavos);
       const ref = db.collection(COL_ALOCACOES).doc();
       ids.push(ref.id);
       soma += a.valorCentavos;

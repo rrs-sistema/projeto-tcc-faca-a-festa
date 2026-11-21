@@ -505,7 +505,7 @@ void main() {
       await foto('02-previa-reconciliada');
       await tester.binding.handlePopRoute();
       await tester.pump(const Duration(milliseconds: 500));
-      await texto('Guardar e sair');
+      await tocar(find.byTooltip('Guardar rascunho e fechar'));
       final gravados = await rascunhos.listarCadastros(auth.currentUser!.uid);
       expect(gravados.cadastros.single.estimativa!.adultos, 44);
       expect(gravados.cadastros.single.estimativa!.limite, 2500);

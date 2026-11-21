@@ -174,8 +174,6 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
 
             final convidadoAtual =
                 convidadoController.convidadoAtual.value ?? widget.convidado;
-            final nomeConvidado = convidadoAtual.nome.split(' ').first;
-            final mensagemBoasVindas = 'Bem-vindo(a), $nomeConvidado! 🎉';
 
             final presentes = giftUseCases;
             final pagina = switch (_selectedIndex) {
@@ -188,7 +186,7 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
                     ),
               2 => _buildConfirmacaoPage(convidadoAtual),
               3 => _buildTarefasPage(evento, convidadoAtual),
-              _ => _buildInformacoesPage(evento),
+              _ => _buildInformacoesPage(evento, convidadoAtual),
             };
 
             return Stack(
@@ -315,18 +313,29 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
                                     ),
                                     Expanded(
                                       child: Center(
-                                        child: Text(
-                                          '${theme.tituloCabecalho.value}\n$titulo',
-                                          textAlign: TextAlign.center,
-                                          overflow: TextOverflow.ellipsis,
-                                          maxLines: 2,
-                                          style: GoogleFonts.poppins(
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w700,
-                                            color: Colors.white,
-                                            letterSpacing: 0.4,
-                                          ),
-                                        ),
+                                        child: _selectedIndex == 0
+                                            ? Text(
+                                                'Seu convite',
+                                                style: GoogleFonts.poppins(
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: Colors.white
+                                                      .withValues(alpha: 0.92),
+                                                  letterSpacing: 1.2,
+                                                ),
+                                              )
+                                            : Text(
+                                                '${theme.tituloCabecalho.value}\n$titulo',
+                                                textAlign: TextAlign.center,
+                                                overflow: TextOverflow.ellipsis,
+                                                maxLines: 2,
+                                                style: GoogleFonts.poppins(
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: Colors.white,
+                                                  letterSpacing: 0.4,
+                                                ),
+                                              ),
                                       ),
                                     ),
                                     _botaoSairCabecalho(),
@@ -343,79 +352,20 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
                   right: 0,
                   bottom: 0,
                   child: Material(
-                    color: theme.surfaceColor.value,
+                    color: _selectedIndex == 0
+                        ? Color.lerp(
+                            const Color(0xFFF4EEE6),
+                            theme.primaryColor.value,
+                            0.04,
+                          )
+                        : theme.surfaceColor.value,
                     elevation: 2,
                     borderRadius:
                         const BorderRadius.vertical(top: Radius.circular(24)),
                     clipBehavior: Clip.antiAlias,
                     child: Column(
                       children: [
-                        if (_selectedIndex != 2) ...[
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
-                            child: Column(
-                              children: [
-                                Text(
-                                  mensagemBoasVindas,
-                                  textAlign: TextAlign.center,
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w700,
-                                    color: theme.primaryColor.value,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  (_statusPresencaLocal ??
-                                              convidadoAtual.status) ==
-                                          StatusConvidado.pendente
-                                      ? 'Primeiro, confirme se você vai à festa.'
-                                      : 'Você foi convidado(a) para um momento especial!',
-                                  textAlign: TextAlign.center,
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 12,
-                                    color: Colors.grey.shade700,
-                                    height: 1.3,
-                                  ),
-                                ),
-                                if (appController.acessoPorLink.value) ...[
-                                  const SizedBox(height: 10),
-                                  _bannerContaParaTarefas(),
-                                ],
-                              ],
-                            ),
-                          ),
-                          const Divider(
-                              thickness: 0.5, indent: 16, endIndent: 16),
-                        ],
                         Expanded(child: pagina),
-                        if (_selectedIndex != 2) ...[
-                          const SizedBox(height: 6),
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 6),
-                            child: Column(
-                              children: [
-                                Text(
-                                  'Organizado com 💕 pelo aplicativo',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 10,
-                                    color: Colors.grey.shade600,
-                                    fontWeight: FontWeight.w400,
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  '🎉 Faça a Festa',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w700,
-                                    color: theme.primaryColor.value,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
                       ],
                     ),
                   ),

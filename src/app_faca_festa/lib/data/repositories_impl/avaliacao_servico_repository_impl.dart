@@ -12,9 +12,15 @@ class AvaliacaoServicoRepositoryImpl implements AvaliacaoServicoRepository {
   Future<List<Map<String, dynamic>>> contratosAvaliaveis(
           {required String idFornecedor,
           required String idEvento,
-          String? idServico}) =>
+          String? idServico,
+          String? idOrcamento,
+          bool detalhar = false}) =>
       remote.contratosAvaliaveis(
-          idFornecedor: idFornecedor, idEvento: idEvento, idServico: idServico);
+          idFornecedor: idFornecedor,
+          idEvento: idEvento,
+          idServico: idServico,
+          idOrcamento: idOrcamento,
+          detalhar: detalhar);
 
   @override
   Stream<List<AvaliacaoServico>> observarAvaliacoesServico({

@@ -10,6 +10,10 @@ import {
   ModoComissao,
   EstadoRepasse,
 } from "./intermediacaoFinanceiraService";
+import {
+  confirmadoLimitado,
+  LIMITE_PAGAMENTOS_CONTRATO,
+} from "./asaasPixRegras";
 
 export type NivelPagamentoPlataforma =
   | "nao_informado"
@@ -48,6 +52,8 @@ export type VisaoContratoOrganizador = {
   nomeEvento: string | null;
   nomeFornecedor: string | null;
   nomeServico: string | null;
+  idFornecedor: string | null;
+  idServico: string | null;
   escopo: string | null;
   valorContratadoCentavos: number;
   /** Soma parcelas conhecidas; null se incompleto. */
@@ -56,6 +62,11 @@ export type VisaoContratoOrganizador = {
   valorDeclaradoCentavos: number;
   valorConfirmadoPlataformaAlocadoCentavos: number;
   aPagarPlataformaCentavos: number;
+  /** Garantia pedida pelo fornecedor. Não é parcela obrigatória. */
+  entradaSugeridaCentavos: number | null;
+  percentualEntradaSugerido: number | null;
+  pagamentosRegistrados: number;
+  limitePagamentos: number;
   /** Status de repasse só no nível permitido (sem banco/margem). */
   statusRepassePermitido: string;
   estadoExecucao: EstadoExecucaoParte;
@@ -202,23 +213,39 @@ export function montarVisaoOrganizador(params: {
   nomeEvento: string | null;
   nomeFornecedor: string | null;
   nomeServico: string | null;
+  idFornecedor?: string | null;
+  idServico?: string | null;
   escopo: string | null;
   valorContratadoCentavos: number;
   declaradoCentavos: number;
   /** Alocado confirmado (conferência/fonte) ao contrato. */
   confirmadoAlocadoCentavos: number;
+  /** Parcela do alocado que entrou por Pix Asaas. */
+  confirmadoFonteExternaCentavos?: number;
   estadoRepasse: EstadoRepasse | "sem_repasse" | "elegivel_pendente";
   estadoExecucao: EstadoExecucaoParte;
   parcelasConhecidas: boolean;
   politicaLiberacaoAtiva: boolean;
+  entradaSugeridaCentavos?: number | null;
+  percentualEntradaSugerido?: number | null;
+  pagamentosRegistrados?: number;
 }): VisaoContratoOrganizador {
+  const fonteExterna = Math.min(
+    confirmadoLimitado(params.valorContratadoCentavos, params.confirmadoFonteExternaCentavos ?? 0),
+    confirmadoLimitado(params.valorContratadoCentavos, params.confirmadoAlocadoCentavos),
+  );
   const nivel = nivelDeConfirmacaoRecebimento({
     declaradoCentavos: params.declaradoCentavos,
-    conferidoCentavos: params.confirmadoAlocadoCentavos,
-    confirmadoFonteExternaCentavos: 0,
+    conferidoCentavos: Math.max(
+      0,
+      confirmadoLimitado(params.valorContratadoCentavos, params.confirmadoAlocadoCentavos) - fonteExterna,
+    ),
+    confirmadoFonteExternaCentavos: fonteExterna,
   });
-  // Antes da conferência, só declaração — aPagar usa confirmado.
-  const confirmado = Math.max(0, params.confirmadoAlocadoCentavos);
+  const confirmado = confirmadoLimitado(
+    params.valorContratadoCentavos,
+    params.confirmadoAlocadoCentavos,
+  );
   const aPagar = Math.max(0, params.valorContratadoCentavos - confirmado);
 
   let statusRepasse = "Ainda sem repasse ao fornecedor";
@@ -237,6 +264,8 @@ export function montarVisaoOrganizador(params: {
     nomeEvento: params.nomeEvento,
     nomeFornecedor: params.nomeFornecedor,
     nomeServico: params.nomeServico,
+    idFornecedor: params.idFornecedor ?? null,
+    idServico: params.idServico ?? null,
     escopo: params.escopo,
     valorContratadoCentavos: params.valorContratadoCentavos,
     parcelasConhecidas: params.parcelasConhecidas,
@@ -244,6 +273,10 @@ export function montarVisaoOrganizador(params: {
     valorDeclaradoCentavos: Math.max(0, params.declaradoCentavos),
     valorConfirmadoPlataformaAlocadoCentavos: confirmado,
     aPagarPlataformaCentavos: aPagar,
+    entradaSugeridaCentavos: params.entradaSugeridaCentavos ?? null,
+    percentualEntradaSugerido: params.percentualEntradaSugerido ?? null,
+    pagamentosRegistrados: Math.max(0, params.pagamentosRegistrados ?? 0),
+    limitePagamentos: LIMITE_PAGAMENTOS_CONTRATO,
     statusRepassePermitido: statusRepasse,
     estadoExecucao: params.estadoExecucao,
     proximoPasso: proximoPassoOrganizador({

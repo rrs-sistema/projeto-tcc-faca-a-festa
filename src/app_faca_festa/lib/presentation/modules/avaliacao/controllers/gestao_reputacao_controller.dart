@@ -30,6 +30,7 @@ class GestaoReputacaoController extends GetxController {
       enviando = false.obs,
       temMais = false.obs,
       autorizado = false.obs;
+  final permissaoModeracaoAusente = false.obs;
   final erro = ''.obs, mensagem = ''.obs;
   final pendente = Rxn<Map<String, dynamic>>();
   final nota = 0.obs, dias = 0.obs;
@@ -73,6 +74,7 @@ class GestaoReputacaoController extends GetxController {
     enviando.value = false;
     carregando.value = false;
     autorizado.value = false;
+    permissaoModeracaoAusente.value = false;
     if (uid == null || (!moderacao && uid != idFornecedor)) {
       erro.value = 'Acesse com a sessão autorizada.';
       return;
@@ -82,7 +84,10 @@ class GestaoReputacaoController extends GetxController {
         final p = await gateway.chamar('consultarPermissaoReputacaoFn', {});
         if (!_valido(g, uid)) return;
         if (p['moderar'] != true) {
-          erro.value = 'Permissão específica de moderação necessária.';
+          permissaoModeracaoAusente.value = true;
+          erro.value = 'Sua conta não tem acesso à moderação de avaliações. '
+              'Solicite essa permissão ao responsável pelo sistema. '
+              'Se o acesso já foi liberado, saia e entre novamente no aplicativo.';
           return;
         }
       }

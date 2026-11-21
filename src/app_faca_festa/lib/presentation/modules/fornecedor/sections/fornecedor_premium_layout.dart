@@ -104,8 +104,6 @@ class PremiumSectionShell extends StatelessWidget {
                       children: [
                         Text(
                           title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.poppins(
                             fontSize: 15.5,
                             fontWeight: FontWeight.w800,

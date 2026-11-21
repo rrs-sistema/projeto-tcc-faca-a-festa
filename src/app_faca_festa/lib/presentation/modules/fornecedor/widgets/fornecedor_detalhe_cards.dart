@@ -2,12 +2,9 @@ part of '../pages/fornecedor_detalhe_screen.dart';
 
 Widget _cardServicoCarrossel({
   required ServicoProduto servico,
-  required CategoriaServico categoria,
   required String fotoUrl,
   required Color primary,
-  required Gradient gradient,
-  required String fornecedorId,
-  required BuildContext context,
+  required FornecedorDetalhado detalhe,
   required FornecedorLocalizacaoController controllerLocalizacao,
   required EventThemeController themeController,
   required AppController appController,
@@ -97,31 +94,19 @@ Widget _cardServicoCarrossel({
                         borderRadius: BorderRadius.circular(10)),
                   ),
                   onPressed: () {
-                    final serviceComplet =
-                        controllerLocalizacao.allService.firstWhereOrNull(
-                      (s) =>
-                          s.idProdutoServico == servico.id &&
-                          s.idFornecedor == fornecedorId &&
-                          s.idSubcategoria == servico.idSubcategoria,
+                    HapticFeedback.mediumImpact();
+                    _abrirCotacaoDoFornecedor(
+                      fornecedorController: fornecedorController,
+                      controllerLocalizacao: controllerLocalizacao,
+                      fornecedor: detalhe.fornecedor,
+                      idCategoria: detalhe.categoriaId,
+                      nomeCategoria: detalhe.categoriaNome,
+                      idProdutoServicoDestaque: servico.id,
+                      themeController: themeController,
+                      appController: appController,
+                      eventoController: eventoController,
+                      cotacoes: cotacoes,
                     );
-
-                    if (serviceComplet == null) return;
-
-                    controllerLocalizacao.servicosFornecedor
-                      ..clear()
-                      ..add(serviceComplet);
-
-                    Get.to(() => ServicosParaCotacaoScreen(
-                          idCategoria: categoria.id,
-                          nomeCategoria: categoria.nome,
-                          fornecedoresSelecionados: [fornecedorId],
-                          themeController: themeController,
-                          fornecedorController: controllerLocalizacao,
-                          appController: appController,
-                          fornecedorCadastroController: fornecedorController,
-                          eventoController: eventoController,
-                          cotacoes: cotacoes,
-                        ));
                   },
                 ),
               ],
@@ -196,31 +181,6 @@ Widget _bannerFornecedor(String fotoCapa, Gradient gradient) {
         ),
       ),
     ],
-  );
-}
-
-void getDialogAvaliacaoFornecedor({
-  required Fornecedor fornecedor,
-  required AppController appController,
-  required EventoController eventoController,
-  required AvaliacaoServicoController avaliacaoController,
-  required EventThemeController theme,
-}) {
-  final usuario = appController.usuarioLogado.value!;
-  final evento = eventoController.eventoAtualEntidade!;
-
-  Get.dialog(
-    EnviarAvaliacaoDialog(
-      idFornecedor: fornecedor.idFornecedor,
-      tipo: TipoAvaliacao.fornecedor,
-      idServico: null,
-      idCliente: usuario.idUsuario,
-      nomeCliente: usuario.nome,
-      idEvento: evento.idEvento,
-      nomeEventoAtual: evento.nomeEvento,
-      controller: avaliacaoController,
-      themeController: theme,
-    ),
   );
 }
 

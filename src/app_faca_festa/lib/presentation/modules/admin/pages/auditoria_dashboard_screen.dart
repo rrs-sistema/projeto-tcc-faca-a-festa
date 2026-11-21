@@ -8,6 +8,7 @@ import 'package:app_faca_festa/presentation/modules/tema/admin_theme.dart';
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import 'package:app_faca_festa/presentation/widgets/admin/admin_kit.dart';
 import 'package:app_faca_festa/presentation/widgets/auditoria/auditoria_evento_card.dart';
+import 'package:app_faca_festa/presentation/widgets/auditoria/auditoria_distribuicao_bar.dart';
 
 class AuditoriaDashboardScreen extends StatelessWidget {
   final AuditoriaController controller;
@@ -270,8 +271,6 @@ class _HeaderBand extends StatelessWidget {
                 const SizedBox(height: 3),
                 Text(
                   '$cobertura% de cobertura auditada, ${controller.totalCriticos} críticos e ${controller.totalAuditadosSemHash} eventos sem hash.',
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.poppins(
                     color: Colors.white.withValues(alpha: 0.82),
                     fontSize: 12,
@@ -317,9 +316,8 @@ class _MetricGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final width = constraints.maxWidth < 720
-            ? (constraints.maxWidth - 8) / 2
-            : (constraints.maxWidth - 28) / 4;
+        final columns = (constraints.maxWidth / 180).floor().clamp(1, 4);
+        final width = (constraints.maxWidth - 8 * (columns - 1)) / columns;
         return Wrap(
           spacing: 8,
           runSpacing: 8,
@@ -345,7 +343,7 @@ class _MetricCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 66,
+      constraints: const BoxConstraints(minHeight: 76),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: data.color.withValues(alpha: 0.07),
@@ -363,8 +361,6 @@ class _MetricCard extends StatelessWidget {
               children: [
                 Text(
                   data.value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.poppins(
                     fontSize: 17,
                     fontWeight: FontWeight.w800,
@@ -373,8 +369,6 @@ class _MetricCard extends StatelessWidget {
                 ),
                 Text(
                   data.label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                   style:
                       GoogleFonts.poppins(fontSize: 10.5, color: theme.muted),
                 ),
@@ -436,25 +430,35 @@ class _ActivityPanel extends StatelessWidget {
     return _Panel(
       title: 'Atividade nos últimos 15 dias',
       theme: theme,
-      child: SizedBox(
-        height: 150,
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            for (final dia in dias) ...[
-              Expanded(
-                child: _VerticalBar(
-                  label: dia.key,
-                  value: dia.value,
-                  percent: dia.value / maior,
-                  theme: theme,
-                ),
-              ),
-              if (dia != dias.last) const SizedBox(width: 5),
-            ],
-          ],
-        ),
-      ),
+      child: LayoutBuilder(builder: (context, constraints) {
+        final scaler = MediaQuery.textScalerOf(context);
+        final minWidth = dias.length * (scaler.scale(34) + 5);
+        return SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: SizedBox(
+            width: constraints.maxWidth < minWidth
+                ? minWidth
+                : constraints.maxWidth,
+            height: 110 + scaler.scale(40),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                for (final dia in dias) ...[
+                  Expanded(
+                    child: _VerticalBar(
+                      label: dia.key,
+                      value: dia.value,
+                      percent: dia.value / maior,
+                      theme: theme,
+                    ),
+                  ),
+                  if (dia != dias.last) const SizedBox(width: 5),
+                ],
+              ],
+            ),
+          ),
+        );
+      }),
     );
   }
 }
@@ -588,8 +592,6 @@ class _HealthLine extends StatelessWidget {
           Expanded(
             child: Text(
               label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
               style: GoogleFonts.poppins(
                 fontSize: 11.5,
                 fontWeight: FontWeight.w600,
@@ -645,7 +647,7 @@ class _BarsPanel extends StatelessWidget {
           : Column(
               children: [
                 for (final item in items.take(7)) ...[
-                  _HorizontalBar(
+                  AuditoriaDistribuicaoBar(
                     label: item.key,
                     value: item.value,
                     percent: item.value / maior,
@@ -655,81 +657,6 @@ class _BarsPanel extends StatelessWidget {
                 ],
               ],
             ),
-    );
-  }
-}
-
-class _HorizontalBar extends StatelessWidget {
-  const _HorizontalBar({
-    required this.label,
-    required this.value,
-    required this.percent,
-    required this.theme,
-  });
-
-  final String label;
-  final int value;
-  final double percent;
-  final AuditoriaVisualTheme theme;
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final labelWidth = switch (constraints.maxWidth) {
-          >= 560 => 190.0,
-          >= 460 => 164.0,
-          >= 360 => 142.0,
-          _ => 118.0,
-        };
-
-        return Row(
-          children: [
-            SizedBox(
-              width: labelWidth,
-              child: Tooltip(
-                message: label,
-                waitDuration: const Duration(milliseconds: 450),
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.poppins(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: theme.ink,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(999),
-                child: LinearProgressIndicator(
-                  value: percent.clamp(0, 1),
-                  minHeight: 7,
-                  color: theme.primary,
-                  backgroundColor: theme.border.withValues(alpha: 0.55),
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            SizedBox(
-              width: 34,
-              child: Text(
-                '$value',
-                textAlign: TextAlign.right,
-                style: GoogleFonts.poppins(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  color: theme.muted,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
     );
   }
 }

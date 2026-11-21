@@ -20,6 +20,7 @@ class AtualizacaoIndicadores extends StatelessWidget {
   const AtualizacaoIndicadores(
       {super.key,
       this.dados,
+      this.compacto = false,
       this.periodo,
       this.onRefresh,
       this.carregando = false,
@@ -28,6 +29,7 @@ class AtualizacaoIndicadores extends StatelessWidget {
   final Map? periodo;
   final VoidCallback? onRefresh;
   final bool carregando;
+  final bool compacto;
   final bool complementoIndisponivel;
   static const nomes = {
     'atendimentos': 'Atendimentos',
@@ -76,15 +78,27 @@ class AtualizacaoIndicadores extends StatelessWidget {
             childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 16),
             leading:
                 Icon(Icons.update_rounded, color: tema.colorScheme.primary),
-            title: Text('Atualização dos dados',
-                style: tema.textTheme.titleSmall
-                    ?.copyWith(fontWeight: FontWeight.w600)),
-            subtitle: Text(
-                dados == null
-                    ? 'Aguardando a primeira consulta'
-                    : horarioAtualizacaoPainel(dados?['consultadoEm']),
-                style: tema.textTheme.bodySmall?.copyWith(
-                    color: tema.colorScheme.onSurfaceVariant, height: 1.5)),
+            dense: compacto,
+            title: Text(
+                compacto
+                    ? dados == null
+                        ? 'Aguardando a primeira consulta'
+                        : 'Atualizado em ${horarioAtualizacaoPainel(dados?['consultadoEm'])}'
+                    : 'Atualização dos dados',
+                style: (compacto
+                        ? tema.textTheme.bodySmall
+                        : tema.textTheme.titleSmall)
+                    ?.copyWith(
+                        fontWeight:
+                            compacto ? FontWeight.w400 : FontWeight.w600)),
+            subtitle: compacto
+                ? null
+                : Text(
+                    dados == null
+                        ? 'Aguardando a primeira consulta'
+                        : horarioAtualizacaoPainel(dados?['consultadoEm']),
+                    style: tema.textTheme.bodySmall?.copyWith(
+                        color: tema.colorScheme.onSurfaceVariant, height: 1.5)),
             children: [
               Align(
                   alignment: Alignment.centerLeft,

@@ -69,8 +69,12 @@ class OperacaoFalha extends StatelessWidget {
       {super.key,
       required this.titulo,
       required this.mensagem,
-      required this.onRetry});
+      required this.onRetry,
+      this.icone = Icons.cloud_off_outlined,
+      this.textoAcao = 'Tentar novamente'});
   final String titulo, mensagem;
+  final IconData icone;
+  final String textoAcao;
   final VoidCallback? onRetry;
   @override
   Widget build(BuildContext context) {
@@ -93,8 +97,8 @@ class OperacaoFalha extends StatelessWidget {
                       decoration: BoxDecoration(
                           color: t.colorScheme.primary.withValues(alpha: .08),
                           shape: BoxShape.circle),
-                      child: Icon(Icons.cloud_off_outlined,
-                          size: 30, color: t.colorScheme.primary)),
+                      child:
+                          Icon(icone, size: 30, color: t.colorScheme.primary)),
                   const SizedBox(height: 16),
                   Text(titulo,
                       textAlign: TextAlign.center,
@@ -112,7 +116,7 @@ class OperacaoFalha extends StatelessWidget {
                   FilledButton.icon(
                       onPressed: onRetry,
                       icon: const Icon(Icons.refresh_rounded),
-                      label: const Text('Tentar novamente'))
+                      label: Text(textoAcao))
                 ])));
   }
 }

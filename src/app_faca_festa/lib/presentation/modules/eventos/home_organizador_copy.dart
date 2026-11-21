@@ -168,8 +168,10 @@ abstract final class HomeOrganizadorCopy {
     return '$confirmados de $total confirmaram';
   }
 
-  static String convidadosPendentes(int? pendentes) {
-    if (pendentes == null) return 'Lista indisponível';
+  /// Só aparece quando já há gente na lista. Sem cadastro, a home não inventa
+  /// "nenhuma resposta" em cima de 0/0.
+  static String? convidadosPendentes(int? pendentes, {int? naLista}) {
+    if (pendentes == null || naLista == null || naLista <= 0) return null;
     if (pendentes == 0) return 'Nenhuma resposta pendente';
     return pendentes == 1
         ? '1 aguardando resposta'

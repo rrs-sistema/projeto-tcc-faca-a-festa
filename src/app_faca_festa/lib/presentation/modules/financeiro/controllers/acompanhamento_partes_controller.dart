@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 
 import 'package:app_faca_festa/data/datasources/remote/acompanhamento_partes_remote.dart';
+import 'package:app_faca_festa/domain/entities/cobranca_pix_servico.dart';
 import 'package:app_faca_festa/domain/services/acompanhamento_partes_service.dart';
 
 class AcompanhamentoPartesController extends GetxController {
@@ -252,5 +253,54 @@ class AcompanhamentoPartesController extends GetxController {
     aviso.value = '';
     idEvento.value = '';
     idFornecedor.value = '';
+  }
+
+  String mensagemPagamento(Object e) {
+    final texto = e.toString().trim();
+    final semCodigo = texto.replaceFirst(RegExp(r'^\[[^\]]+\]\s*'), '');
+    return semCodigo.isEmpty ? 'Não foi possível gerar o Pix.' : semCodigo;
+  }
+
+  Future<CobrancaPixServico?> criarCobrancaPix({
+    required String idOrcamento,
+    required int valorCentavos,
+    String? cpf,
+  }) async {
+    if (idEvento.value.isEmpty) {
+      erro.value = 'Não foi possível identificar o evento.';
+      return null;
+    }
+    erro.value = '';
+    try {
+      final r = await remote.criarCobrancaPix(
+        idEvento: idEvento.value,
+        idOrcamento: idOrcamento,
+        valorCentavos: valorCentavos,
+        cpf: cpf,
+      );
+      final cobranca = CobrancaPixServico.fromMap(r);
+      if ((cobranca.aviso ?? '').isNotEmpty) aviso.value = cobranca.aviso!;
+      return cobranca;
+    } catch (e) {
+      erro.value = mensagemPagamento(e);
+      return null;
+    }
+  }
+
+  Future<CobrancaPixServico?> consultarCobrancaPix(
+    String cobrancaId, {
+    bool silencioso = false,
+  }) async {
+    try {
+      final r = await remote.consultarCobrancaPix(cobrancaId: cobrancaId);
+      final cobranca = CobrancaPixServico.fromMap(r);
+      if (cobranca.confirmado && idEvento.value.isNotEmpty) {
+        await carregarOrganizador(idEvento.value);
+      }
+      return cobranca;
+    } catch (e) {
+      if (!silencioso) erro.value = mensagemPagamento(e);
+      return null;
+    }
   }
 }

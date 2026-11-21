@@ -16,64 +16,153 @@ function texto(value: unknown): string {
 async function apagarConsulta(
   query: FirebaseFirestore.Query,
 ): Promise<number> {
-  const snap = await query.limit(200).get();
-  if (snap.empty) return 0;
-  const batch = admin.firestore().batch();
-  for (const doc of snap.docs) {
-    batch.delete(doc.ref);
+  let total = 0;
+  for (;;) {
+    const snap = await query.limit(200).get();
+    if (snap.empty) break;
+    const batch = admin.firestore().batch();
+    for (const doc of snap.docs) {
+      batch.delete(doc.ref);
+    }
+    await batch.commit();
+    total += snap.size;
+    if (snap.size < 200) break;
   }
-  await batch.commit();
-  return snap.size;
+  return total;
 }
 
 async function apagarRecursivo(
   ref: FirebaseFirestore.DocumentReference,
 ): Promise<void> {
-  const subcolecoes = await ref.listCollections();
-  for (const colecao of subcolecoes) {
-    const docs = await colecao.limit(200).get();
-    for (const doc of docs.docs) {
-      await apagarRecursivo(doc.ref);
+  // recursiveDelete cobre subcoleções (ex.: mensagens da cotação).
+  await admin.firestore().recursiveDelete(ref).catch(async () => {
+    const subcolecoes = await ref.listCollections();
+    for (const colecao of subcolecoes) {
+      const docs = await colecao.limit(200).get();
+      for (const doc of docs.docs) {
+        await apagarRecursivo(doc.ref);
+      }
     }
-  }
-  await ref.delete().catch(() => undefined);
+    await ref.delete().catch(() => undefined);
+  });
 }
 
 async function apagarPorCampo(
   colecao: string,
   campo: string,
   valor: string,
+  recursivo = false,
 ): Promise<number> {
   try {
-    return await apagarConsulta(
-      admin.firestore().collection(colecao).where(campo, "==", valor),
-    );
+    const query = admin.firestore().collection(colecao).where(campo, "==", valor);
+    if (!recursivo) {
+      return await apagarConsulta(query);
+    }
+    let total = 0;
+    for (;;) {
+      const snap = await query.limit(50).get();
+      if (snap.empty) break;
+      for (const doc of snap.docs) {
+        await apagarRecursivo(doc.ref);
+        total += 1;
+      }
+      if (snap.size < 50) break;
+    }
+    return total;
   } catch (error) {
     logger.warn("Falha ao apagar coleção do titular", { colecao, campo, error });
     return 0;
   }
 }
 
+export function ehVinculoCotacaoFornecedor(path: string): boolean {
+  return /^cotacao\/[^/]+\/fornecedores\/[^/]+$/.test(path);
+}
+
+async function apagarVinculosCotacaoFornecedor(idUsuario: string): Promise<number> {
+  // Mensagens/propostas ficam em cotacao/{id}/fornecedores/{uid}/… — não apaga a cotação do organizador.
+  let total = 0;
+  try {
+    for (;;) {
+      const snap = await admin
+        .firestore()
+        .collectionGroup("fornecedores")
+        .where("id_fornecedor", "==", idUsuario)
+        .limit(50)
+        .get();
+      if (snap.empty) break;
+      let removidos = 0;
+      for (const doc of snap.docs) {
+        if (!ehVinculoCotacaoFornecedor(doc.ref.path)) continue;
+        await apagarRecursivo(doc.ref);
+        removidos += 1;
+        total += 1;
+      }
+      // Paths fora do modelo de cotação não são apagados aqui; evita loop infinito.
+      if (removidos === 0 || snap.size < 50) break;
+    }
+  } catch (error) {
+    logger.warn("Falha ao apagar mensagens/vínculos de cotação do fornecedor", {
+      idUsuario,
+      error,
+    });
+  }
+  return total;
+}
+
+async function apagarArquivosTitular(
+  idUsuario: string,
+  idsEventos: string[],
+): Promise<void> {
+  const bucket = admin.storage().bucket();
+  const prefixes = [
+    `usuarios/${idUsuario}/`,
+    `banners_fornecedores/${idUsuario}/`,
+    `servicos/${idUsuario}/`,
+    ...idsEventos.map((id) => `eventos/${id}/`),
+  ];
+  for (const prefix of prefixes) {
+    try {
+      await bucket.deleteFiles({ prefix });
+    } catch (error) {
+      logger.warn("Arquivos do titular não removidos", { idUsuario, prefix, error });
+    }
+  }
+}
+
 async function executarExclusao(idUsuario: string): Promise<string> {
   const db = admin.firestore();
-  const eventos = await db
-    .collection("evento")
-    .where("id_usuario", "==", idUsuario)
-    .limit(50)
-    .get();
+  const idsEventos: string[] = [];
 
-  for (const evento of eventos.docs) {
-    await apagarPorCampo("convidado", "id_evento", evento.id);
-    await apagarPorCampo("convidados", "id_evento", evento.id);
-    await apagarPorCampo("orcamento", "id_evento", evento.id);
-    await apagarRecursivo(evento.ref);
+  // Eventos do organizador: convidados, orçamentos, capa e subcoleções.
+  for (;;) {
+    const eventos = await db
+      .collection("evento")
+      .where("id_usuario", "==", idUsuario)
+      .limit(50)
+      .get();
+    if (eventos.empty) break;
+    for (const evento of eventos.docs) {
+      idsEventos.push(evento.id);
+      await apagarPorCampo("convidado", "id_evento", evento.id);
+      await apagarPorCampo("convidados", "id_evento", evento.id);
+      await apagarPorCampo("orcamento", "id_evento", evento.id, true);
+      await apagarRecursivo(evento.ref);
+    }
+    if (eventos.size < 50) break;
   }
 
   await apagarPorCampo("convidado", "id_usuario", idUsuario);
-  await apagarPorCampo("cotacao", "id_usuario_solicitante", idUsuario);
-  await apagarPorCampo("orcamento", "id_usuario", idUsuario);
-  await apagarPorCampo("inspiracoes", "id_usuario", idUsuario);
+  // Cotação do solicitante: remove a árvore (fornecedores → mensagens/propostas).
+  await apagarPorCampo("cotacao", "id_usuario_solicitante", idUsuario, true);
+  await apagarVinculosCotacaoFornecedor(idUsuario);
+  await apagarPorCampo("orcamento", "id_usuario", idUsuario, true);
+  await apagarPorCampo("orcamento", "id_fornecedor", idUsuario, true);
+  await apagarPorCampo("inspiracoes", "id_usuario", idUsuario, true);
   await apagarPorCampo("tarefa", "id_usuario", idUsuario);
+  await apagarPorCampo("territorio", "id_fornecedor", idUsuario);
+  await apagarPorCampo("fornecedor_servico", "id_fornecedor", idUsuario, true);
+  await apagarPorCampo("fornecedor_categoria", "id_fornecedor", idUsuario);
 
   const fornecedor = db.collection("fornecedor").doc(idUsuario);
   if ((await fornecedor.get()).exists) {
@@ -92,11 +181,7 @@ async function executarExclusao(idUsuario: string): Promise<string> {
   await mfa.commit();
   await db.recursiveDelete(db.collection("mfa_sessoes").doc(idUsuario));
 
-  try {
-    await admin.storage().bucket().deleteFiles({ prefix: `usuarios/${idUsuario}/` });
-  } catch (error) {
-    logger.warn("Arquivos do titular não removidos", { idUsuario, error });
-  }
+  await apagarArquivosTitular(idUsuario, idsEventos);
 
   try {
     await admin.auth().deleteUser(idUsuario);
@@ -107,7 +192,11 @@ async function executarExclusao(idUsuario: string): Promise<string> {
     }
   }
 
-  return "Conta, eventos, convidados, cotações, fornecedor e autenticação removidos. Logs de auditoria seguem o prazo de 365 dias.";
+  return (
+    "Conta, perfil, eventos do organizador, convidados, cotações, mensagens, " +
+    "orçamentos, fotos enviadas, cadastro de fornecedor e autenticação removidos. " +
+    "Logs de auditoria seguem o prazo de 365 dias."
+  );
 }
 
 async function concluirPorTipo(

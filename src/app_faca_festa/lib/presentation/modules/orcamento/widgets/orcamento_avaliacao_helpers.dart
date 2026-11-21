@@ -20,24 +20,22 @@ extension _OrcamentoAvaliacao on _OrcamentoScreenState {
             final usuario = appController.usuarioLogado.value;
             if (usuario == null) return;
             final evento = eventoController.eventoAtualEntidade;
-            Get.dialog(EnviarAvaliacaoDialog(
-              tipo: TipoAvaliacao.servico,
+            mostrarAvaliarContratacao(
+              context,
               idFornecedor: fornecedor,
-              idServico: servico,
-              idCliente: usuario.idUsuario,
-              nomeCliente: usuario.nome,
               idEvento: orcamento.idEvento,
-              nomeEventoAtual: evento?.idEvento == orcamento.idEvento
+              idOrcamento: orcamento.idOrcamento,
+              idServico: servico,
+              nomeFornecedor: orcamento.nomeFornecedor,
+              nomeEvento: evento?.idEvento == orcamento.idEvento
                   ? evento!.nomeEvento
-                  : '',
-              idOrcamentoAlvo: orcamento.idOrcamento,
-              idContratoAlvo: orcamento.idContrato,
+                  : null,
               controller: avaliacaoController,
               themeController: themeController,
-            ));
+            );
           },
           icon: const Icon(Icons.star_outline_rounded),
-          label: const Text('Avaliar serviço'),
+          label: const Text('Avaliar contratação'),
         ),
       );
     }
@@ -47,7 +45,8 @@ extension _OrcamentoAvaliacao on _OrcamentoScreenState {
         'Confirme a entrega no acompanhamento para avaliar.',
       'contestado' => 'A entrega está em contestação.',
       'cancelado_execucao' => 'A entrega foi cancelada.',
-      null => 'A avaliação é liberada após o aceite da entrega.',
+      null =>
+        'A avaliação abre depois do aceite da entrega, com a nota do fornecedor e a deste serviço.',
       _ => 'Aguarde o fornecedor registrar a entrega para poder confirmá-la.',
     };
     return Column(

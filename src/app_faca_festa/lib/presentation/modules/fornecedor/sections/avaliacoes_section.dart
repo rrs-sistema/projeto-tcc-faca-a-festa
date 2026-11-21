@@ -21,7 +21,9 @@ class AvaliacoesSection extends StatelessWidget {
             .toList();
         return Column(children: [
           GestaoReputacaoPainel(
-              key: ValueKey(f.idFornecedor), idFornecedor: f.idFornecedor),
+              key: ValueKey(f.idFornecedor),
+              idFornecedor: f.idFornecedor,
+              recolherFiltrosQuandoVazio: true),
           if (legado.isNotEmpty)
             _HistoricoAnterior(
                 key: ValueKey('legado-${f.idFornecedor}'), itens: legado),

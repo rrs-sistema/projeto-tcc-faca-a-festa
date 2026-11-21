@@ -1134,18 +1134,22 @@ extension _CalculadoraPlanejamento on _CalculadoraFestaScreenState {
                   primary: primary,
                   selecionado: !c.revisarCardapio.value,
                   onTap: () => c.alterarModoCardapio(false)),
-              const SizedBox(height: 8),
-              _ModoPlanejamento(
-                  titulo: 'Revisar meu cardápio',
-                  descricao: c.cardapioDisponivel.value
-                      ? 'Compare quantidades e ajuste porções.'
-                      : 'Selecione um cardápio abaixo e aguarde os itens.',
-                  icon: Icons.restaurant_menu_rounded,
-                  primary: primary,
-                  selecionado: c.revisarCardapio.value,
-                  onTap: c.cardapioDisponivel.value
-                      ? () => c.alterarModoCardapio(true)
-                      : null),
+              if (JornadaCadastroFesta.mostraCardapioNaCalculadora(
+                estimativaSemEvento: c.estimativaSemEvento.value,
+              )) ...[
+                const SizedBox(height: 8),
+                _ModoPlanejamento(
+                    titulo: 'Revisar meu cardápio',
+                    descricao: c.cardapioDisponivel.value
+                        ? 'Compare quantidades e ajuste porções.'
+                        : 'Selecione um cardápio abaixo e aguarde os itens.',
+                    icon: Icons.restaurant_menu_rounded,
+                    primary: primary,
+                    selecionado: c.revisarCardapio.value,
+                    onTap: c.cardapioDisponivel.value
+                        ? () => c.alterarModoCardapio(true)
+                        : null),
+              ],
               const SizedBox(height: 12),
               if (c.revisarCardapio.value) ...[
                 for (final item in c.itensCardapio)

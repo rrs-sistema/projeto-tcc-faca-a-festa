@@ -3,7 +3,6 @@ import 'package:get_storage/get_storage.dart';
 import 'package:get/get.dart';
 import 'dart:async';
 
-import 'package:app_faca_festa/app/routes/app_route_args.dart';
 import 'package:app_faca_festa/domain/entities/endereco_usuario.dart';
 import 'package:app_faca_festa/domain/entities/evento.dart';
 import 'package:app_faca_festa/domain/entities/servico_cotado.dart';
@@ -17,6 +16,7 @@ import 'package:app_faca_festa/domain/usecases/gerenciar_fornecedores.dart';
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_carrinho_cotacao.dart';
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_ciclo_sessao.dart';
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_convite_controller.dart';
+import 'package:app_faca_festa/presentation/modules/app/controllers/app_rotas_sessao.dart';
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_sessao_fornecedor.dart';
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_totp_sessao.dart';
 import 'package:app_faca_festa/presentation/modules/avaliacao/controllers/avaliacao_servico_controller.dart';
@@ -233,7 +233,7 @@ class AppController extends GetxController {
 
   void guardarTokenConvite(String token) => convite.guardarTokenConvite(token);
 
-  Future<AreaConvidadoArgs?> abrirConvite(String token) =>
+  Future<ResultadoAbrirConvite> abrirConvite(String token) =>
       convite.abrirConvite(token);
 
   Future<void> redirecionarConvidadoAposLogin(
@@ -241,6 +241,27 @@ class AppController extends GetxController {
     String? token,
   }) =>
       convite.redirecionarConvidadoAposLogin(usuario, token: token);
+
+  /// Sai da conta atual (ex.: fornecedor) sem misturar papéis e reabre o
+  /// convite como visitante/convidado, preservando o token do link.
+  Future<void> sairParaAbrirConvite(String token) async {
+    final tokenLimpo = token.trim();
+    if (tokenLimpo.isEmpty) return;
+    final tipo = usuarioLogado.value?.tipo;
+    await _cicloSessao.encerrar(
+      limparFornecedorAntes: tipo == 'F',
+      preservarTokenConvite: tokenLimpo,
+    );
+  }
+
+  /// Mantém a sessão atual e sai da rota de convite (papéis separados).
+  Future<void> permanecerNaContaAtualAposConvite() async {
+    convite.limpar();
+    if (AppRotasSessao.ehConvite(Get.currentRoute)) {
+      Get.offAllNamed('/role');
+    }
+    await _cicloSessao.revalidar();
+  }
 
   Future<void> verificarAprovacaoFornecedorPendente() =>
       sessaoFornecedor.verificarAprovacaoPendente();

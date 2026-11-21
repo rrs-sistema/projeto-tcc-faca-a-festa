@@ -53,11 +53,23 @@ class _FestaLeituraState extends State<FestaLeitura> {
 
   void _pausarRolagem() {
     _indicadorTimer?.cancel();
-    final rolagem = _rolagem;
-    if (rolagem?.context.notificationContext?.mounted == true) {
-      _pausa = rolagem!.hold(() => _pausa = null);
+    final atual = _posicaoAtiva();
+    if (atual != null) {
+      _rolagem = atual;
+      _pausa = atual.hold(() => _pausa = null);
     }
     setState(() => _indicador = true);
+  }
+
+  /// A notificação guarda o [ScrollPosition] daquele instante. Trocar a physics
+  /// da pinça, ou a escala do texto, faz o [Scrollable] absorver essa posição e
+  /// zerar `activity`, enquanto o contexto dela continua montado.
+  ScrollPosition? _posicaoAtiva() {
+    final contexto = _rolagem?.context.notificationContext;
+    if (contexto == null || !contexto.mounted) return null;
+    final atual = Scrollable.maybeOf(contexto)?.position;
+    if (atual == null || atual.activity == null) return null;
+    return atual;
   }
 
   void _mover(PointerMoveEvent evento, PreferenciasLeitura preferencias) {

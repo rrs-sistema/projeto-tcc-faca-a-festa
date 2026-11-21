@@ -1,3 +1,7 @@
+import 'package:app_faca_festa/presentation/modules/fornecedor/sections/header_section.dart';
+import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
+import 'package:app_faca_festa/domain/entities/fornecedor_categoria_resumo.dart';
+import 'package:app_faca_festa/presentation/modules/fornecedor/pages/fornecedor_home_screen.dart';
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -33,6 +37,14 @@ class _Fornecedor extends Fake implements FornecedorController {
 
   @override
   final ai = _Ia();
+}
+
+class _Conta extends Fake implements AppController {
+  int saidas = 0;
+  @override
+  Future<void> logoutFornecedor() async {
+    saidas++;
+  }
 }
 
 class _Ia extends Fake implements FornecedorAiController {
@@ -189,7 +201,7 @@ void main() {
 
     mensagens.value = 0;
     await t.pump();
-    expect(find.text('Nenhuma mensagem não lida'), findsOneWidget);
+    expect(find.text('Nenhuma mensagem não lida'), findsNothing);
 
     mensagens.value = 1;
     await t.pump();
@@ -198,7 +210,7 @@ void main() {
 
     mensagens.value = 0;
     await t.pump();
-    expect(find.text('Nenhuma mensagem não lida'), findsOneWidget);
+    expect(find.text('Nenhuma mensagem não lida'), findsNothing);
     expect(consultas, 1);
     await t.pumpWidget(const SizedBox.shrink());
     painel.onClose();
@@ -357,8 +369,208 @@ void main() {
     c.onClose();
     await g.stream.close();
   });
+  List<Cotacao> pedidos(int quantidade) => List.generate(
+      quantidade,
+      (i) => Cotacao(
+            id: 'q$i',
+            idEvento: 'e$i',
+            idUsuarioSolicitante: 'u$i',
+            nomeUsuarioSolicitante: 'Cliente $i',
+            categoriaNome: i.isEven ? 'Decoração' : 'Buffet',
+            descricao: 'Descrição completa do pedido $i',
+            dataCadastro: DateTime(2026, 10, 1).add(Duration(days: i)),
+            status: StatusCotacao.pendente,
+            fornecedores: const ['f'],
+            servicos: const [],
+          ));
+
+  Widget lista(_Solicitacoes solicitacoes,
+          {bool resumo = false, VoidCallback? verTodos}) =>
+      GetMaterialApp(
+        home: Scaffold(
+            body: SingleChildScrollView(
+                child: SolicitacoesSection(
+          fornecedorController: _Fornecedor(),
+          solicitacoesController: solicitacoes,
+          themeController: EventThemeController(),
+          cotacoes: _Cotacoes(),
+          resumido: resumo,
+          onVerTodos: verTodos,
+        ))),
+      );
+
+  testWidgets('resumo limita cinco pendências e prioriza as mais antigas',
+      (t) async {
+    addTearDown(Get.reset);
+    final dados = _Solicitacoes();
+    dados.solicitacoes.assignAll(pedidos(8).reversed);
+    dados.solicitacoes
+        .add(pedidos(1).single.copyWith(status: StatusCotacao.cancelada));
+    var aberturas = 0;
+    await t.pumpWidget(lista(dados, resumo: true, verTodos: () => aberturas++));
+    await t.pumpAndSettle();
+    for (var i = 0; i < 5; i++) {
+      expect(find.byKey(ValueKey('pedido-q$i')), findsOneWidget);
+    }
+    expect(find.byKey(const ValueKey('pedido-q5')), findsNothing);
+    expect(t.getTopLeft(find.text('Cliente 0')).dy,
+        lessThan(t.getTopLeft(find.text('Cliente 1')).dy));
+    expect(find.text('Gerar IA'), findsNothing);
+    await t.ensureVisible(find.text('Ver todos os pedidos'));
+    await t.tap(find.text('Ver todos os pedidos'));
+    expect(aberturas, 1);
+  });
+
+  testWidgets('gestão pagina vinte pedidos, busca e combina filtros',
+      (t) async {
+    addTearDown(Get.reset);
+    final dados = _Solicitacoes()..solicitacoes.assignAll(pedidos(45));
+    await t.pumpWidget(lista(dados));
+    await t.pumpAndSettle();
+    expect(find.byKey(const ValueKey('pedido-q44')), findsOneWidget);
+    expect(find.byKey(const ValueKey('pedido-q25')), findsOneWidget);
+    expect(find.byKey(const ValueKey('pedido-q24')), findsNothing);
+    await t.ensureVisible(find.byTooltip('Próxima página'));
+    await t.tap(find.byTooltip('Próxima página'));
+    await t.pumpAndSettle();
+    expect(find.text('Página 2 de 3'), findsOneWidget);
+    expect(find.byKey(const ValueKey('pedido-q24')), findsOneWidget);
+    expect(find.byKey(const ValueKey('pedido-q44')), findsNothing);
+    await t.ensureVisible(find.byType(TextField));
+    await t.enterText(find.byType(TextField), 'Cliente 0');
+    await t.pumpAndSettle();
+    expect(find.text('Página 1 de 1'), findsOneWidget);
+    expect(find.byKey(const ValueKey('pedido-q0')), findsOneWidget);
+    expect(find.byKey(const ValueKey('pedido-q1')), findsNothing);
+    await t.tap(find.byType(DropdownButtonFormField<String>));
+    await t.pumpAndSettle();
+    await t.tap(find.text('Buffet').last);
+    await t.pumpAndSettle();
+    expect(find.text('Nenhum pedido neste filtro'), findsOneWidget);
+    expect(find.byKey(const ValueKey('pedido-q0')), findsNothing);
+  });
+
+  testWidgets('detalhes preservam descrição completa e assistência de IA',
+      (t) async {
+    addTearDown(Get.reset);
+    await t.pumpWidget(lista(_Solicitacoes()));
+    await t.pumpAndSettle();
+    expect(find.text('Gerar IA'), findsNothing);
+    await t.ensureVisible(find.text('Detalhes'));
+    await t.tap(find.text('Detalhes'));
+    await t.pumpAndSettle();
+    expect(find.text('Detalhes do pedido'), findsOneWidget);
+    expect(find.text('Gerar IA'), findsOneWidget);
+    expect(find.text('Decoração para festa de aniversário'), findsWidgets);
+    await t.tap(find.byTooltip('Fechar detalhes'));
+    await t.pumpAndSettle();
+    expect(find.text('Detalhes do pedido'), findsNothing);
+  });
+
+  for (final largura in [360.0, 768.0, 1280.0]) {
+    testWidgets('cabeçalho organiza identidade e conta em $largura', (t) async {
+      await t.binding.setSurfaceSize(Size(largura, 600));
+      addTearDown(() => t.binding.setSurfaceSize(null));
+      final fornecedor = _Fornecedor();
+      fornecedor.fornecedor.value = fornecedor.fornecedor.value!.copyWith(
+        razaoSocial: 'Decora Festas Curitiba',
+        email: 'decorafestas@gmail.com',
+        aptoParaOperar: true,
+        categorias: const [
+          FornecedorCategoriaResumo(nomeCategoria: 'Decoração')
+        ],
+      );
+      final conta = _Conta();
+      Widget app(double escala) => MaterialApp(
+            debugShowCheckedModeBanner: false,
+            theme: ThemeData(fontFamily: 'PainelPoppins'),
+            builder: (context, child) => MediaQuery(
+                data: MediaQuery.of(context)
+                    .copyWith(textScaler: TextScaler.linear(escala)),
+                child: child!),
+            home: Scaffold(
+                backgroundColor: const Color(0xFFF6F7FB),
+                body: SingleChildScrollView(
+                    padding: const EdgeInsets.all(16),
+                    child: HeaderSection(
+                        controller: fornecedor, appController: conta))),
+          );
+      await t.pumpWidget(app(1));
+      await t.pumpAndSettle();
+      await expectLater(
+          find.byType(Scaffold),
+          matchesGoldenFile(
+              '../../../docs/evidencias_validacao/operacao-fornecedor/reorganizacao/cabecalho-${largura.toInt()}.png'));
+      expect(find.text('Operacional'), findsOneWidget);
+      expect(find.text('Área de atendimento'), findsOneWidget);
+      expect(find.text('Comunicados'), findsOneWidget);
+      await t.tap(find.text('Minha conta'));
+      await t.pumpAndSettle();
+      expect(find.text('Privacidade e dados'), findsOneWidget);
+      expect(find.text('Preferências de notificações'), findsOneWidget);
+      expect(find.text('Auditoria dos serviços'), findsOneWidget);
+      await t.tap(find.text('Sair da conta'));
+      await t.pumpAndSettle();
+      expect(conta.saidas, 0);
+      await t.tap(find.text('Cancelar'));
+      await t.pumpAndSettle();
+      expect(conta.saidas, 0);
+      await t.pumpWidget(app(2));
+      await t.pumpAndSettle();
+      await t.ensureVisible(find.text('Minha conta'));
+      await t.tap(find.text('Minha conta'));
+      await t.pumpAndSettle();
+      await t.ensureVisible(find.text('Sair da conta'));
+      await t.tap(find.text('Sair da conta'));
+      await t.pumpAndSettle();
+      await t.tap(find.text('Sair'));
+      await t.pumpAndSettle();
+      expect(conta.saidas, 1);
+      expect(t.takeException(), isNull);
+    });
+  }
+
+  testWidgets('navegação mantém cinco destinos acessíveis com texto ampliado',
+      (t) async {
+    var destino = -1;
+    for (final largura in [360.0, 1280.0]) {
+      await t.binding.setSurfaceSize(Size(largura, 800));
+      for (final escala in [1.0, 2.0]) {
+        await t.pumpWidget(MaterialApp(
+          builder: (context, child) => MediaQuery(
+              data: MediaQuery.of(context)
+                  .copyWith(textScaler: TextScaler.linear(escala)),
+              child: child!),
+          home: Scaffold(
+              bottomNavigationBar: FornecedorNavegacao(
+            compacto: largura >= 1040,
+            ativo: 0,
+            onVisaoGeral: () => destino = 0,
+            onPedidos: () => destino = 1,
+            onCatalogo: () => destino = 2,
+            onAcessosRapidos: () => destino = 3,
+            onAvaliacoes: () => destino = 4,
+          )),
+        ));
+        await t.pumpAndSettle();
+        for (final item in [
+          'Visão geral',
+          'Pedidos',
+          'Catálogo',
+          'Acessos rápidos',
+          'Avaliações'
+        ].asMap().entries) {
+          await t.tap(find.text(item.value));
+          expect(destino, item.key);
+        }
+        expect(t.takeException(), isNull);
+      }
+    }
+    await t.binding.setSurfaceSize(null);
+  });
+
   for (final largura in [360.0, 1280.0]) {
-    testWidgets('visão rica resiste à falha consolidada em $largura',
+    testWidgets('painel reorganizado resiste à falha consolidada em $largura',
         (t) async {
       await t.binding.setSurfaceSize(Size(largura, 1500));
       addTearDown(() => t.binding.setSurfaceSize(null));
@@ -374,6 +586,9 @@ void main() {
         solicitacoesController: _Solicitacoes(),
         themeController: EventThemeController(),
         cotacoes: _Cotacoes(),
+        resumido: true,
+        clock: () => DateTime.parse('2026-10-27T12:00:00Z'),
+        onVerTodos: () {},
       );
       Widget app(double escala) => MaterialApp(
           debugShowCheckedModeBanner: false,
@@ -400,24 +615,27 @@ void main() {
       await expectLater(
           find.byType(Scaffold).first,
           matchesGoldenFile(
-              '../../../docs/evidencias_validacao/operacao-fornecedor/restauracao/painel-${largura.toInt()}.png'));
-      expect(find.text('16'), findsOneWidget);
+              '../../../docs/evidencias_validacao/operacao-fornecedor/reorganizacao/painel-${largura.toInt()}.png'));
+      expect(find.text('16'), findsNothing);
       expect(find.text('≈ 7 d 10 h'), findsOneWidget);
       expect(find.text('4,4'), findsOneWidget);
-      final pedidos = find.text('Lista de pedidos');
-      expect(pedidos.hitTestable(), findsOneWidget);
-      expect(find.text('1 pedido no total'), findsOneWidget);
+      final pedidos = find.text('Pedidos que precisam de resposta');
+      expect(pedidos, findsOneWidget);
+      expect(find.text('1 pedido no total'), findsNothing);
       expect(find.text('1 novo aguardando resposta'), findsOneWidget);
-      expect(t.getTopLeft(find.text('Ana Martins')).dy, lessThan(980));
       expect(t.getTopLeft(pedidos).dy,
           lessThan(t.getTopLeft(find.text('Acessos rápidos')).dy));
+      expect(t.getTopLeft(find.text('Indicadores do negócio')).dy,
+          lessThan(t.getTopLeft(pedidos).dy));
       expect(t.getTopLeft(pedidos).dy,
-          lessThan(t.getTopLeft(find.text('Indicadores do negócio')).dy));
+          lessThan(t.getTopLeft(find.text('Oportunidades na sua região')).dy));
       expect(find.text('5 avaliações verificadas'), findsOneWidget);
       expect(find.text('Não foi possível carregar o painel'), findsNothing);
-      await t.tap(find.text('Abrir atendimento'));
+      await t.ensureVisible(find.text('Responder pedido'));
+      await t.tap(find.text('Responder pedido'));
       expect(cotacao?['idCotacao'], 'q1');
-      await t.tap(find.text('Próximo compromisso'));
+      await t.ensureVisible(find.text('Abrir agenda'));
+      await t.tap(find.text('Abrir agenda'));
       expect(rota, '/fornecedor/agenda');
       final reputacao = find.text('Reputação');
       await t.ensureVisible(reputacao);

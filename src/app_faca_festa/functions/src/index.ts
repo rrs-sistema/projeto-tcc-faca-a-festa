@@ -139,6 +139,11 @@ export {
   registrarAceiteClienteFn as registrarAceiteCliente,
   abrirCasoMediacaoParteFn as abrirCasoMediacaoParte,
 } from "./functions/financeiro/comandosAcompanhamentoPartes";
+export {
+  criarCobrancaPixServicoFn as criarCobrancaPixServico,
+  consultarCobrancaPixServicoFn as consultarCobrancaPixServico,
+  asaasWebhookFacaFesta,
+} from "./functions/financeiro/cobrancaPixAsaas";
 
 export {
     recomendarFornecedoresParaEvento,

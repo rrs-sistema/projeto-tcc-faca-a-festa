@@ -386,7 +386,7 @@ class _PremiumGiftHeader extends StatelessWidget {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              'Sugestões para o espaço dos convidados',
+                              'Lista do convite',
                               style: GoogleFonts.poppins(
                                 color: Colors.white.withValues(alpha: 0.82),
                                 fontSize: 11.5,
@@ -404,17 +404,17 @@ class _PremiumGiftHeader extends StatelessWidget {
                   ),
                   const SizedBox(height: 22),
                   Text(
-                    'Uma lista bonita, clara e fácil de escolher.',
+                    'Monte a lista que aparece no convite.',
                     style: GoogleFonts.poppins(
                       color: Colors.white,
-                      fontSize: 22,
+                      fontSize: 20,
                       fontWeight: FontWeight.w800,
-                      height: 1.08,
+                      height: 1.15,
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Organize presentes físicos, PIX e metas coletivas com aparência profissional para seus convidados.',
+                    'Cadastre itens físicos, PIX ou cotas coletivas. Os convidados veem só o que estiver disponível.',
                     style: GoogleFonts.poppins(
                       color: Colors.white.withValues(alpha: 0.84),
                       fontSize: 12.2,

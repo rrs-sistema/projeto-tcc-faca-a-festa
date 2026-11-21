@@ -8,21 +8,19 @@ import 'package:get/get.dart';
 
 import 'package:app_faca_festa/core/utils/biblioteca.dart';
 import 'package:app_faca_festa/core/utils/no_sqflite_cache_manager.dart';
-import 'package:app_faca_festa/domain/entities/avaliacao.dart';
-import 'package:app_faca_festa/domain/entities/categoria_servico.dart';
 import 'package:app_faca_festa/domain/entities/fornecedor.dart';
 import 'package:app_faca_festa/domain/entities/fornecedor_detalhado.dart';
 import 'package:app_faca_festa/domain/entities/fornecedor_produto_servico.dart';
-import 'package:app_faca_festa/domain/entities/fornecedor_servico_detalhado.dart';
 import 'package:app_faca_festa/domain/entities/servico_produto.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_cotacoes.dart';
-import 'package:app_faca_festa/presentation/modules/avaliacao/pages/enviar_avaliacao_dialog.dart';
+import 'package:app_faca_festa/presentation/modules/avaliacao/pages/avaliar_contratacao_sheet.dart';
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
 import 'package:app_faca_festa/presentation/modules/avaliacao/controllers/avaliacao_servico_controller.dart';
 import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_controller.dart';
 import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_controller.dart';
 import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_localizacao_controller.dart';
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/fornecedor/cotacao/montar_servicos_para_cotacao.dart';
 import 'package:app_faca_festa/presentation/modules/fornecedor/pages/cotacao/servicos_para_cotacao_screen.dart';
 
 part '../sections/fornecedor_detalhe_hero.dart';
@@ -67,29 +65,6 @@ class FornecedorDetalheScreen extends StatelessWidget {
     final primary = themeController.primaryColor.value;
     // Contato direto (tel/e-mail) só para admin; organizador fala via chat/cotação.
     final exibirContatoDireto = appController.usuarioLogado.value?.tipo == 'A';
-
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final idFornecedor = fornecedorDetalhado.fornecedor.idFornecedor;
-      final idEvento = eventoController.eventoAtualEntidade?.idEvento ?? '';
-      final idUsuario = appController.usuarioLogado.value?.idUsuario ?? '';
-
-      avaliacaoController.permitidoAvaliarFornecedor.value = false;
-
-      if (idEvento.isEmpty || idUsuario.isEmpty) return;
-
-      try {
-        final pode = await avaliacaoController.podeAvaliarFornecedor(
-          idFornecedor: idFornecedor,
-          idEvento: idEvento,
-          idUsuario: idUsuario,
-        );
-
-        avaliacaoController.permitidoAvaliarFornecedor.value = pode;
-      } catch (e, s) {
-        debugPrint('❌ Erro ao verificar avaliação do fornecedor: $e\n$s');
-        avaliacaoController.permitidoAvaliarFornecedor.value = false;
-      }
-    });
 
     return Scaffold(
       backgroundColor: const Color(0xFFF6F7FB),
@@ -182,8 +157,6 @@ class FornecedorDetalheScreen extends StatelessWidget {
                               fornecedorController,
                               fornecedorLocalizacaoController,
                               primary,
-                              gradient,
-                              context,
                             ),
                             sectionHeader(
                               titulo: 'Outros serviços deste fornecedor',
@@ -246,76 +219,67 @@ class FornecedorDetalheScreen extends StatelessWidget {
     required FornecedorLocalizacaoController controllerLocalizacao,
     required FornecedorDetalhado detalhe,
   }) {
-    final fornecedor = detalhe.fornecedor;
-
-    final servicosDoFornecedor = <FornecedorServicoDetalhado>[];
-
-    for (final sev in controllerLocalizacao.allService) {
-      if (sev.idFornecedor == fornecedor.idFornecedor && sev.ativo) {
-        servicosDoFornecedor.add(sev);
-      }
-    }
-
-    if (servicosDoFornecedor.isEmpty) {
-      for (final vinculo in fornecedorController.allServicosFornecedor) {
-        if (vinculo.idFornecedor != fornecedor.idFornecedor) continue;
-
-        final catalogo = fornecedorController.catalogoServicos.firstWhereOrNull(
-          (s) => s.id == vinculo.idProdutoServico,
-        );
-        final foto = fornecedorController.fotosServico.firstWhereOrNull(
-          (f) =>
-              f.idFornecedor == fornecedor.idFornecedor &&
-              f.idProdutoServico == vinculo.idProdutoServico,
-        );
-
-        servicosDoFornecedor.add(
-          FornecedorServicoDetalhado(
-            id: vinculo.id,
-            idFornecedor: fornecedor.idFornecedor,
-            idProdutoServico: vinculo.idProdutoServico,
-            idSubcategoria: vinculo.idSubcategoria ?? catalogo?.idSubcategoria,
-            nomeServico: catalogo?.nome,
-            nomeFornecedor: fornecedor.razaoSocial,
-            descricaoServico: catalogo?.descricao,
-            preco: vinculo.preco,
-            quantidade: 1,
-            precoPromocao: vinculo.precoPromocao,
-            nomeCategoria: detalhe.categoriaNome,
-            imagemUrl: foto?.url,
-            tipoMedida: catalogo?.tipoMedida,
-            ativo: vinculo.ativo,
-          ),
-        );
-      }
-    }
-
-    if (servicosDoFornecedor.isEmpty) {
-      Get.snackbar(
-        'Fornecedor sem serviços',
-        'Este fornecedor ainda não possui serviços disponíveis para cotação.',
-        snackPosition: SnackPosition.BOTTOM,
-        margin: const EdgeInsets.all(16),
-      );
-      return;
-    }
-
-    controllerLocalizacao.servicosFornecedor
-      ..clear()
-      ..addAll(servicosDoFornecedor);
-
-    Get.to(
-      () => ServicosParaCotacaoScreen(
-        idCategoria: detalhe.categoriaId,
-        nomeCategoria: detalhe.categoriaNome,
-        fornecedoresSelecionados: [fornecedor.idFornecedor],
-        themeController: themeController,
-        fornecedorController: controllerLocalizacao,
-        appController: appController,
-        fornecedorCadastroController: fornecedorController,
-        eventoController: eventoController,
-        cotacoes: cotacoes,
-      ),
+    _abrirCotacaoDoFornecedor(
+      fornecedorController: fornecedorController,
+      controllerLocalizacao: controllerLocalizacao,
+      fornecedor: detalhe.fornecedor,
+      idCategoria: detalhe.categoriaId,
+      nomeCategoria: detalhe.categoriaNome,
+      themeController: themeController,
+      appController: appController,
+      eventoController: eventoController,
+      cotacoes: cotacoes,
     );
   }
+}
+
+void _abrirCotacaoDoFornecedor({
+  required FornecedorController fornecedorController,
+  required FornecedorLocalizacaoController controllerLocalizacao,
+  required Fornecedor fornecedor,
+  required String idCategoria,
+  required String nomeCategoria,
+  required EventThemeController themeController,
+  required AppController appController,
+  required EventoController eventoController,
+  required GerenciarCotacoes cotacoes,
+  String? idProdutoServicoDestaque,
+}) {
+  final servicos = montarServicosParaCotacao(
+    fornecedor: fornecedor,
+    nomeCategoria: nomeCategoria,
+    servicosLocalizados: controllerLocalizacao.allService,
+    vinculos: fornecedorController.allServicosFornecedor,
+    catalogo: fornecedorController.catalogoServicos,
+    fotos: fornecedorController.fotosServico,
+    idProdutoServicoDestaque: idProdutoServicoDestaque,
+  );
+
+  if (servicos.isEmpty) {
+    Get.snackbar(
+      'Fornecedor sem serviços',
+      'Este fornecedor ainda não possui serviços disponíveis para cotação.',
+      snackPosition: SnackPosition.BOTTOM,
+      margin: const EdgeInsets.all(16),
+    );
+    return;
+  }
+
+  controllerLocalizacao.servicosFornecedor
+    ..clear()
+    ..addAll(servicos);
+
+  Get.to(
+    () => ServicosParaCotacaoScreen(
+      idCategoria: idCategoria,
+      nomeCategoria: nomeCategoria,
+      fornecedoresSelecionados: [fornecedor.idFornecedor],
+      themeController: themeController,
+      fornecedorController: controllerLocalizacao,
+      appController: appController,
+      fornecedorCadastroController: fornecedorController,
+      eventoController: eventoController,
+      cotacoes: cotacoes,
+    ),
+  );
 }
