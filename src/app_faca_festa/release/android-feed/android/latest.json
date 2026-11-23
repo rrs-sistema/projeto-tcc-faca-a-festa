@@ -1,9 +1,9 @@
 {
   "identity": "faca-festa-android",
-  "version": "1.0.17",
-  "build": 19,
-  "sha256": "734d11b8045c9230a9130d490376c0d660c59dc53aa5e37a8818ef0af1c324f9",
-  "size": 113610910,
+  "version": "1.0.33",
+  "build": 35,
+  "sha256": "03e95971e5e8f34ab3766b1af9d65ae27effc3afbfc300907dba1028afb4bfdc",
+  "size": 117952670,
   "published": true,
-  "url": "https://firebasestorage.googleapis.com/v0/b/faca-a-festa.firebasestorage.app/o/android-faca-festa%2Freleases%2Fbuild-19%2FFacaFesta.apk?alt=media&token=c1375aed-687d-455e-a019-71776abdca1b"
+  "url": "https://firebasestorage.googleapis.com/v0/b/faca-a-festa.firebasestorage.app/o/android-faca-festa%2Freleases%2Fbuild-35%2FFacaFesta.apk?alt=media&token=d27b42e3-8e93-4bf0-b9aa-59d8d7e66d8a"
 }

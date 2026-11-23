@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import 'package:app_faca_festa/core/utils/convite_link.dart';
+import 'package:app_faca_festa/data/local/convite_co_organizador_pendente.dart';
 import 'package:app_faca_festa/app/routes/app_route_args.dart';
 import 'package:app_faca_festa/domain/entities/auditoria_evento.dart';
 import 'package:app_faca_festa/domain/entities/endereco_usuario.dart';
@@ -321,8 +322,14 @@ class AppCicloSessao {
           default:
             await _eventos.carregarEventosDoUsuario(usuario.idUsuario);
             final evento = _eventos.eventoAtualEntidade;
+            final tokenCoOrg = TokenConviteCoOrganizador.ler();
 
-            if (evento != null) {
+            // Convite de co-organizador pendente tem prioridade sobre /welcome.
+            if (tokenCoOrg != null && tokenCoOrg.isNotEmpty) {
+              destino = AppDestinoRota(
+                TokenConviteCoOrganizador.rotaAceite(tokenCoOrg),
+              );
+            } else if (evento != null) {
               debugPrint(
                   '🔹 Evento ativo: ${evento.nomeEvento} (${evento.idEvento})');
               _cotacoes.ouvirMinhasCotacoes();

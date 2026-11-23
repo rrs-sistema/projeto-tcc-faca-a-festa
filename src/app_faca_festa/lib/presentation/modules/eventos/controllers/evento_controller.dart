@@ -132,15 +132,23 @@ class EventoController extends GetxController {
   }
 
   /// Lists the organizer's events and restores the last selected one.
-  Future<void> carregarEventosDoUsuario(String idUsuario) async {
+  ///
+  /// [forcar] reinicia a escuta (ex.: logo após aceitar co-organização).
+  Future<void> carregarEventosDoUsuario(
+    String idUsuario, {
+    bool forcar = false,
+  }) async {
     final usuario = idUsuario.trim();
     if (usuario.isEmpty) return;
 
-    if (_idUsuarioListado == usuario && _eventosUsuarioSub != null) {
+    if (!forcar &&
+        _idUsuarioListado == usuario &&
+        _eventosUsuarioSub != null) {
       return;
     }
 
     await _eventosUsuarioSub?.cancel();
+    _eventosUsuarioSub = null;
     _idUsuarioListado = usuario;
     carregando.value = true;
 
@@ -170,13 +178,35 @@ class EventoController extends GetxController {
     }
   }
 
+  /// Abre um evento por id (útil quando a lista ainda não refletiu o aceite).
+  Future<bool> selecionarEventoPorId(String idEvento) async {
+    final id = idEvento.trim();
+    if (id.isEmpty) return false;
+    for (final e in eventosDoUsuario) {
+      if (e.idEvento == id) {
+        await selecionarEvento(e);
+        return true;
+      }
+    }
+    final remoto = await _repository.buscarPorId(id);
+    if (remoto == null) return false;
+    if (!eventosDoUsuario.any((e) => e.idEvento == remoto.idEvento)) {
+      eventosDoUsuario.insert(0, remoto);
+    }
+    await selecionarEvento(remoto);
+    return true;
+  }
+
   /// Makes [evento] the active planning session and reloads related modules.
   Future<void> selecionarEvento(Evento evento) async {
     if (evento.idEvento.trim().isEmpty) return;
 
     if (eventoAtual.value?.idEvento == evento.idEvento &&
         _idEventoComModulos == evento.idEvento) {
-      _eventoAtivoStore.salvar(evento.idUsuario, evento.idEvento);
+      final uidSessao = _idUsuarioListado?.trim();
+      if (uidSessao != null && uidSessao.isNotEmpty) {
+        _eventoAtivoStore.salvar(uidSessao, evento.idEvento);
+      }
       return;
     }
 
@@ -300,7 +330,10 @@ class EventoController extends GetxController {
       if (geracao != _geracaoSessao) return;
 
       eventoAtual.value = evento;
-      _eventoAtivoStore.salvar(evento.idUsuario, evento.idEvento);
+      final uidSessao = _idUsuarioListado?.trim();
+      if (uidSessao != null && uidSessao.isNotEmpty) {
+        _eventoAtivoStore.salvar(uidSessao, evento.idEvento);
+      }
 
       // 🔹 Busca e define o tipo do evento
       await buscarTipoEvento(evento.idTipoEvento);

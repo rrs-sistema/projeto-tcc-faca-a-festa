@@ -135,6 +135,34 @@ class MenuDrawerFacaFesta extends StatelessWidget {
                       });
                     },
                   ),
+                  _menuItem(
+                    Icons.groups_2_outlined,
+                    'Organizar juntos',
+                    subtitle: evento == null
+                        ? 'Convide alguém para co-organizar'
+                        : evento.ehCoOrganizador(
+                                appController.usuarioLogado.value?.idUsuario ??
+                                    '')
+                            ? 'Você é co-organizador deste evento'
+                            : 'Convide alguém para planejar com você',
+                    color: primary,
+                    onTap: () {
+                      Get.back();
+                      final id = evento?.idEvento ?? '';
+                      if (id.isEmpty) {
+                        Get.snackbar(
+                          'Selecione um evento',
+                          'Escolha ou cadastre uma festa antes de convidar.',
+                          snackPosition: SnackPosition.BOTTOM,
+                        );
+                        return;
+                      }
+                      Get.toNamed(
+                        '/co-organizadores',
+                        arguments: {'idEvento': id},
+                      );
+                    },
+                  ),
                   const SizedBox(height: 10),
                   _sectionTitle('Descobrir'),
                   _menuItem(

@@ -1,11 +1,12 @@
 import { HttpsError } from "firebase-functions/v2/https";
 import { Firestore } from "firebase-admin/firestore";
 import { PerfilAuth } from "../../shared/auth";
+import { ehGestorNosDados } from "../../shared/eventoPermissao";
 
 /**
- * Gerente = responsável autorizado pelo evento (dono id_usuario) ou
- * solicitante do orçamento. Admin de plataforma NÃO recebe custos privados
- * de fornecedor automaticamente; aqui só acessa fatos do evento pagador.
+ * Gerente = gestor do evento (dono ou co-organizador) ou solicitante do
+ * orçamento. Admin de plataforma NÃO recebe custos privados de fornecedor
+ * automaticamente; aqui só acessa fatos do evento pagador.
  */
 export async function exigirAcessoFinanceiroEvento(
   db: Firestore,
@@ -22,8 +23,8 @@ export async function exigirAcessoFinanceiroEvento(
     throw new HttpsError("not-found", "Evento não encontrado.");
   }
 
-  const dono = String(eventoSnap.data()?.id_usuario ?? "");
-  const isDono = dono === perfil.uid;
+  const eventoData = eventoSnap.data() ?? {};
+  const isGestor = ehGestorNosDados(eventoData, perfil.uid);
   const isAdminPlataforma = perfil.tipo === "A";
 
   if (opcoes?.idOrcamento) {
@@ -39,7 +40,7 @@ export async function exigirAcessoFinanceiroEvento(
       );
     }
     const solicitante = String(data.id_solicitante ?? "");
-    if (isDono || solicitante === perfil.uid) {
+    if (isGestor || solicitante === perfil.uid) {
       return { idEvento, idOrcamento: opcoes.idOrcamento };
     }
     if (isAdminPlataforma && opcoes.permitirAdminEvento !== false) {
@@ -52,7 +53,7 @@ export async function exigirAcessoFinanceiroEvento(
     );
   }
 
-  if (isDono || (isAdminPlataforma && opcoes?.permitirAdminEvento !== false)) {
+  if (isGestor || (isAdminPlataforma && opcoes?.permitirAdminEvento !== false)) {
     return { idEvento };
   }
 

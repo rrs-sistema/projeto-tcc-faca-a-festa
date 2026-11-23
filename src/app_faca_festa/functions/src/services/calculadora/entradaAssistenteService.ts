@@ -3,6 +3,7 @@ import { createHash, randomUUID } from "crypto";
 import { Firestore, Transaction, Query, Timestamp } from "firebase-admin/firestore";
 import { HttpsError } from "firebase-functions/v2/https";
 import { normalizarFonte } from "./executarPlanoService";
+import { ehGestorNosDados } from "../../shared/eventoPermissao";
 
 export type Dados = Record<string, any>;
 export const mapa = (v: any): Dados => v && typeof v === "object" && !Array.isArray(v) ? v : {};
@@ -25,7 +26,7 @@ const rotulos: Dados = { publico: "Público", base: "Fonte do público", duracao
 
 export async function lerFontesEntrada(db: Firestore, tx: Transaction, evento: string, uid: string, incluirTarefas=false): Promise<Dados> {
   const ev = await tx.get(db.doc(`evento/${evento}`));
-  if (ev.data()?.id_usuario !== uid) throw new HttpsError("permission-denied", "Somente o organizador pode revisar esta entrada.");
+  if (!ehGestorNosDados(ev.data(), uid)) throw new HttpsError("permission-denied", "Somente o organizador pode revisar esta entrada.");
   const fontes: Dados = { [ev.ref.path]: ev.data() };
   const op = await tx.get(db.doc(`calculadora_operacao/${evento}`));
   if (op.data()?.versao != null && op.data()?.versao !== 1) erro("Atualize o leitor antes de alterar esta operação.");
@@ -218,9 +219,9 @@ export async function aplicarEntradaAssistente(db: Firestore, uid: string | unde
   const root = db.doc(`calculadora_operacao/${dados.evento}`), ref = root.collection("entradas").doc(dados.id);
   return db.runTransaction(async tx => {
     const evento = await tx.get(db.doc(`evento/${dados.evento}`));
-    if (evento.data()?.id_usuario !== uid) throw new HttpsError("permission-denied", "Somente o organizador pode revisar esta entrada.");
+    if (!ehGestorNosDados(evento.data(), uid)) throw new HttpsError("permission-denied", "Somente o organizador pode revisar esta entrada.");
     const salvo = mapa((await tx.get(ref)).data());
-    if (!salvo || salvo.id_usuario !== uid || salvo.assinatura !== dados.assinatura) erro("Revisão não encontrada ou incompatível.");
+    if (!salvo || (salvo.id_usuario !== uid && !ehGestorNosDados(evento.data(), uid)) || salvo.assinatura !== dados.assinatura) erro("Revisão não encontrada ou incompatível.");
     if (salvo.aplicado_em) {
       if (hashEntrada(salvo.selecionadas) !== hashEntrada(dados.selecionadas)) erro("O pedido já foi aplicado com outra seleção.");
       return { aplicado: false, operacao: mapa((await tx.get(root)).data()), limite_atual: (salvo.acoes as Dados[]).some(a => dados.selecionadas.includes(a.id) && a.tipo === "limite") ? evento.data()?.custo_estimado : null, regras_alteradas: (salvo.acoes as Dados[]).filter(a => dados.selecionadas.includes(a.id) && a.regra).map(a => a.regra.id) };

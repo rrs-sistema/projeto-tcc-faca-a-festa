@@ -382,8 +382,13 @@ export async function autorizarRepasseOrganizador(db: Firestore, entrada: {
   }
   return db.runTransaction(async tx => {
     const ctx = await carregarContextoRepasse(db, tx, entrada.idOrcamento);
-    if ((ctx.evento.id_usuario || ctx.evento.idUsuario) !== entrada.autorId) {
-      throw new HttpsError("permission-denied", "Somente o organizador do evento pode autorizar o pagamento antecipado.");
+    const dono = String(ctx.evento.id_usuario || ctx.evento.idUsuario || "");
+    const coOrgs = Array.isArray(ctx.evento.co_organizadores)
+      ? ctx.evento.co_organizadores.map((u: unknown) => String(u || "").trim()).filter(Boolean)
+      : [];
+    const autorEhGestor = entrada.autorId === dono || coOrgs.includes(entrada.autorId);
+    if (!autorEhGestor) {
+      throw new HttpsError("permission-denied", "Somente um organizador do evento pode autorizar o pagamento antecipado.");
     }
     if (entrada.autorizar && (!contratado(ctx.orcamento) || !ctx.divisao)) {
       throw new HttpsError("failed-precondition", "Confirme a contratação e confira a comissão antes de autorizar.");

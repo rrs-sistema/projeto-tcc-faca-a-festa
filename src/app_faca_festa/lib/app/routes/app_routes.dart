@@ -38,6 +38,8 @@ import 'package:app_faca_festa/presentation/modules/cotacao/controllers/solicita
 import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_cadastro_controller.dart';
 import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_controller.dart';
 import 'package:app_faca_festa/presentation/modules/eventos/controllers/home_event_nav_controller.dart';
+import 'package:app_faca_festa/presentation/modules/eventos/pages/co_organizadores_page.dart';
+import 'package:app_faca_festa/presentation/modules/eventos/pages/convite_co_organizador_page.dart';
 import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_controller.dart';
 import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_localizacao_controller.dart';
 import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_recomendacao_controller.dart';
@@ -511,6 +513,32 @@ GetPage(name:'/fornecedor/planejamento',page:()=>PlanejamentoFinanceiroPage(idOb
           name: '/convite/:token',
           page: () =>
               ConviteRedirectPage(appController: Get.find<AppController>()),
+        ),
+        GetPage(
+          name: '/convite-organizador',
+          page: () => const ConviteCoOrganizadorPage(),
+        ),
+        GetPage(
+          name: '/convite-organizador/:token',
+          page: () => const ConviteCoOrganizadorPage(),
+        ),
+        GetPage(
+          name: '/co-organizadores',
+          page: () {
+            final args = Get.arguments;
+            final id = args is Map
+                ? (args['idEvento'] ?? args['eventoId'])?.toString() ?? ''
+                : (args?.toString() ?? '');
+            final idEvento = id.trim().isNotEmpty
+                ? id.trim()
+                : (Get.find<EventoController>().eventoAtual.value?.idEvento ??
+                    '');
+            return CoOrganizadoresPage(idEvento: idEvento);
+          },
+          middlewares: [
+            PapelMiddleware(tiposPermitidos: const ['O'])
+          ],
+          transition: Transition.cupertino,
         ),
         GetPage(
           name: '/orcamentos',

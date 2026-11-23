@@ -10,6 +10,7 @@ import { buildInput, buildInstructions } from "../../ia/calculadora/prompt";
 import { buscarSugestoesBaseCalculadora } from "../../services/calculadora/sugestoesBaseIAService";
 import { aplicarRastreabilidadeAnalise } from "../../services/calculadora/rastreabilidadeCalculadoraIAService";
 import { AnaliseCalculadoraIAResponse, CalculadoraIARequest } from "../../types/calculadoraIA.types";
+import { ehGestorNosDados } from "../../shared/eventoPermissao";
 
 const OPENAI_API_KEY = defineSecret("OPENAI_API_KEY");
 const DEFAULT_REGION = "southamerica-east1";
@@ -110,7 +111,7 @@ async function validarAcessoCalculadora(payload: CalculadoraIARequest, uid: stri
   const isAdmin = usuario.data()?.tipo === "A" && usuario.data()?.ativo !== false;
   if (eventoId && eventoId !== "estimativa_temporaria") {
     const evento = await db.collection("evento").doc(eventoId).get();
-    if (!isAdmin && (!evento.exists || evento.data()?.id_usuario !== uid)) {
+    if (!isAdmin && (!evento.exists || !ehGestorNosDados(evento.data(), uid))) {
       throw new HttpsError("permission-denied", "Esta festa não pertence ao usuário autenticado.");
     }
   }

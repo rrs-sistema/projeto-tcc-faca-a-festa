@@ -1,5 +1,6 @@
 import { Firestore, Timestamp } from "firebase-admin/firestore";
 import { HttpsError } from "firebase-functions/v2/https";
+import { ehGestorNosDados } from "../../shared/eventoPermissao";
 
 export async function salvarRevisaoPosEvento(db: Firestore, uid: string | undefined, raw: any) {
   if (!uid) throw new HttpsError("unauthenticated", "Entre na sua conta.");
@@ -11,7 +12,7 @@ export async function salvarRevisaoPosEvento(db: Firestore, uid: string | undefi
   }
   return db.runTransaction(async tx => {
     const ev = await tx.get(db.doc(`evento/${evento}`));
-    if (ev.data()?.id_usuario !== uid) throw new HttpsError("permission-denied", "Somente o organizador pode revisar.");
+    if (!ehGestorNosDados(ev.data(), uid)) throw new HttpsError("permission-denied", "Somente o organizador pode revisar.");
     const data = ev.data()!, fim = data.data_fim ?? data.data;
     if (!(fim instanceof Timestamp) || fim.toMillis() > Date.now() || ["cancelado", "adiado"].includes(data.status)) {
       throw new HttpsError("failed-precondition", "Registre os resultados após a realização da festa.");

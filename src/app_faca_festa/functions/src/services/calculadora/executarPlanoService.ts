@@ -4,6 +4,7 @@ import { validarPoliticaPublico } from "./publicoPlanejamentoService";
 import { createHash } from "crypto";
 import { Firestore, Timestamp, GeoPoint, DocumentReference, Query } from "firebase-admin/firestore";
 import { HttpsError } from "firebase-functions/v2/https";
+import { ehGestorNosDados } from "../../shared/eventoPermissao";
 type M = Record<string, any>;
 const map = (v: unknown): M => v && typeof v === "object" && !Array.isArray(v) ? v as M : {};
 const fail = (message: string): never => { throw new HttpsError("failed-precondition", message); };
@@ -62,11 +63,11 @@ export async function executarPlano(db: Firestore, uid: string | undefined, raw:
     const opRef = db.doc(`calculadora_operacao/${evento}`), receipt = opRef.collection("aplicacoes").doc(pedido);
     return db.runTransaction(async (tx) => {
         const ev = await tx.get(db.doc(`evento/${evento}`));
-        if (ev.data()?.id_usuario !== uid)
+        if (!ehGestorNosDados(ev.data(), uid))
             throw new HttpsError("permission-denied", "Somente o organizador pode aplicar o plano.");
         const oldReceipt = await tx.get(receipt);
         if (oldReceipt.exists) {
-            if (oldReceipt.data()?.versao !== 2 || oldReceipt.data()?.assinatura !== assinatura || oldReceipt.data()?.id_usuario !== uid)
+            if (oldReceipt.data()?.versao !== 2 || oldReceipt.data()?.assinatura !== assinatura)
                 fail("Pedido já utilizado para outra revisão.");
             return false;
         }

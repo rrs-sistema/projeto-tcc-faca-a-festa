@@ -7,6 +7,7 @@ import { admin } from "../../shared/firebaseAdmin";
 import { exigirTipo, exigirUsuarioAutenticado } from "../../shared/auth";
 import { gravarMensagemSistemaParaFornecedores } from "./mensagensSistemaCotacao";
 import { exigirNovosNegociosPermitidos } from "../../services/fornecedores/restricaoComercial";
+import { ehGestorNosDados } from "../../shared/eventoPermissao";
 
 const REGION = "southamerica-east1";
 const MAX_OBS = 2000;
@@ -73,10 +74,10 @@ export const criarCotacao = onCall(
       throw new HttpsError("not-found", "Evento não encontrado.");
     }
     const evento = eventoSnap.data() ?? {};
-    if (perfil.tipo !== "A" && evento.id_usuario !== perfil.uid) {
+    if (perfil.tipo !== "A" && !ehGestorNosDados(evento, perfil.uid)) {
       throw new HttpsError(
         "permission-denied",
-        "Você só pode cotar para o seu próprio evento.",
+        "Você só pode cotar para um evento que organiza.",
       );
     }
 

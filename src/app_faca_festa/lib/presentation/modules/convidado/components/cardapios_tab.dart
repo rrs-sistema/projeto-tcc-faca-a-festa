@@ -19,11 +19,15 @@ import 'package:app_faca_festa/presentation/widgets/festa_leitura.dart';
 class CardapiosTab extends StatelessWidget {
   final CardapioController controller;
   final EventThemeController theme;
+  final VoidCallback? onGerarComIa;
+  final VoidCallback? onCriarManualmente;
 
   const CardapiosTab({
     super.key,
     required this.controller,
     required this.theme,
+    this.onGerarComIa,
+    this.onCriarManualmente,
   });
 
   @override
@@ -36,7 +40,11 @@ class CardapiosTab extends StatelessWidget {
           return Center(child: CircularProgressIndicator(color: primary));
         }
         if (controller.cardapios.isEmpty) {
-          return _CardapioEmptyState(primary: primary);
+          return _CardapioEmptyState(
+            primary: primary,
+            onGerarComIa: onGerarComIa,
+            onCriarManualmente: onCriarManualmente,
+          );
         }
 
         return RefreshIndicator(
@@ -57,6 +65,14 @@ class CardapiosTab extends StatelessWidget {
                   _CardapioHeader(controller: controller, primary: primary),
                   const SizedBox(height: 12),
                   _CardapioQuickStats(controller: controller, primary: primary),
+                  if (onGerarComIa != null || onCriarManualmente != null) ...[
+                    const SizedBox(height: 12),
+                    _AcoesCardapioRapidas(
+                      primary: primary,
+                      onGerarComIa: onGerarComIa ?? () {},
+                      onCriarManualmente: onCriarManualmente ?? () {},
+                    ),
+                  ],
                   const SizedBox(height: 16),
                   _SectionHeader(
                       icon: Icons.restaurant_menu_rounded,
@@ -88,7 +104,15 @@ class CardapiosTab extends StatelessWidget {
 
 class _CardapioEmptyState extends StatelessWidget {
   final Color primary;
-  const _CardapioEmptyState({required this.primary});
+  final VoidCallback? onGerarComIa;
+  final VoidCallback? onCriarManualmente;
+
+  const _CardapioEmptyState({
+    required this.primary,
+    this.onGerarComIa,
+    this.onCriarManualmente,
+  });
+
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -117,19 +141,115 @@ class _CardapioEmptyState extends StatelessWidget {
                   child: Icon(Icons.restaurant_menu_rounded,
                       color: primary, size: 26)),
               const SizedBox(height: 12),
-              Text('Nenhum cardápio',
+              Text('O que vamos servir na sua festa?',
                   style: GoogleFonts.poppins(
                       fontSize: 16,
                       fontWeight: FontWeight.w800,
-                      color: const Color(0xFF111827))),
-              Text('Monte categorias para organizar o evento.',
+                      color: const Color(0xFF111827)),
+                  textAlign: TextAlign.center),
+              const SizedBox(height: 6),
+              Text(
+                  'Receba sugestões de comidas, bebidas e quantidades para seus convidados.',
                   style: GoogleFonts.poppins(
                       color: const Color(0xFF64748B), fontSize: 12),
                   textAlign: TextAlign.center),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: onGerarComIa,
+                  icon: const Icon(Icons.auto_awesome_rounded, size: 18),
+                  label: Text(
+                    'Gerar com IA',
+                    style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+                  ),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: primary,
+                    minimumSize: const Size.fromHeight(46),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: onCriarManualmente,
+                child: Text(
+                  'Criar manualmente',
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w700,
+                    color: primary,
+                  ),
+                ),
+              ),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+class _AcoesCardapioRapidas extends StatelessWidget {
+  const _AcoesCardapioRapidas({
+    required this.primary,
+    required this.onGerarComIa,
+    required this.onCriarManualmente,
+  });
+
+  final Color primary;
+  final VoidCallback onGerarComIa;
+  final VoidCallback onCriarManualmente;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: FilledButton.icon(
+            onPressed: onGerarComIa,
+            icon: const Icon(Icons.auto_awesome_rounded, size: 16),
+            label: Text(
+              'Gerar com IA',
+              style: GoogleFonts.poppins(
+                fontWeight: FontWeight.w700,
+                fontSize: 12,
+              ),
+            ),
+            style: FilledButton.styleFrom(
+              backgroundColor: primary,
+              minimumSize: const Size.fromHeight(42),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: onCriarManualmente,
+            icon: Icon(Icons.add_rounded, size: 16, color: primary),
+            label: Text(
+              'Criar manualmente',
+              style: GoogleFonts.poppins(
+                fontWeight: FontWeight.w700,
+                fontSize: 12,
+                color: primary,
+              ),
+            ),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: primary,
+              side: BorderSide(color: primary.withValues(alpha: 0.35)),
+              minimumSize: const Size.fromHeight(42),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

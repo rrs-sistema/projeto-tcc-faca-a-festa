@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 
 import 'package:app_faca_festa/domain/entities/cardapio.dart';
 import 'package:app_faca_festa/domain/entities/cardapio_item.dart';
+import 'package:app_faca_festa/domain/entities/sugestao_cardapio_ia.dart';
 import 'package:app_faca_festa/domain/repositories/cardapio_repository.dart';
 import 'package:app_faca_festa/domain/services/criacao_cardapio_inicial_service.dart';
 
@@ -19,6 +20,7 @@ class CardapioController extends GetxController {
   final RxBool carregando = false.obs;
   final RxString erro = ''.obs;
   final RxBool criandoPropostaInicial = false.obs;
+  final RxBool salvandoSugestaoIa = false.obs;
 
   Future<bool> criarPropostaInicial(CriacaoCardapioInicial proposta) async {
     if (criandoPropostaInicial.value) {
@@ -101,6 +103,93 @@ class CardapioController extends GetxController {
 
   Future<void> adicionarCardapio(Cardapio cardapio) =>
       _repository.salvarCardapio(cardapio);
+
+  /// Persiste a sugestão revisada como um cardápio + itens (sem agendar nem
+  /// alterar convidados/orçamento). Impede gravações duplicadas por toque.
+  Future<String> salvarSugestaoIa({
+    required String idEvento,
+    required SugestaoCardapioIa sugestao,
+    PublicoAlvoCardapio publicoAlvo = PublicoAlvoCardapio.todos,
+  }) async {
+    if (salvandoSugestaoIa.value) {
+      throw StateError('Aguarde a gravação em andamento.');
+    }
+    final titulo = sugestao.nomeCardapio.trim();
+    final itens = sugestao.todosItens;
+    if (idEvento.trim().isEmpty) {
+      throw StateError('Informe o evento.');
+    }
+    if (titulo.isEmpty) {
+      throw StateError('Informe o nome do cardápio.');
+    }
+    if (itens.isEmpty) {
+      throw StateError('Inclua ao menos um item antes de salvar.');
+    }
+    if (itens.any((i) => i.nome.trim().isEmpty || i.quantidade <= 0)) {
+      throw StateError('Revise nomes e quantidades dos itens.');
+    }
+
+    salvandoSugestaoIa.value = true;
+    try {
+      final idCardapio =
+          'ia_${DateTime.now().millisecondsSinceEpoch}';
+      final cardapio = Cardapio(
+        idCardapio: idCardapio,
+        idEvento: idEvento,
+        titulo: titulo,
+        escopo: EscopoCardapio.refeicao,
+        publicoAlvo: publicoAlvo,
+        icone: 'cardapio',
+        corHex: '#6D4C41',
+        totalItens: itens.length,
+        totalComidas: itens
+            .where((i) =>
+                i.tipo == TipoItemCardapio.comida ||
+                i.tipo == TipoItemCardapio.bolo)
+            .length,
+        totalBebidas:
+            itens.where((i) => i.tipo == TipoItemCardapio.bebida).length,
+        totalSobremesas: itens
+            .where((i) =>
+                i.tipo == TipoItemCardapio.sobremesa ||
+                i.tipo == TipoItemCardapio.bolo)
+            .length,
+        ativo: true,
+      );
+      await _repository.salvarCardapio(cardapio);
+
+      var indice = 0;
+      for (final item in itens) {
+        indice++;
+        final obs = [
+          if (item.nomeCategoria.trim().isNotEmpty)
+            'Categoria: ${item.nomeCategoria.trim()}',
+          if (item.observacao != null && item.observacao!.trim().isNotEmpty)
+            item.observacao!.trim(),
+        ].join(' · ');
+        await _repository.salvarItem(
+          idCardapio,
+          CardapioItem(
+            idItem: '${idCardapio}_$indice',
+            idEvento: idEvento,
+            idCardapio: idCardapio,
+            nome: item.nome.trim(),
+            tipo: item.tipo,
+            publicoAlvo: item.publicoAlvo,
+            quantidadeSugerida: item.quantidade,
+            quantidadeFinal: 0,
+            unidade: item.unidade,
+            confirmado: false,
+            geradoPelaCalculadora: false,
+            observacao: obs.isEmpty ? null : obs,
+          ),
+        );
+      }
+      return idCardapio;
+    } finally {
+      salvandoSugestaoIa.value = false;
+    }
+  }
 
   Future<void> atualizarCardapio(Cardapio cardapio) =>
       _repository.salvarCardapio(cardapio);

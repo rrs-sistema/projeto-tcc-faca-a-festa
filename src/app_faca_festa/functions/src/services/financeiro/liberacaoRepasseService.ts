@@ -72,8 +72,13 @@ export function impedimentoRepasse(params: {
     return "Repasse bloqueado por mediação: conclua a análise e resolva a retenção.";
   }
   if (e.status === "finalizado") return null;
-  const dono = e.id_usuario || e.idUsuario;
-  if (a?.ativa === true && a.autor_id === dono && a.assinatura_contrato === params.assinatura) return null;
+  const dono = String(e.id_usuario || e.idUsuario || "");
+  const coOrgs = Array.isArray(e.co_organizadores)
+    ? e.co_organizadores.map((u: unknown) => String(u || "").trim()).filter(Boolean)
+    : [];
+  const autor = String(a?.autor_id || "");
+  const autorEhGestor = !!autor && (autor === dono || coOrgs.includes(autor));
+  if (a?.ativa === true && autorEhGestor && a.assinatura_contrato === params.assinatura) return null;
   return "Aguarde a finalização do evento ou a autorização explícita do organizador.";
 }
 

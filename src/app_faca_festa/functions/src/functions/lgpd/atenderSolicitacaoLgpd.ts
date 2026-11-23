@@ -135,6 +135,7 @@ async function executarExclusao(idUsuario: string): Promise<string> {
   const idsEventos: string[] = [];
 
   // Eventos do organizador: convidados, orçamentos, capa e subcoleções.
+  // Bloqueia exclusão se ainda houver co-organizadores ativos.
   for (;;) {
     const eventos = await db
       .collection("evento")
@@ -143,6 +144,17 @@ async function executarExclusao(idUsuario: string): Promise<string> {
       .get();
     if (eventos.empty) break;
     for (const evento of eventos.docs) {
+      const coOrgs = Array.isArray(evento.data()?.co_organizadores)
+        ? evento.data()!.co_organizadores.filter(
+            (u: unknown) => typeof u === "string" && u.trim() && u !== idUsuario,
+          )
+        : [];
+      if (coOrgs.length > 0) {
+        throw new HttpsError(
+          "failed-precondition",
+          "Remova os co-organizadores dos seus eventos antes de excluir a conta.",
+        );
+      }
       idsEventos.push(evento.id);
       await apagarPorCampo("convidado", "id_evento", evento.id);
       await apagarPorCampo("convidados", "id_evento", evento.id);
@@ -150,6 +162,33 @@ async function executarExclusao(idUsuario: string): Promise<string> {
       await apagarRecursivo(evento.ref);
     }
     if (eventos.size < 50) break;
+  }
+
+  // Remove o titular das listas de co-organização em eventos de terceiros.
+  for (;;) {
+    const comoCo = await db
+      .collection("evento")
+      .where("co_organizadores", "array-contains", idUsuario)
+      .limit(50)
+      .get();
+    if (comoCo.empty) break;
+    for (const doc of comoCo.docs) {
+      const lista = Array.isArray(doc.data()?.co_organizadores)
+        ? doc.data()!.co_organizadores.filter((u: unknown) => u !== idUsuario)
+        : [];
+      await doc.ref.update({
+        co_organizadores: lista,
+        atualizado_em: FieldValue.serverTimestamp(),
+      });
+      await doc.ref.collection("membros").doc(idUsuario).set(
+        {
+          status: "removido_lgpd",
+          removido_em: FieldValue.serverTimestamp(),
+        },
+        { merge: true },
+      );
+    }
+    if (comoCo.size < 50) break;
   }
 
   await apagarPorCampo("convidado", "id_usuario", idUsuario);

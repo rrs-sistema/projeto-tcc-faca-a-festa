@@ -18,6 +18,8 @@ import 'package:app_faca_festa/presentation/modules/app/controllers/app_controll
 import 'package:app_faca_festa/presentation/modules/convidado/components/abrir_adicionar_convidado.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/components/abrir_adicionar_grupo_bottom_sheet.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/components/cardapios_tab.dart';
+import 'package:app_faca_festa/presentation/modules/convidado/components/escolha_novo_cardapio_sheet.dart';
+import 'package:app_faca_festa/presentation/modules/convidado/components/gerar_cardapio_ia_bottom_sheet.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/components/estatisticas_tab.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/components/grupos_tab.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/components/mesa_tab.dart';
@@ -197,6 +199,8 @@ class _ConvidadosPageState extends State<ConvidadosPage>
                   CardapiosTab(
                     controller: cardapioController,
                     theme: themeController,
+                    onGerarComIa: _abrirGerarCardapioIa,
+                    onCriarManualmente: _abrirNovoCardapio,
                   ),
                   MesasTab(
                     theme: themeController,
@@ -246,6 +250,10 @@ class _ConvidadosPageState extends State<ConvidadosPage>
       }
 
       if (aba == 2) {
+        // Empty state já oferece "Gerar com IA" / "Criar manualmente".
+        if (cardapioController.cardapios.isEmpty) {
+          return const SizedBox.shrink();
+        }
         return FloatingActionButton.extended(
           heroTag: 'btnNovoCardapio',
           backgroundColor: primary,
@@ -256,7 +264,7 @@ class _ConvidadosPageState extends State<ConvidadosPage>
             'Novo cardápio',
             style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
           ),
-          onPressed: _abrirNovoCardapio,
+          onPressed: _abrirEscolhaNovoCardapio,
         );
       }
 
@@ -340,6 +348,41 @@ class _ConvidadosPageState extends State<ConvidadosPage>
       idEvento: evento.idEvento,
       controller: grupoController,
       themeController: themeController,
+    );
+  }
+
+  Future<void> _abrirEscolhaNovoCardapio() async {
+    final escolha = await mostrarEscolhaNovoCardapio(
+      context: context,
+      primaryColor: themeController.primaryColor.value,
+    );
+    if (!mounted || escolha == null) return;
+    if (escolha == EscolhaNovoCardapio.gerarComIa) {
+      _abrirGerarCardapioIa();
+      return;
+    }
+    _abrirNovoCardapio();
+  }
+
+  void _abrirGerarCardapioIa() {
+    final evento = eventoController.eventoAtualEntidade;
+    if (evento == null || evento.idEvento.trim().isEmpty) {
+      _mostrarEventoNaoEncontrado();
+      return;
+    }
+
+    if (_tabController.index != 2) {
+      _tabController.animateTo(2);
+    }
+
+    abrirGerarCardapioIa(
+      context: context,
+      idEvento: evento.idEvento,
+      controller: cardapioController,
+      primaryColor: themeController.primaryColor.value,
+      evento: evento,
+      tipoEvento: eventoController.tipoEventoAtualEntidade,
+      tipoFestaNome: eventoController.tipoEventoAtualEntidade?.nome,
     );
   }
 

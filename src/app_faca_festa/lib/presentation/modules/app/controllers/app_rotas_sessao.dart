@@ -5,6 +5,8 @@ abstract final class AppRotasSessao {
   static bool ehConvite(String rota) =>
       rota == '/convite' ||
       rota.startsWith('/convite/') ||
+      rota == '/convite-organizador' ||
+      rota.startsWith('/convite-organizador/') ||
       rota == '/areaconvidado' ||
       rota.startsWith('/areaconvidado') ||
       rota == '/conviteNaoEncontrado';

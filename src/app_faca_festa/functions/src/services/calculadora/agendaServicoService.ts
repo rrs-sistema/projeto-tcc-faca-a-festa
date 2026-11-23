@@ -1,6 +1,7 @@
 import {createHash} from "crypto";
 import {Firestore, Timestamp} from "firebase-admin/firestore";
 import {HttpsError} from "firebase-functions/v2/https";
+import {ehGestorNosDados} from "../../shared/eventoPermissao";
 type M=Record<string,any>;
 const mapa=(v:any):M=>v&&typeof v==="object"&&!Array.isArray(v)?v:{};
 const falha=(s:string):never=>{throw new HttpsError("failed-precondition",s);};
@@ -49,7 +50,7 @@ export async function confirmarAgendaServico(db:Firestore,uid:string|undefined,r
  const entrada=mapa(acao.config);if(Object.keys(entrada).some(k=>!["publico","publico_extra","servico"].includes(k)))falha("Edite os grupos na configuração desta ocorrência.");validarConfig(entrada);
  const assinatura=createHash("sha256").update(canon(acao)).digest("hex");
  return db.runTransaction(async tx=>{
-  const ev=await tx.get(db.doc(`evento/${evento}`));if(ev.data()?.id_usuario!==uid)throw new HttpsError("permission-denied","Somente o organizador pode confirmar a agenda.");
+  const ev=await tx.get(db.doc(`evento/${evento}`));if(!ehGestorNosDados(ev.data(),uid))throw new HttpsError("permission-denied","Somente o organizador pode confirmar a agenda.");
   const ref=db.doc(`calculadora_operacao/${evento}`),recibo=ref.collection("agenda_confirmacoes").doc(pedido);
   const opDoc=await tx.get(ref),recebido=await tx.get(recibo),op=opDoc.data()??{};
   if(op.versao!=null&&op.versao!==1)falha("Atualize o leitor antes de alterar esta operação.");

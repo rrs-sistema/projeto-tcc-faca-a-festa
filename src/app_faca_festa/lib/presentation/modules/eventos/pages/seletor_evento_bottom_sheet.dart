@@ -347,17 +347,50 @@ class _EventoTile extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      evento.nomeEvento.trim().isEmpty
-                          ? 'Evento sem nome'
-                          : evento.nomeEvento,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.poppins(
-                        fontSize: 13.4,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF1E293B),
-                      ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            evento.nomeEvento.trim().isEmpty
+                                ? 'Evento sem nome'
+                                : evento.nomeEvento,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.poppins(
+                              fontSize: 13.4,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF1E293B),
+                            ),
+                          ),
+                        ),
+                        if (Get.isRegistered<AppController>() &&
+                            evento.ehCoOrganizador(
+                              Get.find<AppController>()
+                                      .usuarioLogado
+                                      .value
+                                      ?.idUsuario ??
+                                  '',
+                            ))
+                          Container(
+                            margin: const EdgeInsets.only(left: 6),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: primary.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              'Co-org',
+                              style: GoogleFonts.poppins(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: primary,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                     Text(
                       local.isEmpty ? data : '$data • $local',

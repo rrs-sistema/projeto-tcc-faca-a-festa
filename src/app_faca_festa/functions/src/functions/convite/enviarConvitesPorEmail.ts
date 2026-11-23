@@ -13,6 +13,7 @@ import {
 } from "../../shared/emailCodigo";
 import { admin } from "../../shared/firebaseAdmin";
 import { emailPermiteConvite } from "../lgpd/preferenciasNotificacao";
+import { ehGestorNosDados } from "../../shared/eventoPermissao";
 
 const REGION = "southamerica-east1";
 const ORIGEM_PUBLICA = "https://faca-a-festa.web.app";
@@ -66,8 +67,7 @@ export const enviarConvitesPorEmail = onCall(
     }
 
     const evento = eventoSnap.data() ?? {};
-    const dono = texto(evento.id_usuario);
-    if (perfil.tipo !== "A" && dono !== perfil.uid) {
+    if (perfil.tipo !== "A" && !ehGestorNosDados(evento, perfil.uid)) {
       throw new HttpsError(
         "permission-denied",
         "Você não pode enviar convites deste evento.",

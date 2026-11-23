@@ -47,11 +47,35 @@ service cloud.firestore {
       return isAtivo() && userData().tipo == tipo;
     }
 
-    function eventoDono(eventoId) {
+    function dadosEvento(eventoId) {
+      return get(/databases/$(database)/documents/evento/$(eventoId)).data;
+    }
+
+    /** Dono canônico do evento (id_usuario). */
+    function ehDonoEvento(eventoId) {
       return signedIn()
         && (!userExists() || mfaConcluido())
         && exists(/databases/$(database)/documents/evento/$(eventoId))
-        && get(/databases/$(database)/documents/evento/$(eventoId)).data.id_usuario == uid();
+        && dadosEvento(eventoId).id_usuario == uid();
+    }
+
+    /** Dono ou co-organizador listado em co_organizadores. */
+    function podeGerirEvento(eventoId) {
+      return signedIn()
+        && (!userExists() || mfaConcluido())
+        && exists(/databases/$(database)/documents/evento/$(eventoId))
+        && (
+          dadosEvento(eventoId).id_usuario == uid()
+          || uid() in dadosEvento(eventoId).get('co_organizadores', [])
+        );
+    }
+
+    /**
+     * Nome legado: agora equivale a gestor do evento (dono ou co-organizador).
+     * Exclusões sensíveis (delete do evento) usam ehDonoEvento.
+     */
+    function eventoDono(eventoId) {
+      return podeGerirEvento(eventoId);
     }
 
     function orcamentoDoSolicitante(data) {
@@ -347,11 +371,22 @@ service cloud.firestore {
     match /evento/{eventoId} {
       allow read: if signedIn();
       allow create: if isAdmin()
-        || (isTipo('O') && request.resource.data.id_usuario == uid());
+        || (isTipo('O')
+          && request.resource.data.id_usuario == uid()
+          && (!('co_organizadores' in request.resource.data)
+            || request.resource.data.co_organizadores.size() == 0));
+      // Gestor edita o evento; não pode transferir dono nem alterar co_organizadores
+      // pelo cliente (membros só via Cloud Functions / Admin SDK).
       allow update: if isAdmin()
-        || (isTipo('O') && eventoDono(eventoId)
-          && request.resource.data.id_usuario == uid());
-      allow delete: if isAdmin() || eventoDono(eventoId);
+        || (isTipo('O') && podeGerirEvento(eventoId)
+          && request.resource.data.id_usuario == resource.data.id_usuario
+          && !('co_organizadores' in request.resource.data.diff(resource.data).affectedKeys()));
+      allow delete: if isAdmin() || ehDonoEvento(eventoId);
+
+      match /membros/{membroId} {
+        allow read: if isAdmin() || podeGerirEvento(eventoId);
+        allow write: if false;
+      }
 
       match /presentes/{presenteId} {
         allow read: if signedIn();
@@ -370,6 +405,15 @@ service cloud.firestore {
           allow write: if isAdmin() || eventoDono(eventoId);
         }
       }
+    }
+
+    // Convites de co-organizador: escrita só via Admin SDK (callables).
+    match /convites_co_organizador/{token} {
+      allow read: if isAdmin()
+        || (signedIn()
+          && resource.data.email is string
+          && resource.data.email == emailDoUsuario());
+      allow write: if false;
     }
 
     // list/get separados: OR com convite/e-mail faz a query por id_evento

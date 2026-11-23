@@ -9,6 +9,7 @@ import { admin } from "../../shared/firebaseAdmin";
 import { atualizarExecucaoContrato } from "../financeiro/acompanhamentoPersistenciaService";
 import { exigirUsuarioAutenticado } from "../../shared/auth";
 import { exigirNovosNegociosPermitidos } from "../fornecedores/restricaoComercial";
+import { ehGestorEventoTx } from "../../shared/eventoPermissao";
 export const hashJornada=(v:unknown)=>createHash("sha256").update(JSON.stringify(v)).digest("hex");
 export function idJornada(v:unknown):string{if(typeof v!=="string"||!v.trim()||v.length>200||v.includes("/"))throw new HttpsError("invalid-argument","Identificador inválido.");return v.trim();}
 const texto=(v:unknown,max=2000)=>{if(typeof v!=="string"||v.length>max)throw new HttpsError("invalid-argument","Texto inválido.");return v.trim();};
@@ -27,11 +28,16 @@ export function proximaAcaoJornada(comercial:string,execucao:string|null,respons
  const [acao,r]=a[execucao||""]||["Conferir vínculo do compromisso","participantes"];
  return {acao,responsavel:r,prazo:prazo||null};
 }
-async function contexto(db:Firestore,tx:Transaction,uid:string,idCotacao:string,idFornecedor:string){
+async function contexto(db:Firestore,tx:Transaction,uid:string,idCotacao:string,idFornecedor:string,opts?:{permitirGestorEvento?:boolean}){
  const cRef=db.doc(`cotacao/${idCotacao}`),fRef=cRef.collection("fornecedores").doc(idFornecedor),c=await tx.get(cRef),f=await tx.get(fRef);
  if(!c.exists||!f.exists)throw new HttpsError("not-found","Atendimento não encontrado.");
- if(uid!==c.data()?.id_usuario_solicitante&&uid!==idFornecedor)throw new HttpsError("permission-denied","Sem vínculo com a conversa.");
- return {cRef,fRef,c:c.data()!,f:f.data()!};
+ const dados=c.data()!;
+ let permitido=uid===dados.id_usuario_solicitante||uid===idFornecedor;
+ if(!permitido&&opts?.permitirGestorEvento&&dados.id_evento){
+  permitido=await ehGestorEventoTx(db,tx,uid,String(dados.id_evento));
+ }
+ if(!permitido)throw new HttpsError("permission-denied","Sem vínculo com a conversa.");
+ return {cRef,fRef,c:dados,f:f.data()!};
 }
 function audit(tx:Transaction,ref:FirebaseFirestore.DocumentReference,uid:string,chave:string,assinatura:string,detalhes:any,resultado:any){
  tx.create(ref.collection("historico_jornada").doc(hashJornada([uid,chave])),{...detalhes,autor_id:uid,chave,assinatura,resultado,criado_em:FieldValue.serverTimestamp()});
@@ -83,13 +89,14 @@ export async function movimentarComercial(db:Firestore,uid:string,d:any){
  if(acao==="negociar"&&(!prazo||Date.parse(prazo)<=Date.now()))throw new HttpsError("invalid-argument","Informe prazo de retorno futuro.");
  const assinatura=hashJornada([acao,d.motivo||null,descricao,prazo]);
  return transacaoIdempotente(db,async tx=>{
- const x=await contexto(db,tx,uid,cot,forn),prev=await idem(tx,x.fRef,uid,chave,assinatura);if(prev)return prev;aberto(x.c,x.f);
+ const x=await contexto(db,tx,uid,cot,forn,{permitirGestorEvento:true}),prev=await idem(tx,x.fRef,uid,chave,assinatura);if(prev)return prev;aberto(x.c,x.f);
  if(acao==="recusar"&&uid!==forn)throw new HttpsError("permission-denied","Só o fornecedor registra recusa.");
  if(acao==="negociar"&&!(x.f.proposta_versao>0))throw new HttpsError("failed-precondition","A negociação exige proposta versionada.");
  const todos=await tx.get(x.cRef.collection("fornecedores"));
  const estado=acao==="negociar"?"negociacao":acao==="recusar"?"recusado":acao==="perder"?"perdido":"cancelado";
  const status=acao==="negociar"?"respondido":acao==="recusar"?"recusado":acao==="perder"?"perdeuCotacao":"cancelada";
- const alvoTodos=acao==="cancelar"&&uid===x.c.id_usuario_solicitante;
+ const gestorCliente=uid===x.c.id_usuario_solicitante||await ehGestorEventoTx(db,tx,uid,String(x.c.id_evento||""));
+ const alvoTodos=acao==="cancelar"&&gestorCliente;
  const alvos=alvoTodos?todos.docs:[todos.docs.find(f=>f.id===forn)!];
  for(const f of alvos){tx.update(f.ref,{status,estado_comercial:estado,responsavel_retorno:acao==="negociar"?(uid===forn?"cliente":"fornecedor"):null,prazo_retorno:prazo,motivo_encerramento:acao==="negociar"?null:{codigo:d.motivo,descricao,autor_id:uid,data:FieldValue.serverTimestamp()}});if(f.id!==forn)tx.create(f.ref.collection("historico_jornada").doc(hashJornada([uid,chave])),{acao,autor_id:uid,estado_novo:estado,motivo:d.motivo,descricao,criado_em:FieldValue.serverTimestamp()});}
  const statusCotacao=alvoTodos?"cancelada":paiApos(todos.docs,forn,status);tx.update(x.cRef,{status:statusCotacao});
@@ -102,8 +109,12 @@ export async function contratarProposta(db:Firestore,uid:string,d:any){
  const idCotacao=idJornada(d.idCotacao??d.id_cotacao),idFornecedor=idJornada(d.idFornecedor??d.id_fornecedor);
  const versao=inteiro(d.versaoProposta,1),assinaturaEsperada=texto(d.assinaturaProposta,128);
  return transacaoIdempotente(db,async tx=>{
- const x=await contexto(db,tx,uid,idCotacao,idFornecedor);
- if(uid!==x.c.id_usuario_solicitante||uid===idFornecedor)throw new HttpsError("permission-denied","Apenas o cliente solicitante aceita a proposta.");
+ const x=await contexto(db,tx,uid,idCotacao,idFornecedor,{permitirGestorEvento:true});
+ if(uid===idFornecedor)throw new HttpsError("permission-denied","Apenas um organizador do evento aceita a proposta.");
+ if(uid!==x.c.id_usuario_solicitante){
+  const gestor=await ehGestorEventoTx(db,tx,uid,String(x.c.id_evento||""));
+  if(!gestor)throw new HttpsError("permission-denied","Apenas um organizador do evento aceita a proposta.");
+ }
  if(x.c.status==="concluida"){
  if(x.c.id_fornecedor_contratado!==idFornecedor||x.f.proposta_aceita?.versao!==versao||x.f.proposta_aceita?.assinatura!==assinaturaEsperada)throw new HttpsError("failed-precondition","Já houve outra contratação/versão aceita.");
  return {ok:true,idEvento:x.c.id_evento,idOrcamento:x.c.id_orcamento_contratado,valorContratado:x.f.proposta_aceita.liquidoCentavos/100,idempotente:true};

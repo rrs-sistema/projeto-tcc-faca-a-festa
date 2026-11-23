@@ -53,6 +53,7 @@ class EventoModel extends Evento {
     super.hashtagEvento,
     super.siteEvento,
     super.dressCode,
+    super.coOrganizadores,
   });
 
   factory EventoModel.fromEntity(Evento evento) {
@@ -103,6 +104,7 @@ class EventoModel extends Evento {
       hashtagEvento: evento.hashtagEvento,
       siteEvento: evento.siteEvento,
       dressCode: evento.dressCode,
+      coOrganizadores: evento.coOrganizadores,
     );
   }
 
@@ -160,6 +162,7 @@ class EventoModel extends Evento {
       'hashtag_evento': hashtagEvento,
       'site_evento': siteEvento,
       'dress_code': dressCode,
+      // co_organizadores só via Cloud Functions — não gravar pelo cliente.
     };
   }
 
@@ -234,7 +237,16 @@ class EventoModel extends Evento {
       hashtagEvento: map['hashtag_evento']?.toString(),
       siteEvento: map['site_evento']?.toString(),
       dressCode: map['dress_code']?.toString(),
+      coOrganizadores: _parseCoOrganizadores(map['co_organizadores']),
     );
+  }
+
+  static List<String> _parseCoOrganizadores(dynamic value) {
+    if (value is! List) return const [];
+    return value
+        .map((e) => e.toString().trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
   }
 
   static int? _parseIntNullable(dynamic value) {
@@ -355,6 +367,7 @@ class EventoModel extends Evento {
     bool limparSiteEvento = false,
     String? dressCode,
     bool limparDressCode = false,
+    List<String>? coOrganizadores,
   }) {
     return EventoModel(
       idEvento: idEvento ?? this.idEvento,
@@ -425,6 +438,7 @@ class EventoModel extends Evento {
           limparHashtagEvento ? null : (hashtagEvento ?? this.hashtagEvento),
       siteEvento: limparSiteEvento ? null : (siteEvento ?? this.siteEvento),
       dressCode: limparDressCode ? null : (dressCode ?? this.dressCode),
+      coOrganizadores: coOrganizadores ?? this.coOrganizadores,
     );
   }
 }

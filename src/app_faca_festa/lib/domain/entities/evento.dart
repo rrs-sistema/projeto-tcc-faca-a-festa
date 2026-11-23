@@ -84,6 +84,9 @@ class Evento {
   final String? siteEvento;
   final String? dressCode;
 
+  /// UIDs de co-organizadores (além do [idUsuario] dono).
+  final List<String> coOrganizadores;
+
   Evento({
     required this.idEvento,
     required this.idTipoEvento,
@@ -131,7 +134,22 @@ class Evento {
     this.hashtagEvento,
     this.siteEvento,
     this.dressCode,
-  }) : dataCadastro = dataCadastro ?? DateTime.now();
+    List<String>? coOrganizadores,
+  })  : coOrganizadores = List.unmodifiable(coOrganizadores ?? const []),
+        dataCadastro = dataCadastro ?? DateTime.now();
+
+  bool ehDono(String uid) => idUsuario.trim() == uid.trim();
+
+  bool ehGestor(String uid) {
+    final id = uid.trim();
+    if (id.isEmpty) return false;
+    return ehDono(id) || coOrganizadores.contains(id);
+  }
+
+  bool ehCoOrganizador(String uid) {
+    final id = uid.trim();
+    return id.isNotEmpty && !ehDono(id) && coOrganizadores.contains(id);
+  }
 
   /// Dias do calendário, incluindo início e término, sem depender do fuso.
   int get duracaoDias {
@@ -266,6 +284,7 @@ class Evento {
     bool limparSiteEvento = false,
     String? dressCode,
     bool limparDressCode = false,
+    List<String>? coOrganizadores,
   }) {
     return Evento(
       idEvento: idEvento ?? this.idEvento,
@@ -336,6 +355,7 @@ class Evento {
           limparHashtagEvento ? null : (hashtagEvento ?? this.hashtagEvento),
       siteEvento: limparSiteEvento ? null : (siteEvento ?? this.siteEvento),
       dressCode: limparDressCode ? null : (dressCode ?? this.dressCode),
+      coOrganizadores: coOrganizadores ?? this.coOrganizadores,
     );
   }
 }

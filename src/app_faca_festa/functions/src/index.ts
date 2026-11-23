@@ -9,6 +9,7 @@ export { expurgarAuditoriaAntiga } from "./functions/lgpd/expurgarAuditoriaAntig
 export { novaAvaliacaoProcessar } from "./functions/fornecedores/novaAvaliacaoProcessar";
 export { testarNotificacaoFornecedor } from "./functions/fornecedores/testarNotificacaoFornecedor";
 export { analisarCalculadoraFestaIA } from "./functions/calculadora/analisarCalculadoraFestaIA";
+export { gerarCardapioIA } from "./functions/cardapio/gerarCardapioIA";
 export {
     solicitarCodigoRedefinicaoSenha,
     redefinirSenhaComCodigo,
@@ -29,6 +30,13 @@ export {
 } from "./functions/auth/recuperacaoMfa";
 export { abrirConvitePorToken } from "./functions/convite/abrirConvitePorToken";
 export { enviarConvitesPorEmail } from "./functions/convite/enviarConvitesPorEmail";
+export {
+  convidarCoOrganizador,
+  aceitarConviteCoOrganizador,
+  removerCoOrganizador,
+  listarCoOrganizadores,
+  consultarConviteCoOrganizador,
+} from "./functions/coOrganizador/comandosCoOrganizador";
 export {
   enviarCapaTemaFesta,
   removerCapaTemaFesta,

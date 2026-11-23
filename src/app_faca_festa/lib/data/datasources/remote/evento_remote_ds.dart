@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:app_faca_festa/domain/services/evento_leitura_confirmada.dart';
@@ -164,12 +166,75 @@ class EventoRemoteDatasource {
   }
 
   Stream<List<EventoModel>> listarPorUsuario(String idUsuario) {
-    return EventoLeituraConfirmada.listasConfirmadas(
+    final uid = idUsuario.trim();
+    if (uid.isEmpty) {
+      return Stream.value(const <EventoModel>[]);
+    }
+
+    // Une eventos próprios + eventos em que o usuário é co-organizador.
+    // Emite assim que qualquer lado responder (o outro começa vazio).
+    final controller = StreamController<List<EventoModel>>();
+    var proprios = <EventoModel>[];
+    var comoCo = <EventoModel>[];
+    var propriosProntos = false;
+    var coProntos = false;
+
+    void emitir() {
+      if (controller.isClosed) return;
+      if (!propriosProntos && !coProntos) return;
+      final mapa = <String, EventoModel>{};
+      for (final evento in [...proprios, ...comoCo]) {
+        final id = evento.idEvento.trim();
+        if (id.isEmpty) continue;
+        mapa[id] = evento;
+      }
+      controller.add(mapa.values.toList());
+    }
+
+    final subProprios = EventoLeituraConfirmada.listasConfirmadas(
       _eventos
-          .where('id_usuario', isEqualTo: idUsuario)
+          .where('id_usuario', isEqualTo: uid)
           .snapshots()
           .map(_consultaDeEventos),
+    ).listen(
+      (lista) {
+        proprios = lista;
+        propriosProntos = true;
+        emitir();
+      },
+      onError: (Object error, StackTrace stack) {
+        // Não bloqueia a lista de co-organização se a query própria falhar.
+        debugPrint('❌ [EventoRemote] listar próprios: $error');
+        propriosProntos = true;
+        emitir();
+        if (!coProntos) controller.addError(error, stack);
+      },
     );
+
+    final subCo = EventoLeituraConfirmada.listasConfirmadas(
+      _eventos
+          .where('co_organizadores', arrayContains: uid)
+          .snapshots()
+          .map(_consultaDeEventos),
+    ).listen(
+      (lista) {
+        comoCo = lista;
+        coProntos = true;
+        emitir();
+      },
+      onError: (Object error, StackTrace stack) {
+        debugPrint('❌ [EventoRemote] listar co-org: $error');
+        coProntos = true;
+        emitir();
+      },
+    );
+
+    controller.onCancel = () async {
+      await subProprios.cancel();
+      await subCo.cancel();
+    };
+
+    return controller.stream;
   }
 
   ConsultaEventos<EventoModel> _consultaDeEventos(
