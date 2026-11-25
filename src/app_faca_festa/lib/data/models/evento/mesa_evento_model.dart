@@ -1,38 +1,33 @@
-class MesaEventoModel {
-  final String idMesa;
-  final String idEvento;
+import 'package:app_faca_festa/domain/entities/mesa_evento.dart';
 
-  final int numeroMesa;
-  final String nomeMesa;
-
-  final int capacidadeAssentos;
-  final int totalOcupados;
-
-  final String? idGrupo;
-  final String? nomeGrupo;
-
-  final String? corHex;
-  final bool ativa;
-
+class MesaEventoModel extends MesaEvento {
   const MesaEventoModel({
-    required this.idMesa,
-    required this.idEvento,
-    required this.numeroMesa,
-    required this.nomeMesa,
-    required this.capacidadeAssentos,
-    this.totalOcupados = 0,
-    this.idGrupo,
-    this.nomeGrupo,
-    this.corHex,
-    this.ativa = true,
+    required super.idMesa,
+    required super.idEvento,
+    required super.numeroMesa,
+    required super.nomeMesa,
+    required super.capacidadeAssentos,
+    super.totalOcupados,
+    super.idGrupo,
+    super.nomeGrupo,
+    super.corHex,
+    super.ativa,
   });
 
-  int get totalLivres {
-    final livres = capacidadeAssentos - totalOcupados;
-    return livres < 0 ? 0 : livres;
+  factory MesaEventoModel.fromEntity(MesaEvento mesa) {
+    return MesaEventoModel(
+      idMesa: mesa.idMesa,
+      idEvento: mesa.idEvento,
+      numeroMesa: mesa.numeroMesa,
+      nomeMesa: mesa.nomeMesa,
+      capacidadeAssentos: mesa.capacidadeAssentos,
+      totalOcupados: mesa.totalOcupados,
+      idGrupo: mesa.idGrupo,
+      nomeGrupo: mesa.nomeGrupo,
+      corHex: mesa.corHex,
+      ativa: mesa.ativa,
+    );
   }
-
-  bool get lotada => totalOcupados >= capacidadeAssentos;
 
   Map<String, dynamic> toMap() {
     return {
@@ -66,29 +61,33 @@ class MesaEventoModel {
       idGrupo: map['id_grupo']?.toString(),
       nomeGrupo: map['nome_grupo']?.toString(),
       corHex: map['cor_hex']?.toString(),
-      ativa: map['ativa'] ?? true,
+      ativa: map['ativa'] is bool ? map['ativa'] as bool : true,
     );
   }
 
+  @override
   MesaEventoModel copyWith({
+    String? idMesa,
+    String? idEvento,
     int? numeroMesa,
     String? nomeMesa,
     int? capacidadeAssentos,
     int? totalOcupados,
     String? idGrupo,
     String? nomeGrupo,
+    bool limparGrupo = false,
     String? corHex,
     bool? ativa,
   }) {
     return MesaEventoModel(
-      idMesa: idMesa,
-      idEvento: idEvento,
+      idMesa: idMesa ?? this.idMesa,
+      idEvento: idEvento ?? this.idEvento,
       numeroMesa: numeroMesa ?? this.numeroMesa,
       nomeMesa: nomeMesa ?? this.nomeMesa,
       capacidadeAssentos: capacidadeAssentos ?? this.capacidadeAssentos,
       totalOcupados: totalOcupados ?? this.totalOcupados,
-      idGrupo: idGrupo ?? this.idGrupo,
-      nomeGrupo: nomeGrupo ?? this.nomeGrupo,
+      idGrupo: limparGrupo ? null : (idGrupo ?? this.idGrupo),
+      nomeGrupo: limparGrupo ? null : (nomeGrupo ?? this.nomeGrupo),
       corHex: corHex ?? this.corHex,
       ativa: ativa ?? this.ativa,
     );

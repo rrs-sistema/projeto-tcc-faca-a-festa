@@ -76,62 +76,156 @@ void main() {
     expect(repository.grupoExcluido, 'grupo-1');
   });
 
-  test('creates a default group when the event has none', () async {
+  test('creates the three initial groups when the event has none', () async {
     await controller.escutarGrupos('evento-1');
     repository.grupos.add(const []);
     await Future<void>.delayed(Duration.zero);
+    // A escuta já dispara garantirGruposIniciais na 1ª emissão.
+    await Future<void>.delayed(Duration.zero);
+
+    expect(
+      repository.gruposSalvos.map((g) => g.nome),
+      GrupoConvidadoController.gruposIniciais.map((g) => g.nome),
+    );
+    expect(
+      repository.gruposSalvos.map((g) => g.idGrupo),
+      [
+        for (final def in GrupoConvidadoController.gruposIniciais)
+          GrupoConvidadoController.idGrupoInicial('evento-1', def.nome),
+      ],
+    );
+    expect(repository.salvamentos, 3);
 
     final grupo = await controller.garantirGrupoPadrao();
-
-    expect(grupo, isNotNull);
-    expect(grupo!.nome, GrupoConvidadoController.nomeGrupoPadrao);
-    expect(grupo.idEvento, 'evento-1');
-    expect(grupo.icone, 'group');
-    expect(repository.grupoSalvo, same(grupo));
-    expect(controller.grupos.single.idGrupo, grupo.idGrupo);
+    expect(grupo?.nome, GrupoConvidadoController.nomeGrupoPadrao);
+    expect(repository.salvamentos, 3);
   });
 
-  test('reuses the default group instead of creating another', () async {
+  test('does not restart seed when escutarGrupos is called again for same event',
+      () async {
+    await controller.escutarGrupos('evento-1');
+    repository.grupos.add(const []);
+    await Future<void>.delayed(Duration.zero);
+    await Future<void>.delayed(Duration.zero);
+    expect(repository.salvamentos, 3);
+
+    await controller.escutarGrupos('evento-1');
+    await Future<void>.delayed(Duration.zero);
+
+    expect(repository.salvamentos, 3);
+  });
+
+  test('deduplicates repeated initial groups by name', () async {
+    await controller.escutarGrupos('evento-1');
+    final idEstavel =
+        GrupoConvidadoController.idGrupoInicial('evento-1', 'Geral');
+    repository.grupos.add([
+      _grupo(id: 'dup-1', nome: 'Geral'),
+      _grupo(id: idEstavel, nome: 'Geral'),
+      _grupo(id: 'dup-2', nome: 'Geral'),
+      for (final def in GrupoConvidadoController.gruposIniciais
+          .where((d) => d.nome != 'Geral'))
+        _grupo(
+          id: GrupoConvidadoController.idGrupoInicial('evento-1', def.nome),
+          nome: def.nome,
+        ),
+    ]);
+    await Future<void>.delayed(Duration.zero);
+    await Future<void>.delayed(Duration.zero);
+
+    expect(repository.gruposExcluidos, containsAll(['dup-1', 'dup-2']));
+    expect(
+      controller.grupos.where((g) => g.nome.trim() == 'Geral').length,
+      1,
+    );
+    expect(
+      controller.grupos.singleWhere((g) => g.nome.trim() == 'Geral').idGrupo,
+      idEstavel,
+    );
+  });
+
+  test('collapses duplicates on UI even when they arrive after first seed',
+      () async {
+    await controller.escutarGrupos('evento-1');
+    repository.grupos.add(const []);
+    await Future<void>.delayed(Duration.zero);
+    await Future<void>.delayed(Duration.zero);
+    expect(repository.salvamentos, 3);
+
+    final idEstavel =
+        GrupoConvidadoController.idGrupoInicial('evento-1', 'Amigos');
+    repository.grupos.add([
+      _grupo(id: 'dup-a', nome: 'Amigos'),
+      _grupo(id: 'dup-b', nome: 'Amigos'),
+      _grupo(id: idEstavel, nome: 'Amigos'),
+      for (final def in GrupoConvidadoController.gruposIniciais
+          .where((d) => d.nome != 'Amigos'))
+        _grupo(
+          id: GrupoConvidadoController.idGrupoInicial('evento-1', def.nome),
+          nome: def.nome,
+        ),
+    ]);
+    await Future<void>.delayed(Duration.zero);
+    await Future<void>.delayed(Duration.zero);
+
+    expect(
+      controller.grupos.where((g) => g.nome.trim() == 'Amigos').length,
+      1,
+    );
+    expect(repository.gruposExcluidos, containsAll(['dup-a', 'dup-b']));
+    expect(repository.salvamentos, 3);
+  });
+
+  test('reuses existing initial groups instead of creating another', () async {
     await controller.escutarGrupos('evento-1');
     repository.grupos.add([
-      _grupo(nome: '  ${GrupoConvidadoController.nomeGrupoPadrao}  '),
+      for (final def in GrupoConvidadoController.gruposIniciais)
+        _grupo(
+          id: 'id-${def.nome}',
+          nome: '  ${def.nome}  ',
+        ),
     ]);
+    await Future<void>.delayed(Duration.zero);
     await Future<void>.delayed(Duration.zero);
 
     final grupo = await controller.garantirGrupoPadrao();
 
-    expect(grupo?.idGrupo, 'grupo-1');
-    expect(repository.grupoSalvo, isNull);
+    expect(grupo?.nome.trim(), GrupoConvidadoController.nomeGrupoPadrao);
+    expect(repository.salvamentos, 0);
   });
 
-  test('does not create a default group when another group already exists',
-      () async {
+  test('creates only the missing initial groups', () async {
     await controller.escutarGrupos('evento-1');
     repository.grupos.add([_grupo(nome: 'Família')]);
     await Future<void>.delayed(Duration.zero);
-
-    final grupo = await controller.garantirGrupoPadrao();
-
-    expect(grupo, isNull);
-    expect(repository.grupoSalvo, isNull);
-  });
-
-  test('shares one default-group create while the first request is in flight',
-      () async {
-    await controller.escutarGrupos('evento-1');
-    repository.grupos.add(const []);
-    repository.atrasarSalvarGrupo = Completer<void>();
     await Future<void>.delayed(Duration.zero);
 
-    final primeira = controller.garantirGrupoPadrao();
-    final segunda = controller.garantirGrupoPadrao();
+    expect(
+      repository.gruposSalvos.map((g) => g.nome),
+      ['Geral', 'Amigos'],
+    );
+    expect(repository.salvamentos, 2);
+
+    final grupo = await controller.garantirGrupoPadrao();
+    expect(grupo?.nome, 'Geral');
+  });
+
+  test('shares one initial-groups create while the first request is in flight',
+      () async {
+    await controller.escutarGrupos('evento-1');
+    repository.atrasarSalvarGrupo = Completer<void>();
+    repository.grupos.add(const []);
+    await Future<void>.delayed(Duration.zero);
+
+    final primeira = controller.garantirGruposIniciais();
+    final segunda = controller.garantirGruposIniciais();
     await Future<void>.delayed(Duration.zero);
     repository.atrasarSalvarGrupo!.complete();
 
-    final grupos = await Future.wait([primeira, segunda]);
+    final resultados = await Future.wait([primeira, segunda]);
 
-    expect(grupos.first?.idGrupo, grupos.last?.idGrupo);
-    expect(repository.salvamentos, 1);
+    expect(identical(resultados.first, resultados.last), isTrue);
+    expect(repository.salvamentos, 3);
   });
 
   test('empty event clears state without opening repository streams', () async {
@@ -147,10 +241,13 @@ void main() {
   });
 }
 
-GrupoConvidado _grupo({required String nome}) {
+GrupoConvidado _grupo({
+  required String nome,
+  String id = 'grupo-1',
+}) {
   final data = DateTime(2026, 8, 14);
   return GrupoConvidado(
-    idGrupo: 'grupo-1',
+    idGrupo: id,
     idEvento: 'evento-1',
     nome: nome,
     dataCadastro: data,
@@ -184,11 +281,13 @@ class _GrupoConvidadoRepositoryFake implements GrupoConvidadoRepository {
   String? eventoGrupos;
   String? eventoConvidados;
   GrupoConvidado? grupoSalvo;
+  final gruposSalvos = <GrupoConvidado>[];
   int salvamentos = 0;
   Completer<void>? atrasarSalvarGrupo;
   Convidado? convidadoVinculado;
   GrupoConvidado? grupoVinculado;
   String? grupoExcluido;
+  final gruposExcluidos = <String>[];
 
   Future<void> close() async {
     await grupos.close();
@@ -212,6 +311,7 @@ class _GrupoConvidadoRepositoryFake implements GrupoConvidadoRepository {
     final espera = atrasarSalvarGrupo;
     if (espera != null) await espera.future;
     grupoSalvo = grupo;
+    gruposSalvos.add(grupo);
     salvamentos++;
   }
 
@@ -230,9 +330,11 @@ class _GrupoConvidadoRepositoryFake implements GrupoConvidadoRepository {
   @override
   Future<void> excluirGrupo(
     String idGrupo, {
+    String? idEvento,
     bool desvincularConvidados = true,
   }) async {
     grupoExcluido = idGrupo;
+    gruposExcluidos.add(idGrupo);
   }
 
   @override

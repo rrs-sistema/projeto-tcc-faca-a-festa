@@ -462,6 +462,12 @@ service cloud.firestore {
       allow update, delete: if isAdmin() || eventoDono(resource.data.id_evento);
     }
 
+    match /mesa_evento/{id} {
+      allow read: if signedIn();
+      allow create: if isAdmin() || eventoDono(request.resource.data.id_evento);
+      allow update, delete: if isAdmin() || eventoDono(resource.data.id_evento);
+    }
+
     function responsavelTarefaValido(data) {
       let convidado = /databases/$(database)/documents/convidado/$(data.id_responsavel);
       let evento = /databases/$(database)/documents/evento/$(data.id_evento);

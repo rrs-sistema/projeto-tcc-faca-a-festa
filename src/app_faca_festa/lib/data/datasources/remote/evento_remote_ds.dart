@@ -172,7 +172,8 @@ class EventoRemoteDatasource {
     }
 
     // Une eventos próprios + eventos em que o usuário é co-organizador.
-    // Emite assim que qualquer lado responder (o outro começa vazio).
+    // A 1ª emissão só sai quando os dois lados responderam — evita o boot
+    // da sessão mandar co-organizador puro para /welcome com lista vazia.
     final controller = StreamController<List<EventoModel>>();
     var proprios = <EventoModel>[];
     var comoCo = <EventoModel>[];
@@ -181,7 +182,7 @@ class EventoRemoteDatasource {
 
     void emitir() {
       if (controller.isClosed) return;
-      if (!propriosProntos && !coProntos) return;
+      if (!propriosProntos || !coProntos) return;
       final mapa = <String, EventoModel>{};
       for (final evento in [...proprios, ...comoCo]) {
         final id = evento.idEvento.trim();

@@ -28,6 +28,7 @@ abstract interface class GrupoConvidadoRepository {
 
   Future<void> excluirGrupo(
     String idGrupo, {
+    String? idEvento,
     bool desvincularConvidados = true,
   });
 

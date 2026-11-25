@@ -48,7 +48,6 @@ class _AdicionarGrupoFormContentState
     extends State<_AdicionarGrupoFormContent> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nomeCtrl;
-  late final TextEditingController _numeroMesaCtrl;
   late final TextEditingController _descCtrl;
 
   late String _corSelecionada;
@@ -86,7 +85,6 @@ class _AdicionarGrupoFormContentState
     super.initState();
     final grupo = widget.grupo;
     _nomeCtrl = TextEditingController(text: grupo?.nome ?? '');
-    _numeroMesaCtrl = TextEditingController();
     _descCtrl = TextEditingController(text: grupo?.descricao ?? '');
     _corSelecionada =
         (grupo?.corHex ?? widget.themeController.primaryColor.value.toHex())
@@ -105,7 +103,6 @@ class _AdicionarGrupoFormContentState
   @override
   void dispose() {
     _nomeCtrl.dispose();
-    _numeroMesaCtrl.dispose();
     _descCtrl.dispose();
     super.dispose();
   }
@@ -172,18 +169,6 @@ class _AdicionarGrupoFormContentState
                         v,
                         campo: 'o nome do grupo',
                         minimo: 2,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    _textField(
-                      controller: _numeroMesaCtrl,
-                      label: 'Número da mesa (opcional)',
-                      icon: Icons.table_bar_outlined,
-                      keyboardType: TextInputType.number,
-                      validator: (v) => FormValidators.inteiroNaoNegativo(
-                        v,
-                        campo: 'o número da mesa',
-                        obrigatorio: false,
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -334,19 +319,11 @@ class _AdicionarGrupoFormContentState
       final existente = widget.grupo;
 
       if (existente != null) {
-        final atualizado = GrupoConvidado(
-          idGrupo: existente.idGrupo,
-          idEvento: existente.idEvento,
+        final atualizado = existente.copyWith(
           nome: _nomeCtrl.text.trim(),
           descricao: descricao,
           icone: _iconeSelecionado,
           corHex: _corSelecionada,
-          totalConvidados: existente.totalConvidados,
-          totalAdultos: existente.totalAdultos,
-          totalCriancas: existente.totalCriancas,
-          totalBebes: existente.totalBebes,
-          totalConfirmados: existente.totalConfirmados,
-          dataCadastro: existente.dataCadastro,
           dataAtualizacao: agora,
         );
         await widget.controller.atualizarGrupo(atualizado);

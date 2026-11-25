@@ -27,6 +27,7 @@ import 'package:app_faca_festa/presentation/modules/legal/pages/solicitacoes_lgp
 import 'package:app_faca_festa/presentation/modules/legal/pages/preferencias_notificacao_screen.dart';
 import 'package:app_faca_festa/presentation/modules/usuario/pages/edit_usuario_screen.dart';
 import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_controller.dart';
+import 'package:app_faca_festa/presentation/modules/eventos/home_organizador_copy.dart';
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
 import 'package:app_faca_festa/core/utils/biblioteca.dart';
 
@@ -75,6 +76,8 @@ class MenuDrawerFacaFesta extends StatelessWidget {
       final tituloCabecalho = themeController.tituloCabecalho.value;
       final evento = eventoController.eventoAtualEntidade;
       final eventoTitulo = _resolverTituloEvento(evento, tituloCabecalho);
+      final uid = appController.usuarioLogado.value?.idUsuario ?? '';
+      final ehCoOrg = evento != null && evento.ehCoOrganizador(uid);
       final nomeUsuario =
           appController.usuarioLogado.value?.nome.split(' ').first ??
               'Organizador';
@@ -91,6 +94,8 @@ class MenuDrawerFacaFesta extends StatelessWidget {
               icon: icon,
               titulo: 'Olá, $nomeUsuario 👋',
               eventoTitulo: eventoTitulo,
+              papelEvento:
+                  ehCoOrg ? HomeOrganizadorCopy.papelCoOrganizador : null,
             ),
             Expanded(
               child: ListView(
@@ -322,6 +327,7 @@ class MenuDrawerFacaFesta extends StatelessWidget {
     required IconData icon,
     required String titulo,
     required String eventoTitulo,
+    String? papelEvento,
   }) {
     final topPadding = MediaQuery.paddingOf(context).top;
 
@@ -382,39 +388,66 @@ class MenuDrawerFacaFesta extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.16),
-                    borderRadius: BorderRadius.circular(999),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.24),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.event_available_rounded,
-                        size: 12,
-                        color: Colors.white,
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.16),
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.24),
+                        ),
                       ),
-                      const SizedBox(width: 5),
-                      Flexible(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.event_available_rounded,
+                            size: 12,
+                            color: Colors.white,
+                          ),
+                          const SizedBox(width: 5),
+                          ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 140),
+                            child: Text(
+                              eventoTitulo,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.poppins(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w500,
+                                fontSize: 10.5,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if ((papelEvento ?? '').isNotEmpty)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.22),
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.3),
+                          ),
+                        ),
                         child: Text(
-                          eventoTitulo,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                          papelEvento!,
                           style: GoogleFonts.poppins(
                             color: Colors.white,
-                            fontWeight: FontWeight.w500,
+                            fontWeight: FontWeight.w700,
                             fontSize: 10.5,
                           ),
                         ),
                       ),
-                    ],
-                  ),
+                  ],
                 ),
               ],
             ),

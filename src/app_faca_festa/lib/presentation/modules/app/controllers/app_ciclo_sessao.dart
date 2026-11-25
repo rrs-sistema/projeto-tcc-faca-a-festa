@@ -322,6 +322,7 @@ class AppCicloSessao {
           default:
             await _eventos.carregarEventosDoUsuario(usuario.idUsuario);
             final evento = _eventos.eventoAtualEntidade;
+            final temEventoGerido = _eventos.temEventoGerido;
             final tokenCoOrg = TokenConviteCoOrganizador.ler();
 
             // Convite de co-organizador pendente tem prioridade sobre /welcome.
@@ -329,9 +330,20 @@ class AppCicloSessao {
               destino = AppDestinoRota(
                 TokenConviteCoOrganizador.rotaAceite(tokenCoOrg),
               );
-            } else if (evento != null) {
-              debugPrint(
-                  '🔹 Evento ativo: ${evento.nomeEvento} (${evento.idEvento})');
+            } else if (temEventoGerido) {
+              // Dono ou co-organizador: Home (lista unida já resolvida).
+              if (evento != null) {
+                debugPrint(
+                  '🔹 Evento ativo: ${evento.nomeEvento} (${evento.idEvento})'
+                  '${evento.ehCoOrganizador(usuario.idUsuario) ? ' [co-org]' : ''}',
+                );
+              } else {
+                debugPrint(
+                  '🔹 Eventos geridos: ${_eventos.eventosGeridos.length} '
+                  '(seleção pendente).',
+                );
+              }
+              _contaIncompleta?.value = false;
               _cotacoes.ouvirMinhasCotacoes();
               _validarDependenciasHomeEvent?.call();
               destino = const AppDestinoRota('/HomeEventScreen');
@@ -344,6 +356,16 @@ class AppCicloSessao {
 
         if (!_podeProcessar(user)) return;
         final rotaDepois = Get.currentRoute;
+
+        // /welcome é provisório: se já há evento gerido (ex.: co-org que
+        // chegou após a 1ª emissão), sobe para a Home em vez de ficar preso.
+        if (rotaDepois == '/welcome' &&
+            destino.nome == '/HomeEventScreen' &&
+            _eventos.temEventoGerido) {
+          Get.offAllNamed(destino.nome, arguments: destino.argumentos);
+          return;
+        }
+
         if (AppRotasSessao.destinoEstavel(rotaDepois) ||
             AppRotasSessao.usuarioJaNavegando(
               rotaDepois,

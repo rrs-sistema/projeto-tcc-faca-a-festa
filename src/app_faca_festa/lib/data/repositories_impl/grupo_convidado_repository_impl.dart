@@ -33,11 +33,13 @@ class GrupoConvidadoRepositoryImpl implements GrupoConvidadoRepository {
   @override
   Future<void> excluirGrupo(
     String idGrupo, {
+    String? idEvento,
     bool desvincularConvidados = true,
   }) {
     return UpdateOperations.run(() async {
       return remote.excluirGrupo(
         idGrupo,
+        idEvento: idEvento,
         desvincularConvidados: desvincularConvidados,
       );
     });

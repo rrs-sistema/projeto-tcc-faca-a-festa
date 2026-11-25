@@ -16,6 +16,7 @@ import 'package:app_faca_festa/presentation/modules/calculadora/controllers/calc
 import 'package:app_faca_festa/presentation/modules/convidado/controllers/cardapio_controller.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/controllers/convidado_controller.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/controllers/grupo_convidado_controller.dart';
+import 'package:app_faca_festa/presentation/modules/convidado/controllers/mesa_evento_controller.dart';
 import 'package:app_faca_festa/presentation/modules/checklist/controllers/tarefa_controller.dart';
 import 'package:app_faca_festa/presentation/modules/financeiro/controllers/financeiro_gerente_controller.dart';
 import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_controller.dart';
@@ -66,6 +67,9 @@ abstract final class EventoBootstrap {
               : null,
           grupoControllerOf: () => Get.isRegistered<GrupoConvidadoController>()
               ? Get.find<GrupoConvidadoController>()
+              : null,
+          mesaControllerOf: () => Get.isRegistered<MesaEventoController>()
+              ? Get.find<MesaEventoController>()
               : null,
           tarefaControllerOf: () => Get.isRegistered<TarefaController>()
               ? Get.find<TarefaController>()

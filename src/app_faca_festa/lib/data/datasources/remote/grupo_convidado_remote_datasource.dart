@@ -22,9 +22,9 @@ class GrupoConvidadoRemoteDatasource {
         .map((snapshot) {
       final grupos = snapshot.docs.map((document) {
         final data = Map<String, dynamic>.from(document.data());
-        if ((data['id_grupo'] ?? '').toString().trim().isEmpty) {
-          data['id_grupo'] = document.id;
-        }
+        // Sempre usa o ID do documento: evita excluir/atualizar o doc errado
+        // quando o campo id_grupo divergir.
+        data['id_grupo'] = document.id;
         if ((data['id_evento'] ?? '').toString().trim().isEmpty) {
           data['id_evento'] = idEvento;
         }
@@ -93,12 +93,20 @@ class GrupoConvidadoRemoteDatasource {
 
   Future<void> excluirGrupo(
     String idGrupo, {
+    String? idEvento,
     required bool desvincularConvidados,
   }) async {
     final batch = firestore.batch();
     if (desvincularConvidados) {
-      final snapshot =
-          await _convidados.where('id_grupo', isEqualTo: idGrupo).get();
+      // Precisa filtrar por id_evento: senão o list do convidado cai em
+      // PERMISSION_DENIED (regra exige eventoDono(id_evento) na query).
+      final eventoId = (idEvento ?? '').trim();
+      final query = eventoId.isEmpty
+          ? _convidados.where('id_grupo', isEqualTo: idGrupo)
+          : _convidados
+              .where('id_evento', isEqualTo: eventoId)
+              .where('id_grupo', isEqualTo: idGrupo);
+      final snapshot = await query.get();
       for (final document in snapshot.docs) {
         batch.update(document.reference, {
           'id_grupo': null,

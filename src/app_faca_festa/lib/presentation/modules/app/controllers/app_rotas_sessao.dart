@@ -11,10 +11,12 @@ abstract final class AppRotasSessao {
       rota.startsWith('/areaconvidado') ||
       rota == '/conviteNaoEncontrado';
 
+  /// Rotas em que a revalidação de sessão não deve forçar outro destino.
+  /// `/welcome` NÃO entra aqui: é provisório até existir evento gerido
+  /// (próprio ou como co-organizador); ver AppCicloSessao.
   static bool destinoEstavel(String rota) {
     return rota == '/HomeEventScreen' ||
         rota.startsWith('/HomeEventScreen/') ||
-        rota == '/welcome' ||
         rota == '/fornecedor' ||
         rota == '/fornecedores' ||
         rota == '/admin' ||
@@ -29,6 +31,7 @@ abstract final class AppRotasSessao {
         rota == '/' ||
         rota == '/notfound' ||
         rota == '/role' ||
+        rota == '/welcome' ||
         rota == '/login' ||
         rota == '/register' ||
         rota == '/forgotPassword' ||

@@ -13,10 +13,12 @@ import 'package:app_faca_festa/core/utils/form_validators.dart';
 import 'package:app_faca_festa/domain/services/convite_email_service.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/controllers/convidado_controller.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/controllers/grupo_convidado_controller.dart';
+import 'package:app_faca_festa/presentation/modules/convidado/controllers/mesa_evento_controller.dart';
 import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_controller.dart';
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import 'package:app_faca_festa/domain/entities/convidado.dart';
 import 'package:app_faca_festa/domain/entities/grupo_convidado.dart';
+import 'package:app_faca_festa/domain/entities/mesa_evento.dart';
 import 'package:app_faca_festa/presentation/modules/legal/widgets/aviso_lgpd_card.dart';
 import 'package:app_faca_festa/presentation/widgets/cadastro_passos_bar.dart';
 import 'buscar_contato_agenda_sheet.dart';
@@ -29,6 +31,7 @@ Future<void> abrirDialogAdicionarConvidado(
   required EventoController eventoController,
   required ConvidadoController convidadoController,
   required GrupoConvidadoController grupoController,
+  MesaEventoController? mesaController,
   Convidado? convidado,
 }) {
   return showCadastroBottomSheet<void>(
@@ -40,6 +43,10 @@ Future<void> abrirDialogAdicionarConvidado(
       eventoController: eventoController,
       convidadoController: convidadoController,
       grupoController: grupoController,
+      mesaController: mesaController ??
+          (Get.isRegistered<MesaEventoController>()
+              ? Get.find<MesaEventoController>()
+              : null),
       convidado: convidado,
     ),
   );
@@ -52,6 +59,7 @@ class _AdicionarConvidadoSheet extends StatefulWidget {
     required this.eventoController,
     required this.convidadoController,
     required this.grupoController,
+    this.mesaController,
     this.convidado,
   });
 
@@ -60,6 +68,7 @@ class _AdicionarConvidadoSheet extends StatefulWidget {
   final EventoController eventoController;
   final ConvidadoController convidadoController;
   final GrupoConvidadoController grupoController;
+  final MesaEventoController? mesaController;
   final Convidado? convidado;
 
   @override
@@ -79,6 +88,7 @@ class _AdicionarConvidadoSheetState extends State<_AdicionarConvidadoSheet> {
   var _passo = 0;
   var _garantindoGrupoPadrao = false;
   late final RxString idGrupoSelecionado;
+  late final RxString idMesaSelecionada;
   late final Rx<TipoConvidado> tipoConvidado;
   late final RxBool cuidadoEspecial;
   late final RxBool enviarPorEmail;
@@ -89,6 +99,7 @@ class _AdicionarConvidadoSheetState extends State<_AdicionarConvidadoSheet> {
   EventoController get eventoController => widget.eventoController;
   ConvidadoController get convidadoController => widget.convidadoController;
   GrupoConvidadoController get grupoController => widget.grupoController;
+  MesaEventoController? get mesaController => widget.mesaController;
   Convidado? get convidado => widget.convidado;
   bool get editando => convidado != null;
 
@@ -100,22 +111,45 @@ class _AdicionarConvidadoSheetState extends State<_AdicionarConvidadoSheet> {
     telefoneMask = FormMasks.telefone(initialText: convidado?.contato ?? '');
     telCtrl = TextEditingController(text: telefoneMask.getMaskedText());
     idGrupoSelecionado = (convidado?.idGrupo ?? '').obs;
+    idMesaSelecionada = (convidado?.idMesa ?? '').obs;
     tipoConvidado = (convidado?.tipoConvidado ?? TipoConvidado.adulto).obs;
     cuidadoEspecial = (convidado?.cuidadoEspecial ?? false).obs;
     enviarPorEmail = false.obs;
     salvando = false.obs;
 
-    final nomeGrupoInicial = convidado?.nomeGrupo?.trim();
-    if (idGrupoSelecionado.value.trim().isEmpty &&
-        nomeGrupoInicial != null &&
-        nomeGrupoInicial.isNotEmpty) {
-      final nomeGrupo = nomeGrupoInicial.toLowerCase();
-      for (final grupo in grupoController.grupos) {
-        if (grupo.nome.trim().toLowerCase() == nomeGrupo) {
-          idGrupoSelecionado.value = grupo.idGrupo;
-          break;
-        }
+    _sincronizarSelecaoGrupoInicial();
+    _sincronizarSelecaoMesaInicial();
+  }
+
+  void _sincronizarSelecaoGrupoInicial() {
+    final grupos = <String, GrupoConvidado>{
+      for (final g in grupoController.grupos) g.idGrupo: g,
+    };
+    final idAtual = idGrupoSelecionado.value.trim();
+    if (idAtual.isNotEmpty && grupos.containsKey(idAtual)) return;
+
+    final nomeGrupoInicial = (convidado?.nomeGrupo ?? '').trim();
+    if (nomeGrupoInicial.isEmpty) {
+      if (idAtual.isNotEmpty) idGrupoSelecionado.value = '';
+      return;
+    }
+    final nomeGrupo = nomeGrupoInicial.toLowerCase();
+    for (final grupo in grupoController.grupos) {
+      if (grupo.nome.trim().toLowerCase() == nomeGrupo) {
+        idGrupoSelecionado.value = grupo.idGrupo;
+        return;
       }
+    }
+    if (idAtual.isNotEmpty) idGrupoSelecionado.value = '';
+  }
+
+  void _sincronizarSelecaoMesaInicial() {
+    final controller = mesaController;
+    if (controller == null) return;
+    final ids = {for (final m in controller.mesasAtivas) m.idMesa};
+    final idAtual = idMesaSelecionada.value.trim();
+    if (idAtual.isNotEmpty && !ids.contains(idAtual)) {
+      idMesaSelecionada.value = '';
     }
   }
 
@@ -130,6 +164,7 @@ class _AdicionarConvidadoSheetState extends State<_AdicionarConvidadoSheet> {
     emailCtrl.dispose();
     telCtrl.dispose();
     idGrupoSelecionado.close();
+    idMesaSelecionada.close();
     tipoConvidado.close();
     cuidadoEspecial.close();
     enviarPorEmail.close();
@@ -161,6 +196,16 @@ class _AdicionarConvidadoSheetState extends State<_AdicionarConvidadoSheet> {
     if (idGrupo.isEmpty) return null;
     for (final grupo in grupoController.grupos) {
       if (grupo.idGrupo == idGrupo) return grupo;
+    }
+    return null;
+  }
+
+  MesaEvento? mesaSelecionadaAtual() {
+    final mesas = mesaController?.mesasAtivas ?? const <MesaEvento>[];
+    final idMesa = idMesaSelecionada.value.trim();
+    if (idMesa.isEmpty) return null;
+    for (final mesa in mesas) {
+      if (mesa.idMesa == idMesa) return mesa;
     }
     return null;
   }
@@ -294,6 +339,7 @@ class _AdicionarConvidadoSheetState extends State<_AdicionarConvidadoSheet> {
       final agora = DateTime.now();
       final convidadoEditando = widget.convidado;
 
+      final mesa = mesaSelecionadaAtual();
       if (convidadoEditando != null) {
         final atualizado = convidadoEditando.copyWith(
           nome: nome,
@@ -301,12 +347,23 @@ class _AdicionarConvidadoSheetState extends State<_AdicionarConvidadoSheet> {
           email: email,
           idGrupo: grupo.idGrupo,
           nomeGrupo: grupo.nome,
+          idMesa: mesa?.idMesa,
+          numeroMesa: mesa?.numeroMesa,
           tipoConvidado: tipoConvidado.value,
           ocupaAssento: tipoConvidado.value != TipoConvidado.bebe,
           cuidadoEspecial: cuidadoEspecial.value,
           dataAtualizacao: agora,
         );
         await convidadoController.atualizarConvidado(atualizado);
+        if (mesa != null) {
+          await grupoController.vincularConvidadoNaMesa(
+            convidado: atualizado,
+            idMesa: mesa.idMesa,
+            numeroMesa: mesa.numeroMesa,
+          );
+        } else if ((convidadoEditando.idMesa ?? '').trim().isNotEmpty) {
+          await grupoController.removerConvidadoDaMesa(atualizado);
+        }
         await _fecharAposSalvar(
           titulo: 'Convidado atualizado',
           nome: nome,
@@ -327,6 +384,8 @@ class _AdicionarConvidadoSheetState extends State<_AdicionarConvidadoSheet> {
         tipoConvidado: tipoConvidado.value,
         idGrupo: grupo.idGrupo,
         nomeGrupo: grupo.nome,
+        idMesa: mesa?.idMesa,
+        numeroMesa: mesa?.numeroMesa,
         ocupaAssento: tipoConvidado.value != TipoConvidado.bebe,
         cuidadoEspecial: cuidadoEspecial.value,
         dataCadastro: agora,
@@ -770,11 +829,24 @@ class _AdicionarConvidadoSheetState extends State<_AdicionarConvidadoSheet> {
           ]),
         );
       }
+      final porId = <String, GrupoConvidado>{
+        for (final g in grupos) g.idGrupo: g,
+      };
+      final itens = porId.values.toList(growable: false);
       final selectedValue = idGrupoSelecionado.value.trim().isEmpty
           ? null
           : idGrupoSelecionado.value.trim();
-      final valueExists = selectedValue == null ||
-          grupos.any((g) => g.idGrupo == selectedValue);
+      final valueSeguro =
+          selectedValue != null && porId.containsKey(selectedValue)
+              ? selectedValue
+              : null;
+      if (selectedValue != null && valueSeguro == null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (idGrupoSelecionado.value.trim() == selectedValue) {
+            idGrupoSelecionado.value = '';
+          }
+        });
+      }
 
       return Container(
         decoration: BoxDecoration(
@@ -788,11 +860,11 @@ class _AdicionarConvidadoSheetState extends State<_AdicionarConvidadoSheet> {
           ],
         ),
         child: DropdownButtonFormField<String>(
-          value: valueExists ? selectedValue : null,
+          value: valueSeguro,
           isExpanded: true,
           decoration: InputDecoration(
             labelText: 'Grupo',
-            helperText: 'Famílias, amigos, mesas.',
+            helperText: 'Organização social (Família, Amigos...).',
             labelStyle: GoogleFonts.poppins(color: textMuted, fontSize: 12),
             helperStyle: GoogleFonts.poppins(color: textMuted, fontSize: 10),
             prefixIcon: Icon(Icons.group_outlined, color: primary, size: 20),
@@ -813,7 +885,7 @@ class _AdicionarConvidadoSheetState extends State<_AdicionarConvidadoSheet> {
           ),
           icon:
               Icon(Icons.keyboard_arrow_down_rounded, color: primary, size: 20),
-          items: grupos
+          items: itens
               .map((g) => DropdownMenuItem(
                   value: g.idGrupo,
                   child: Text(g.nome,
@@ -826,6 +898,97 @@ class _AdicionarConvidadoSheetState extends State<_AdicionarConvidadoSheet> {
           onChanged: (v) => idGrupoSelecionado.value = v ?? '',
           validator: (v) =>
               (v == null || v.trim().isEmpty) ? 'Selecione um grupo' : null,
+        ),
+      );
+    });
+  }
+
+  Widget buildMesaDropdown() {
+    final controller = mesaController;
+    if (controller == null) return const SizedBox.shrink();
+
+    return Obx(() {
+      final porId = <String, MesaEvento>{
+        for (final m in controller.mesasAtivas) m.idMesa: m,
+      };
+      final mesas = porId.values.toList(growable: false);
+      final selectedValue = idMesaSelecionada.value.trim().isEmpty
+          ? null
+          : idMesaSelecionada.value.trim();
+      final valueSeguro =
+          selectedValue != null && porId.containsKey(selectedValue)
+              ? selectedValue
+              : null;
+      if (selectedValue != null && valueSeguro == null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (idMesaSelecionada.value.trim() == selectedValue) {
+            idMesaSelecionada.value = '';
+          }
+        });
+      }
+
+      return Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [
+            BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 4))
+          ],
+        ),
+        child: DropdownButtonFormField<String?>(
+          value: valueSeguro,
+          isExpanded: true,
+          decoration: InputDecoration(
+            labelText: 'Mesa (opcional)',
+            helperText: 'Posição física no salão.',
+            labelStyle: GoogleFonts.poppins(color: textMuted, fontSize: 12),
+            helperStyle: GoogleFonts.poppins(color: textMuted, fontSize: 10),
+            prefixIcon:
+                Icon(Icons.table_bar_outlined, color: primary, size: 20),
+            filled: true,
+            fillColor: Colors.white,
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide(color: Colors.grey.shade200)),
+            focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide(color: primary, width: 1.2)),
+          ),
+          icon:
+              Icon(Icons.keyboard_arrow_down_rounded, color: primary, size: 20),
+          items: [
+            DropdownMenuItem<String?>(
+              value: null,
+              child: Text(
+                'Sem mesa',
+                style: GoogleFonts.poppins(
+                  color: textMuted,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            ...mesas.map(
+              (m) => DropdownMenuItem<String?>(
+                value: m.idMesa,
+                child: Text(
+                  '${m.nomeMesa} · nº ${m.numeroMesa}',
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.poppins(
+                    color: textDark,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ],
+          onChanged: (v) => idMesaSelecionada.value = v ?? '',
         ),
       );
     });
@@ -1093,6 +1256,8 @@ class _AdicionarConvidadoSheetState extends State<_AdicionarConvidadoSheet> {
                         }),
                         const SizedBox(height: 12),
                         buildGroupDropdown(),
+                        const SizedBox(height: 12),
+                        buildMesaDropdown(),
                         const SizedBox(height: 12),
                         buildCareSwitch(),
                       ],

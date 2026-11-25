@@ -5,6 +5,7 @@ import 'package:app_faca_festa/presentation/modules/calculadora/controllers/calc
 import 'package:app_faca_festa/presentation/modules/convidado/controllers/cardapio_controller.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/controllers/convidado_controller.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/controllers/grupo_convidado_controller.dart';
+import 'package:app_faca_festa/presentation/modules/convidado/controllers/mesa_evento_controller.dart';
 import 'package:app_faca_festa/presentation/modules/checklist/controllers/tarefa_controller.dart';
 import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_controller.dart';
 import 'package:app_faca_festa/presentation/modules/inspiracao/controllers/inspiracao_controller.dart';
@@ -33,6 +34,7 @@ class GetxEventoSessionCoordinator implements EventoSessionCoordinator {
     required this.convidadoControllerOf,
     required this.cardapioControllerOf,
     required this.grupoControllerOf,
+    required this.mesaControllerOf,
     required this.tarefaControllerOf,
     required this.inspiracaoControllerOf,
     required this.usuarioControllerOf,
@@ -47,6 +49,7 @@ class GetxEventoSessionCoordinator implements EventoSessionCoordinator {
   final ConvidadoController? Function() convidadoControllerOf;
   final CardapioController? Function() cardapioControllerOf;
   final GrupoConvidadoController? Function() grupoControllerOf;
+  final MesaEventoController? Function() mesaControllerOf;
   final TarefaController? Function() tarefaControllerOf;
   final InspiracaoController? Function() inspiracaoControllerOf;
   final UsuarioController? Function() usuarioControllerOf;
@@ -59,6 +62,7 @@ class GetxEventoSessionCoordinator implements EventoSessionCoordinator {
   StreamSubscription<void>? _convidadosSub;
   StreamSubscription<void>? _cardapiosSub;
   StreamSubscription<void>? _gruposSub;
+  StreamSubscription<void>? _mesasSub;
   StreamSubscription<void>? _tarefasSub;
 
   @override
@@ -83,6 +87,7 @@ class GetxEventoSessionCoordinator implements EventoSessionCoordinator {
     final convidadoController = convidadoControllerOf();
     final cardapioController = cardapioControllerOf();
     final grupoController = grupoControllerOf();
+    final mesaController = mesaControllerOf();
     final tarefaController = tarefaControllerOf();
     final inspiracaoController = inspiracaoControllerOf();
     final usuarioController = usuarioControllerOf();
@@ -101,6 +106,10 @@ class GetxEventoSessionCoordinator implements EventoSessionCoordinator {
         .listen((_) {});
     _gruposSub = grupoController
         ?.escutarGrupos(evento.idEvento)
+        .asStream()
+        .listen((_) {});
+    _mesasSub = mesaController
+        ?.escutarMesas(evento.idEvento)
         .asStream()
         .listen((_) {});
     _tarefasSub = tarefaController
@@ -134,18 +143,21 @@ class GetxEventoSessionCoordinator implements EventoSessionCoordinator {
     await _convidadosSub?.cancel();
     await _cardapiosSub?.cancel();
     await _gruposSub?.cancel();
+    await _mesasSub?.cancel();
 
     _orcamentosSub = null;
     _tarefasSub = null;
     _convidadosSub = null;
     _cardapiosSub = null;
     _gruposSub = null;
+    _mesasSub = null;
 
     await orcamentoControllerOf()?.encerrarEscutas();
     await tarefaControllerOf()?.encerrarEscutas();
     convidadoControllerOf()?.limpar();
     await cardapioControllerOf()?.encerrarEscutas();
     await grupoControllerOf()?.encerrarEscutas();
+    await mesaControllerOf()?.encerrarEscutas();
     await inspiracaoControllerOf()?.encerrarEscutas();
     await orcamentoGastoControllerOf()?.encerrarEscutas();
     calculadoraControllerOf()?.limpar();

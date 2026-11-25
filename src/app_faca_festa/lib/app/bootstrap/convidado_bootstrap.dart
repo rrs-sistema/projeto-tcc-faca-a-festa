@@ -7,12 +7,14 @@ import 'package:app_faca_festa/data/datasources/remote/convidado_remote_datasour
 import 'package:app_faca_festa/data/datasources/remote/convite_convidado_remote_datasource.dart';
 import 'package:app_faca_festa/data/datasources/remote/cardapio_remote_datasource.dart';
 import 'package:app_faca_festa/data/datasources/remote/grupo_convidado_remote_datasource.dart';
+import 'package:app_faca_festa/data/datasources/remote/mesa_evento_remote_datasource.dart';
 import 'package:app_faca_festa/data/datasources/remote/presente_reservation_remote_datasource.dart';
 import 'package:app_faca_festa/data/datasources/remote/tarefa_remote_datasource.dart';
 import 'package:app_faca_festa/data/repositories_impl/convidado_repository_impl.dart';
 import 'package:app_faca_festa/data/repositories_impl/convite_convidado_repository_impl.dart';
 import 'package:app_faca_festa/data/repositories_impl/cardapio_repository_impl.dart';
 import 'package:app_faca_festa/data/repositories_impl/grupo_convidado_repository_impl.dart';
+import 'package:app_faca_festa/data/repositories_impl/mesa_evento_repository_impl.dart';
 import 'package:app_faca_festa/data/repositories_impl/tarefa_repository_impl.dart';
 import 'package:app_faca_festa/data/repositories_impl/presente_reservation_repository_impl.dart';
 import 'package:app_faca_festa/data/services/convite/enviar_convites_por_email_service.dart';
@@ -20,6 +22,7 @@ import 'package:app_faca_festa/domain/repositories/convidado_repository.dart';
 import 'package:app_faca_festa/domain/repositories/convite_convidado_repository.dart';
 import 'package:app_faca_festa/domain/repositories/cardapio_repository.dart';
 import 'package:app_faca_festa/domain/repositories/grupo_convidado_repository.dart';
+import 'package:app_faca_festa/domain/repositories/mesa_evento_repository.dart';
 import 'package:app_faca_festa/domain/repositories/tarefa_repository.dart';
 import 'package:app_faca_festa/domain/repositories/presente_reservation_repository.dart';
 import 'package:app_faca_festa/domain/services/convite_email_service.dart';
@@ -27,6 +30,7 @@ import 'package:app_faca_festa/presentation/modules/app/controllers/app_controll
 import 'package:app_faca_festa/presentation/modules/convidado/controllers/cardapio_controller.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/controllers/convidado_controller.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/controllers/grupo_convidado_controller.dart';
+import 'package:app_faca_festa/presentation/modules/convidado/controllers/mesa_evento_controller.dart';
 import 'package:app_faca_festa/presentation/modules/checklist/controllers/tarefa_controller.dart';
 import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_controller.dart';
 
@@ -146,6 +150,32 @@ abstract final class ConvidadoBootstrap {
       Get.put<GrupoConvidadoController>(
         GrupoConvidadoController(
           repository: Get.find<GrupoConvidadoRepository>(),
+        ),
+        permanent: true,
+      );
+    }
+
+    if (!Get.isRegistered<MesaEventoRemoteDatasource>()) {
+      Get.put<MesaEventoRemoteDatasource>(
+        MesaEventoRemoteDatasource(Get.find<FirebaseFirestore>()),
+        permanent: true,
+      );
+    }
+
+    if (!Get.isRegistered<MesaEventoRepository>()) {
+      Get.put<MesaEventoRepository>(
+        MesaEventoRepositoryImpl(Get.find<MesaEventoRemoteDatasource>()),
+        permanent: true,
+      );
+    }
+
+    if (!Get.isRegistered<MesaEventoController>()) {
+      Get.put<MesaEventoController>(
+        MesaEventoController(
+          repository: Get.find<MesaEventoRepository>(),
+          grupoControllerOf: () => Get.isRegistered<GrupoConvidadoController>()
+              ? Get.find<GrupoConvidadoController>()
+              : null,
         ),
         permanent: true,
       );

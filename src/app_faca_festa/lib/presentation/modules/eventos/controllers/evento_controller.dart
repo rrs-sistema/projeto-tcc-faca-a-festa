@@ -33,6 +33,24 @@ class EventoController extends GetxController {
   /// Domain-facing access used by presentation and application controllers.
   TipoEvento? get tipoEventoAtualEntidade => tipoEventoAtual.value;
 
+  /// Eventos que o usuário gerencia (dono ou co-organizador) — lista unida.
+  List<Evento> get eventosGeridos => eventosDoUsuario.toList();
+
+  /// Há pelo menos um evento gerido (próprio ou como co-organizador).
+  bool get temEventoGerido =>
+      eventoAtualEntidade != null || eventosDoUsuario.isNotEmpty;
+
+  /// UID da listagem ativa (sessão de organizador).
+  String? get idUsuarioListado => _idUsuarioListado;
+
+  /// True se o evento ativo é gerido como co-organizador (não como dono).
+  bool ehCoOrganizadorDoEventoAtual([String? uid]) {
+    final evento = eventoAtualEntidade;
+    final id = (uid ?? _idUsuarioListado ?? '').trim();
+    if (evento == null || id.isEmpty) return false;
+    return evento.ehCoOrganizador(id);
+  }
+
   StreamSubscription<Evento?>? _eventoSubscription;
   StreamSubscription<Evento?>? _eventoDocSub;
   StreamSubscription<List<Evento>>? _eventosUsuarioSub;

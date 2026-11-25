@@ -298,7 +298,56 @@ void main() {
 
     expect(controller.eventoAtual.value, isNull);
     expect(controller.eventosDoUsuario, isEmpty);
+    expect(controller.temEventoGerido, isFalse);
+    expect(controller.eventosGeridos, isEmpty);
     expect(sessionCoordinator.eventoInicializado, isNull);
+  });
+
+  test('co-org only event counts as managed and opens the session', () async {
+    final coOrg = _evento(
+      id: 'evento-co',
+      nome: 'Formatura do Riva',
+      idUsuario: 'dono-outro',
+      coOrganizadores: const ['usuario-1'],
+      data: _diasAPartirDeHoje(10),
+    );
+    repository.eventos = [coOrg];
+
+    await controller.carregarEventosDoUsuario('usuario-1');
+
+    expect(controller.temEventoGerido, isTrue);
+    expect(controller.eventosGeridos.map((e) => e.idEvento), ['evento-co']);
+    expect(controller.eventoAtual.value?.idEvento, 'evento-co');
+    expect(controller.ehCoOrganizadorDoEventoAtual(), isTrue);
+  });
+
+  test('united list keeps owned and co-organized events', () async {
+    final proprio = _evento(
+      id: 'evento-proprio',
+      nome: 'Meu evento',
+      idUsuario: 'usuario-1',
+      data: _diasAPartirDeHoje(30),
+      cadastro: DateTime(2026, 1, 1),
+    );
+    final coOrg = _evento(
+      id: 'evento-co',
+      nome: 'Evento compartilhado',
+      idUsuario: 'dono-outro',
+      coOrganizadores: const ['usuario-1'],
+      data: _diasAPartirDeHoje(5),
+      cadastro: DateTime(2026, 2, 1),
+    );
+    repository.eventos = [proprio, coOrg];
+
+    await controller.carregarEventosDoUsuario('usuario-1');
+
+    expect(controller.temEventoGerido, isTrue);
+    expect(
+      controller.eventosGeridos.map((e) => e.idEvento).toSet(),
+      {'evento-proprio', 'evento-co'},
+    );
+    // Mais próximo no calendário.
+    expect(controller.eventoAtual.value?.idEvento, 'evento-co');
   });
 
   test('selecting another event cancels the previous session', () async {
@@ -428,17 +477,20 @@ void main() {
 Evento _evento({
   String id = 'evento-1',
   String nome = 'Festa',
+  String idUsuario = 'usuario-1',
+  List<String> coOrganizadores = const [],
   DateTime? data,
   DateTime? cadastro,
 }) {
   return Evento(
     idEvento: id,
     idTipoEvento: 'tipo-1',
-    idUsuario: 'usuario-1',
+    idUsuario: idUsuario,
     nomeEvento: nome,
     localEvento: 'Salão',
     data: data ?? DateTime(2026, 12, 20),
     dataCadastro: cadastro,
+    coOrganizadores: coOrganizadores,
   );
 }
 

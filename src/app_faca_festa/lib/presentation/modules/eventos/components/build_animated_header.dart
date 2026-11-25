@@ -12,6 +12,7 @@ import 'dart:ui';
 
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_controller.dart';
+import 'package:app_faca_festa/presentation/modules/eventos/home_organizador_copy.dart';
 import 'package:app_faca_festa/domain/entities/evento.dart';
 import 'package:app_faca_festa/presentation/widgets/frase_aleatoria_widget.dart';
 import 'package:app_faca_festa/presentation/widgets/tema_capa_imagem.dart';
@@ -46,6 +47,7 @@ Widget buildAnimatedHeader(
         (tipoEvento?.nome ?? 'Faça a Festa');
     final temRotuloPersonalizado =
         (evento?.rotuloBanner ?? '').trim().isNotEmpty;
+    final ehCoOrg = eventoController.ehCoOrganizadorDoEventoAtual();
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -258,6 +260,10 @@ Widget buildAnimatedHeader(
                                         shadows: _sombraCapa,
                                       ),
                                     ),
+                                    if (ehCoOrg) ...[
+                                      const SizedBox(height: 6),
+                                      _badgeCoOrganizador(),
+                                    ],
                                     const SizedBox(height: 8),
                                     _metaEventoCapa(evento),
                                   ],
@@ -714,6 +720,36 @@ Widget _metaEventoCapa(Evento? evento) {
           ),
         ),
       ],
+    ),
+  );
+}
+
+Widget _badgeCoOrganizador() {
+  return Tooltip(
+    message: HomeOrganizadorCopy.papelCoOrganizadorDica,
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.22),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.groups_2_rounded, color: Colors.white, size: 14),
+          const SizedBox(width: 5),
+          Text(
+            HomeOrganizadorCopy.papelCoOrganizador,
+            style: GoogleFonts.poppins(
+              color: Colors.white,
+              fontSize: 11.5,
+              fontWeight: FontWeight.w700,
+              shadows: _sombraCapa,
+            ),
+          ),
+        ],
+      ),
     ),
   );
 }

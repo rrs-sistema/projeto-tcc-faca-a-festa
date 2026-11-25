@@ -11,6 +11,7 @@ import 'package:app_faca_festa/presentation/modules/checklist/controllers/tarefa
 import 'package:app_faca_festa/presentation/modules/convidado/controllers/cardapio_controller.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/controllers/convidado_controller.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/controllers/grupo_convidado_controller.dart';
+import 'package:app_faca_festa/presentation/modules/convidado/controllers/mesa_evento_controller.dart';
 import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_controller.dart';
 import 'package:app_faca_festa/presentation/modules/inspiracao/controllers/inspiracao_controller.dart';
 import 'package:app_faca_festa/presentation/modules/orcamento/controllers/orcamento_controller.dart';
@@ -25,6 +26,7 @@ void main() {
   late _ConvidadoFake convidado;
   late _CardapioFake cardapio;
   late _GrupoFake grupo;
+  late _MesaFake mesa;
   late _TarefaFake tarefa;
   late _InspiracaoFake inspiracao;
   late _UsuarioFake usuario;
@@ -40,6 +42,7 @@ void main() {
     convidado = _ConvidadoFake(log);
     cardapio = _CardapioFake(log);
     grupo = _GrupoFake(log);
+    mesa = _MesaFake(log);
     tarefa = _TarefaFake(log);
     inspiracao = _InspiracaoFake(log);
     usuario = _UsuarioFake(log);
@@ -53,6 +56,7 @@ void main() {
       convidado: convidado,
       cardapio: cardapio,
       grupo: grupo,
+      mesa: mesa,
       tarefa: tarefa,
       inspiracao: inspiracao,
       usuario: usuario,
@@ -74,6 +78,7 @@ void main() {
         'lookup:convidado',
         'lookup:cardapio',
         'lookup:grupo',
+        'lookup:mesa',
         'lookup:tarefa',
         'lookup:inspiracao',
         'lookup:usuario',
@@ -81,6 +86,7 @@ void main() {
         'convidado.escutar:evento-1',
         'cardapio.escutar:evento-1',
         'grupo.escutar:evento-1',
+        'mesa.escutar:evento-1',
         'tarefa.listen:evento-1',
         'inspiracao.configurar:evento-1:usuario-logado',
         'lookup:fornecedor',
@@ -113,6 +119,7 @@ void main() {
         convidado: convidado,
         cardapio: cardapio,
         grupo: grupo,
+        mesa: mesa,
         tarefa: tarefa,
         inspiracao: inspiracao,
         usuario: null,
@@ -140,6 +147,7 @@ void main() {
         convidado: null,
         cardapio: null,
         grupo: null,
+        mesa: null,
         tarefa: null,
         inspiracao: null,
         usuario: null,
@@ -155,6 +163,7 @@ void main() {
         'lookup:convidado',
         'lookup:cardapio',
         'lookup:grupo',
+        'lookup:mesa',
         'lookup:tarefa',
         'lookup:inspiracao',
         'lookup:usuario',
@@ -198,6 +207,7 @@ void main() {
         'convidado.sub.cancel',
         'cardapio.sub.cancel',
         'grupo.sub.cancel',
+        'mesa.sub.cancel',
         'lookup:orcamento',
         'orcamento.encerrar',
         'lookup:tarefa',
@@ -208,6 +218,8 @@ void main() {
         'cardapio.encerrar',
         'lookup:grupo',
         'grupo.encerrar',
+        'lookup:mesa',
+        'mesa.encerrar',
         'lookup:inspiracao',
         'inspiracao.encerrar',
         'lookup:gasto',
@@ -234,6 +246,8 @@ void main() {
         'cardapio.encerrar',
         'lookup:grupo',
         'grupo.encerrar',
+        'lookup:mesa',
+        'mesa.encerrar',
         'lookup:inspiracao',
         'inspiracao.encerrar',
         'lookup:gasto',
@@ -314,6 +328,7 @@ GetxEventoSessionCoordinator _montarCoordinator({
   required _ConvidadoFake? convidado,
   required _CardapioFake? cardapio,
   required _GrupoFake? grupo,
+  required _MesaFake? mesa,
   required _TarefaFake? tarefa,
   required _InspiracaoFake? inspiracao,
   required _UsuarioFake? usuario,
@@ -341,6 +356,10 @@ GetxEventoSessionCoordinator _montarCoordinator({
     grupoControllerOf: () {
       log.add('lookup:grupo');
       return grupo;
+    },
+    mesaControllerOf: () {
+      log.add('lookup:mesa');
+      return mesa;
     },
     tarefaControllerOf: () {
       log.add('lookup:tarefa');
@@ -577,6 +596,28 @@ class _GrupoFake extends Fake implements GrupoConvidadoController {
   @override
   Future<void> encerrarEscutas() async {
     log.add('grupo.encerrar');
+  }
+}
+
+class _MesaFake extends Fake implements MesaEventoController {
+  _MesaFake(this.log);
+
+  final _CallLog log;
+  final pendente = Completer<void>();
+
+  @override
+  Future<void> escutarMesas(String idEvento) {
+    return _segurar(
+      log,
+      call: 'mesa.escutar:$idEvento',
+      cancelamento: 'mesa.sub.cancel',
+      pendente: pendente,
+    );
+  }
+
+  @override
+  Future<void> encerrarEscutas() async {
+    log.add('mesa.encerrar');
   }
 }
 

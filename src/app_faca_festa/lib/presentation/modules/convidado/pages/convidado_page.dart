@@ -12,11 +12,13 @@ import 'package:app_faca_festa/core/legal/convidados_csv.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/controllers/cardapio_controller.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/controllers/convidado_controller.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/controllers/grupo_convidado_controller.dart';
+import 'package:app_faca_festa/presentation/modules/convidado/controllers/mesa_evento_controller.dart';
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import 'package:app_faca_festa/domain/entities/evento.dart';
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/components/abrir_adicionar_convidado.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/components/abrir_adicionar_grupo_bottom_sheet.dart';
+import 'package:app_faca_festa/presentation/modules/convidado/components/abrir_adicionar_mesa_bottom_sheet.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/components/cardapios_tab.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/components/escolha_novo_cardapio_sheet.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/components/gerar_cardapio_ia_bottom_sheet.dart';
@@ -35,6 +37,7 @@ class ConvidadosPage extends StatefulWidget {
   final AppController appController;
   final EventoController eventoController;
   final GrupoConvidadoController grupoController;
+  final MesaEventoController mesaController;
   final ConvidadoController convidadoController;
   final CardapioController cardapioController;
   final bool automaticamenteImplyLeading;
@@ -45,6 +48,7 @@ class ConvidadosPage extends StatefulWidget {
     required this.appController,
     required this.eventoController,
     required this.grupoController,
+    required this.mesaController,
     required this.convidadoController,
     required this.cardapioController,
     this.automaticamenteImplyLeading = true,
@@ -67,6 +71,7 @@ class _ConvidadosPageState extends State<ConvidadosPage>
   AppController get appController => widget.appController;
   EventoController get eventoController => widget.eventoController;
   GrupoConvidadoController get grupoController => widget.grupoController;
+  MesaEventoController get mesaController => widget.mesaController;
   ConvidadoController get convidadoController => widget.convidadoController;
   CardapioController get cardapioController => widget.cardapioController;
 
@@ -82,6 +87,7 @@ class _ConvidadosPageState extends State<ConvidadosPage>
       (evento) {
         if (evento != null && evento.idEvento.trim().isNotEmpty) {
           grupoController.escutarGrupos(evento.idEvento);
+          mesaController.escutarMesas(evento.idEvento);
           convidadoController.escutarConvidados(evento.idEvento);
         }
       },
@@ -124,6 +130,7 @@ class _ConvidadosPageState extends State<ConvidadosPage>
     }
 
     grupoController.escutarGrupos(evento.idEvento);
+    mesaController.escutarMesas(evento.idEvento);
     convidadoController.escutarConvidados(evento.idEvento);
   }
 
@@ -204,8 +211,9 @@ class _ConvidadosPageState extends State<ConvidadosPage>
                   ),
                   MesasTab(
                     theme: themeController,
-                    controller: convidadoController,
+                    mesaController: mesaController,
                     grupoController: grupoController,
+                    appController: appController,
                   ),
                   EstatisticasTab(
                     convidadoController: convidadoController,
@@ -283,6 +291,21 @@ class _ConvidadosPageState extends State<ConvidadosPage>
         );
       }
 
+      if (aba == 3) {
+        return FloatingActionButton.extended(
+          heroTag: 'btnNovaMesa',
+          backgroundColor: primary,
+          foregroundColor: Colors.white,
+          elevation: 8,
+          icon: const Icon(Icons.table_restaurant_rounded),
+          label: Text(
+            'Nova mesa',
+            style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+          ),
+          onPressed: _abrirNovaMesa,
+        );
+      }
+
       return const SizedBox.shrink();
     });
   }
@@ -347,6 +370,22 @@ class _ConvidadosPageState extends State<ConvidadosPage>
       context: context,
       idEvento: evento.idEvento,
       controller: grupoController,
+      themeController: themeController,
+    );
+  }
+
+  void _abrirNovaMesa() {
+    final evento = eventoController.eventoAtualEntidade;
+    if (evento == null || evento.idEvento.trim().isEmpty) {
+      _mostrarEventoNaoEncontrado();
+      return;
+    }
+
+    abrirAdicionarMesaBottomSheet(
+      context: context,
+      idEvento: evento.idEvento,
+      controller: mesaController,
+      grupoController: grupoController,
       themeController: themeController,
     );
   }

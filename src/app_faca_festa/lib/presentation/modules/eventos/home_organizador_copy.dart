@@ -18,6 +18,11 @@ abstract final class HomeOrganizadorCopy {
   static const barraOrcamento = 'Orçamento';
   static const barraMais = 'Mais';
 
+  /// Papel no evento ativo (membership), não a classe global da conta.
+  static const papelCoOrganizador = 'Co-organizador';
+  static const papelCoOrganizadorDica =
+      'Você organiza esta festa junto com o dono';
+
   static const resumoTitulo = 'Como vai a festa';
   static const resumoConvidados = 'Confirmados';
   static const resumoOrcamento = 'Orçamento';

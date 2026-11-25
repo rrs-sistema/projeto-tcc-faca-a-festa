@@ -17,6 +17,7 @@ import 'package:app_faca_festa/presentation/modules/calculadora/controllers/forn
 import 'package:app_faca_festa/presentation/modules/convidado/controllers/cardapio_controller.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/controllers/convidado_controller.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/controllers/grupo_convidado_controller.dart';
+import 'package:app_faca_festa/presentation/modules/convidado/controllers/mesa_evento_controller.dart';
 import 'package:app_faca_festa/domain/entities/fornecedor_detalhado.dart';
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import 'package:app_faca_festa/presentation/modules/tema/controllers/tema_festa_controller.dart';
@@ -473,6 +474,7 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
                 appController: appController,
                 eventoController: eventoController,
                 grupoController: grupoConvidadoController,
+                mesaController: Get.find<MesaEventoController>(),
                 convidadoController: convidadoController,
                 cardapioController: cardapioController,
                 automaticamenteImplyLeading: false,

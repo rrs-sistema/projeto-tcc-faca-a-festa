@@ -32,6 +32,7 @@ import 'package:app_faca_festa/presentation/modules/catalogo/controllers/subcate
 import 'package:app_faca_festa/presentation/modules/convidado/controllers/cardapio_controller.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/controllers/convidado_controller.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/controllers/grupo_convidado_controller.dart';
+import 'package:app_faca_festa/presentation/modules/convidado/controllers/mesa_evento_controller.dart';
 import 'package:app_faca_festa/presentation/modules/checklist/controllers/tarefa_controller.dart';
 import 'package:app_faca_festa/presentation/modules/cotacao/controllers/cotacao_controller.dart';
 import 'package:app_faca_festa/presentation/modules/cotacao/controllers/solicitacoes_controller.dart';
@@ -481,6 +482,7 @@ GetPage(name:'/fornecedor/planejamento',page:()=>PlanejamentoFinanceiroPage(idOb
             appController: Get.find<AppController>(),
             eventoController: Get.find<EventoController>(),
             grupoController: Get.find<GrupoConvidadoController>(),
+            mesaController: Get.find<MesaEventoController>(),
             convidadoController: Get.find<ConvidadoController>(),
             cardapioController: Get.find<CardapioController>(),
           ),

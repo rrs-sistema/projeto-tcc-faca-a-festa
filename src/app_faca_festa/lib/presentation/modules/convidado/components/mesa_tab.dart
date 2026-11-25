@@ -1,92 +1,57 @@
 import 'package:app_faca_festa/presentation/widgets/festa_scroll_area.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:app_faca_festa/presentation/widgets/festa_leitura.dart';
 import 'package:get/get.dart';
 
+import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/controllers/grupo_convidado_controller.dart';
-import 'package:app_faca_festa/presentation/modules/convidado/controllers/convidado_controller.dart';
+import 'package:app_faca_festa/presentation/modules/convidado/controllers/mesa_evento_controller.dart';
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
-import 'package:app_faca_festa/core/utils/biblioteca.dart';
 import 'package:app_faca_festa/domain/entities/convidado.dart';
-import 'package:app_faca_festa/domain/entities/grupo_convidado.dart';
+import 'package:app_faca_festa/domain/entities/mesa_evento.dart';
 import 'package:app_faca_festa/domain/entities/resultados_operacao.dart';
+import 'abrir_adicionar_mesa_bottom_sheet.dart';
 
 class MesasTab extends StatelessWidget {
   final EventThemeController theme;
-  final ConvidadoController controller;
+  final MesaEventoController mesaController;
   final GrupoConvidadoController grupoController;
+  final AppController appController;
 
   const MesasTab({
     super.key,
     required this.theme,
-    required this.controller,
+    required this.mesaController,
     required this.grupoController,
+    required this.appController,
   });
 
-  GrupoConvidado? _buscarGrupoPorNome(
-      Iterable<GrupoConvidado> grupos, String nome) {
-    final nomeNormalizado = nome.trim().toLowerCase();
-    for (final grupo in grupos) {
-      if (grupo.nome.trim().toLowerCase() == nomeNormalizado) return grupo;
-    }
-    return null;
-  }
-
-  int _resolverAssentosMesa({
-    required GrupoConvidado? grupoAtual,
-    required int quantidadeConvidados,
-    required int ocupados,
-  }) {
-    const capacidadePadraoMesa = 5;
-    final totalGrupo = grupoAtual?.totalConvidados ?? 0;
-    var capacidade = totalGrupo > 0 ? totalGrupo : quantidadeConvidados;
-    if (capacidade < capacidadePadraoMesa) capacidade = capacidadePadraoMesa;
-    if (capacidade < ocupados) capacidade = ocupados;
-    return capacidade;
-  }
-
-  EstatisticasMesas _montarEstatisticasMesas({
-    required Map<String, List<Convidado>> grupos,
-    required GrupoConvidadoController grupoController,
-  }) {
-    var totalAssentos = 0, totalOcupados = 0;
-    for (final entry in grupos.entries) {
-      final ocupados = entry.value
-          .where((c) => c.status == StatusConvidado.confirmado)
-          .length;
-      final assentos = _resolverAssentosMesa(
-        grupoAtual: _buscarGrupoPorNome(grupoController.grupos, entry.key),
-        quantidadeConvidados: entry.value.length,
-        ocupados: ocupados,
-      );
-      totalAssentos += assentos;
-      totalOcupados += ocupados;
-    }
-    return EstatisticasMesas(
-      totalMesas: grupos.length,
-      assentos: totalAssentos,
-      ocupados: totalOcupados,
-      livres: totalAssentos - totalOcupados,
-    );
+  Color _corMesa(MesaEvento mesa, Color primary) {
+    final hex = (mesa.corHex ?? '').trim();
+    if (hex.isEmpty) return primary;
+    final limpo = hex.replaceFirst('#', '');
+    final valor = int.tryParse(limpo, radix: 16);
+    if (valor == null) return primary;
+    if (limpo.length == 6) return Color(0xFF000000 | valor);
+    if (limpo.length == 8) return Color(valor);
+    return primary;
   }
 
   @override
   Widget build(BuildContext context) {
     return Obx(() {
       final primary = theme.primaryColor.value;
-      final grupos = controller.convidadosPorMesa;
-      final estat = _montarEstatisticasMesas(
-        grupos: grupos,
-        grupoController: grupoController,
-      );
+      final usuario = appController.usuarioLogado.value;
+      final podeGerenciar = usuario != null && usuario.tipo != 'C';
+      final mesas = mesaController.mesasAtivas;
+      final estat = mesaController.estatisticas;
 
-      if (controller.carregando.value) {
+      if (mesaController.carregando.value && mesas.isEmpty) {
         return Center(child: CircularProgressIndicator(color: primary));
       }
 
-      if (grupos.isEmpty) {
+      if (mesas.isEmpty) {
         return ColoredBox(
           color: const Color(0xFFF8FAFC),
           child: Center(
@@ -127,13 +92,25 @@ class MesasTab extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'As mesas aparecem a partir dos grupos de convidados.',
+                      'Cadastre as mesas conforme o espaço físico alugado.',
                       textAlign: TextAlign.center,
                       style: GoogleFonts.poppins(
                         fontSize: 12,
                         color: const Color(0xFF6B7280),
                       ),
                     ),
+                    if (podeGerenciar) ...[
+                      const SizedBox(height: 16),
+                      ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primary,
+                          foregroundColor: Colors.white,
+                        ),
+                        onPressed: () => _abrirForm(context),
+                        icon: const Icon(Icons.add_rounded),
+                        label: const Text('Nova mesa'),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -145,57 +122,135 @@ class MesasTab extends StatelessWidget {
       return ColoredBox(
         color: const Color(0xFFF8FAFC),
         child: FestaScrollArea(
-            color: primary,
-            maxWidth: 1200,
-            child: ListView(
-              primary: true,
-              physics: FestaLeitura.physics(context),
-              padding: const EdgeInsets.fromLTRB(14, 12, 14, 96),
-              children: [
-                _MesasHero(
-                  primary: primary,
-                  totalMesas: estat.totalMesas,
-                  ocupados: estat.ocupados,
-                  assentos: estat.assentos,
-                ),
-                const SizedBox(height: 12),
-                _ResumoMesas(estat: estat, primary: primary),
-                const SizedBox(height: 18),
-                _SectionTitle(
-                  icon: Icons.table_restaurant_rounded,
-                  title: 'Mesas',
-                  subtitle: 'Ocupação e convidados por mesa.',
-                  color: primary,
-                ),
-                const SizedBox(height: 10),
-                ...grupos.entries.map((entry) {
-                  final nome = entry.key;
-                  final convidados = entry.value;
-                  final ocupados = convidados
-                      .where((c) => c.status == StatusConvidado.confirmado)
-                      .length;
-                  final assentos = _resolverAssentosMesa(
-                    grupoAtual:
-                        _buscarGrupoPorNome(grupoController.grupos, nome),
-                    quantidadeConvidados: convidados.length,
-                    ocupados: ocupados,
-                  );
-                  final color = Biblioteca.gerarCorPorChaves([nome]);
-                  return _MesaCard(
-                    nome: nome,
-                    assentos: assentos,
-                    ocupados: ocupados,
-                    color: color,
-                    icon: Icons.chair_rounded,
-                    convidados: convidados,
-                  );
-                }),
-                const SizedBox(height: 8),
-                _GraficoMesas(estat: estat, primary: primary),
-              ],
-            )),
+          color: primary,
+          maxWidth: 1200,
+          child: ListView(
+            primary: true,
+            physics: FestaLeitura.physics(context),
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 96),
+            children: [
+              _MesasHero(
+                primary: primary,
+                totalMesas: estat.totalMesas,
+                ocupados: estat.ocupados,
+                assentos: estat.assentos,
+              ),
+              const SizedBox(height: 12),
+              _ResumoMesas(estat: estat, primary: primary),
+              const SizedBox(height: 18),
+              _SectionTitle(
+                icon: Icons.table_restaurant_rounded,
+                title: 'Mesas',
+                subtitle: 'Ocupação e convidados por mesa física.',
+                color: primary,
+              ),
+              const SizedBox(height: 10),
+              ...mesas.map((mesa) {
+                final convidados = mesaController.convidadosDaMesa(mesa.idMesa);
+                final ocupados = mesaController.confirmadosDaMesa(mesa);
+                final color = _corMesa(mesa, primary);
+                return _MesaCard(
+                  mesa: mesa,
+                  assentos: mesa.capacidadeAssentos,
+                  ocupados: ocupados,
+                  color: color,
+                  convidados: convidados,
+                  podeGerenciar: podeGerenciar,
+                  onEditar: () => _abrirForm(context, mesa: mesa),
+                  onExcluir: () => _confirmarExcluir(mesa),
+                );
+              }),
+            ],
+          ),
+        ),
       );
     });
+  }
+
+  void _abrirForm(BuildContext context, {MesaEvento? mesa}) {
+    final idEvento = (mesa?.idEvento ??
+            mesaController.idEventoAtual ??
+            grupoController.grupos.firstWhereOrNull((_) => true)?.idEvento ??
+            '')
+        .trim();
+    if (idEvento.isEmpty) {
+      Get.snackbar(
+        'Atenção',
+        'Nenhum evento selecionado.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+    abrirAdicionarMesaBottomSheet(
+      context: context,
+      idEvento: idEvento,
+      controller: mesaController,
+      grupoController: grupoController,
+      themeController: theme,
+      mesa: mesa,
+    );
+  }
+
+  Future<void> _confirmarExcluir(MesaEvento mesa) async {
+    if (mesaController.convidadosDaMesa(mesa.idMesa).isNotEmpty) {
+      Get.snackbar(
+        'Mesa com convidados',
+        'Remova os convidados desta mesa antes de excluí-la.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: const Color(0xFFB45309),
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    final confirmar = await Get.dialog<bool>(
+      AlertDialog(
+        title: Text(
+          'Excluir mesa?',
+          style: GoogleFonts.poppins(fontWeight: FontWeight.w800),
+        ),
+        content: Text(
+          'A mesa ${mesa.numeroMesa} (${mesa.nomeMesa}) será removida.',
+          style: GoogleFonts.poppins(fontSize: 13),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(result: false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red.shade600,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Get.back(result: true),
+            child: const Text('Excluir'),
+          ),
+        ],
+      ),
+    );
+    if (confirmar != true) return;
+
+    try {
+      await mesaController.excluirMesa(mesa.idMesa);
+      Get.snackbar(
+        'Mesa excluída',
+        '"${mesa.nomeMesa}" foi removida.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: const Color(0xFF059669),
+        colorText: Colors.white,
+      );
+    } catch (_) {
+      Get.snackbar(
+        'Não foi possível excluir',
+        mesaController.erro.value.isNotEmpty
+            ? mesaController.erro.value
+            : 'Tente novamente.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.shade600,
+        colorText: Colors.white,
+      );
+    }
   }
 }
 
@@ -227,13 +282,6 @@ class _MesasHero extends StatelessWidget {
           ],
         ),
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: primary.withValues(alpha: 0.22),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -330,7 +378,6 @@ class _SectionTitle extends StatelessWidget {
                 style: GoogleFonts.poppins(
                   fontSize: 14,
                   fontWeight: FontWeight.w800,
-                  color: const Color(0xFF111827),
                 ),
               ),
               Text(
@@ -412,39 +459,21 @@ class _ResumoCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: item.color.withValues(alpha: 0.12)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.035),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 26,
-            height: 26,
-            decoration: BoxDecoration(
-              color: item.color.withValues(alpha: 0.10),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(item.icon, color: item.color, size: 14),
-          ),
+          Icon(item.icon, color: item.color, size: 16),
           const SizedBox(height: 8),
           Text(
             item.value.toString(),
             style: GoogleFonts.poppins(
-              color: const Color(0xFF111827),
               fontSize: 16,
               fontWeight: FontWeight.w800,
             ),
           ),
           Text(
             item.label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
             style: GoogleFonts.poppins(
               color: const Color(0xFF6B7280),
               fontSize: 9,
@@ -458,27 +487,31 @@ class _ResumoCard extends StatelessWidget {
 }
 
 class _MesaCard extends StatelessWidget {
-  final String nome;
+  final MesaEvento mesa;
   final int assentos;
   final int ocupados;
-  final IconData icon;
   final Color color;
   final List<Convidado> convidados;
+  final bool podeGerenciar;
+  final VoidCallback onEditar;
+  final VoidCallback onExcluir;
 
   const _MesaCard({
-    required this.nome,
+    required this.mesa,
     required this.assentos,
     required this.ocupados,
-    required this.icon,
     required this.color,
     required this.convidados,
+    required this.podeGerenciar,
+    required this.onEditar,
+    required this.onExcluir,
   });
 
   @override
   Widget build(BuildContext context) {
     final livres = (assentos - ocupados).clamp(0, assentos).toInt();
-    final ocupacao =
-        assentos <= 0 ? 0.0 : (ocupados / assentos).clamp(0.0, 1.0).toDouble();
+    final progresso =
+        assentos <= 0 ? 0.0 : (ocupados / assentos).clamp(0.0, 1.0);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -486,18 +519,11 @@ class _MesaCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: color.withValues(alpha: 0.14)),
-        boxShadow: [
-          BoxShadow(
-            color: color.withValues(alpha: 0.07),
-            blurRadius: 12,
-            offset: const Offset(0, 5),
-          ),
-        ],
       ),
       child: Theme(
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
-          tilePadding: const EdgeInsets.fromLTRB(12, 6, 12, 6),
+          tilePadding: const EdgeInsets.fromLTRB(12, 6, 8, 6),
           childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
           leading: Container(
             width: 40,
@@ -506,24 +532,21 @@ class _MesaCard extends StatelessWidget {
               color: color.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: color, size: 20),
+            child: Icon(Icons.chair_rounded, color: color, size: 20),
           ),
           title: Text(
-            nome,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+            '${mesa.nomeMesa} · nº ${mesa.numeroMesa}',
             style: GoogleFonts.poppins(
               fontWeight: FontWeight.w800,
               fontSize: 13.5,
-              color: const Color(0xFF111827),
             ),
           ),
           subtitle: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 4),
               Text(
-                '$ocupados ocupados · $livres livres',
+                '$ocupados ocupados · $livres livres'
+                '${mesa.nomeGrupo == null || mesa.nomeGrupo!.isEmpty ? '' : ' · ${mesa.nomeGrupo}'}',
                 style: GoogleFonts.poppins(
                   fontSize: 10,
                   color: const Color(0xFF6B7280),
@@ -533,7 +556,7 @@ class _MesaCard extends StatelessWidget {
               ClipRRect(
                 borderRadius: BorderRadius.circular(999),
                 child: LinearProgressIndicator(
-                  value: ocupacao,
+                  value: progresso,
                   minHeight: 5,
                   color: color,
                   backgroundColor: color.withValues(alpha: 0.12),
@@ -541,216 +564,47 @@ class _MesaCard extends StatelessWidget {
               ),
             ],
           ),
-          children: convidados.isEmpty
-              ? [
-                  Padding(
-                    padding: const EdgeInsets.only(top: 6),
-                    child: Text(
-                      'Nenhum convidado nesta mesa.',
-                      style: GoogleFonts.poppins(
-                        fontSize: 11,
-                        color: const Color(0xFF6B7280),
-                      ),
-                    ),
-                  ),
-                ]
-              : convidados
-                  .map(
-                    (c) => _ConvidadoItem(
-                      nome: c.nome,
-                      confirmado: c.status == StatusConvidado.confirmado,
-                    ),
-                  )
-                  .toList(),
-        ),
-      ),
-    );
-  }
-}
-
-class _ConvidadoItem extends StatelessWidget {
-  final String nome;
-  final bool confirmado;
-  const _ConvidadoItem({required this.nome, required this.confirmado});
-
-  @override
-  Widget build(BuildContext context) {
-    final color =
-        confirmado ? const Color(0xFF059669) : const Color(0xFFD97706);
-    return Container(
-      margin: const EdgeInsets.only(top: 6),
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.black.withValues(alpha: 0.04)),
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 14,
-            backgroundColor: color.withValues(alpha: 0.12),
-            child: Icon(
-              confirmado
-                  ? Icons.event_available_rounded
-                  : Icons.schedule_rounded,
-              color: color,
-              size: 16,
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              nome,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.poppins(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: const Color(0xFF111827),
-              ),
-            ),
-          ),
-          Text(
-            confirmado ? 'Confirmado' : 'Pendente',
-            style: GoogleFonts.poppins(
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
-              color: color,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _GraficoMesas extends StatelessWidget {
-  final EstatisticasMesas estat;
-  final Color primary;
-  const _GraficoMesas({required this.estat, required this.primary});
-
-  @override
-  Widget build(BuildContext context) {
-    final totalAssentos = estat.assentos.toDouble();
-    final totalOcupados = estat.ocupados.toDouble();
-    final totalLivres = estat.livres.toDouble();
-
-    return Container(
-      margin: const EdgeInsets.only(top: 8, bottom: 24),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.035),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _SectionTitle(
-            icon: Icons.pie_chart_rounded,
-            title: 'Ocupação',
-            subtitle: 'Assentos confirmados versus livres.',
-            color: primary,
-          ),
-          const SizedBox(height: 14),
-          if (totalAssentos == 0)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              child: Center(
-                child: Text(
-                  'Sem dados suficientes para o gráfico.',
-                  style: GoogleFonts.poppins(
-                    color: const Color(0xFF6B7280),
-                    fontSize: 12,
-                  ),
-                ),
-              ),
-            )
-          else ...[
-            SizedBox(
-              height: 180,
-              child: PieChart(
-                PieChartData(
-                  sectionsSpace: 3,
-                  centerSpaceRadius: 40,
-                  startDegreeOffset: -90,
-                  sections: [
-                    if (totalOcupados > 0)
-                      PieChartSectionData(
-                        color: const Color(0xFF0F766E),
-                        value: totalOcupados,
-                        title:
-                            '${((totalOcupados / totalAssentos) * 100).toStringAsFixed(0)}%',
-                        radius: 52,
-                        titleStyle: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    if (totalLivres > 0)
-                      PieChartSectionData(
-                        color: const Color(0xFFF59E0B),
-                        value: totalLivres,
-                        title:
-                            '${((totalLivres / totalAssentos) * 100).toStringAsFixed(0)}%',
-                        radius: 52,
-                        titleStyle: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
+          trailing: podeGerenciar
+              ? PopupMenuButton<String>(
+                  onSelected: (value) {
+                    if (value == 'editar') onEditar();
+                    if (value == 'excluir') onExcluir();
+                  },
+                  itemBuilder: (_) => const [
+                    PopupMenuItem(value: 'editar', child: Text('Editar')),
+                    PopupMenuItem(value: 'excluir', child: Text('Excluir')),
                   ],
+                )
+              : null,
+          children: [
+            if (convidados.isEmpty)
+              Text(
+                'Nenhum convidado nesta mesa.',
+                style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  color: const Color(0xFF6B7280),
+                ),
+              )
+            else
+              ...convidados.map(
+                (c) => ListTile(
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(
+                    c.nome,
+                    style: GoogleFonts.poppins(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  subtitle: Text(
+                    c.status.name,
+                    style: GoogleFonts.poppins(fontSize: 10),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 6,
-              children: [
-                _legenda('Ocupados (${totalOcupados.toInt()})',
-                    const Color(0xFF0F766E)),
-                _legenda(
-                    'Livres (${totalLivres.toInt()})', const Color(0xFFF59E0B)),
-              ],
-            ),
           ],
-        ],
-      ),
-    );
-  }
-
-  Widget _legenda(String label, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.circle, color: color, size: 8),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: GoogleFonts.poppins(
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-              color: const Color(0xFF374151),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

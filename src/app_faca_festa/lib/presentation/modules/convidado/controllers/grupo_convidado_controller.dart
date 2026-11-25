@@ -20,11 +20,41 @@ class GrupoConvidadoController extends GetxController {
 
   static const nomeGrupoPadrao = 'Geral';
 
+  /// Grupos criados automaticamente em todo evento novo.
+  static const gruposIniciais = <({
+    String nome,
+    String descricao,
+    String icone,
+    String corHex,
+  })>[
+    (
+      nome: nomeGrupoPadrao,
+      descricao: 'Grupo padrão dos convidados.',
+      icone: 'group',
+      corHex: '#0F766E',
+    ),
+    (
+      nome: 'Família',
+      descricao: 'Parentes e familiares.',
+      icone: 'family',
+      corHex: '#FF7BAC',
+    ),
+    (
+      nome: 'Amigos',
+      descricao: 'Amigos e convidados próximos.',
+      icone: 'favorite',
+      corHex: '#6EC3F4',
+    ),
+  ];
+
   StreamSubscription<List<GrupoConvidado>>? _subGrupos;
   StreamSubscription<List<Convidado>>? _subConvidados;
   List<Convidado> _convidadosRecebidos = const [];
+  /// Snapshot bruto do Firestore (com possíveis duplicatas) para sanitização.
+  List<GrupoConvidado> _ultimaListaBruta = const [];
   String? _idEventoAtual;
-  Future<GrupoConvidado?>? _garantiaGrupoPadrao;
+  Future<List<GrupoConvidado>>? _garantiaGruposIniciais;
+  bool _gruposIniciaisSolicitados = false;
 
   Future<void> escutarGrupos(String idEvento) async {
     final eventoId = idEvento.trim();
@@ -32,25 +62,47 @@ class GrupoConvidadoController extends GetxController {
       await _cancelarEscutas();
       _idEventoAtual = null;
       _convidadosRecebidos = const [];
+      _ultimaListaBruta = const [];
+      _gruposIniciaisSolicitados = false;
       grupos.clear();
       convidados.clear();
       carregando.value = false;
       return;
     }
 
+    // Já escutando este evento: não reinicia seed (evita duplicar Grupos).
+    if (_idEventoAtual == eventoId && _subGrupos != null) {
+      return;
+    }
+
     _idEventoAtual = eventoId;
+    _gruposIniciaisSolicitados = false;
     carregando.value = true;
     erro.value = '';
     await _cancelarEscutas();
     grupos.clear();
     convidados.clear();
     _convidadosRecebidos = const [];
+    _ultimaListaBruta = const [];
 
     _subGrupos = _repository.observarGrupos(eventoId).listen(
       (lista) {
-        grupos.assignAll(lista);
+        _ultimaListaBruta = List<GrupoConvidado>.from(lista);
+        final tinhaDuplicatas = _temDuplicatasGruposIniciais(lista);
+        // UI limpa na hora; limpeza no Firestore usa a lista bruta.
+        grupos.assignAll(
+          _unicosPorIdGrupo(_colapsarGruposIniciaisParaExibicao(lista)),
+        );
         _publicarConvidadosNormalizados();
         carregando.value = false;
+
+        final precisaSanitizar = !_gruposIniciaisSolicitados ||
+            tinhaDuplicatas ||
+            _faltamGruposIniciais(grupos);
+        if (precisaSanitizar) {
+          _gruposIniciaisSolicitados = true;
+          unawaited(garantirGruposIniciais(idEvento: eventoId));
+        }
       },
       onError: (Object error, StackTrace stackTrace) {
         erro.value = 'Erro ao carregar grupos de convidados: $error';
@@ -69,6 +121,21 @@ class GrupoConvidadoController extends GetxController {
         carregando.value = false;
       },
     );
+  }
+
+  /// ID estável dos grupos seed (idempotente no Firestore).
+  static String idGrupoInicial(String idEvento, String nome) {
+    final slug = nome
+        .trim()
+        .toLowerCase()
+        .replaceAll(RegExp(r'[áàâãä]'), 'a')
+        .replaceAll(RegExp(r'[éèêë]'), 'e')
+        .replaceAll(RegExp(r'[íìîï]'), 'i')
+        .replaceAll(RegExp(r'[óòôõö]'), 'o')
+        .replaceAll(RegExp(r'[úùûü]'), 'u')
+        .replaceAll(RegExp(r'ç'), 'c')
+        .replaceAll(RegExp(r'[^a-z0-9]+'), '_');
+    return 'grupo_${idEvento.trim()}_$slug';
   }
 
   void _publicarConvidadosNormalizados() {
@@ -95,52 +162,215 @@ class GrupoConvidadoController extends GetxController {
     );
   }
 
-  /// Garante um grupo quando o evento ainda não tem nenhum, para o cadastro
+  /// Garante o grupo [nomeGrupoPadrao] (e os demais iniciais) para o cadastro
   /// do primeiro convidado poder continuar.
-  ///
-  /// Reutiliza o grupo [nomeGrupoPadrao] se ele já existir. Não cria outro
-  /// grupo quando o evento já tem grupos diferentes.
-  Future<GrupoConvidado?> garantirGrupoPadrao({String? idEvento}) {
-    final emAndamento = _garantiaGrupoPadrao;
+  Future<GrupoConvidado?> garantirGrupoPadrao({String? idEvento}) async {
+    final criados = await garantirGruposIniciais(idEvento: idEvento);
+    return _buscarGrupoPorNome(nomeGrupoPadrao) ??
+        criados.firstWhereOrNull(
+          (grupo) => _normalizarTexto(grupo.nome) == _normalizarTexto(nomeGrupoPadrao),
+        );
+  }
+
+  /// Garante Geral, Família e Amigos no evento. Idempotente: só cria os que
+  /// ainda não existem pelo nome.
+  Future<List<GrupoConvidado>> garantirGruposIniciais({String? idEvento}) {
+    final emAndamento = _garantiaGruposIniciais;
     if (emAndamento != null) return emAndamento;
 
-    final futuro = _garantirGrupoPadrao(idEvento: idEvento);
-    _garantiaGrupoPadrao = futuro;
+    final futuro = _garantirGruposIniciais(idEvento: idEvento);
+    _garantiaGruposIniciais = futuro;
     return futuro.whenComplete(() {
-      if (identical(_garantiaGrupoPadrao, futuro)) {
-        _garantiaGrupoPadrao = null;
+      if (identical(_garantiaGruposIniciais, futuro)) {
+        _garantiaGruposIniciais = null;
       }
     });
   }
 
-  Future<GrupoConvidado?> _garantirGrupoPadrao({String? idEvento}) async {
-    final existente = _buscarGrupoPorNome(nomeGrupoPadrao);
-    if (existente != null) return existente;
-    if (grupos.isNotEmpty) return null;
-
+  Future<List<GrupoConvidado>> _garantirGruposIniciais({
+    String? idEvento,
+  }) async {
     final eventoId = (idEvento ?? _idEventoAtual ?? '').trim();
     if (eventoId.isEmpty) {
       throw StateError(
-        'Nenhum evento selecionado para cadastrar o grupo padrão.',
+        'Nenhum evento selecionado para cadastrar os grupos iniciais.',
       );
     }
 
+    await _deduplicarGruposIniciais();
+
+    // Snapshot no início: evita duplicar se a lista local mudar no meio do loop.
+    final porNome = <String, GrupoConvidado>{
+      for (final grupo in grupos) _normalizarTexto(grupo.nome): grupo,
+    };
+
+    final criados = <GrupoConvidado>[];
     final agora = DateTime.now();
-    final grupo = GrupoConvidado(
-      idGrupo: agora.millisecondsSinceEpoch.toString(),
-      idEvento: eventoId,
-      nome: nomeGrupoPadrao,
-      descricao: 'Grupo padrão dos convidados.',
-      icone: 'group',
-      corHex: '#0F766E',
-      dataCadastro: agora,
-      dataAtualizacao: agora,
-    );
-    await adicionarGrupo(grupo);
-    if (_buscarGrupoPorId(grupo.idGrupo) == null) {
-      grupos.add(grupo);
+
+    for (final definicao in gruposIniciais) {
+      final nomeNormalizado = _normalizarTexto(definicao.nome);
+      final idEstavel = idGrupoInicial(eventoId, definicao.nome);
+      final existente = porNome[nomeNormalizado] ?? _buscarGrupoPorId(idEstavel);
+      if (existente != null) continue;
+
+      final grupo = GrupoConvidado(
+        idGrupo: idEstavel,
+        idEvento: eventoId,
+        nome: definicao.nome,
+        descricao: definicao.descricao,
+        icone: definicao.icone,
+        corHex: definicao.corHex,
+        dataCadastro: agora,
+        dataAtualizacao: agora,
+      );
+      await adicionarGrupo(grupo);
+      if (_buscarGrupoPorId(grupo.idGrupo) == null) {
+        grupos.add(grupo);
+      }
+      porNome[nomeNormalizado] = grupo;
+      criados.add(grupo);
     }
-    return grupo;
+
+    return criados;
+  }
+
+  List<GrupoConvidado> _unicosPorIdGrupo(List<GrupoConvidado> lista) {
+    final vistos = <String>{};
+    final unicos = <GrupoConvidado>[];
+    for (final grupo in lista) {
+      final id = grupo.idGrupo.trim();
+      if (id.isEmpty || !vistos.add(id)) continue;
+      unicos.add(grupo);
+    }
+    return unicos;
+  }
+
+  bool _temDuplicatasGruposIniciais(List<GrupoConvidado> lista) {
+    final nomesSeed = {
+      for (final def in gruposIniciais) _normalizarTexto(def.nome),
+    };
+    final contagem = <String, int>{};
+    for (final grupo in lista) {
+      final nome = _normalizarTexto(grupo.nome);
+      if (!nomesSeed.contains(nome)) continue;
+      contagem[nome] = (contagem[nome] ?? 0) + 1;
+      if (contagem[nome]! > 1) return true;
+    }
+    return false;
+  }
+
+  bool _faltamGruposIniciais(List<GrupoConvidado> lista) {
+    final existentes = {
+      for (final grupo in lista) _normalizarTexto(grupo.nome),
+    };
+    return gruposIniciais.any(
+      (def) => !existentes.contains(_normalizarTexto(def.nome)),
+    );
+  }
+
+  /// Escolhe um representante por nome seed (id estável > mais convidados > mais antigo).
+  List<GrupoConvidado> _colapsarGruposIniciaisParaExibicao(
+    List<GrupoConvidado> lista,
+  ) {
+    final nomesSeed = {
+      for (final def in gruposIniciais) _normalizarTexto(def.nome),
+    };
+    final porNome = <String, List<GrupoConvidado>>{};
+    final demais = <GrupoConvidado>[];
+
+    for (final grupo in lista) {
+      final nome = _normalizarTexto(grupo.nome);
+      if (!nomesSeed.contains(nome)) {
+        demais.add(grupo);
+        continue;
+      }
+      (porNome[nome] ??= <GrupoConvidado>[]).add(grupo);
+    }
+
+    final colapsados = <GrupoConvidado>[];
+    for (final entry in porNome.entries) {
+      final candidatos = List<GrupoConvidado>.from(entry.value);
+      if (candidatos.length == 1) {
+        colapsados.add(candidatos.first);
+        continue;
+      }
+      final idPreferido = _idEventoAtual == null
+          ? null
+          : idGrupoInicial(
+              _idEventoAtual!,
+              candidatos.first.nome,
+            );
+      candidatos.sort((a, b) => _compararCandidatosGrupo(a, b, idPreferido));
+      colapsados.add(candidatos.first);
+    }
+
+    return [...colapsados, ...demais]
+      ..sort((a, b) => a.nome.toLowerCase().compareTo(b.nome.toLowerCase()));
+  }
+
+  int _compararCandidatosGrupo(
+    GrupoConvidado a,
+    GrupoConvidado b,
+    String? idPreferido,
+  ) {
+    if (idPreferido != null) {
+      if (a.idGrupo == idPreferido) return -1;
+      if (b.idGrupo == idPreferido) return 1;
+    }
+    final qa = convidadosDoGrupo(a.idGrupo).length;
+    final qb = convidadosDoGrupo(b.idGrupo).length;
+    if (qa != qb) return qb.compareTo(qa);
+    return a.dataCadastro.compareTo(b.dataCadastro);
+  }
+
+  /// Remove cópias extras dos grupos seed no Firestore (e na lista local).
+  Future<void> _deduplicarGruposIniciais() async {
+    final fonte = _ultimaListaBruta.isNotEmpty
+        ? List<GrupoConvidado>.from(_ultimaListaBruta)
+        : grupos.toList();
+
+    for (final definicao in gruposIniciais) {
+      final nomeAlvo = _normalizarTexto(definicao.nome);
+      final duplicados =
+          fonte.where((g) => _normalizarTexto(g.nome) == nomeAlvo).toList();
+      if (duplicados.length <= 1) continue;
+
+      final idPreferido = _idEventoAtual == null
+          ? null
+          : idGrupoInicial(_idEventoAtual!, definicao.nome);
+
+      duplicados.sort((a, b) => _compararCandidatosGrupo(a, b, idPreferido));
+
+      final keep = duplicados.first;
+      for (final dup in duplicados.skip(1)) {
+        final lista = convidadosDoGrupo(dup.idGrupo);
+        for (final convidado in lista) {
+          await vincularConvidadoAoGrupo(convidado: convidado, grupo: keep);
+        }
+        try {
+          await _repository.excluirGrupo(
+            dup.idGrupo,
+            idEvento: _idEventoAtual,
+            desvincularConvidados: false,
+          );
+          fonte.removeWhere((g) => g.idGrupo == dup.idGrupo);
+          _ultimaListaBruta =
+              _ultimaListaBruta.where((g) => g.idGrupo != dup.idGrupo).toList();
+          grupos.removeWhere((g) => g.idGrupo == dup.idGrupo);
+        } catch (e) {
+          erro.value = 'Erro ao remover grupo duplicado: $e';
+        }
+      }
+    }
+
+    // Garante UI alinhada ao que restou após a limpeza.
+    if (_ultimaListaBruta.isNotEmpty) {
+      grupos.assignAll(
+        _unicosPorIdGrupo(
+          _colapsarGruposIniciaisParaExibicao(_ultimaListaBruta),
+        ),
+      );
+    }
   }
 
   Future<void> atualizarGrupo(GrupoConvidado grupo) async {
@@ -164,6 +394,7 @@ class GrupoConvidadoController extends GetxController {
       mensagemErro: 'Erro ao excluir grupo',
       acao: () => _repository.excluirGrupo(
         idGrupo,
+        idEvento: _idEventoAtual,
         desvincularConvidados: desvincularConvidados,
       ),
     );
@@ -377,6 +608,8 @@ class GrupoConvidadoController extends GetxController {
     await _cancelarEscutas();
     _idEventoAtual = null;
     _convidadosRecebidos = const [];
+    _ultimaListaBruta = const [];
+    _gruposIniciaisSolicitados = false;
     grupos.clear();
     convidados.clear();
     carregando.value = false;
