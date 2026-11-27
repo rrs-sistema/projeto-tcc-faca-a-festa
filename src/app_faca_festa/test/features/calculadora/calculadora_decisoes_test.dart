@@ -76,6 +76,7 @@ void main() {
     final data = {
       'nome': 'Arroz',
       'unidade': 'kg',
+      'orcamento_fechado': true,
       'custo_real': 100,
       'calculadora_conferencia_financeira': {
         'modo': 'realizado',

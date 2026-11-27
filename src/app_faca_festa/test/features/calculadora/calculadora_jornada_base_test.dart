@@ -255,8 +255,11 @@ void main() {
     convidados.convidados.refresh();
     await tester.pumpAndSettle();
     expect(c.totalAdultos.value, 1);
-    Finder adultos() => find.byWidgetPredicate(
-        (w) => w is TextField && w.decoration?.labelText == 'Adultos');
+    Finder adultos() => find.descendant(
+        of: find
+            .ancestor(of: find.text('Adultos'), matching: find.byType(Column))
+            .first,
+        matching: find.byType(TextField));
     await tester.scrollUntilVisible(adultos(), 120,
         scrollable: find.byType(Scrollable).last);
     expect(tester.widget<TextField>(adultos()).controller!.text, '1');

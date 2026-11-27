@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
 /// Replica a regra corrigida: categoria NÃO dispensa leitura do detalhe pago.
-_CategoriaDetalhes conciliar({
+_CategoriaDetalhes _conciliar({
   required String? idCategoria,
   required String nomeCategoria,
   required double custoEstimadoOrcamento,
@@ -41,7 +41,7 @@ class _CategoriaDetalhes {
 
 void main() {
   test('com categoria e pagamento detalhado, admin concilia o pago', () {
-    final resultado = conciliar(
+    final resultado = _conciliar(
       idCategoria: 'cat-buffet',
       nomeCategoria: 'Buffet',
       custoEstimadoOrcamento: 10000,
@@ -57,7 +57,7 @@ void main() {
   });
 
   test('sem categoria ainda usa nomes e totais do detalhe', () {
-    final resultado = conciliar(
+    final resultado = _conciliar(
       idCategoria: null,
       nomeCategoria: 'Outros',
       custoEstimadoOrcamento: 0,

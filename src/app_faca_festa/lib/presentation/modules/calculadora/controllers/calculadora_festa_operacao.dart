@@ -32,7 +32,9 @@ extension CalculadoraFestaOperacao on CalculadoraFestaController {
     });
     if (idEventoAtual.value != evento ||
         usandoContextoHistorico.value ||
-        sessao != sessaoPlanejador) return;
+        sessao != sessaoPlanejador) {
+      return;
+    }
     adicionarItemManual(regra);
     _regrasExecucaoRecebidas[regra.id] =
         assinaturaExecucao(regra.toPlanejamento());

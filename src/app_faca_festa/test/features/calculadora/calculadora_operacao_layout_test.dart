@@ -64,7 +64,7 @@ void main() {
     expect(find.byType(Dialog), findsOneWidget);
     expect(find.text('Novo lote'), findsOneWidget);
     await tester.enterText(find.byType(TextFormField).first, 'Rascunho');
-    await tester.tap(find.byTooltip('Voltar ao estoque'));
+    await tester.tap(find.byTooltip('Voltar'));
     await tester.pumpAndSettle();
     expect(find.text('Seu estoque começa aqui'), findsOneWidget);
     expect(c.operacaoEvento['lotes'], isNull);

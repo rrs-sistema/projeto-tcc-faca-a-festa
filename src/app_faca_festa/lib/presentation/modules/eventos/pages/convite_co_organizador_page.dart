@@ -159,9 +159,7 @@ class _ConviteCoOrganizadorPageState extends State<ConviteCoOrganizadorPage> {
     if (_aceitando) return;
     final app = Get.find<AppController>();
     var usuario = app.usuarioLogado.value;
-    if (usuario == null) {
-      usuario = await _aguardarUsuarioOrganizador();
-    }
+    usuario ??= await _aguardarUsuarioOrganizador();
     if (usuario == null) {
       if (silenciosoSeSemUsuario) return;
       await _irParaLogin();

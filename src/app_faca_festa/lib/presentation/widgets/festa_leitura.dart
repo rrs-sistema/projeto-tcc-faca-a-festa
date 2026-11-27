@@ -63,12 +63,12 @@ class _FestaLeituraState extends State<FestaLeitura> {
 
   /// A notificação guarda o [ScrollPosition] daquele instante. Trocar a physics
   /// da pinça, ou a escala do texto, faz o [Scrollable] absorver essa posição e
-  /// zerar `activity`, enquanto o contexto dela continua montado.
+  /// substituí-la por uma nova, enquanto o contexto dela continua montado.
   ScrollPosition? _posicaoAtiva() {
     final contexto = _rolagem?.context.notificationContext;
     if (contexto == null || !contexto.mounted) return null;
     final atual = Scrollable.maybeOf(contexto)?.position;
-    if (atual == null || atual.activity == null) return null;
+    if (atual == null || !atual.haveDimensions) return null;
     return atual;
   }
 

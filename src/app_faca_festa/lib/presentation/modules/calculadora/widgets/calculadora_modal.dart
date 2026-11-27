@@ -37,6 +37,9 @@ class CalculadoraModal extends StatelessWidget {
     final escala = mq.textScaler.scale(16);
     final compacto =
         alturaTela < 520 || (alturaTela < 700 && escala > 22);
+    // Em paisagem com teclado, rodapé fixo deixa poucos pixels para o campo
+    // em edição; as ações passam a rolar junto com o formulário.
+    final acoesNoScroll = compacto && teclado > 0 && larguraTela > alturaTela;
     // Altura do cartão baseada na tela cheia — não muda ao abrir o IME.
     final alturaCartao = math.min(820.0, alturaTela - 24);
     final larguraCartao = math.min(620.0, larguraTela - 24);
@@ -139,8 +142,13 @@ class CalculadoraModal extends StatelessWidget {
                                           const SizedBox(height: 16),
                                         ],
                                         child,
+                                        if (acoesNoScroll &&
+                                            rodape != null) ...[
+                                          const SizedBox(height: 16),
+                                          rodape!,
+                                        ],
                                       ])))),
-                      if (acoes != null) acoes,
+                      if (acoes != null && !acoesNoScroll) acoes,
                       // Reserva a faixa do IME sem encolher/desmontar o corpo.
                       SizedBox(height: teclado),
                     ]))),

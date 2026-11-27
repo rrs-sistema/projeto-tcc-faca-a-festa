@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:app_faca_festa/domain/services/evento_leitura_confirmada.dart';
 

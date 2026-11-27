@@ -5,7 +5,6 @@ import 'package:app_faca_festa/domain/entities/perfil_festa.dart';
 import 'package:app_faca_festa/domain/entities/referencia_contextual.dart';
 import 'package:app_faca_festa/domain/services/calculadora_festa_service.dart';
 import 'package:app_faca_festa/domain/services/lista_compras_calculadora_service.dart';
-import 'package:app_faca_festa/domain/services/plano_execucao_service.dart';
 import 'package:app_faca_festa/domain/services/proposta_refeicao_service.dart';
 import 'package:app_faca_festa/domain/services/rendimento_referencia_service.dart';
 
