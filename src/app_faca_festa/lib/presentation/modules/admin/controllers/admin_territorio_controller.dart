@@ -8,10 +8,12 @@ import 'package:latlong2/latlong.dart';
 
 import 'package:app_faca_festa/domain/entities/territorio.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_admin_territorios.dart';
+import 'package:app_faca_festa/core/conectividade/recarregar_ao_reconectar.dart';
 
 enum FiltroStatusTerritorio { todos, ativos, inativos }
 
-class AdminTerritorioController extends GetxController {
+class AdminTerritorioController extends GetxController
+    with RecarregarAoReconectar {
   AdminTerritorioController({
     required GerenciarAdminTerritorios territoriosAdmin,
   }) : _territoriosAdmin = territoriosAdmin;
@@ -56,6 +58,7 @@ class AdminTerritorioController extends GetxController {
   int get totalAtivos => territorios.where((t) => t.ativo).length;
 
   Future<void> carregarTerritorios({bool ajustarMapa = true}) async {
+    repetirAoReconectar('territorios', () => carregarTerritorios(ajustarMapa: false));
     try {
       territorios.value = await _territoriosAdmin.listarTerritorios();
       final selecionado = idTerritorioSelecionado.value;

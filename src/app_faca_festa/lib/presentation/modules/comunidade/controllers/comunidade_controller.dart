@@ -6,8 +6,10 @@ import 'package:get/get.dart';
 import 'package:app_faca_festa/domain/entities/comunidade.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_comunidade.dart';
 import 'package:app_faca_festa/domain/repositories/autenticacao_repository.dart';
+import 'package:app_faca_festa/core/conectividade/recarregar_ao_reconectar.dart';
 
-class ComunidadeController extends GetxController {
+class ComunidadeController extends GetxController
+    with RecarregarAoReconectar {
   ComunidadeController({required GerenciarComunidade comunidade})
       : _comunidade = comunidade;
 
@@ -43,6 +45,7 @@ class ComunidadeController extends GetxController {
       },
       onError: (Object e, StackTrace s) {
         debugPrint('❌ [ComunidadeController] Erro ao escutar posts: $e\n$s');
+        refazerAoReconectar('posts', _carregarPosts);
       },
       cancelOnError: true,
     );

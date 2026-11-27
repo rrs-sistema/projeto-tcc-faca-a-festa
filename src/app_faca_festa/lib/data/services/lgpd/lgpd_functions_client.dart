@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import 'package:app_faca_festa/data/services/functions/callable_https_client.dart';
 
+import 'package:app_faca_festa/data/services/functions/exigir_conexao_functions.dart';
 class LgpdFunctionsException implements Exception {
   const LgpdFunctionsException(this.code, this.message);
 
@@ -62,6 +63,7 @@ class LgpdFunctionsClient {
     Duration timeout,
   ) async {
     try {
+      garantirConexaoFunctions('Esta solicitação de privacidade');
       if (CallableHttpsClient.necessarioNaPlataformaAtual) {
         return _https.call(nome, data, timeout);
       }

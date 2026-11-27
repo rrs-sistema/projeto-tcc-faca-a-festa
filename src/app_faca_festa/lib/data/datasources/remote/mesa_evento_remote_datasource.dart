@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../models/evento/mesa_evento_model.dart';
+import 'package:app_faca_festa/core/conectividade/escrita_local_primeiro.dart';
 
 class MesaEventoRemoteDatasource {
   MesaEventoRemoteDatasource(this.firestore);
@@ -21,8 +22,9 @@ class MesaEventoRemoteDatasource {
   }
 
   Future<List<MesaEventoModel>> buscarMesas(String idEvento) async {
-    final snapshot =
-        await _mesas.where('id_evento', isEqualTo: idEvento).get();
+    final snapshot = await LeituraLocalPrimeiro.consulta(
+      _mesas.where('id_evento', isEqualTo: idEvento),
+    );
     return _mapearMesas(snapshot, idEvento);
   }
 
@@ -58,7 +60,11 @@ class MesaEventoRemoteDatasource {
         (key, value) =>
             value == null && key != 'id_grupo' && key != 'nome_grupo',
       );
-    await _mesas.doc(mesa.idMesa).set(data, SetOptions(merge: true));
+    await escritaLocalPrimeiro(
+      _mesas.doc(mesa.idMesa).set(data, SetOptions(merge: true)),
+      descricao: 'mesa "${mesa.nomeMesa}"',
+      chave: mesa.idMesa,
+    );
   }
 
   Future<void> excluirMesa(
@@ -76,7 +82,7 @@ class MesaEventoRemoteDatasource {
           : _convidados
               .where('id_evento', isEqualTo: eventoId)
               .where('id_mesa', isEqualTo: idMesa);
-      final snapshot = await query.get();
+      final snapshot = await LeituraLocalPrimeiro.consulta(query);
       for (final document in snapshot.docs) {
         batch.update(document.reference, {
           'id_mesa': null,
@@ -86,16 +92,24 @@ class MesaEventoRemoteDatasource {
       }
     }
     batch.delete(_mesas.doc(idMesa));
-    await batch.commit();
+    await escritaLocalPrimeiro(
+      batch.commit(),
+      descricao: 'exclusão de uma mesa',
+      chave: idMesa,
+    );
   }
 
   Future<void> atualizarOcupacao({
     required String idMesa,
     required int totalOcupados,
   }) {
-    return _mesas.doc(idMesa).set({
-      'total_ocupados': totalOcupados,
-      'data_atualizacao': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+    return escritaLocalPrimeiro(
+      _mesas.doc(idMesa).set({
+        'total_ocupados': totalOcupados,
+        'data_atualizacao': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true)),
+      descricao: 'ocupação da mesa',
+      chave: idMesa,
+    );
   }
 }

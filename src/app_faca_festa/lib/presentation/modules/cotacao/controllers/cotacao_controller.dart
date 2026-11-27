@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'dart:async';
 
+import 'package:app_faca_festa/core/conectividade/recarregar_ao_reconectar.dart';
 import 'package:app_faca_festa/domain/entities/cotacao.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_cotacoes.dart';
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
 
-class CotacaoController extends GetxController {
+class CotacaoController extends GetxController with RecarregarAoReconectar {
   CotacaoController({
     required GerenciarCotacoes gerenciarCotacoes,
     AppController? appController,
@@ -75,11 +76,14 @@ class CotacaoController extends GetxController {
       } finally {
         carregando.value = false;
       }
-    }, onError: (e) {
+    }, onError: (Object e) {
       carregando.value = false;
-      erroEscuta.value =
-          'Não foi possível carregar seus pedidos de preço. Verifique a conexão e tente de novo.';
+      erroEscuta.value = falhaDeConexao(e)
+          ? semInternetPara('Seus pedidos de preço atualizam')
+          : 'Não foi possível carregar seus pedidos de preço. Verifique a conexão e tente de novo.';
       debugPrint('❌ Erro ao escutar cotações: $e');
+      // Escuta encerrada pelo erro: só volta abrindo uma nova.
+      refazerAoReconectar('cotacoes', ouvirMinhasCotacoes);
     });
   }
 
@@ -112,8 +116,10 @@ class CotacaoController extends GetxController {
           );
         }
       }
-    }, onError: (e) {
+    }, onError: (Object e) {
       debugPrint('❌ Erro ao ouvir fornecedores da cotação $idCotacao: $e');
+      _subStreams.remove(idCotacao);
+      refazerAoReconectar('cotacoes', ouvirMinhasCotacoes);
     });
 
     _subStreams[idCotacao] = stream;
@@ -150,6 +156,7 @@ class CotacaoController extends GetxController {
   }
 
   Future<void> encerrarEscutas() async {
+    esquecerRecarga('cotacoes');
     await _cotacaoStream?.cancel();
     _cotacaoStream = null;
     _cancelarSubStreams();

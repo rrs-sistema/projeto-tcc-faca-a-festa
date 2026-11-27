@@ -2,6 +2,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 
 import '../../services/functions/callable_https_client.dart';
 
+import 'package:app_faca_festa/data/services/functions/exigir_conexao_functions.dart';
 /// Callables do fluxo de cotação (região southamerica-east1).
 class CotacaoFunctionsDatasource {
   CotacaoFunctionsDatasource({
@@ -83,6 +84,7 @@ class CotacaoFunctionsDatasource {
     Map<String, dynamic> data,
   ) async {
     try {
+      garantirConexaoFunctions('Esta ação da cotação');
       if (CallableHttpsClient.necessarioNaPlataformaAtual) {
         return _https.call(nome, data);
       }

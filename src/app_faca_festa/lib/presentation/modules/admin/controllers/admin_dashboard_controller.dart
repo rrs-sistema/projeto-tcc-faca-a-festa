@@ -2,8 +2,10 @@ import 'package:get/get.dart';
 
 import 'package:app_faca_festa/domain/entities/admin_dashboard_stats.dart';
 import 'package:app_faca_festa/domain/usecases/carregar_admin_dashboard.dart';
+import 'package:app_faca_festa/core/conectividade/recarregar_ao_reconectar.dart';
 
-class AdminDashboardController extends GetxController {
+class AdminDashboardController extends GetxController
+    with RecarregarAoReconectar {
   AdminDashboardController({required CarregarAdminDashboard carregarDashboard})
       : _carregarDashboard = carregarDashboard;
 
@@ -21,6 +23,7 @@ class AdminDashboardController extends GetxController {
   }
 
   Future<void> carregar() async {
+    repetirAoReconectar('dashboard', carregar);
     try {
       carregando.value = true;
       erro.value = '';

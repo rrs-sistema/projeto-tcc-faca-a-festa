@@ -1,10 +1,13 @@
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
+import 'package:app_faca_festa/core/conectividade/recarregar_ao_reconectar.dart';
+
 import 'package:app_faca_festa/domain/entities/fornecedor_recomendacao.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_fornecedor_recomendacoes.dart';
 
-class FornecedorRecomendacaoController extends GetxController {
+class FornecedorRecomendacaoController extends GetxController
+    with RecarregarAoReconectar {
   FornecedorRecomendacaoController({
     required GerenciarFornecedorRecomendacoes recomendacoesFornecedor,
   }) : _recomendacoesFornecedor = recomendacoesFornecedor;
@@ -122,8 +125,20 @@ class FornecedorRecomendacaoController extends GetxController {
       );
 
       recomendacoes.assignAll(lista);
+      repetirAoReconectar(
+          'salvas',
+          () => carregarRecomendacoesSalvas(
+              idEvento: idEvento, idUsuario: idUsuario, limite: limite));
     } catch (e, s) {
-      erro.value = 'Erro ao carregar recomendações.';
+      if (falhaDeConexao(e)) {
+        erro.value = semInternetPara('As recomendações aparecem');
+        refazerAoReconectar(
+            'salvas',
+            () => carregarRecomendacoesSalvas(
+                idEvento: idEvento, idUsuario: idUsuario, limite: limite));
+      } else {
+        erro.value = 'Erro ao carregar recomendações.';
+      }
 
       debugPrint(
         '❌ [FornecedorRecomendacao] carregarRecomendacoesSalvas: $e\n$s',
@@ -161,7 +176,17 @@ class FornecedorRecomendacaoController extends GetxController {
 
       recomendacoes.assignAll(lista);
     } catch (e, s) {
-      erro.value = 'Erro ao gerar recomendações.';
+      if (falhaDeConexao(e)) {
+        // A tentativa não conta: a geração volta sozinha com a internet.
+        _geracaoTentadaPorEvento.remove(idEvento);
+        erro.value = semInternetPara('As recomendações são geradas');
+        refazerAoReconectar(
+            'gerar',
+            () => gerarRecomendacoes(
+                idEvento: idEvento, limite: limite, modoDemo: modoDemo));
+      } else {
+        erro.value = 'Erro ao gerar recomendações.';
+      }
       debugPrint('❌ [FornecedorRecomendacao] gerarRecomendacoes: $e\n$s');
     } finally {
       gerando.value = false;

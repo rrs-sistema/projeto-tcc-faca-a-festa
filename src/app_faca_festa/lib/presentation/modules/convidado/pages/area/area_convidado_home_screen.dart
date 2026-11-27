@@ -183,6 +183,14 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
                       evento: evento,
                       theme: theme,
                       giftUseCases: presentes,
+                      onReservar: (presente) =>
+                          convidadoController.reservarPresente(
+                        idEvento: evento.idEvento,
+                        idPresente: presente.id,
+                        idConvidado: convidadoAtual.idConvidado,
+                        nomeConvidado: convidadoAtual.nome,
+                        backgroundColor: theme.primaryColor.value,
+                      ),
                     ),
               2 => _buildConfirmacaoPage(convidadoAtual),
               3 => _buildTarefasPage(evento, convidadoAtual),

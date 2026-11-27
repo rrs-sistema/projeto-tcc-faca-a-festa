@@ -8,6 +8,7 @@ import 'package:app_faca_festa/domain/entities/fornecedor.dart';
 import 'package:app_faca_festa/domain/services/fornecedor_ai.dart';
 import '../models/fornecedor_intelligence/sugestao_resposta_cotacao_ai_model.dart';
 
+import 'package:app_faca_festa/data/services/functions/exigir_conexao_functions.dart';
 typedef FornecedorAiBackendCaller = Future<dynamic> Function(
   Map<String, dynamic> payload,
 );
@@ -284,6 +285,7 @@ Se não houver serviço solicitado, pergunte qual serviço o organizador deseja.
     if (functions == null) {
       throw StateError('FirebaseFunctions não injetado para IA generativa.');
     }
+    garantirConexaoFunctions('A sugestão com IA');
     final callable = functions.httpsCallable(functionName);
     final result = await callable.call(payload);
     return result.data;

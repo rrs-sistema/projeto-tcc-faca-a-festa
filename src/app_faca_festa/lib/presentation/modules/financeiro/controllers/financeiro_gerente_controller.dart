@@ -7,12 +7,14 @@ import 'package:app_faca_festa/domain/entities/evento.dart';
 import 'package:app_faca_festa/domain/services/previsao_financeira_gerente_service.dart';
 import 'package:app_faca_festa/domain/services/simulacao_orcamento_evento_service.dart';
 import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_controller.dart';
+import 'package:app_faca_festa/core/conectividade/recarregar_ao_reconectar.dart';
 
 enum EixoTemporalFinanceiro { mesEvento, mesPagamento }
 
 /// Dashboard do responsável autorizado pelos eventos (dono id_usuario).
 /// Sem hierarquia empresarial inventada.
-class FinanceiroGerenteController extends GetxController {
+class FinanceiroGerenteController extends GetxController
+    with RecarregarAoReconectar {
   FinanceiroGerenteController({
     required EventoController eventoController,
     required CompromissosEventoRemote compromissosRemote,
@@ -167,6 +169,8 @@ class FinanceiroGerenteController extends GetxController {
   }
 
   Future<void> iniciar() async {
+    repetirAoReconectar('financeiro-gerente', iniciar,
+        quando: () => erro.value.isNotEmpty || previsoes.isEmpty);
     final uid = _usuarioAtual?.call();
     final geracao = ++_geracao;
     await _cancelarSubs();

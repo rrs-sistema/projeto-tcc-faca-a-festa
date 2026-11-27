@@ -4,6 +4,7 @@ import 'package:app_faca_festa/data/datasources/remote/dashboard_financeiro_admi
 import 'package:app_faca_festa/domain/entities/financeiro/contratacao_identidade.dart';
 import 'package:app_faca_festa/domain/entities/financeiro/dashboard_financeiro_admin.dart';
 import 'package:app_faca_festa/domain/services/dashboard_financeiro_admin_service.dart';
+import 'package:app_faca_festa/core/conectividade/recarregar_ao_reconectar.dart';
 
 typedef ConsultarDashboardAdminFn = Future<Map<String, dynamic>> Function({
   required String eixoTemporal,
@@ -13,7 +14,8 @@ typedef ConsultarDashboardAdminFn = Future<Map<String, dynamic>> Function({
   String? estado,
 });
 
-class DashboardFinanceiroAdminController extends GetxController {
+class DashboardFinanceiroAdminController extends GetxController
+    with RecarregarAoReconectar {
   DashboardFinanceiroAdminController({
     this.remote,
     ConsultarDashboardAdminFn? consultarFn,
@@ -104,6 +106,7 @@ class DashboardFinanceiroAdminController extends GetxController {
   void aoTrocarSessao() => _geracao++;
 
   Future<void> carregar() async {
+    repetirAoReconectar('dashboard-financeiro', carregar);
     final geracao = ++_geracao;
     final uid = _usuarioAtual?.call();
     erro.value = '';

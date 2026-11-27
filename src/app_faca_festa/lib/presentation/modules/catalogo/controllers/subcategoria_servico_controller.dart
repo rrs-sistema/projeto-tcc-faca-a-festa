@@ -5,8 +5,10 @@ import 'package:get/get.dart';
 
 import 'package:app_faca_festa/domain/entities/subcategoria_servico.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_catalogo_servico.dart';
+import 'package:app_faca_festa/core/conectividade/recarregar_ao_reconectar.dart';
 
-class SubcategoriaServicoController extends GetxController {
+class SubcategoriaServicoController extends GetxController
+    with RecarregarAoReconectar {
   SubcategoriaServicoController({
     required GerenciarCatalogoServico catalogo,
     FutureOr<void> Function()? sincronizarCategorias,
@@ -62,6 +64,7 @@ class SubcategoriaServicoController extends GetxController {
       contagemServicos[idSubcategoria] ?? 0;
 
   Future<void> carregarTodasSubcategoria() async {
+    repetirAoReconectar('todas-subcategorias', carregarTodasSubcategoria);
     try {
       final lista = await _catalogo.listarSubcategorias();
       todasSubcategorias.assignAll(lista);
@@ -75,6 +78,7 @@ class SubcategoriaServicoController extends GetxController {
   }
 
   Future<void> carregarSubcategorias([String? idCategoria]) async {
+    repetirAoReconectar('subcategorias', () => carregarSubcategorias(idCategoria));
     try {
       carregando.value = true;
       erro.value = '';

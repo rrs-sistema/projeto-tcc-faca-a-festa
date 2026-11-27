@@ -24,12 +24,14 @@ import 'package:app_faca_festa/presentation/modules/calculadora/controllers/calc
 import 'package:app_faca_festa/presentation/modules/calculadora/controllers/fornecedor_migracao_admin_controller.dart';
 import 'package:app_faca_festa/presentation/modules/calculadora/controllers/sugestao_base_festa_controller.dart';
 
+import 'package:app_faca_festa/data/services/functions/exigir_conexao_functions.dart';
 abstract final class CalculadoraBootstrap {
   static void register() {
     if (!Get.isRegistered<ICalculadoraFestaAIService>()) {
       Get.lazyPut<ICalculadoraFestaAIService>(
         () => CalculadoraFestaRemoteAIService(
           executor: (payload) async {
+            garantirConexaoFunctions('A análise com IA');
             if (CallableHttpsClient.necessarioNaPlataformaAtual) {
               return Get.find<CallableHttpsClient>().call(
                   'analisarCalculadoraFestaIA',

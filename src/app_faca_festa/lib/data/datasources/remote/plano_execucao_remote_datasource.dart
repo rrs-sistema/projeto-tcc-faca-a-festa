@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:app_faca_festa/core/conectividade/exigir_conexao.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../local/cadastro_armazenamento.dart';
 import 'agenda_servico_remote.dart';
@@ -9,6 +10,7 @@ import '../../../domain/services/compromisso_planejamento_service.dart';
 import '../../models/cardapio/cardapio_model.dart';
 import '../../models/cardapio/cardapio_item_model.dart';
 
+import 'package:app_faca_festa/data/services/functions/exigir_conexao_functions.dart';
 class PlanoExecucaoRemoteDatasource {
   PlanoExecucaoRemoteDatasource(this.db, this.auth,
       {this.enviar,
@@ -40,6 +42,8 @@ class PlanoExecucaoRemoteDatasource {
   }
 
   Future<ContextoExecucaoPlano> carregar(String evento) async {
+    // A revisão conjunta confere as versões no servidor antes de aplicar.
+    garantirConexao('Revisar e aplicar o plano');
     final uid = auth.currentUser?.uid;
     if (uid == null || evento.isEmpty || evento.contains('/')) {
       throw StateError('Entre na conta do organizador.');
@@ -179,6 +183,7 @@ class PlanoExecucaoRemoteDatasource {
         '${_prefixo(uid, evento)}${base64Url.encode(utf8.encode(p.pedido))}';
     // Confirmação já autorizada: guarda somente a identidade do pedido antes
     // de enviá-lo. Uma resposta perdida é recuperada pelo recibo do servidor.
+    garantirConexaoFunctions('Aplicar o plano');
     await recuperacao.gravar(chave, jsonEncode({'pedido': p.pedido}));
     try {
       final response = enviar != null

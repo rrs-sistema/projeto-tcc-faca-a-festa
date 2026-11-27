@@ -7,8 +7,10 @@ import 'package:app_faca_festa/data/services/functions/financeiro_callable_gatew
 import 'package:app_faca_festa/domain/entities/convidado.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/controllers/convidado_controller.dart';
 import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_controller.dart';
+import 'package:app_faca_festa/core/conectividade/recarregar_ao_reconectar.dart';
 
-class CoOrganizadorController extends GetxController {
+class CoOrganizadorController extends GetxController
+    with RecarregarAoReconectar {
   CoOrganizadorController({
     required this.idEvento,
     CoOrganizadorService? service,
@@ -111,6 +113,7 @@ class CoOrganizadorController extends GetxController {
   }
 
   Future<void> carregar() async {
+    repetirAoReconectar('equipe', carregar);
     carregando.value = true;
     erro.value = null;
     try {

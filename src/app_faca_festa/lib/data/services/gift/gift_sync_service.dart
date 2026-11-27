@@ -1,6 +1,7 @@
 import 'package:app_faca_festa/core/services/update_operations.dart';
 import 'dart:developer' as developer;
 
+import 'package:app_faca_festa/core/conectividade/conectividade_service.dart';
 import 'package:app_faca_festa/core/database/app_database.dart';
 import 'package:app_faca_festa/domain/entities/gift/gift_contribution.dart';
 
@@ -17,19 +18,28 @@ class GiftSyncService {
     required this.remote,
   });
 
+  /// Limite por item: sem resposta do servidor, a escrita segue na fila do
+  /// Firestore e a próxima reconexão tenta de novo.
+  static const limiteEnvio = Duration(seconds: 20);
+
   Future<void> syncPendentes() {
     return UpdateOperations.run(() async {
+      if (ConectividadeService.offlineAgora) return;
       final pendentes = await local.getUnsynced();
 
       for (final gift in pendentes) {
         try {
           if (gift.deleted) {
-            await remote.deleteGift(gift.eventoId, gift.giftId);
+            await remote
+                .deleteGift(gift.eventoId, gift.giftId)
+                .timeout(limiteEnvio);
           } else {
-            await remote.createGift(gift.eventoId, gift.toModel());
+            await remote
+                .enviarDoAparelho(gift.eventoId, gift.toModel())
+                .timeout(limiteEnvio);
           }
 
-          await local.markSynced(gift.giftId);
+          await local.markSyncedSeVersao(gift.giftId, gift.updatedAt);
         } catch (e) {
           developer.log(
             'Erro ao sincronizar gift ${gift.giftId}',
@@ -54,7 +64,7 @@ class GiftSyncService {
             contribution.eventoId,
             contribution.giftId,
             contribution.toEntity(),
-          );
+          ).timeout(limiteEnvio);
 
           await local.markContributionSynced(contribution.contributionId);
         } catch (e) {

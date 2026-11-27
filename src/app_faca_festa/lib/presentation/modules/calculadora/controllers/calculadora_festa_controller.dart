@@ -53,6 +53,7 @@ import 'package:app_faca_festa/domain/entities/perfil_festa.dart';
 import 'package:app_faca_festa/domain/repositories/calculadora_festa_repository.dart';
 import 'package:app_faca_festa/domain/repositories/calculadora_itens_base_repository_contract.dart';
 import 'package:app_faca_festa/domain/services/calculadora_festa_ai_service.dart';
+import 'package:app_faca_festa/core/conectividade/recarregar_ao_reconectar.dart';
 
 part 'calculadora_festa_publico.dart';
 part 'calculadora_festa_configuracao.dart';
@@ -89,7 +90,8 @@ extension OrigemItensCalculadoraExtension on OrigemItensCalculadora {
   }
 }
 
-class CalculadoraFestaController extends GetxController {
+class CalculadoraFestaController extends GetxController
+    with RecarregarAoReconectar {
   final catalogoContextual = CatalogoContextual.indisponivel.obs;
   final carregandoCatalogo = false.obs;
   int _consultaCatalogo = 0;
@@ -781,6 +783,8 @@ class CalculadoraFestaController extends GetxController {
   }
 
   Future<void> carregarContextoOrcamento() async {
+    repetirAoReconectar('orcamento', carregarContextoOrcamento,
+        quando: () => erroOrcamento.value.isNotEmpty);
     consultaFinanceiroIniciada.value = true;
     final usuario = _uidAtual;
     final versao = ++_versaoOrcamento;
@@ -1277,6 +1281,9 @@ class CalculadoraFestaController extends GetxController {
   Future<void> carregarItensBasePorTipoEvento({
     bool recalcularAposCarregar = true,
   }) async {
+    // Recarregar descarta o cálculo em andamento: só quando não havia itens.
+    repetirAoReconectar('itens-base', carregarItensBasePorTipoEvento,
+        quando: () => itensEstimativa.isEmpty);
     final versao = ++_versaoCarregamentoItens;
     itensEstimativa.clear();
     itensCalculados.clear();
@@ -1459,6 +1466,8 @@ class CalculadoraFestaController extends GetxController {
   }
 
   Future<void> carregarConvidadosDoEvento(String idEvento) async {
+    repetirAoReconectar('convidados', () => carregarConvidadosDoEvento(idEvento),
+        quando: () => estadoConvidados.value != EstadoFontePlanejamento.disponivel);
     final usuario = _uidAtual;
     final versao = ++_versaoConvidados;
     estadoConvidados.value = EstadoFontePlanejamento.carregando;

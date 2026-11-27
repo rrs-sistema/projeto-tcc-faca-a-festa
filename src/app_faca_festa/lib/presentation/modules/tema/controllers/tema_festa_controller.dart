@@ -7,8 +7,10 @@ import 'package:app_faca_festa/domain/entities/tema_festa.dart';
 import 'package:app_faca_festa/domain/exceptions/tema_festa_exception.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_temas_festa.dart';
 import 'package:app_faca_festa/presentation/modules/tema/tema_festa_view_model.dart';
+import 'package:app_faca_festa/core/conectividade/recarregar_ao_reconectar.dart';
 
-class TemaFestaController extends GetxController {
+class TemaFestaController extends GetxController
+    with RecarregarAoReconectar {
   TemaFestaController({
     required GerenciarTemasFesta temasFesta,
     void Function(TemaFesta tema)? atualizarCacheTema,
@@ -56,6 +58,7 @@ class TemaFestaController extends GetxController {
   }
 
   Future<void> carregar({bool popularSeVazio = false}) async {
+    repetirAoReconectar('temas', carregar);
     try {
       carregando.value = true;
       erro.value = '';

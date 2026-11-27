@@ -5,6 +5,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 
 import '../../models/fornecedor/fornecedor_recomendacao_model.dart';
 
+import 'package:app_faca_festa/data/services/functions/exigir_conexao_functions.dart';
 class FornecedorRecomendacaoRemoteDatasource {
   FornecedorRecomendacaoRemoteDatasource({
     required FirebaseFirestore firestore,
@@ -63,6 +64,7 @@ class FornecedorRecomendacaoRemoteDatasource {
     required int limite,
     required bool modoDemo,
   }) async {
+    garantirConexaoFunctions('Gerar recomendações de fornecedores');
     final callable = _functions.httpsCallable(
       'recomendarFornecedoresParaEvento',
       options: HttpsCallableOptions(
@@ -96,6 +98,7 @@ class FornecedorRecomendacaoRemoteDatasource {
     String? tipoEventoNome,
     String? cidade,
   }) async {
+    garantirConexaoFunctions('Registrar a ação na recomendação');
     final callable = _functions.httpsCallable(
       'registrarInteracaoFornecedor',
       options: HttpsCallableOptions(

@@ -2,6 +2,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 
 import 'package:app_faca_festa/domain/entities/resultados_operacao.dart';
 
+import 'package:app_faca_festa/data/services/functions/exigir_conexao_functions.dart';
 class FornecedorMigracaoRemoteDatasource {
   FornecedorMigracaoRemoteDatasource({required FirebaseFunctions functions})
       : _functions = functions;
@@ -14,6 +15,7 @@ class FornecedorMigracaoRemoteDatasource {
     required bool sobrescrever,
     required int limite,
   }) async {
+    garantirConexaoFunctions('A migração de fornecedores');
     final warmupCallable = _functions.httpsCallable(
       'atualizarFornecedoresTiposEventoManual',
     );

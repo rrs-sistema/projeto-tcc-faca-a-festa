@@ -1,0 +1,417 @@
+{
+  "modo": "linha_base",
+  "aparelho": "SM-X110",
+  "android": "16",
+  "inicio": null,
+  "fim": "2026-11-26T16:54:59.919Z",
+  "reconstruido_do_log": ".dart_tool/offline_linha_base.log",
+  "total": 49,
+  "aprovadas": 27,
+  "reprovadas": 22,
+  "etapas": [
+    {
+      "fase": "offline",
+      "jornada": "sessao",
+      "cenario": "online",
+      "etapa": "Login dos três perfis",
+      "ok": true,
+      "ms": 453
+    },
+    {
+      "fase": "offline",
+      "jornada": "organizador",
+      "cenario": "online",
+      "etapa": "Perfil e lista de eventos",
+      "ok": true,
+      "ms": 1409
+    },
+    {
+      "fase": "offline",
+      "jornada": "organizador",
+      "cenario": "online",
+      "etapa": "Checklist, convidados e orçamento",
+      "ok": true,
+      "ms": 798
+    },
+    {
+      "fase": "offline",
+      "jornada": "organizador",
+      "cenario": "online",
+      "etapa": "Presentes no aparelho",
+      "ok": false,
+      "ms": 283,
+      "erro": "Bad state: Presente do servidor não chegou ao banco local"
+    },
+    {
+      "fase": "offline",
+      "jornada": "convidado",
+      "cenario": "online",
+      "etapa": "Abrir convite pelo link",
+      "ok": true,
+      "ms": 829
+    },
+    {
+      "fase": "offline",
+      "jornada": "fornecedor",
+      "cenario": "online",
+      "etapa": "Perfil, serviços e painel",
+      "ok": true,
+      "ms": 669
+    },
+    {
+      "fase": "offline",
+      "jornada": "calculadora",
+      "cenario": "online",
+      "etapa": "Catálogo e simulação",
+      "ok": false,
+      "ms": 1186,
+      "erro": "Bad state: Sem cálculo (operacao=true erro=\"\" evento=naoConsultada convidados=disponivel idades=true itens=0 adultos=20)"
+    },
+    {
+      "fase": "offline",
+      "jornada": "rede",
+      "cenario": "corte",
+      "etapa": "Servidor inalcançável no aparelho",
+      "ok": true,
+      "ms": 3128
+    },
+    {
+      "fase": "offline",
+      "jornada": "organizador",
+      "cenario": "offline",
+      "etapa": "Perfil abre do cache",
+      "ok": true,
+      "ms": 3127
+    },
+    {
+      "fase": "offline",
+      "jornada": "organizador",
+      "cenario": "offline",
+      "etapa": "Lista de eventos do cache",
+      "ok": true,
+      "ms": 75
+    },
+    {
+      "fase": "offline",
+      "jornada": "organizador",
+      "cenario": "offline",
+      "etapa": "Editar evento sem travar",
+      "ok": false,
+      "ms": 8013,
+      "erro": "Não terminou em 8s (travou esperando o servidor)"
+    },
+    {
+      "fase": "offline",
+      "jornada": "organizador",
+      "cenario": "offline",
+      "etapa": "Criar evento sem travar",
+      "ok": false,
+      "ms": 9773,
+      "erro": "Não terminou em 8s (travou esperando o servidor)"
+    },
+    {
+      "fase": "offline",
+      "jornada": "organizador",
+      "cenario": "offline",
+      "etapa": "Evento novo aparece na lista",
+      "ok": false,
+      "ms": 8026,
+      "erro": "Não terminou em 8s (travou esperando o servidor)"
+    },
+    {
+      "fase": "offline",
+      "jornada": "organizador",
+      "cenario": "offline",
+      "etapa": "Adicionar tarefa sem travar",
+      "ok": false,
+      "ms": 10801,
+      "erro": "Não terminou em 8s (travou esperando o servidor)"
+    },
+    {
+      "fase": "offline",
+      "jornada": "organizador",
+      "cenario": "offline",
+      "etapa": "Tarefa aparece no checklist",
+      "ok": true,
+      "ms": 51
+    },
+    {
+      "fase": "offline",
+      "jornada": "organizador",
+      "cenario": "offline",
+      "etapa": "Adicionar convidado sem travar",
+      "ok": false,
+      "ms": 8021,
+      "erro": "Não terminou em 8s (travou esperando o servidor)"
+    },
+    {
+      "fase": "offline",
+      "jornada": "organizador",
+      "cenario": "offline",
+      "etapa": "Convidado aparece na lista",
+      "ok": true,
+      "ms": 132
+    },
+    {
+      "fase": "offline",
+      "jornada": "organizador",
+      "cenario": "offline",
+      "etapa": "Registrar gasto no orçamento",
+      "ok": false,
+      "ms": 8015,
+      "erro": "Não terminou em 8s (travou esperando o servidor)"
+    },
+    {
+      "fase": "offline",
+      "jornada": "organizador",
+      "cenario": "offline",
+      "etapa": "Cadastrar presente sem travar",
+      "ok": false,
+      "ms": 8300,
+      "erro": "Não terminou em 8s (travou esperando o servidor)"
+    },
+    {
+      "fase": "offline",
+      "jornada": "organizador",
+      "cenario": "offline",
+      "etapa": "Registrar contribuição PIX",
+      "ok": true,
+      "ms": 10
+    },
+    {
+      "fase": "offline",
+      "jornada": "convidado",
+      "cenario": "offline",
+      "etapa": "Reabrir convite sem internet",
+      "ok": false,
+      "ms": 2297,
+      "erro": "AbrirConvitePorTokenException(unavailable): UNAVAILABLE"
+    },
+    {
+      "fase": "offline",
+      "jornada": "convidado",
+      "cenario": "offline",
+      "etapa": "Ver lista de presentes",
+      "ok": true,
+      "ms": 43
+    },
+    {
+      "fase": "offline",
+      "jornada": "convidado",
+      "cenario": "offline",
+      "etapa": "Reservar presente sem travar",
+      "ok": false,
+      "ms": 8012,
+      "erro": "Não terminou em 8s (travou esperando o servidor)"
+    },
+    {
+      "fase": "offline",
+      "jornada": "fornecedor",
+      "cenario": "offline",
+      "etapa": "Perfil do fornecedor do cache",
+      "ok": true,
+      "ms": 45
+    },
+    {
+      "fase": "offline",
+      "jornada": "fornecedor",
+      "cenario": "offline",
+      "etapa": "Serviços do fornecedor do cache",
+      "ok": false,
+      "ms": 10008,
+      "erro": "Não terminou em 10s (travou esperando o servidor)"
+    },
+    {
+      "fase": "offline",
+      "jornada": "fornecedor",
+      "cenario": "offline",
+      "etapa": "Painel da última consulta",
+      "ok": false,
+      "ms": 2935,
+      "erro": "ClientException with SocketException: Failed host lookup: 'southamerica-east1-faca-a-festa.cloudfunctions.net' (OS Error: No address associated with hostname, errno = 7), uri=https://southamerica-east1-faca-a-festa.cloudfunctions.net/consultarPainelFornecedorFn"
+    },
+    {
+      "fase": "offline",
+      "jornada": "calculadora",
+      "cenario": "offline",
+      "etapa": "Itens por tipo de festa",
+      "ok": true,
+      "ms": 191
+    },
+    {
+      "fase": "offline",
+      "jornada": "calculadora",
+      "cenario": "offline",
+      "etapa": "Catálogo contextual",
+      "ok": false,
+      "ms": 18,
+      "erro": "[cloud_firestore/unavailable] The service is currently unavailable. This is a most likely a transient condition and may be corrected by retrying with a backoff."
+    },
+    {
+      "fase": "offline",
+      "jornada": "calculadora",
+      "cenario": "offline",
+      "etapa": "Simulação com dados do aparelho",
+      "ok": false,
+      "ms": 16200,
+      "erro": "Bad state: Sem cálculo (operacao=false erro=\"A confirmação do planejamento está indisponível. Atualize antes de calcular.\" evento=naoConsultada convidados=disponivel idades=true itens=0 adultos=20)"
+    },
+    {
+      "fase": "offline",
+      "jornada": "reinicio",
+      "cenario": "reinicio",
+      "etapa": "Fechar e reabrir Firestore e SQLite",
+      "ok": true,
+      "ms": 82
+    },
+    {
+      "fase": "offline",
+      "jornada": "reinicio",
+      "cenario": "reinicio",
+      "etapa": "Eventos e tarefas após reinício",
+      "ok": false,
+      "ms": 10004,
+      "erro": "Não terminou em 10s (travou esperando o servidor)"
+    },
+    {
+      "fase": "offline",
+      "jornada": "reinicio",
+      "cenario": "reinicio",
+      "etapa": "Presente offline após reinício",
+      "ok": true,
+      "ms": 16
+    },
+    {
+      "fase": "reabrir",
+      "jornada": "reabrir",
+      "cenario": "processo_novo",
+      "etapa": "Sessões continuam abertas",
+      "ok": true,
+      "ms": 28
+    },
+    {
+      "fase": "reabrir",
+      "jornada": "reabrir",
+      "cenario": "processo_novo",
+      "etapa": "Perfil e eventos do cache",
+      "ok": false,
+      "ms": 15051,
+      "erro": "Não terminou em 15s (travou esperando o servidor)"
+    },
+    {
+      "fase": "reabrir",
+      "jornada": "reabrir",
+      "cenario": "processo_novo",
+      "etapa": "Pendências locais preservadas",
+      "ok": true,
+      "ms": 207
+    },
+    {
+      "fase": "reabrir",
+      "jornada": "convidado",
+      "cenario": "processo_novo",
+      "etapa": "Convite reabre sem internet",
+      "ok": false,
+      "ms": 2184,
+      "erro": "AbrirConvitePorTokenException(unavailable): UNAVAILABLE"
+    },
+    {
+      "fase": "reabrir",
+      "jornada": "rede",
+      "cenario": "reconexao",
+      "etapa": "Servidor volta a responder",
+      "ok": true,
+      "ms": 4706
+    },
+    {
+      "fase": "reabrir",
+      "jornada": "sincronizacao",
+      "cenario": "reconexao",
+      "etapa": "Fila do Firestore enviada",
+      "ok": true,
+      "ms": 8503
+    },
+    {
+      "fase": "reabrir",
+      "jornada": "sincronizacao",
+      "cenario": "reconexao",
+      "etapa": "Fila de presentes enviada",
+      "ok": true,
+      "ms": 139
+    },
+    {
+      "fase": "reabrir",
+      "jornada": "sincronizacao",
+      "cenario": "reconexao",
+      "etapa": "Servidor recebeu tudo",
+      "ok": false,
+      "ms": 144,
+      "erro": "[cloud_firestore/permission-denied] The caller does not have permission to execute the specified operation."
+    },
+    {
+      "fase": "servidor",
+      "jornada": "admin_sdk",
+      "cenario": "verificacao",
+      "etapa": "Evento criado offline existe",
+      "ok": true
+    },
+    {
+      "fase": "servidor",
+      "jornada": "admin_sdk",
+      "cenario": "verificacao",
+      "etapa": "Edição offline do evento chegou",
+      "ok": true
+    },
+    {
+      "fase": "servidor",
+      "jornada": "admin_sdk",
+      "cenario": "verificacao",
+      "etapa": "Tarefa offline existe",
+      "ok": false
+    },
+    {
+      "fase": "servidor",
+      "jornada": "admin_sdk",
+      "cenario": "verificacao",
+      "etapa": "Convidado offline existe",
+      "ok": true
+    },
+    {
+      "fase": "servidor",
+      "jornada": "admin_sdk",
+      "cenario": "verificacao",
+      "etapa": "Gasto offline registrado uma única vez",
+      "ok": true
+    },
+    {
+      "fase": "servidor",
+      "jornada": "admin_sdk",
+      "cenario": "verificacao",
+      "etapa": "Presente offline existe",
+      "ok": true
+    },
+    {
+      "fase": "servidor",
+      "jornada": "admin_sdk",
+      "cenario": "verificacao",
+      "etapa": "Contribuição PIX sem duplicar",
+      "ok": false,
+      "erro": "encontradas: 0"
+    },
+    {
+      "fase": "servidor",
+      "jornada": "admin_sdk",
+      "cenario": "verificacao",
+      "etapa": "Valor arrecadado coerente",
+      "ok": false,
+      "erro": "valor: 0"
+    },
+    {
+      "fase": "servidor",
+      "jornada": "admin_sdk",
+      "cenario": "verificacao",
+      "etapa": "Reserva do convidado chegou",
+      "ok": true
+    }
+  ]
+}

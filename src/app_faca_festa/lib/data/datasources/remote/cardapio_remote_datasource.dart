@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../models/cardapio/cardapio_item_model.dart';
 import '../../models/cardapio/cardapio_model.dart';
+import 'package:app_faca_festa/core/conectividade/escrita_local_primeiro.dart';
+import 'package:app_faca_festa/core/conectividade/exigir_conexao.dart';
 import 'package:app_faca_festa/domain/repositories/cardapio_repository.dart';
 import '../../../domain/services/criacao_cardapio_inicial_service.dart';
 import '../../models/evento/calculadora_festa_model.dart';
@@ -40,6 +42,8 @@ class CardapioRemoteDatasource {
             i.disponibilidade != null)) {
       throw StateError('A criação inicial contém dados incompatíveis.');
     }
+    // Transação que confere o destino no servidor antes de criar.
+    garantirConexao('Criar o cardápio a partir do plano');
     final parent = _cardapios.doc(menu.idCardapio);
     final simulacao = firestore
         .collection('calculadora_festa')
@@ -140,20 +144,27 @@ class CardapioRemoteDatasource {
       ..['id_cardapio'] = cardapio.idCardapio
       ..['id_evento'] = cardapio.idEvento
       ..removeWhere((key, value) => value == null);
-    return _cardapios
-        .doc(cardapio.idCardapio)
-        .set(data, SetOptions(merge: true));
+    return escritaLocalPrimeiro(
+      _cardapios.doc(cardapio.idCardapio).set(data, SetOptions(merge: true)),
+      descricao: 'cardápio',
+      chave: cardapio.idCardapio,
+    );
   }
 
   Future<void> excluirCardapio(String idCardapio) async {
     final reference = _cardapios.doc(idCardapio);
-    final itens = await reference.collection('itens').get();
+    final itens =
+        await LeituraLocalPrimeiro.consulta(reference.collection('itens'));
     final batch = firestore.batch();
     for (final item in itens.docs) {
       batch.delete(item.reference);
     }
     batch.delete(reference);
-    await batch.commit();
+    await escritaLocalPrimeiro(
+      batch.commit(),
+      descricao: 'exclusão de um cardápio',
+      chave: idCardapio,
+    );
   }
 
   Future<void> salvarItem(
@@ -166,33 +177,48 @@ class CardapioRemoteDatasource {
     final data = Map<String, dynamic>.from(item.toMap())
       ..['id_item'] = idItem
       ..['id_cardapio'] = idCardapio;
-    return collection.doc(idItem).set(data, SetOptions(merge: true));
+    return escritaLocalPrimeiro(
+      collection.doc(idItem).set(data, SetOptions(merge: true)),
+      descricao: 'item "${item.nome}" do cardápio',
+      chave: idItem,
+    );
   }
 
   Future<void> alternarConfirmado(
     String idCardapio,
     CardapioItemModel item,
   ) {
-    return _cardapios
-        .doc(idCardapio)
-        .collection('itens')
-        .doc(item.idItem)
-        .update({'confirmado': !item.confirmado});
+    return escritaLocalPrimeiro(
+      _cardapios
+          .doc(idCardapio)
+          .collection('itens')
+          .doc(item.idItem)
+          .update({'confirmado': !item.confirmado}),
+      descricao: 'item "${item.nome}" do cardápio',
+      chave: item.idItem,
+    );
   }
 
   Future<void> excluirItem(String idCardapio, String idItem) {
-    return _cardapios.doc(idCardapio).collection('itens').doc(idItem).delete();
+    return escritaLocalPrimeiro(
+      _cardapios.doc(idCardapio).collection('itens').doc(idItem).delete(),
+      descricao: 'exclusão de um item do cardápio',
+      chave: idItem,
+    );
   }
 
   Future<void> atualizarResumo(
     String idCardapio,
     ResumoCardapio resumo,
   ) {
-    return _cardapios.doc(idCardapio).set({
-      'total_itens': resumo.totalItens,
-      'total_comidas': resumo.totalComidas,
-      'total_bebidas': resumo.totalBebidas,
-      'total_sobremesas': resumo.totalSobremesas,
-    }, SetOptions(merge: true));
+    return escritaLocalPrimeiro(
+      _cardapios.doc(idCardapio).set({
+        'total_itens': resumo.totalItens,
+        'total_comidas': resumo.totalComidas,
+        'total_bebidas': resumo.totalBebidas,
+        'total_sobremesas': resumo.totalSobremesas,
+      }, SetOptions(merge: true)),
+      descricao: 'resumo do cardápio',
+    );
   }
 }

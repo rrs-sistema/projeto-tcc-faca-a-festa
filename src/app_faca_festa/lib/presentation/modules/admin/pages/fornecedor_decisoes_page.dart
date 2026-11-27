@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/core/conectividade/recarregar_ao_reconectar.dart';
 import 'package:app_faca_festa/presentation/widgets/festa_scroll_area.dart';
 import 'package:app_faca_festa/data/services/functions/callable_sessao_gateway.dart';
 import 'package:app_faca_festa/presentation/modules/tema/admin_theme.dart';
@@ -108,10 +109,11 @@ class FornecedorDecisoesPage extends StatefulWidget {
   State<FornecedorDecisoesPage> createState() => _FornecedorDecisoesPageState();
 }
 
-class _FornecedorDecisoesPageState extends State<FornecedorDecisoesPage> {
+class _FornecedorDecisoesPageState extends State<FornecedorDecisoesPage>
+    with RecarregarConsultaAoReconectar {
   final _rolagem = ScrollController();
   late final _gateway = widget.gateway ?? FirebaseCallableSessaoGateway();
-  late Future<_Dados> _consulta = _carregar();
+  late Future<_Dados> _consulta = acompanharConsulta(_carregar());
   int _dias = 90;
   String _filtroFila = 'todos';
   String _filtroReputacao = 'todas';
@@ -142,8 +144,11 @@ class _FornecedorDecisoesPageState extends State<FornecedorDecisoesPage> {
           _gateway.chamar('consultarComunicadoFornecedorFn', {}),
       };
 
+  @override
+  void recarregarAoReconectar() => _atualizar();
+
   void _atualizar() {
-    final consulta = _carregar();
+    final consulta = acompanharConsulta(_carregar());
     setState(() {
       _consulta = consulta;
     });

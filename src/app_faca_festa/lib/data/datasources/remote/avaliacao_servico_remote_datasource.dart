@@ -5,6 +5,7 @@ import '../../models/avaliacao/avaliacao_model.dart';
 import '../../models/fornecedor/avaliacao_servico_model.dart';
 import '../../services/stream_da_sessao.dart';
 
+import 'package:app_faca_festa/data/services/functions/exigir_conexao_functions.dart';
 class AvaliacaoServicoRemoteDatasource {
   AvaliacaoServicoRemoteDatasource(
       {required FirebaseFirestore firestore,
@@ -113,6 +114,7 @@ class AvaliacaoServicoRemoteDatasource {
       String? idServico,
       String? idOrcamento,
       bool detalhar = false}) async {
+    garantirConexaoFunctions('Consultar os contratos avaliáveis');
     final r =
         await _functions.httpsCallable('consultarContratosAvaliaveis').call({
       'idFornecedor': idFornecedor,
@@ -148,6 +150,7 @@ class AvaliacaoServicoRemoteDatasource {
     if (inteira < 1 || inteira > 5 || (nota - inteira).abs() > 0.001) {
       throw StateError('Escolha uma nota inteira de 1 a 5.');
     }
+    garantirConexaoFunctions('Registrar a avaliação');
     await _functions.httpsCallable('registrarAvaliacaoVerificada').call({
       'idFornecedor': idFornecedor,
       'idOrcamento': idOrcamento,

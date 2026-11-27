@@ -8,8 +8,10 @@ import 'package:app_faca_festa/domain/entities/fornecedor_servico_detalhado.dart
 import 'package:app_faca_festa/domain/entities/servico_produto.dart';
 import 'package:app_faca_festa/domain/services/auditoria_registrar.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_servicos_produto.dart';
+import 'package:app_faca_festa/core/conectividade/recarregar_ao_reconectar.dart';
 
-class ServicoProdutoController extends GetxController {
+class ServicoProdutoController extends GetxController
+    with RecarregarAoReconectar {
   ServicoProdutoController({
     required GerenciarServicosProduto servicos,
     AuditoriaRegistrar? auditoria,
@@ -73,12 +75,18 @@ class ServicoProdutoController extends GetxController {
         _servicos.observarVinculosFornecedor(idFornecedor).listen((_) async {
       debugPrint('♻️ Detectada mudança REAL-TIME → recarregando...');
       await carregarServicosComDetalhesOtimizado(idFornecedor: idFornecedor);
+    }, onError: (Object e) {
+      debugPrint('❌ Listener de vínculos do fornecedor: $e');
+      refazerAoReconectar(
+          'vinculos', () => escutarServicosFornecedor(idFornecedor));
     });
   }
 
   /// 🔹 Carrega serviços com detalhes completos (modo ADMIN ou FORNECEDOR)
   Future<void> carregarServicosComDetalhesOtimizado(
       {String? idFornecedor}) async {
+    repetirAoReconectar('servicos-detalhes',
+        () => carregarServicosComDetalhesOtimizado(idFornecedor: idFornecedor));
     try {
       carregando.value = true;
       servicosFornecedor.clear();
@@ -90,7 +98,9 @@ class ServicoProdutoController extends GetxController {
       servicosFornecedor.assignAll(lista);
       debugPrint('🟢 [SERVIÇOS] Lista carregada: ${lista.length} itens.');
     } catch (e, s) {
-      erro.value = e.toString();
+      erro.value = falhaDeConexao(e)
+          ? semInternetPara('Os serviços atualizam')
+          : e.toString();
       servicosFornecedor.clear();
       debugPrint('❌ Erro ao carregar serviços: $e\n$s');
     } finally {
@@ -138,12 +148,15 @@ class ServicoProdutoController extends GetxController {
   }
 
   Future<void> carregarServicos() async {
+    repetirAoReconectar('servicos', carregarServicos);
     try {
       carregando.value = true;
       final entidades = await _servicos.listarServicos();
       servicos.assignAll(entidades);
     } catch (e) {
-      Get.snackbar('Erro', 'Falha ao carregar serviços: $e');
+      if (!falhaDeConexao(e)) {
+        Get.snackbar('Erro', 'Falha ao carregar serviços: $e');
+      }
     } finally {
       carregando.value = false;
     }

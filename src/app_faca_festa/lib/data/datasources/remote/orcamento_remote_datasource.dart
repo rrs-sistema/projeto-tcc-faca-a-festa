@@ -3,6 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../models/orcamento/orcamento_model.dart';
+import 'package:app_faca_festa/core/conectividade/escrita_local_primeiro.dart';
+import 'package:app_faca_festa/core/conectividade/exigir_conexao.dart';
 import 'package:app_faca_festa/domain/entities/orcamento.dart';
 
 class OrcamentoRemoteDatasource {
@@ -55,10 +57,14 @@ class OrcamentoRemoteDatasource {
     final dados = model.toMap();
     dados['id_solicitante'] ??= _auth.currentUser?.uid;
 
-    return _db
-        .collection('orcamento')
-        .doc(model.idOrcamento)
-        .set(dados, SetOptions(merge: true));
+    return escritaLocalPrimeiro(
+      _db
+          .collection('orcamento')
+          .doc(model.idOrcamento)
+          .set(dados, SetOptions(merge: true)),
+      descricao: 'item do orçamento',
+      chave: model.idOrcamento,
+    );
   }
 
   Future<void> confirmarReserva({
@@ -67,7 +73,9 @@ class OrcamentoRemoteDatasource {
     required String? anotacoes,
     required DateTime? dataReserva,
     required StatusOrcamento status,
-  }) {
+  }) async {
+    // Fecha negócio com o fornecedor: não pode ficar na fila do aparelho.
+    garantirConexao('Confirmar a reserva com o fornecedor');
     return _db.collection('orcamento').doc(idOrcamento).update({
       'anotacoes': anotacoes,
       'custo_estimado': custoEstimado,
@@ -83,8 +91,9 @@ class OrcamentoRemoteDatasource {
     required double custoEstimado,
     String? anotacoes,
     required bool fechar,
-  }) {
+  }) async {
     final status = fechar ? 'fechado' : 'em_negociacao';
+    garantirConexao('Responder o orçamento');
 
     return _db.collection('orcamento').doc(idOrcamento).update({
       'custo_estimado': custoEstimado,
@@ -95,7 +104,26 @@ class OrcamentoRemoteDatasource {
     });
   }
 
+  Future<void> atualizarOrcamento({
+    required String idOrcamento,
+    required String anotacoes,
+    required double custoEstimado,
+  }) {
+    return escritaLocalPrimeiro(
+      _db.collection('orcamento').doc(idOrcamento).update({
+        'anotacoes': anotacoes,
+        'custo_estimado': custoEstimado,
+      }),
+      descricao: 'item do orçamento',
+      chave: idOrcamento,
+    );
+  }
+
   Future<void> excluirOrcamento(String idOrcamento) {
-    return _db.collection('orcamento').doc(idOrcamento).delete();
+    return escritaLocalPrimeiro(
+      _db.collection('orcamento').doc(idOrcamento).delete(),
+      descricao: 'exclusão de um item do orçamento',
+      chave: idOrcamento,
+    );
   }
 }

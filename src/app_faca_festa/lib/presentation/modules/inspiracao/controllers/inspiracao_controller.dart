@@ -12,10 +12,12 @@ import 'package:app_faca_festa/domain/entities/inspiracao_sugestao.dart';
 import 'package:app_faca_festa/domain/entities/referencia_evento.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_inspiracoes.dart';
 import 'package:app_faca_festa/presentation/modules/legal/widgets/direito_imagem_dialog.dart';
+import 'package:app_faca_festa/core/conectividade/recarregar_ao_reconectar.dart';
 
 part 'inspiracao_evento_planejamento.dart';
 
-class InspiracaoController extends GetxController {
+class InspiracaoController extends GetxController
+    with RecarregarAoReconectar {
   InspiracaoController({
     required GerenciarInspiracoes inspiracoes,
   }) : _inspiracoes = inspiracoes;
@@ -142,6 +144,13 @@ class InspiracaoController extends GetxController {
           if (kDebugMode) {
             print('❌ Erro ao escutar inspirações: $e');
           }
+          refazerAoReconectar(
+              'inspiracoes',
+              () => carregarInspiracoes(tipoEvento,
+                  tipoEventoId: tipoEventoId,
+                  tipoEventoSlug: tipoEventoSlug,
+                  eventoId: eventoId,
+                  userId: userId));
         },
       );
     } catch (e) {
@@ -355,6 +364,7 @@ class InspiracaoController extends GetxController {
         if (kDebugMode) {
           print('❌ Erro ao escutar referências do evento: $e');
         }
+        refazerAoReconectar('referencias', _escutarReferenciasDoEvento);
       },
     );
   }
@@ -394,6 +404,7 @@ class InspiracaoController extends GetxController {
         if (kDebugMode) {
           print('❌ Erro ao escutar tarefas do evento: $e');
         }
+        refazerAoReconectar('tarefas-inspiracao', _escutarTarefasDoEvento);
       },
     );
   }
@@ -433,6 +444,7 @@ class InspiracaoController extends GetxController {
         if (kDebugMode) {
           print('❌ Erro ao escutar orçamento do evento: $e');
         }
+        refazerAoReconectar('orcamento-inspiracao', _escutarOrcamentoDoEvento);
       },
     );
   }

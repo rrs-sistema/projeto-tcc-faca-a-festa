@@ -1,5 +1,6 @@
 import 'package:cloud_functions/cloud_functions.dart';
 
+import 'package:app_faca_festa/data/services/functions/exigir_conexao_functions.dart';
 /// Comandos financeiros críticos via Cloud Functions (Admin SDK + auth própria).
 class FinanceiroEventoRemoteDatasource {
   FinanceiroEventoRemoteDatasource({required FirebaseFunctions functions})
@@ -15,6 +16,7 @@ class FinanceiroEventoRemoteDatasource {
     String? idNecessidade,
     String? motivo,
   }) async {
+    garantirConexaoFunctions('Registrar o contrato');
     final callable = _functions.httpsCallable('registrarContratoFinanceiro');
     final result = await callable.call(<String, dynamic>{
       'idEvento': idEvento,
@@ -34,6 +36,7 @@ class FinanceiroEventoRemoteDatasource {
     int retencaoCentavos = 0,
     int reembolsoCentavos = 0,
   }) async {
+    garantirConexaoFunctions('Cancelar o contrato');
     final callable = _functions.httpsCallable('cancelarContratoFinanceiro');
     final result = await callable.call(<String, dynamic>{
       'idEvento': idEvento,
@@ -55,6 +58,7 @@ class FinanceiroEventoRemoteDatasource {
     String? motivo,
     String? confirmacao,
   }) async {
+    garantirConexaoFunctions('Registrar o pagamento');
     final callable = _functions.httpsCallable('registrarLiquidacaoFinanceira');
     final result = await callable.call(<String, dynamic>{
       'idEvento': idEvento,

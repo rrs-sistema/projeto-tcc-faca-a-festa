@@ -3,8 +3,10 @@ import 'package:get/get.dart';
 import 'package:app_faca_festa/domain/entities/categoria_servico.dart';
 import 'package:app_faca_festa/domain/services/auditoria_registrar.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_catalogo_servico.dart';
+import 'package:app_faca_festa/core/conectividade/recarregar_ao_reconectar.dart';
 
-class CategoriaServicoController extends GetxController {
+class CategoriaServicoController extends GetxController
+    with RecarregarAoReconectar {
   CategoriaServicoController({
     required GerenciarCatalogoServico catalogo,
     AuditoriaRegistrar? auditoria,
@@ -69,6 +71,7 @@ class CategoriaServicoController extends GetxController {
       contagemSubcategorias[idCategoria] ?? 0;
 
   Future<void> carregarCategorias() async {
+    repetirAoReconectar('categorias', carregarCategorias);
     try {
       carregando.value = true;
       erro.value = '';

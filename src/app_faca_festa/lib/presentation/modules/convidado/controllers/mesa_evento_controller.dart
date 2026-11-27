@@ -8,8 +8,10 @@ import 'package:app_faca_festa/domain/entities/mesa_evento.dart';
 import 'package:app_faca_festa/domain/entities/resultados_operacao.dart';
 import 'package:app_faca_festa/domain/repositories/mesa_evento_repository.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/controllers/grupo_convidado_controller.dart';
+import 'package:app_faca_festa/core/conectividade/recarregar_ao_reconectar.dart';
 
-class MesaEventoController extends GetxController {
+class MesaEventoController extends GetxController
+    with RecarregarAoReconectar {
   MesaEventoController({
     required MesaEventoRepository repository,
     GrupoConvidadoController? Function()? grupoControllerOf,
@@ -100,8 +102,15 @@ class MesaEventoController extends GetxController {
         }
       },
       onError: (Object error, StackTrace stackTrace) {
-        erro.value = 'Erro ao carregar mesas do evento: $error';
+        erro.value = falhaDeConexao(error)
+            ? semInternetPara('As mesas atualizam')
+            : 'Erro ao carregar mesas do evento: $error';
         carregando.value = false;
+        refazerAoReconectar('mesas', () async {
+          if (_idEventoAtual != eventoId) return;
+          await _cancelarEscutas();
+          await escutarMesas(eventoId);
+        });
       },
     );
 

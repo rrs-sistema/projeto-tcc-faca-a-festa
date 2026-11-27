@@ -1,10 +1,13 @@
 import 'dart:async';
 
+import 'package:app_faca_festa/core/conectividade/conectividade_service.dart';
 import 'package:app_faca_festa/domain/entities/convidado.dart';
 import 'package:app_faca_festa/domain/entities/grupo_convidado.dart';
 import 'package:app_faca_festa/domain/repositories/grupo_convidado_repository.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/controllers/grupo_convidado_controller.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:get/get.dart';
 
 void main() {
   late _GrupoConvidadoRepositoryFake repository;
@@ -18,6 +21,77 @@ void main() {
   tearDown(() async {
     controller.onClose();
     await repository.close();
+    Get.reset();
+  });
+
+  group('abertura sem ação do usuário não gera escritas', () {
+    List<GrupoConvidado> iniciais({int totalGeral = 0}) => [
+          for (final def in GrupoConvidadoController.gruposIniciais)
+            _grupo(
+              id: GrupoConvidadoController.idGrupoInicial(
+                  'evento-1', def.nome),
+              nome: def.nome,
+              total: def.nome == 'Geral' ? totalGeral : 0,
+            ),
+        ];
+
+    test('seed pedido antes da primeira lista espera e não recria grupos',
+        () async {
+      await controller.escutarGrupos('evento-1');
+      final seed = controller.garantirGruposIniciais(idEvento: 'evento-1');
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      repository.grupos.add(iniciais());
+
+      expect(await seed, isEmpty);
+      await Future<void>.delayed(Duration.zero);
+      expect(repository.salvamentos, 0);
+    });
+
+    test('resumo espera os convidados e grava uma vez só por rajada',
+        () async {
+      await controller.escutarGrupos('evento-1');
+      final idGeral =
+          GrupoConvidadoController.idGrupoInicial('evento-1', 'Geral');
+      repository.grupos.add(iniciais(totalGeral: 1));
+      await Future<void>.delayed(const Duration(milliseconds: 1000));
+      expect(repository.resumosGravados, isEmpty,
+          reason: 'sem a lista de convidados o total calculado seria zero');
+
+      final convidados = [
+        _convidado(nome: 'Ana', idGrupo: idGeral),
+        _convidado(nome: 'Bia', id: 'convidado-2', idGrupo: idGeral),
+      ];
+      repository.convidados.add(convidados);
+      repository.grupos.add(iniciais(totalGeral: 1));
+      repository.convidados.add(convidados);
+      await Future<void>.delayed(const Duration(milliseconds: 1000));
+
+      expect(repository.resumosGravados, hasLength(1));
+      final geral = repository.resumosGravados.single
+          .singleWhere((r) => r.idGrupo == idGeral);
+      expect(geral.total, 2);
+    });
+
+    test('sem internet o resumo não entra na fila de envio', () async {
+      final servico = Get.put(ConectividadeService(
+        mudancasRede: const Stream.empty(),
+        redeAtual: () async => [ConnectivityResult.wifi],
+        sonda: () async => false,
+        intervaloOffline: const Duration(hours: 1),
+        intervaloOnline: const Duration(hours: 1),
+      ));
+      await servico.verificarAgora();
+      final idGeral =
+          GrupoConvidadoController.idGrupoInicial('evento-1', 'Geral');
+
+      await controller.escutarGrupos('evento-1');
+      repository.grupos.add(iniciais());
+      repository.convidados.add([_convidado(nome: 'Ana', idGrupo: idGeral)]);
+      await Future<void>.delayed(const Duration(milliseconds: 1000));
+
+      expect(repository.resumosGravados, isEmpty);
+      servico.onClose();
+    });
   });
 
   test('observes groups and resolves a legacy guest group by name', () async {
@@ -66,14 +140,78 @@ void main() {
     expect(repository.grupoExcluido, isNull);
   });
 
-  test('deletes an empty group', () async {
+  test('deletes an empty custom group', () async {
     await controller.escutarGrupos('evento-1');
-    repository.grupos.add([_grupo(nome: 'Família')]);
+    repository.grupos.add([_grupo(nome: 'Padrinhos')]);
     repository.convidados.add(const []);
     await Future<void>.delayed(Duration.zero);
 
     await controller.excluirGrupo('grupo-1');
     expect(repository.grupoExcluido, 'grupo-1');
+    expect(controller.grupos.map((g) => g.nome), isNot(contains('Padrinhos')));
+  });
+
+  test('deleting an initial group marks it as excluded and is not recreated',
+      () async {
+    await controller.escutarGrupos('evento-1');
+    final ids = {
+      for (final def in GrupoConvidadoController.gruposIniciais)
+        def.nome: GrupoConvidadoController.idGrupoInicial('evento-1', def.nome),
+    };
+    repository.grupos.add([
+      for (final def in GrupoConvidadoController.gruposIniciais)
+        _grupo(id: ids[def.nome]!, nome: def.nome),
+    ]);
+    repository.convidados.add(const []);
+    await Future<void>.delayed(Duration.zero);
+    await Future<void>.delayed(Duration.zero);
+    expect(repository.salvamentos, 0);
+
+    await controller.excluirGrupo(ids['Amigos']!);
+
+    expect(repository.grupoExcluido, isNull);
+    expect(repository.grupoSalvo?.idGrupo, ids['Amigos']);
+    expect(repository.grupoSalvo?.excluido, isTrue);
+    expect(controller.grupos.map((g) => g.nome), isNot(contains('Amigos')));
+
+    // Firestore devolve o grupo marcado como excluído: não pode voltar.
+    repository.grupos.add([
+      for (final def in GrupoConvidadoController.gruposIniciais)
+        _grupo(
+          id: ids[def.nome]!,
+          nome: def.nome,
+          excluido: def.nome == 'Amigos',
+        ),
+    ]);
+    await Future<void>.delayed(Duration.zero);
+    await Future<void>.delayed(Duration.zero);
+
+    expect(repository.salvamentos, 1);
+    expect(controller.grupos.map((g) => g.nome), isNot(contains('Amigos')));
+    expect(controller.grupos.length, 2);
+  });
+
+  test('restores the default group when no active group remains', () async {
+    await controller.escutarGrupos('evento-1');
+    final idGeral = GrupoConvidadoController.idGrupoInicial('evento-1', 'Geral');
+    repository.grupos.add([
+      for (final def in GrupoConvidadoController.gruposIniciais)
+        _grupo(
+          id: GrupoConvidadoController.idGrupoInicial('evento-1', def.nome),
+          nome: def.nome,
+          excluido: true,
+        ),
+    ]);
+    await Future<void>.delayed(Duration.zero);
+    await Future<void>.delayed(Duration.zero);
+    expect(controller.grupos, isEmpty);
+    expect(repository.salvamentos, 0);
+
+    final grupo = await controller.garantirGrupoPadrao();
+
+    expect(grupo?.idGrupo, idGeral);
+    expect(grupo?.excluido, isFalse);
+    expect(repository.grupoSalvo?.excluido, isFalse);
   });
 
   test('creates the three initial groups when the event has none', () async {
@@ -244,6 +382,8 @@ void main() {
 GrupoConvidado _grupo({
   required String nome,
   String id = 'grupo-1',
+  bool excluido = false,
+  int total = 0,
 }) {
   final data = DateTime(2026, 8, 14);
   return GrupoConvidado(
@@ -252,6 +392,8 @@ GrupoConvidado _grupo({
     nome: nome,
     dataCadastro: data,
     dataAtualizacao: data,
+    excluido: excluido,
+    totalConvidados: total,
   );
 }
 
@@ -325,7 +467,11 @@ class _GrupoConvidadoRepositoryFake implements GrupoConvidadoRepository {
   }
 
   @override
-  Future<void> atualizarResumos(List<ResumoGrupoConvidado> resumos) async {}
+  Future<void> atualizarResumos(List<ResumoGrupoConvidado> resumos) async {
+    if (resumos.isNotEmpty) resumosGravados.add(resumos);
+  }
+
+  final resumosGravados = <List<ResumoGrupoConvidado>>[];
 
   @override
   Future<void> excluirGrupo(

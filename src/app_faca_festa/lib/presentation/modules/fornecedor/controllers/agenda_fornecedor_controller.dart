@@ -5,8 +5,10 @@ import 'package:uuid/uuid.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:app_faca_festa/data/services/functions/callable_sessao_gateway.dart';
 import 'package:app_faca_festa/data/local/recebimento_pendente_store.dart';
+import 'package:app_faca_festa/core/conectividade/recarregar_ao_reconectar.dart';
 
-class AgendaFornecedorController extends GetxController {
+class AgendaFornecedorController extends GetxController
+    with RecarregarAoReconectar {
   AgendaFornecedorController(
       {required this.gateway, RecebimentoPendenteStore? store})
       : store = store ??
@@ -53,6 +55,7 @@ class AgendaFornecedorController extends GetxController {
   }
 
   Future<void> carregar() async {
+    repetirAoReconectar('agenda', carregar);
     final g = _g;
     if (!ativa(g)) return;
     carregando.value = true;

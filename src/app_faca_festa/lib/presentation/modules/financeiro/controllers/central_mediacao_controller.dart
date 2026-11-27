@@ -4,8 +4,10 @@ import 'package:get/get.dart';
 import 'package:app_faca_festa/data/datasources/remote/central_mediacao_remote.dart';
 import 'package:app_faca_festa/domain/entities/financeiro/mediacao_operacional.dart';
 import 'package:app_faca_festa/domain/services/mediacao_operacional_service.dart';
+import 'package:app_faca_festa/core/conectividade/recarregar_ao_reconectar.dart';
 
-class CentralMediacaoController extends GetxController {
+class CentralMediacaoController extends GetxController
+    with RecarregarAoReconectar {
   CentralMediacaoController({
     required this.remote,
     MediacaoOperacionalService? dominio,
@@ -76,6 +78,7 @@ class CentralMediacaoController extends GetxController {
   }
 
   Future<void> carregarLista() async {
+    repetirAoReconectar('mediacao', carregarLista);
     final g = ++_geracao;
     carregando.value = true;
     erro.value = '';

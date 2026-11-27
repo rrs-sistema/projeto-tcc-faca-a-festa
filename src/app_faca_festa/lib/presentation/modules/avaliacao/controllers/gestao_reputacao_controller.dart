@@ -6,8 +6,10 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:app_faca_festa/data/local/recebimento_pendente_store.dart';
 import 'package:app_faca_festa/data/datasources/remote/gestao_reputacao_remote.dart';
 import 'package:app_faca_festa/domain/entities/gestao_reputacao.dart';
+import 'package:app_faca_festa/core/conectividade/recarregar_ao_reconectar.dart';
 
-class GestaoReputacaoController extends GetxController {
+class GestaoReputacaoController extends GetxController
+    with RecarregarAoReconectar {
   GestaoReputacaoController(
       {required this.gateway,
       this.idFornecedor,
@@ -126,6 +128,7 @@ class GestaoReputacaoController extends GetxController {
                 .toIso8601String()
         };
   Future<void> carregar({bool mais = false}) async {
+    if (!mais) repetirAoReconectar('reputacao', carregar);
     if (!autorizado.value || carregando.value) return;
     final uid = _usuario, g = _geracao;
     carregando.value = true;

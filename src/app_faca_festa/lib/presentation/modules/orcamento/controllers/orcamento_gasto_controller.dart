@@ -5,8 +5,10 @@ import 'dart:async';
 import 'package:app_faca_festa/domain/entities/orcamento_gasto.dart';
 import 'package:app_faca_festa/domain/entities/orcamento_validacao_resultado.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_orcamento_gastos.dart';
+import 'package:app_faca_festa/core/conectividade/recarregar_ao_reconectar.dart';
 
-class OrcamentoGastoController extends GetxController {
+class OrcamentoGastoController extends GetxController
+    with RecarregarAoReconectar {
   OrcamentoGastoController({
     required GerenciarOrcamentoGastos gastosOrcamento,
     FutureOr<void> Function()? atualizarResumoGeral,
@@ -31,11 +33,15 @@ class OrcamentoGastoController extends GetxController {
       _atualizarResumoGeral();
     }, onError: (e) {
       debugPrint('❌ Erro ao escutar gastos do orçamento: $e');
+      if (geracao == _geracao) {
+        refazerAoReconectar('gastos', () => escutarGastos(idOrcamento));
+      }
     });
   }
 
   Future<void> encerrarEscutas() async {
     ++_geracao;
+    esquecerRecarga('gastos');
     await _gastosSub?.cancel();
     _gastosSub = null;
     gastos.clear();

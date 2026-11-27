@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/core/conectividade/recarregar_ao_reconectar.dart';
 import 'package:app_faca_festa/presentation/widgets/festa_scroll_area.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
@@ -19,15 +20,19 @@ class TabelasAbrangenciaAdminPage extends StatefulWidget {
 }
 
 class _TabelasAbrangenciaAdminPageState
-    extends State<TabelasAbrangenciaAdminPage> {
+    extends State<TabelasAbrangenciaAdminPage>
+    with RecarregarConsultaAoReconectar {
   late final _datasource = widget.datasource ?? AbrangenciaRemoteDatasource();
-  late var _consulta = _datasource.consultarAdmin();
+  late var _consulta = acompanharConsulta(_datasource.consultarAdmin());
 
   void _recarregar() {
     setState(() {
-      _consulta = _datasource.consultarAdmin();
+      _consulta = acompanharConsulta(_datasource.consultarAdmin());
     });
   }
+
+  @override
+  void recarregarAoReconectar() => _recarregar();
 
   Future<void> _editar(AbrangenciaAdmin dados, TabelaAbrangencia? base) async {
     final publicada = await showDialog<bool>(

@@ -2,8 +2,10 @@ import 'package:get/get.dart';
 
 import 'package:app_faca_festa/data/datasources/remote/intermediacao_financeira_remote.dart';
 import 'package:app_faca_festa/domain/services/intermediacao_financeira_service.dart';
+import 'package:app_faca_festa/core/conectividade/recarregar_ao_reconectar.dart';
 
-class IntermediacaoFinanceiraController extends GetxController {
+class IntermediacaoFinanceiraController extends GetxController
+    with RecarregarAoReconectar {
   IntermediacaoFinanceiraController({
     required this.remote,
     IntermediacaoFinanceiraService? dominio,
@@ -29,6 +31,7 @@ class IntermediacaoFinanceiraController extends GetxController {
   }
 
   Future<void> carregarExtrato(String eventoId) async {
+    repetirAoReconectar('extrato', () => carregarExtrato(eventoId));
     final geracao = ++_geracao;
     idEvento.value = eventoId.trim();
     if (idEvento.value.isEmpty) {

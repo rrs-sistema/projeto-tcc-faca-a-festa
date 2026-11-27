@@ -15,6 +15,7 @@ import 'package:app_faca_festa/domain/entities/evento.dart';
 import 'package:app_faca_festa/domain/entities/gift/gift.dart';
 import 'package:app_faca_festa/domain/usecases/get_gifts/gift_usecases.dart';
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/widgets/festa_imagem_rede.dart';
 
 part '../../sections/presentes_hero_filter.dart';
 part '../../widgets/presentes_gift_card.dart';
@@ -25,12 +26,14 @@ class PresentesSection extends StatefulWidget {
   final Evento evento;
   final EventThemeController theme;
   final GiftUseCases giftUseCases;
+  final Future<void> Function(Gift presente) onReservar;
 
   const PresentesSection({
     super.key,
     required this.evento,
     required this.theme,
     required this.giftUseCases,
+    required this.onReservar,
   });
 
   @override
@@ -39,6 +42,7 @@ class PresentesSection extends StatefulWidget {
 
 class _PresentesSectionState extends State<PresentesSection> {
   _GiftFilter _filter = _GiftFilter.todos;
+  String? _reservando;
 
   @override
   Widget build(BuildContext context) {
@@ -144,7 +148,7 @@ class _PresentesSectionState extends State<PresentesSection> {
                         nomeRecebedor: _nomeRecebedorPix(),
                         cidadeRecebedor: widget.evento.nomeCidade,
                       ),
-                      onReserveTap: () => _showReserveSoon(primary),
+                      onReserveTap: () => _confirmarReserva(item, primary),
                     );
                   },
                 ),
@@ -261,16 +265,37 @@ class _PresentesSectionState extends State<PresentesSection> {
     );
   }
 
-  void _showReserveSoon(Color primary) {
-    Get.snackbar(
-      'Quase lá 🎁',
-      'A confirmação de reserva do presente físico pode ser ligada no próximo passo.',
-      backgroundColor: primary.withValues(alpha: 0.92),
-      colorText: Colors.white,
-      snackPosition: SnackPosition.BOTTOM,
-      margin: const EdgeInsets.all(14),
-      borderRadius: 16,
-      icon: const Icon(Icons.favorite_rounded, color: Colors.white),
+  Future<void> _confirmarReserva(Gift presente, Color primary) async {
+    if (_reservando != null) return;
+    final nome = presente.nome.trim().isEmpty ? 'este presente' : presente.nome;
+    final confirmou = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Reservar $nome?',
+            style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
+        content: Text(
+          'Os outros convidados vão ver que este presente já foi escolhido.',
+          style: GoogleFonts.poppins(fontSize: 13),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Voltar'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: primary),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Reservar'),
+          ),
+        ],
+      ),
     );
+    if (confirmou != true || !mounted) return;
+    setState(() => _reservando = presente.id);
+    try {
+      await widget.onReservar(presente);
+    } finally {
+      if (mounted) setState(() => _reservando = null);
+    }
   }
 }

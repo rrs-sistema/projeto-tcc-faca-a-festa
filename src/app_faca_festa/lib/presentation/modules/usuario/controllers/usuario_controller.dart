@@ -13,8 +13,10 @@ import 'package:app_faca_festa/domain/services/buscar_cep_service.dart';
 import 'package:app_faca_festa/presentation/modules/usuario/controllers/endereco_usuario_controller.dart';
 import 'package:app_faca_festa/presentation/modules/usuario/components/endereco/endereco_section_controller.dart';
 import 'package:app_faca_festa/presentation/modules/usuario/controllers/uf_cidade_controller.dart';
+import 'package:app_faca_festa/core/conectividade/recarregar_ao_reconectar.dart';
 
-class UsuarioController extends GetxController {
+class UsuarioController extends GetxController
+    with RecarregarAoReconectar {
   UsuarioController({
     required AutenticacaoRepository autenticacaoRepository,
     required PerfilUsuarioRepository perfilRepository,
@@ -74,6 +76,7 @@ class UsuarioController extends GetxController {
   // 🔹 CARREGA usuário logado a partir do Auth
   // =============================================================
   Future<void> carregarUsuarioLogado() async {
+    repetirAoReconectar('usuario-logado', carregarUsuarioLogado);
     try {
       final uid = _autenticacaoRepository.idUsuarioAtual;
       if (uid == null) return;
@@ -215,6 +218,7 @@ class UsuarioController extends GetxController {
   // =============================================================
 
   Future<void> carregarUsuarios() async {
+    repetirAoReconectar('usuarios', carregarUsuarios);
     try {
       carregando.value = true;
       final usuariosEncontrados = await _perfilRepository.listarUsuarios();

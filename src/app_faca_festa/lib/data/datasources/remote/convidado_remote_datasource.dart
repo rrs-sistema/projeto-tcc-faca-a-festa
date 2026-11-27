@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../models/convidado/convidado_model.dart';
+import 'package:app_faca_festa/core/conectividade/escrita_local_primeiro.dart';
 import 'package:app_faca_festa/domain/repositories/convidado_repository.dart';
 import 'package:app_faca_festa/domain/entities/convidado.dart';
 
@@ -67,14 +68,22 @@ class ConvidadoRemoteDatasource {
   }
 
   Future<void> salvar(ConvidadoModel convidado) {
-    return _convidados.doc(convidado.idConvidado).set(
-          convidado.toMap(),
-          SetOptions(merge: true),
-        );
+    return escritaLocalPrimeiro(
+      _convidados.doc(convidado.idConvidado).set(
+            convidado.toMap(),
+            SetOptions(merge: true),
+          ),
+      descricao: 'convidado ${convidado.nome}',
+      chave: convidado.idConvidado,
+    );
   }
 
   Future<void> excluir(String idConvidado) {
-    return _convidados.doc(idConvidado).delete();
+    return escritaLocalPrimeiro(
+      _convidados.doc(idConvidado).delete(),
+      descricao: 'exclusão de um convidado',
+      chave: idConvidado,
+    );
   }
 
   Future<void> atualizarStatus(
@@ -82,10 +91,14 @@ class ConvidadoRemoteDatasource {
     StatusConvidado status,
     DateTime dataResposta,
   ) {
-    return _convidados.doc(idConvidado).update({
-      'status': status.firestoreValue,
-      'data_resposta': Timestamp.fromDate(dataResposta),
-    });
+    return escritaLocalPrimeiro(
+      _convidados.doc(idConvidado).update({
+        'status': status.firestoreValue,
+        'data_resposta': Timestamp.fromDate(dataResposta),
+      }),
+      descricao: 'resposta de um convidado',
+      chave: idConvidado,
+    );
   }
 
   Future<MigracaoTipoConvidadoResultado> migrarTiposLegados() async {

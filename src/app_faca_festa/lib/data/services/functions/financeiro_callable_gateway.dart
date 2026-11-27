@@ -2,6 +2,8 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:get/get.dart';
 
 import 'package:app_faca_festa/data/services/functions/callable_https_client.dart';
+import 'package:app_faca_festa/core/conectividade/conectividade_service.dart';
+import 'package:app_faca_festa/core/conectividade/exigir_conexao.dart';
 
 /// Gateway único para callables financeiras.
 /// Windows: HTTP direto (plugin pigeon falha). Web/mobile: `httpsCallable`.
@@ -30,6 +32,10 @@ class FinanceiroCallableGateway {
     Duration timeout = const Duration(seconds: 90),
   ]) async {
     final payload = data ?? <String, dynamic>{};
+    if (ConectividadeService.offlineAgora) {
+      throw FinanceiroCallableException(
+          'unavailable', const SemConexaoException('Esta ação').mensagem);
+    }
     try {
       // Windows: HTTPS direto (plugin pigeon falha).
       // Web/mobile: httpsCallable; se o plugin devolver HTML/404 opaco,

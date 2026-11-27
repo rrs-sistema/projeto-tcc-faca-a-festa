@@ -35,8 +35,10 @@ import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/forne
 import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_painel_ao_vivo.dart';
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import 'package:app_faca_festa/presentation/modules/orcamento/dialogs/show_novo_orcamento_bottom_sheet.dart';
+import 'package:app_faca_festa/core/conectividade/recarregar_ao_reconectar.dart';
 
-class FornecedorController extends GetxController {
+class FornecedorController extends GetxController
+    with RecarregarAoReconectar {
   FornecedorController({
     AutenticacaoRepository? autenticacaoRepository,
     GerenciarFornecedores? gerenciarFornecedores,
@@ -477,7 +479,10 @@ class FornecedorController extends GetxController {
     return _appControllerResolver?.call();
   }
 
-  Future<void> carregarTodosFornecedores() => listaAdmin.carregarTodos();
+  Future<void> carregarTodosFornecedores() {
+    repetirAoReconectar('todos-fornecedores', listaAdmin.carregarTodos);
+    return listaAdmin.carregarTodos();
+  }
 
   Future<Fornecedor?> buscarFornecedor(String idUsuario) async {
     try {
@@ -603,6 +608,7 @@ class FornecedorController extends GetxController {
   }
 
   Future<void> carregarFornecedoresDoEvento(String idEvento) async {
+    repetirAoReconectar('fornecedores-evento', () => carregarFornecedoresDoEvento(idEvento));
     try {
       carregando.value = true;
       erro.value = '';
@@ -611,7 +617,9 @@ class FornecedorController extends GetxController {
         await _fornecedores.listarFornecedoresDoEvento(idEvento),
       );
     } catch (e) {
-      erro.value = 'Erro ao carregar fornecedores: $e';
+      erro.value = falhaDeConexao(e)
+          ? semInternetPara('A lista de fornecedores atualiza')
+          : 'Erro ao carregar fornecedores: $e';
     } finally {
       carregando.value = false;
     }

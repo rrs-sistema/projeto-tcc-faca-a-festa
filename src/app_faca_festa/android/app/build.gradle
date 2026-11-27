@@ -5,10 +5,12 @@ plugins {
     id "dev.flutter.flutter-gradle-plugin"
 }
 
-def calculadoraQa = project.hasProperty("calculadoraQa") ||
-    (project.findProperty("dart-defines") ?: "").split(",").any { valor ->
-        valor && new String(valor.decodeBase64(), "UTF-8") == "CALCULADORA_QA=true"
-    }
+def dartDefinesQa = (project.findProperty("dart-defines") ?: "").split(",").findAll { it }.collect { valor ->
+    new String(valor.decodeBase64(), "UTF-8")
+}
+def calculadoraQa = project.hasProperty("calculadoraQa") || dartDefinesQa.contains("CALCULADORA_QA=true")
+def offlineQa = project.hasProperty("offlineQa") || dartDefinesQa.contains("OFFLINE_QA=true")
+def qaLocal = calculadoraQa || offlineQa
 
 def localProperties = new Properties()
 def localPropertiesFile = rootProject.file('local.properties')
@@ -63,6 +65,9 @@ android {
         if (calculadoraQa) {
             applicationIdSuffix ".calculadoraqa"
             manifestPlaceholders["appLabel"] = "Faça a Festa QA"
+        } else if (offlineQa) {
+            applicationIdSuffix ".offlineqa"
+            manifestPlaceholders["appLabel"] = "Faça a Festa QA offline"
         }
         minSdkVersion 24
         targetSdkVersion 36
@@ -108,13 +113,13 @@ dependencies {
 }
 
 // O alvo de QA não inicializa Firebase nem utiliza credenciais do aplicativo.
-if (calculadoraQa) {
+if (qaLocal) {
     tasks.configureEach { task ->
         if (task.name.endsWith("GoogleServices")) task.enabled = false
     }
     gradle.taskGraph.whenReady { graph ->
         if (graph.allTasks.any { it.name.toLowerCase().contains("release") }) {
-            throw new GradleException("O alvo calculadoraQa só pode ser executado em debug.")
+            throw new GradleException("Os alvos de QA local só podem ser executados em debug.")
         }
     }
 }

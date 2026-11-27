@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../models/convidado/convidado_model.dart';
 import '../../models/convidado/grupo_convidado_model.dart';
+import 'package:app_faca_festa/core/conectividade/escrita_local_primeiro.dart';
 import 'package:app_faca_festa/domain/repositories/grupo_convidado_repository.dart';
 
 class GrupoConvidadoRemoteDatasource {
@@ -88,7 +89,11 @@ class GrupoConvidadoRemoteDatasource {
       ..['id_evento'] = grupo.idEvento
       ..['data_atualizacao'] = FieldValue.serverTimestamp()
       ..removeWhere((key, value) => value == null);
-    await _grupos.doc(grupo.idGrupo).set(data, SetOptions(merge: true));
+    await escritaLocalPrimeiro(
+      _grupos.doc(grupo.idGrupo).set(data, SetOptions(merge: true)),
+      descricao: 'grupo "${grupo.nome}"',
+      chave: grupo.idGrupo,
+    );
   }
 
   Future<void> excluirGrupo(
@@ -106,7 +111,7 @@ class GrupoConvidadoRemoteDatasource {
           : _convidados
               .where('id_evento', isEqualTo: eventoId)
               .where('id_grupo', isEqualTo: idGrupo);
-      final snapshot = await query.get();
+      final snapshot = await LeituraLocalPrimeiro.consulta(query);
       for (final document in snapshot.docs) {
         batch.update(document.reference, {
           'id_grupo': null,
@@ -117,30 +122,49 @@ class GrupoConvidadoRemoteDatasource {
       }
     }
     batch.delete(_grupos.doc(idGrupo));
-    await batch.commit();
+    await escritaLocalPrimeiro(
+      batch.commit(),
+      descricao: 'exclusão de um grupo',
+      chave: idGrupo,
+    );
+  }
+
+  Future<void> _atualizarConvidado(
+    ConvidadoModel convidado,
+    Map<String, dynamic> dados,
+    String descricao,
+  ) {
+    return escritaLocalPrimeiro(
+      _convidados.doc(convidado.idConvidado).set({
+        ...dados,
+        'data_atualizacao': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true)),
+      descricao: '$descricao de ${convidado.nome}',
+      chave: convidado.idConvidado,
+    );
   }
 
   Future<void> vincularConvidadoAoGrupo(
     ConvidadoModel convidado,
     GrupoConvidadoModel grupo,
   ) {
-    return _convidados.doc(convidado.idConvidado).set({
-      'id_convidado': convidado.idConvidado,
-      'id_evento': convidado.idEvento,
-      'id_grupo': grupo.idGrupo,
-      'nome_grupo': grupo.nome,
-      'grupo_mesa': grupo.nome,
-      'data_atualizacao': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+    return _atualizarConvidado(
+        convidado,
+        {
+          'id_convidado': convidado.idConvidado,
+          'id_evento': convidado.idEvento,
+          'id_grupo': grupo.idGrupo,
+          'nome_grupo': grupo.nome,
+          'grupo_mesa': grupo.nome,
+        },
+        'grupo');
   }
 
   Future<void> removerConvidadoDoGrupo(ConvidadoModel convidado) {
-    return _convidados.doc(convidado.idConvidado).set({
-      'id_grupo': null,
-      'nome_grupo': null,
-      'grupo_mesa': null,
-      'data_atualizacao': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+    return _atualizarConvidado(
+        convidado,
+        {'id_grupo': null, 'nome_grupo': null, 'grupo_mesa': null},
+        'grupo');
   }
 
   Future<void> vincularConvidadoNaMesa(
@@ -148,19 +172,13 @@ class GrupoConvidadoRemoteDatasource {
     String idMesa,
     int numeroMesa,
   ) {
-    return _convidados.doc(convidado.idConvidado).set({
-      'id_mesa': idMesa,
-      'numero_mesa': numeroMesa,
-      'data_atualizacao': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+    return _atualizarConvidado(
+        convidado, {'id_mesa': idMesa, 'numero_mesa': numeroMesa}, 'mesa');
   }
 
   Future<void> removerConvidadoDaMesa(ConvidadoModel convidado) {
-    return _convidados.doc(convidado.idConvidado).set({
-      'id_mesa': null,
-      'numero_mesa': null,
-      'data_atualizacao': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+    return _atualizarConvidado(
+        convidado, {'id_mesa': null, 'numero_mesa': null}, 'mesa');
   }
 
   Future<void> atualizarResumos(List<ResumoGrupoConvidado> resumos) async {
@@ -180,6 +198,6 @@ class GrupoConvidadoRemoteDatasource {
         SetOptions(merge: true),
       );
     }
-    await batch.commit();
+    await escritaLocalPrimeiro(batch.commit(), descricao: 'resumo dos grupos');
   }
 }

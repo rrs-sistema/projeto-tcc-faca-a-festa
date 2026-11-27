@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import 'package:app_faca_festa/core/conectividade/conectividade_service.dart';
 import 'package:app_faca_festa/core/utils/biblioteca.dart';
 import 'package:app_faca_festa/core/utils/form_masks.dart';
 import 'package:app_faca_festa/core/utils/form_validators.dart';
@@ -20,6 +21,7 @@ import 'package:app_faca_festa/presentation/modules/orcamento/controllers/orcame
 import 'package:app_faca_festa/presentation/modules/orcamento/controllers/orcamento_gasto_controller.dart';
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import 'package:app_faca_festa/presentation/widgets/festa_app_bar.dart';
+import 'package:app_faca_festa/presentation/widgets/selo_sincronizacao.dart';
 import 'package:app_faca_festa/presentation/modules/calculadora/widgets/calculadora_modal.dart';
 
 part '../sections/orcamento_resumo_section.dart';
@@ -150,10 +152,11 @@ class _OrcamentoScreenState extends State<OrcamentoScreen> {
                     pendente: !resumo.completo ||
                         orcamentoController.carregandoFinanceiro.value ||
                         orcamentoController.erroFinanceiro.value.isNotEmpty,
+                    semInternet: ConectividadeService.offlineAgora,
                     onConferir: () => _abrirConferenciaFinanceira(
                       context,
                       orcamentoController: orcamentoController,
-                      primary: themeController.primaryColor.value,
+                      themeController: themeController,
                     ),
                   ),
                   const SizedBox(height: 16),

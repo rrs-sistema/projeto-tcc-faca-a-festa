@@ -14,8 +14,10 @@ import 'package:app_faca_festa/domain/entities/fornecedor_servico_detalhado.dart
 import 'package:app_faca_festa/domain/entities/territorio.dart';
 import 'package:app_faca_festa/domain/repositories/autenticacao_repository.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_fornecedor_localizacao.dart';
+import 'package:app_faca_festa/core/conectividade/recarregar_ao_reconectar.dart';
 
-class FornecedorLocalizacaoController extends GetxController {
+class FornecedorLocalizacaoController extends GetxController
+    with RecarregarAoReconectar {
   FornecedorLocalizacaoController({
     required GerenciarFornecedorLocalizacao localizacao,
   }) : _localizacao = localizacao;
@@ -239,6 +241,11 @@ class FornecedorLocalizacaoController extends GetxController {
   void _onErroEscuta(String fonte, Object e, StackTrace s) {
     debugPrint('❌ Escuta "$fonte" falhou: $e\n$s');
     _onFontePronta(fonte);
+    refazerAoReconectar('localizacao', () async {
+      if (!_usuarioAutenticado) return;
+      await encerrarEscutas();
+      await inicializar();
+    });
     final mensagem = e.toString();
     final semPermissao = mensagem.contains('permission-denied') ||
         mensagem.contains('PERMISSION_DENIED') ||

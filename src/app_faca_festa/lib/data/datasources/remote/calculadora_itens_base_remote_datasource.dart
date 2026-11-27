@@ -4,6 +4,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:uuid/uuid.dart';
 import 'package:app_faca_festa/domain/entities/referencia_contextual.dart';
 import 'agenda_servico_remote.dart';
+import 'package:app_faca_festa/core/conectividade/escrita_local_primeiro.dart';
+import 'package:app_faca_festa/data/local/cache_offline_store.dart';
+import 'package:app_faca_festa/data/local/catalogo_calculadora_empacotado.dart';
 
 import '../../models/calculadora/calculadora_evento_item_model.dart';
 import '../../models/calculadora/calculadora_item_base_model.dart';
@@ -32,9 +35,7 @@ class CalculadoraItensBaseRemoteDatasource {
   }) : _firestore = firestore;
 
   Future<CatalogoContextual> carregarCatalogoContextual() async {
-    final docs = await _itensBaseRef
-        .limit(501)
-        .get(const GetOptions(source: Source.server));
+    final docs = await LeituraLocalPrimeiro.consulta(_itensBaseRef.limit(501));
     if (docs.size > 500) {
       throw StateError('Catálogo excedeu a consulta suportada.');
     }
@@ -61,24 +62,23 @@ class CalculadoraItensBaseRemoteDatasource {
             ? 'Há referências que exigem uma versão mais recente do aplicativo.'
             : refs.isEmpty
                 ? 'Nenhuma referência aprovada disponível. Seu cardápio continua livre.'
-                : '');
+                : docs.metadata.isFromCache
+                    ? 'Sem internet: referências salvas neste aparelho.'
+                    : '');
   }
 
   Future<ReferenciaContextual?> carregarReferencia(String id) async {
-    final doc = await _itensBaseRef
-        .doc(id)
-        .get(const GetOptions(source: Source.server));
+    final doc = await LeituraLocalPrimeiro.documento(_itensBaseRef.doc(id));
     final d = doc.data();
     var r = d?['referencia_rascunho'] ?? d?['referencia_contextual'];
     final ultima = d?['governanca_contextual']?['ultima_versao'];
     if (d?['referencia_rascunho'] == null &&
         ultima is int &&
         (r == null || r['versao'] != ultima)) {
-      r = (await _itensBaseRef
+      r = (await LeituraLocalPrimeiro.documento(_itensBaseRef
               .doc(id)
               .collection('versoes_contextuais')
-              .doc('$ultima')
-              .get(const GetOptions(source: Source.server)))
+              .doc('$ultima')))
           .data();
     }
     return r is Map ? ReferenciaContextual(Map<String, dynamic>.from(r)) : null;
@@ -268,11 +268,37 @@ class CalculadoraItensBaseRemoteDatasource {
     }
   }
 
+  /// Sem itens no servidor nem no cache (primeiro uso sem internet), usa a
+  /// base que vai junto com o app.
   Future<List<CalculadoraEventoItemModel>> buscarItensPorTipoEventoComFallback({
     required String tipoEvento,
     String? perfilFesta,
   }) async {
     final perfilFestaKey = _normalizarChave(perfilFesta ?? '');
+    List<CalculadoraEventoItemModel> itens;
+    try {
+      itens = await _buscarItensRemotosComFallback(
+          tipoEvento: tipoEvento, perfilFestaKey: perfilFestaKey);
+    } catch (error, stackTrace) {
+      if (!erroDeRede(error)) rethrow;
+      _logError(
+        method: 'buscarItensPorTipoEventoComFallback',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      itens = const [];
+    }
+    if (itens.isNotEmpty) return itens;
+    return CatalogoCalculadoraEmpacotado.doTipo(
+      _normalizarChave(tipoEvento),
+      perfilFestaKey: perfilFestaKey,
+    );
+  }
+
+  Future<List<CalculadoraEventoItemModel>> _buscarItensRemotosComFallback({
+    required String tipoEvento,
+    required String perfilFestaKey,
+  }) async {
 
     final itensComPerfil = await buscarItensPorTipoEvento(
       tipoEvento: tipoEvento,

@@ -6,6 +6,7 @@ import 'package:app_faca_festa/domain/entities/auditoria_evento.dart';
 import '../../models/auditoria/auditoria_evento_model.dart';
 import '../../services/functions/callable_https_client.dart';
 
+import 'package:app_faca_festa/data/services/functions/exigir_conexao_functions.dart';
 class AuditoriaRemoteDatasource {
   AuditoriaRemoteDatasource({
     required FirebaseFirestore firestore,
@@ -736,6 +737,7 @@ class AuditoriaRemoteDatasource {
     String nome,
     Map<String, dynamic> data,
   ) async {
+    garantirConexaoFunctions('A auditoria');
     if (CallableHttpsClient.necessarioNaPlataformaAtual) {
       return _https.call(nome, data);
     }
@@ -757,6 +759,7 @@ class AuditoriaRemoteDatasource {
     String nome,
     Map<String, dynamic> data,
   ) async {
+    garantirConexaoFunctions('A auditoria');
     if (CallableHttpsClient.necessarioNaPlataformaAtual) {
       return _https.callPublic(nome, data);
     }

@@ -12,6 +12,8 @@ import 'dart:async';
 import 'package:collection/collection.dart';
 import 'package:app_faca_festa/domain/services/revisao_cardapio_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:app_faca_festa/core/conectividade/escrita_local_primeiro.dart';
+import 'package:app_faca_festa/core/conectividade/exigir_conexao.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../models/cardapio/cardapio_item_model.dart';
@@ -24,6 +26,7 @@ import 'package:app_faca_festa/domain/entities/calculadora_festa_item.dart';
 import 'package:app_faca_festa/domain/entities/calculadora_festa.dart';
 import 'package:app_faca_festa/domain/entities/registro_consumo_calculadora.dart';
 
+import 'package:app_faca_festa/data/services/functions/exigir_conexao_functions.dart';
 /// Datasource de persistência das simulações da calculadora.
 ///
 /// Centraliza os acessos ao Firestore
@@ -60,6 +63,7 @@ class CalculadoraFestaRemoteDatasource {
   Future<Map<String, dynamic>> interpretarEntradaCalculadora(
       Map<String, dynamic> entrada) async {
     try {
+      garantirConexaoFunctions('Interpretar o texto da calculadora');
       if (_functions == null) {
         return await chamarPlanejador('interpretarEntradaCalculadora', entrada);
       }
@@ -85,6 +89,7 @@ class CalculadoraFestaRemoteDatasource {
         }
         return result;
       }
+      garantirConexaoFunctions('Aplicar a entrada da calculadora');
       final result = await _functions
           .httpsCallable('aplicarEntradaCalculadora',
               options:
@@ -102,11 +107,16 @@ class CalculadoraFestaRemoteDatasource {
   Future<List<Map<String, dynamic>>> lerMemoriaCalculadora() async {
     final uid = _auth.currentUser?.uid;
     if (uid == null) throw StateError('Entre na sua conta.');
-    final doc = await _db
-        .collection('calculadora_preferencias')
-        .doc(uid)
-        .get(const GetOptions(source: Source.server));
-    return OperacaoCalculadoraService.lista(doc.data()?['receitas']);
+    final ref = _db.collection('calculadora_preferencias').doc(uid);
+    try {
+      final doc = await LeituraLocalPrimeiro.documento(ref);
+      return OperacaoCalculadoraService.lista(doc.data()?['receitas']);
+    } on FirebaseException catch (e) {
+      // Sem internet e sem cópia no aparelho: a calculadora segue sem memória;
+      // gravar confere a versão no servidor.
+      if (e.code == 'unavailable') return const [];
+      rethrow;
+    }
   }
 
   Future<void> gravarMemoriaCalculadora(List<Map<String, dynamic>> receitas,
@@ -115,6 +125,7 @@ class CalculadoraFestaRemoteDatasource {
     if (uid == null || receitas.length > 60) {
       throw StateError('Confira as receitas guardadas.');
     }
+    garantirConexao('Guardar as receitas da calculadora');
     final ref = _db.collection('calculadora_preferencias').doc(uid);
     await _db.runTransaction((tx) async {
       final doc = await tx.get(ref);
@@ -146,7 +157,9 @@ class CalculadoraFestaRemoteDatasource {
           .collection('calculadora_operacao')
           .doc(idEvento)
           .snapshots(includeMetadataChanges: true)
-          .where((s) => !s.metadata.isFromCache && !s.metadata.hasPendingWrites)
+          .where((s) =>
+              LeituraLocalPrimeiro.aceitarSnapshot(s.metadata) &&
+              !s.metadata.hasPendingWrites)
           .map((s) {
         final dados = s.data() ?? <String, dynamic>{};
         const OperacaoCalculadoraService().validarDocumento(dados);
@@ -165,6 +178,7 @@ class CalculadoraFestaRemoteDatasource {
     }
     if (acao['tipo'] == 'revisao_pos_evento') {
       try {
+        garantirConexaoFunctions('A revisão pós-evento');
         final response = await (_functions ??
                 FirebaseFunctions.instanceFor(
                     app: _auth.app, region: 'southamerica-east1'))

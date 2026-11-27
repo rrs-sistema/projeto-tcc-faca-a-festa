@@ -7,8 +7,10 @@ import 'package:uuid/uuid.dart';
 import 'package:app_faca_festa/data/datasources/remote/estoque_fornecedor_remote_datasource.dart';
 import 'package:app_faca_festa/domain/entities/financeiro/item_estoque_fornecedor.dart';
 import 'package:app_faca_festa/domain/services/estoque_fornecedor_service.dart';
+import 'package:app_faca_festa/core/conectividade/recarregar_ao_reconectar.dart';
 
-class EstoqueFornecedorController extends GetxController {
+class EstoqueFornecedorController extends GetxController
+    with RecarregarAoReconectar {
   EstoqueFornecedorController({
     required FirebaseFirestore firestore,
     required this.idFornecedor,
@@ -79,8 +81,11 @@ class EstoqueFornecedorController extends GetxController {
       carregando.value = false;
     }, onError: (e) {
       if (geracao != _geracao) return;
-      erro.value = 'Falha ao ouvir estoque: $e';
+      erro.value = falhaDeConexao(e)
+          ? semInternetPara('O estoque atualiza')
+          : 'Falha ao ouvir estoque: $e';
       carregando.value = false;
+      refazerAoReconectar('estoque', iniciar);
     }));
   }
 

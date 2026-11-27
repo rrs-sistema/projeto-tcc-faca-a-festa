@@ -4,6 +4,7 @@ import 'chat_notifications_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import 'package:app_faca_festa/core/conectividade/conectividade_service.dart';
 import 'package:app_faca_festa/core/utils/convite_link.dart';
 import 'package:app_faca_festa/data/local/convite_co_organizador_pendente.dart';
 import 'package:app_faca_festa/app/routes/app_route_args.dart';
@@ -377,10 +378,13 @@ class AppCicloSessao {
       } catch (e, s) {
         if (!_podeProcessar(user)) return;
         debugPrint('❌ Erro ao validar sessão: $e\n$s');
+        final semInternet = ConectividadeService.offlineAgora;
         Get.snackbar(
-          'Erro de sessão',
-          'Não foi possível validar sua conta. Tente novamente.',
-          backgroundColor: Colors.redAccent,
+          semInternet ? 'Sem internet' : 'Erro de sessão',
+          semInternet
+              ? 'Seus dados ainda não estão neste aparelho. Conecte-se uma vez para usar sem internet depois.'
+              : 'Não foi possível validar sua conta. Tente novamente.',
+          backgroundColor: semInternet ? const Color(0xFF37474F) : Colors.redAccent,
           colorText: Colors.white,
         );
         Get.offAllNamed('/role');
@@ -419,6 +423,9 @@ class AppCicloSessao {
     for (var tentativa = 1; tentativa <= 8; tentativa++) {
       final perfil = await _perfil.carregarPerfil(idUsuario);
       if (perfil != null) return perfil;
+      // As tentativas esperam o cadastro chegar ao servidor; offline o
+      // cache não vai mudar.
+      if (ConectividadeService.offlineAgora) return null;
 
       debugPrint(
         '$_logTag Perfil $idUsuario ainda não disponível no Firestore. '

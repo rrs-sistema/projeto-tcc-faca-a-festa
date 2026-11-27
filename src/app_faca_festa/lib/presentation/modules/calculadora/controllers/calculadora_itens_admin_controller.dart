@@ -5,8 +5,10 @@ import 'package:get/get.dart';
 import 'package:app_faca_festa/domain/entities/calculadora_evento_item.dart';
 import 'package:app_faca_festa/domain/entities/calculadora_item_base.dart';
 import 'package:app_faca_festa/domain/repositories/calculadora_itens_base_repository_contract.dart';
+import 'package:app_faca_festa/core/conectividade/recarregar_ao_reconectar.dart';
 
-class CalculadoraItensAdminController extends GetxController {
+class CalculadoraItensAdminController extends GetxController
+    with RecarregarAoReconectar {
   final CalculadoraItensBaseRepositoryContract repository;
 
   CalculadoraItensAdminController({
@@ -83,6 +85,7 @@ class CalculadoraItensAdminController extends GetxController {
   }
 
   Future<void> carregarTudo() async {
+    repetirAoReconectar('itens-admin', carregarTudo);
     loading.value = true;
     erro.value = '';
 

@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'dart:async';
 
+import 'package:app_faca_festa/core/conectividade/conectividade_service.dart';
 import 'package:app_faca_festa/core/utils/convite_link.dart';
 import 'package:app_faca_festa/domain/entities/convidado.dart';
 import 'package:app_faca_festa/domain/entities/evento.dart';
@@ -15,8 +16,10 @@ import 'package:app_faca_festa/domain/repositories/presente_reservation_reposito
 import 'package:app_faca_festa/domain/services/convite_email_service.dart';
 import 'package:app_faca_festa/domain/entities/resultados_operacao.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/controllers/grupo_convidado_controller.dart';
+import 'package:app_faca_festa/core/conectividade/recarregar_ao_reconectar.dart';
 
-class ConvidadoController extends GetxController {
+class ConvidadoController extends GetxController
+    with RecarregarAoReconectar {
   ConvidadoController({
     required ConvidadoRepository repository,
     required PresenteReservationRepository presenteReservationRepository,
@@ -279,8 +282,11 @@ class ConvidadoController extends GetxController {
       erro.value = '';
     }, onError: (Object e) {
       if (!atual()) return;
-      erro.value = 'Não foi possível consultar a lista de convidados.';
+      erro.value = falhaDeConexao(e)
+          ? semInternetPara('A lista de convidados atualiza')
+          : 'Não foi possível consultar a lista de convidados.';
       carregando.value = false;
+      refazerAoReconectar('convidados', () => _reescutarConvidados(id));
     });
     final repo = _planejamentoResolver?.call();
     if (repo != null) {
@@ -307,13 +313,22 @@ class ConvidadoController extends GetxController {
             if (cfg.containsKey(k)) k: cfg[k]
         });
         erroPublico.value = '';
-      }, onError: (Object _) {
+      }, onError: (Object e) {
         if (!atual()) return;
         carregandoPublico.value = false;
-        erroPublico.value =
-            'A configuração privada de público está indisponível.';
+        erroPublico.value = falhaDeConexao(e)
+            ? semInternetPara('A configuração de público atualiza')
+            : 'A configuração privada de público está indisponível.';
+        refazerAoReconectar('convidados', () => _reescutarConvidados(id));
       });
     }
+  }
+
+  Future<void> _reescutarConvidados(String idEvento) async {
+    if (idEventoAtual.value != idEvento) return;
+    await _convidadosSub?.cancel();
+    _convidadosSub = null;
+    await escutarConvidados(idEvento);
   }
 
   Future<void> adicionarConvidado(Convidado model) async {
@@ -579,21 +594,36 @@ class ConvidadoController extends GetxController {
   }
 
   Future<void> reservarPresente(
-      {required String idPresente,
+      {required String idEvento,
+      required String idPresente,
       required String idConvidado,
       required String nomeConvidado,
       required Color backgroundColor}) async {
-    await _presenteReservationRepository.reservar(
-      idEvento: idEventoAtual.value,
-      idPresente: idPresente,
-      idConvidado: idConvidado,
-      nomeConvidado: nomeConvidado,
-      dataReserva: DateTime.now(),
-    );
+    try {
+      await _presenteReservationRepository.reservar(
+        idEvento: idEvento,
+        idPresente: idPresente,
+        idConvidado: idConvidado,
+        nomeConvidado: nomeConvidado,
+        dataReserva: DateTime.now(),
+      );
+    } on StateError catch (e) {
+      Get.snackbar('Presente indisponível', e.message,
+          backgroundColor: Colors.orange.shade700, colorText: Colors.white);
+      return;
+    } catch (e) {
+      debugPrint('❌ Reserva do presente $idPresente: $e');
+      Get.snackbar('Não foi possível reservar',
+          'Tente novamente em alguns instantes.',
+          backgroundColor: Colors.red.shade700, colorText: Colors.white);
+      return;
+    }
 
     Get.snackbar(
       '🎁 Presente reservado!',
-      'Você selecionou esse presente. Obrigado por participar!',
+      ConectividadeService.offlineAgora
+          ? 'Reserva salva no aparelho. Confirmamos quando a internet voltar.'
+          : 'Você selecionou esse presente. Obrigado por participar!',
       backgroundColor: backgroundColor,
       colorText: Colors.white,
     );

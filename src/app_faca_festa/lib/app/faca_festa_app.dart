@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import '../core/accessibility/preferencias_leitura.dart';
 import '../core/accessibility/tipografia_festa.dart';
+import '../presentation/widgets/banner_conectividade.dart';
 import '../presentation/widgets/festa_leitura.dart';
 
 import 'package:app_faca_festa/presentation/modules/legal/widgets/vigia_aceite_politica.dart';
@@ -31,40 +32,54 @@ class _FacaFestaAppState extends State<FacaFestaApp> {
 
   @override
   Widget build(BuildContext context) {
-    return GetMaterialApp(
-      title: 'Faça a Festa',
-      debugShowCheckedModeBanner: false,
-      localizationsDelegates: const [
-        GlobalWidgetsLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: const [
-        Locale('pt', 'BR'),
-        Locale('en', 'US'),
-      ],
-      theme: EventThemeController.montarThemeData(
+    Widget buildApp(ThemeData themeData) {
+      return GetMaterialApp(
+        title: 'Faça a Festa',
+        debugShowCheckedModeBanner: false,
+        localizationsDelegates: const [
+          GlobalWidgetsLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [
+          Locale('pt', 'BR'),
+          Locale('en', 'US'),
+        ],
+        theme: themeData,
+        initialRoute: AppRoutes.initialRoute(),
+        unknownRoute: AppRoutes.unknownRoute,
+        getPages: AppRoutes.pages,
+        builder: (context, child) {
+          final page = FestaTipografia(
+            preferencias: _leitura,
+            child: FestaLeitura(
+              child: BannerConectividade(
+                child: VigiaAceitePolitica(
+                  child: child ?? const EntradaAppPage(),
+                ),
+              ),
+            ),
+          );
+          try {
+            return DesktopUpdateOverlay(
+                child: EasyLoading.init()(context, page));
+          } catch (_) {
+            return page;
+          }
+        },
+      );
+    }
+
+    if (Get.isRegistered<EventThemeController>()) {
+      final themeController = Get.find<EventThemeController>();
+      return Obx(() => buildApp(themeController.materialTheme));
+    }
+
+    return buildApp(
+      EventThemeController.montarThemeData(
         const Color(0xFF009688),
         const Color(0xFFE0F2F1),
       ),
-      initialRoute: AppRoutes.initialRoute(),
-      unknownRoute: AppRoutes.unknownRoute,
-      getPages: AppRoutes.pages,
-      builder: (context, child) {
-        final page = FestaTipografia(
-          preferencias: _leitura,
-          child: FestaLeitura(
-            child: VigiaAceitePolitica(
-              child: child ?? const EntradaAppPage(),
-            ),
-          ),
-        );
-        try {
-          return DesktopUpdateOverlay(child: EasyLoading.init()(context, page));
-        } catch (_) {
-          return page;
-        }
-      },
     );
   }
 }

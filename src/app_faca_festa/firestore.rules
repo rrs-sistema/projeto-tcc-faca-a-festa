@@ -143,7 +143,12 @@ service cloud.firestore {
         && request.auth.token.papel == 'C'
         && request.auth.token.idEvento == eventoId
         && request.resource.data.diff(resource.data).affectedKeys()
-            .hasOnly(['reservado_por', 'id_convidado', 'data_reserva']);
+            .hasOnly(['reservado_por', 'id_convidado', 'data_reserva'])
+        // Reserva feita sem internet chega depois: só vale se o presente
+        // ainda estiver livre ou já for do mesmo convidado.
+        && (resource.data.get('reservado_por', null) in [null, '']
+          || resource.data.get('id_convidado', null)
+            == request.resource.data.get('id_convidado', null));
     }
 
     function convidadoComContaReal(idConvidado) {

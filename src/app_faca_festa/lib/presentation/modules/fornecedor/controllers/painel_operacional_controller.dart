@@ -2,8 +2,10 @@ import 'dart:async';
 import 'package:app_faca_festa/data/services/consultas_em_andamento.dart';
 import 'package:get/get.dart';
 import 'package:app_faca_festa/data/services/functions/callable_sessao_gateway.dart';
+import 'package:app_faca_festa/core/conectividade/recarregar_ao_reconectar.dart';
 
-class PainelOperacionalController extends GetxController {
+class PainelOperacionalController extends GetxController
+    with RecarregarAoReconectar {
   PainelOperacionalController(
       {required this.gateway,
       this.lerFontesDisponiveis,
@@ -68,6 +70,7 @@ class PainelOperacionalController extends GetxController {
   }
 
   Future<void> carregar({bool aposAlteracao = false}) {
+    repetirAoReconectar('painel', () => carregar(aposAlteracao: true));
     if (aposAlteracao) _leituras.invalidar();
     return _leituras.executar('$_g', _carregar);
   }
@@ -102,7 +105,13 @@ class PainelOperacionalController extends GetxController {
       final r = await gateway.chamar('consultarPainelFornecedorFn', {}).timeout(
           const Duration(seconds: 15));
       if (!_valido(g) || q != _consulta) return;
-      _falhaUltimaConsulta = false;
+      final doAparelho =
+          r[FirebaseCallableSessaoGateway.chaveAtualizadoEm] != null;
+      _falhaUltimaConsulta = doAparelho;
+      if (doAparelho) {
+        erro.value = 'Sem internet. Mostrando a última consulta salva '
+            'neste aparelho.';
+      }
       dados.value = r;
       verificarAtualizacao();
     } catch (_) {

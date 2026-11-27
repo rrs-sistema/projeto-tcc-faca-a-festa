@@ -5,6 +5,9 @@ import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:app_faca_festa/core/conectividade/conectividade_service.dart';
+import 'package:app_faca_festa/core/conectividade/escrita_local_primeiro.dart';
+import 'package:app_faca_festa/core/conectividade/exigir_conexao.dart';
 import '../../services/transacao_firestore.dart';
 import 'package:app_faca_festa/domain/entities/fornecedor_dados_cadastrais.dart';
 import 'package:app_faca_festa/domain/entities/fornecedor_cadastro_edicao.dart';
@@ -162,6 +165,7 @@ class FirebaseFornecedorRemoteDatasource implements FornecedorRemoteDatasource {
   @override
   Future<void> salvarCadastroEdicao(
       FornecedorCadastroAlteracao alteracao) async {
+    garantirConexao('Salvar o cadastro do fornecedor');
     final origem = alteracao.origem;
     final id = origem.fornecedor.idFornecedor;
     final uid = origem.fornecedor.idUsuario;
@@ -461,7 +465,8 @@ class FirebaseFornecedorRemoteDatasource implements FornecedorRemoteDatasource {
             .collectionGroup('fornecedores')
             .where('id_fornecedor', isEqualTo: id)
             .snapshots(includeMetadataChanges: true)
-            .where((snapshot) => !snapshot.metadata.isFromCache)
+            .where((snapshot) =>
+                LeituraLocalPrimeiro.aceitarSnapshot(snapshot.metadata))
             .listen((fornecedorSnap) {
           final cotacoesAtuais = <String>{};
 
@@ -480,7 +485,8 @@ class FirebaseFornecedorRemoteDatasource implements FornecedorRemoteDatasource {
             mensagemSubs[idCotacao] = f.reference
                 .collection('mensagens')
                 .snapshots(includeMetadataChanges: true)
-                .where((snapshot) => !snapshot.metadata.isFromCache)
+                .where((snapshot) =>
+                LeituraLocalPrimeiro.aceitarSnapshot(snapshot.metadata))
                 .listen((msgSnap) {
               contadores[idCotacao] = msgSnap.docs.where((m) {
                 final dados = m.data();
@@ -721,7 +727,8 @@ class FirebaseFornecedorRemoteDatasource implements FornecedorRemoteDatasource {
   }
 
   @override
-  Future<void> atualizarFornecedor(FornecedorModel fornecedor) {
+  Future<void> atualizarFornecedor(FornecedorModel fornecedor) async {
+    garantirConexao('Atualizar o fornecedor');
     return firestore
         .collection('fornecedor')
         .doc(fornecedor.idFornecedor)
@@ -732,14 +739,17 @@ class FirebaseFornecedorRemoteDatasource implements FornecedorRemoteDatasource {
   Future<void> atualizarDadosCadastrais({
     required String idFornecedor,
     required FornecedorDadosCadastrais dados,
-  }) =>
-      firestore
-          .collection('fornecedor')
-          .doc(idFornecedor)
-          .update(dados.toMap());
+  }) async {
+    garantirConexao('Salvar os dados cadastrais');
+    return firestore
+        .collection('fornecedor')
+        .doc(idFornecedor)
+        .update(dados.toMap());
+  }
 
   @override
-  Future<void> salvarFornecedor(FornecedorModel fornecedor) {
+  Future<void> salvarFornecedor(FornecedorModel fornecedor) async {
+    garantirConexao('Salvar o fornecedor');
     return firestore
         .collection('fornecedor')
         .doc(fornecedor.idFornecedor)
@@ -747,15 +757,18 @@ class FirebaseFornecedorRemoteDatasource implements FornecedorRemoteDatasource {
   }
 
   @override
-  Future<void> salvarCategoriaFornecedor(FornecedorCategoriaModel categoria) {
-    return firestore.collection('fornecedor_categoria').add(categoria.toMap());
+  Future<void> salvarCategoriaFornecedor(
+      FornecedorCategoriaModel categoria) async {
+    garantirConexao('Salvar a categoria');
+    await firestore.collection('fornecedor_categoria').add(categoria.toMap());
   }
 
   @override
   Future<void> atualizarStatusAtivo({
     required String idFornecedor,
     required bool ativo,
-  }) {
+  }) async {
+    garantirConexao('Ativar ou pausar o fornecedor');
     return firestore.collection('fornecedor').doc(idFornecedor).update({
       'ativo': ativo,
     });
@@ -765,7 +778,8 @@ class FirebaseFornecedorRemoteDatasource implements FornecedorRemoteDatasource {
   Future<void> atualizarAptoParaOperar({
     required String idFornecedor,
     required bool apto,
-  }) {
+  }) async {
+    garantirConexao('Alterar a aptidão para operar');
     return firestore.collection('fornecedor').doc(idFornecedor).update({
       'apto_para_operar': apto,
     });
@@ -775,7 +789,9 @@ class FirebaseFornecedorRemoteDatasource implements FornecedorRemoteDatasource {
   Future<void> atualizarFcmToken({
     required String idFornecedor,
     required String token,
-  }) {
+  }) async {
+    // Sem internet o token é reenviado na próxima abertura do painel.
+    if (ConectividadeService.offlineAgora) return;
     return firestore.collection('fornecedor').doc(idFornecedor).update({
       'fcm_token': token,
     });
@@ -787,6 +803,7 @@ class FirebaseFornecedorRemoteDatasource implements FornecedorRemoteDatasource {
     required String nomeArquivo,
     required String uid,
   }) async {
+    garantirConexao('Enviar o banner');
     final fileName =
         'banners_fornecedores/$uid/${_now().millisecondsSinceEpoch}_$nomeArquivo';
     final ref = storage.ref().child(fileName);

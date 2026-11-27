@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:app_faca_festa/core/conectividade/escrita_local_primeiro.dart';
 import 'package:app_faca_festa/domain/services/compromisso_planejamento_service.dart';
 
 class CompromissosEventoRemote {
@@ -18,7 +19,7 @@ class CompromissosEventoRemote {
     CollectionReference<Map<String, dynamic>> ref,
   ) async {
     try {
-      final snap = await ref.get(const GetOptions(source: Source.server));
+      final snap = await LeituraLocalPrimeiro.consulta(ref);
       return snap.docs.map((d) => d.data()).toList();
     } on FirebaseException catch (e) {
       if (e.code == 'permission-denied') return const [];
@@ -28,10 +29,9 @@ class CompromissosEventoRemote {
 
   Future<List<Map<String, dynamic>>> listarCompromissosDoEvento(
       String idEvento) async {
-    final snapshot = await db
+    final snapshot = await LeituraLocalPrimeiro.consulta(db
         .collection('orcamento')
-        .where('id_evento', isEqualTo: idEvento)
-        .get(const GetOptions(source: Source.server));
+        .where('id_evento', isEqualTo: idEvento));
     final resultados = await Future.wait(snapshot.docs.map((doc) async {
       final gastos = await _lerSubcolecao(doc.reference.collection('orcamento_gasto'));
       final liquidacoes =

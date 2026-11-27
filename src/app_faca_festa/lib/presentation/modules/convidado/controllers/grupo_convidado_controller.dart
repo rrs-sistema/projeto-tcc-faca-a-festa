@@ -6,8 +6,11 @@ import 'package:app_faca_festa/domain/entities/convidado.dart';
 import 'package:app_faca_festa/domain/entities/grupo_convidado.dart';
 import 'package:app_faca_festa/domain/entities/resultados_operacao.dart';
 import 'package:app_faca_festa/domain/repositories/grupo_convidado_repository.dart';
+import 'package:app_faca_festa/core/conectividade/conectividade_service.dart';
+import 'package:app_faca_festa/core/conectividade/recarregar_ao_reconectar.dart';
 
-class GrupoConvidadoController extends GetxController {
+class GrupoConvidadoController extends GetxController
+    with RecarregarAoReconectar {
   GrupoConvidadoController({required GrupoConvidadoRepository repository})
       : _repository = repository;
 
@@ -55,6 +58,11 @@ class GrupoConvidadoController extends GetxController {
   String? _idEventoAtual;
   Future<List<GrupoConvidado>>? _garantiaGruposIniciais;
   bool _gruposIniciaisSolicitados = false;
+  // Primeira lista de cada escuta: antes dela o controller não sabe quais
+  // grupos existem (nem os excluídos) nem quantos convidados há.
+  Completer<void> _gruposRecebidos = Completer<void>();
+  bool _convidadosChegaram = false;
+  Timer? _resumoAgendado;
 
   Future<void> escutarGrupos(String idEvento) async {
     final eventoId = idEvento.trim();
@@ -64,6 +72,7 @@ class GrupoConvidadoController extends GetxController {
       _convidadosRecebidos = const [];
       _ultimaListaBruta = const [];
       _gruposIniciaisSolicitados = false;
+      _reiniciarCargaInicial();
       grupos.clear();
       convidados.clear();
       carregando.value = false;
@@ -77,6 +86,7 @@ class GrupoConvidadoController extends GetxController {
 
     _idEventoAtual = eventoId;
     _gruposIniciaisSolicitados = false;
+    _reiniciarCargaInicial();
     carregando.value = true;
     erro.value = '';
     await _cancelarEscutas();
@@ -88,39 +98,62 @@ class GrupoConvidadoController extends GetxController {
     _subGrupos = _repository.observarGrupos(eventoId).listen(
       (lista) {
         _ultimaListaBruta = List<GrupoConvidado>.from(lista);
-        final tinhaDuplicatas = _temDuplicatasGruposIniciais(lista);
+        // Grupos iniciais excluídos ficam no Firestore como "excluido: true"
+        // (marcador) e nunca aparecem na UI nem são recriados.
+        final ativos = lista.where((g) => !g.excluido).toList();
+        final tinhaDuplicatas = _temDuplicatasGruposIniciais(ativos);
         // UI limpa na hora; limpeza no Firestore usa a lista bruta.
         grupos.assignAll(
-          _unicosPorIdGrupo(_colapsarGruposIniciaisParaExibicao(lista)),
+          _unicosPorIdGrupo(_colapsarGruposIniciaisParaExibicao(ativos)),
         );
+        if (!_gruposRecebidos.isCompleted) _gruposRecebidos.complete();
         _publicarConvidadosNormalizados();
         carregando.value = false;
 
         final precisaSanitizar = !_gruposIniciaisSolicitados ||
             tinhaDuplicatas ||
-            _faltamGruposIniciais(grupos);
+            _faltamGruposIniciais(lista);
         if (precisaSanitizar) {
           _gruposIniciaisSolicitados = true;
           unawaited(garantirGruposIniciais(idEvento: eventoId));
         }
       },
       onError: (Object error, StackTrace stackTrace) {
-        erro.value = 'Erro ao carregar grupos de convidados: $error';
+        erro.value = falhaDeConexao(error)
+            ? semInternetPara('Os grupos atualizam')
+            : 'Erro ao carregar grupos de convidados: $error';
         carregando.value = false;
+        refazerAoReconectar('grupos', () => _reescutar(eventoId));
       },
     );
 
     _subConvidados = _repository.observarConvidados(eventoId).listen(
       (lista) {
         _convidadosRecebidos = lista;
+        _convidadosChegaram = true;
         _publicarConvidadosNormalizados();
         carregando.value = false;
       },
       onError: (Object error, StackTrace stackTrace) {
-        erro.value = 'Erro ao carregar convidados: $error';
+        erro.value = falhaDeConexao(error)
+            ? semInternetPara('Os convidados atualizam')
+            : 'Erro ao carregar convidados: $error';
         carregando.value = false;
+        refazerAoReconectar('grupos', () => _reescutar(eventoId));
       },
     );
+  }
+
+  void _reiniciarCargaInicial() {
+    _gruposRecebidos = Completer<void>();
+    _convidadosChegaram = false;
+    _resumoAgendado?.cancel();
+  }
+
+  Future<void> _reescutar(String idEvento) async {
+    if (_idEventoAtual != idEvento) return;
+    await _cancelarEscutas();
+    await escutarGrupos(idEvento);
   }
 
   /// ID estável dos grupos seed (idempotente no Firestore).
@@ -152,7 +185,23 @@ class GrupoConvidadoController extends GetxController {
       ..sort((a, b) => a.nome.toLowerCase().compareTo(b.nome.toLowerCase()));
 
     convidados.assignAll(lista);
-    unawaited(_sincronizarResumoDosGrupos());
+    _agendarResumoDosGrupos();
+  }
+
+  /// As duas escutas emitem em rajada na abertura; um resumo só, depois que
+  /// ambas chegaram, evita gravar totais zerados de uma lista ainda vazia.
+  void _agendarResumoDosGrupos() {
+    if (!_gruposRecebidos.isCompleted || !_convidadosChegaram) return;
+    _resumoAgendado?.cancel();
+    _resumoAgendado = Timer(const Duration(milliseconds: 800), () {
+      if (isClosed) return;
+      if (ConectividadeService.offlineAgora) {
+        // Total derivado não é alteração do usuário: recalcula ao reconectar.
+        repetirAoReconectar('resumo-grupos', _sincronizarResumoDosGrupos);
+        return;
+      }
+      unawaited(_sincronizarResumoDosGrupos());
+    });
   }
 
   Future<void> adicionarGrupo(GrupoConvidado grupo) async {
@@ -166,6 +215,12 @@ class GrupoConvidadoController extends GetxController {
   /// do primeiro convidado poder continuar.
   Future<GrupoConvidado?> garantirGrupoPadrao({String? idEvento}) async {
     final criados = await garantirGruposIniciais(idEvento: idEvento);
+    if (grupos.isEmpty && _buscarGrupoPorNome(nomeGrupoPadrao) == null) {
+      // Sem nenhum grupo ativo não dá para cadastrar convidados: restaura o
+      // grupo padrão (único caso em que um grupo inicial excluído volta).
+      final restaurado = await _restaurarGrupoPadrao(idEvento: idEvento);
+      if (restaurado != null) return restaurado;
+    }
     return _buscarGrupoPorNome(nomeGrupoPadrao) ??
         criados.firstWhereOrNull(
           (grupo) => _normalizarTexto(grupo.nome) == _normalizarTexto(nomeGrupoPadrao),
@@ -187,6 +242,32 @@ class GrupoConvidadoController extends GetxController {
     });
   }
 
+  Future<GrupoConvidado?> _restaurarGrupoPadrao({String? idEvento}) async {
+    final eventoId = (idEvento ?? _idEventoAtual ?? '').trim();
+    if (eventoId.isEmpty) return null;
+    final definicao = gruposIniciais.first;
+    final idEstavel = idGrupoInicial(eventoId, definicao.nome);
+    final agora = DateTime.now();
+    final existente = _ultimaListaBruta.firstWhereOrNull(
+      (g) => g.idGrupo == idEstavel,
+    );
+    final grupo = (existente ??
+            GrupoConvidado(
+              idGrupo: idEstavel,
+              idEvento: eventoId,
+              nome: definicao.nome,
+              descricao: definicao.descricao,
+              icone: definicao.icone,
+              corHex: definicao.corHex,
+              dataCadastro: agora,
+              dataAtualizacao: agora,
+            ))
+        .copyWith(excluido: false, dataAtualizacao: agora);
+    await adicionarGrupo(grupo);
+    if (_buscarGrupoPorId(grupo.idGrupo) == null) grupos.add(grupo);
+    return grupo;
+  }
+
   Future<List<GrupoConvidado>> _garantirGruposIniciais({
     String? idEvento,
   }) async {
@@ -197,11 +278,25 @@ class GrupoConvidadoController extends GetxController {
       );
     }
 
+    // Sem a primeira lista da escuta, "não existe" pode só significar "ainda
+    // não chegou": recriar sobrescreveria totais e grupos excluídos.
+    if (!_gruposRecebidos.isCompleted) {
+      await _gruposRecebidos.future
+          .timeout(const Duration(seconds: 10), onTimeout: () {});
+      if (!_gruposRecebidos.isCompleted) return const [];
+    }
+
     await _deduplicarGruposIniciais();
 
     // Snapshot no início: evita duplicar se a lista local mudar no meio do loop.
     final porNome = <String, GrupoConvidado>{
       for (final grupo in grupos) _normalizarTexto(grupo.nome): grupo,
+    };
+    // Grupos iniciais que o usuário excluiu (marcador no Firestore): não
+    // recriar.
+    final removidos = {
+      for (final grupo in _ultimaListaBruta.where((g) => g.excluido))
+        _normalizarTexto(grupo.nome),
     };
 
     final criados = <GrupoConvidado>[];
@@ -210,6 +305,7 @@ class GrupoConvidadoController extends GetxController {
     for (final definicao in gruposIniciais) {
       final nomeNormalizado = _normalizarTexto(definicao.nome);
       final idEstavel = idGrupoInicial(eventoId, definicao.nome);
+      if (removidos.contains(nomeNormalizado)) continue;
       final existente = porNome[nomeNormalizado] ?? _buscarGrupoPorId(idEstavel);
       if (existente != null) continue;
 
@@ -326,7 +422,7 @@ class GrupoConvidadoController extends GetxController {
   /// Remove cópias extras dos grupos seed no Firestore (e na lista local).
   Future<void> _deduplicarGruposIniciais() async {
     final fonte = _ultimaListaBruta.isNotEmpty
-        ? List<GrupoConvidado>.from(_ultimaListaBruta)
+        ? _ultimaListaBruta.where((g) => !g.excluido).toList()
         : grupos.toList();
 
     for (final definicao in gruposIniciais) {
@@ -367,7 +463,9 @@ class GrupoConvidadoController extends GetxController {
     if (_ultimaListaBruta.isNotEmpty) {
       grupos.assignAll(
         _unicosPorIdGrupo(
-          _colapsarGruposIniciaisParaExibicao(_ultimaListaBruta),
+          _colapsarGruposIniciaisParaExibicao(
+            _ultimaListaBruta.where((g) => !g.excluido).toList(),
+          ),
         ),
       );
     }
@@ -390,6 +488,28 @@ class GrupoConvidadoController extends GetxController {
       throw StateError(erro.value);
     }
 
+    final grupo = _buscarGrupoPorId(idGrupo);
+    final nomeSeed = {
+      for (final def in gruposIniciais) _normalizarTexto(def.nome),
+    };
+
+    // Grupos iniciais: exclusão lógica (marcador), senão a rotina de grupos
+    // iniciais os recriaria logo após a exclusão.
+    if (grupo != null && nomeSeed.contains(_normalizarTexto(grupo.nome))) {
+      final agora = DateTime.now();
+      final marcado = grupo.copyWith(excluido: true, dataAtualizacao: agora);
+      await _executarPersistencia(
+        mensagemErro: 'Erro ao excluir grupo',
+        acao: () => _repository.salvarGrupo(marcado),
+      );
+      _ultimaListaBruta = [
+        for (final g in _ultimaListaBruta)
+          if (g.idGrupo == idGrupo) marcado else g,
+      ];
+      grupos.removeWhere((g) => g.idGrupo == idGrupo);
+      return;
+    }
+
     await _executarPersistencia(
       mensagemErro: 'Erro ao excluir grupo',
       acao: () => _repository.excluirGrupo(
@@ -398,6 +518,9 @@ class GrupoConvidadoController extends GetxController {
         desvincularConvidados: desvincularConvidados,
       ),
     );
+    _ultimaListaBruta =
+        _ultimaListaBruta.where((g) => g.idGrupo != idGrupo).toList();
+    grupos.removeWhere((g) => g.idGrupo == idGrupo);
   }
 
   Future<void> vincularConvidadoAoGrupo({
@@ -610,6 +733,8 @@ class GrupoConvidadoController extends GetxController {
     _convidadosRecebidos = const [];
     _ultimaListaBruta = const [];
     _gruposIniciaisSolicitados = false;
+    _reiniciarCargaInicial();
+    esquecerRecarga('resumo-grupos');
     grupos.clear();
     convidados.clear();
     carregando.value = false;
@@ -617,6 +742,7 @@ class GrupoConvidadoController extends GetxController {
 
   @override
   void onClose() {
+    _resumoAgendado?.cancel();
     unawaited(_cancelarEscutas());
     super.onClose();
   }

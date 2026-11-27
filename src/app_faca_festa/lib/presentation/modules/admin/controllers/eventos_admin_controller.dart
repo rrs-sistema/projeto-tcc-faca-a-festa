@@ -6,8 +6,10 @@ import 'package:app_faca_festa/domain/services/auditoria_registrar.dart';
 import 'package:app_faca_festa/domain/services/kit_servicos_por_tipo.dart';
 import 'package:app_faca_festa/domain/services/lead_evento_score_service.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_eventos_admin.dart';
+import 'package:app_faca_festa/core/conectividade/recarregar_ao_reconectar.dart';
 
-class EventosAdminController extends GetxController {
+class EventosAdminController extends GetxController
+    with RecarregarAoReconectar {
   EventosAdminController({
     required GerenciarEventosAdmin eventosAdmin,
     LeadEventoScoreService? leadScore,
@@ -179,6 +181,7 @@ class EventosAdminController extends GetxController {
       _kitServicos.sugerir(evento.tipoNome);
 
   Future<void> carregarEventosComTipo() async {
+    repetirAoReconectar('eventos', carregarEventosComTipo);
     try {
       carregando.value = true;
       erro.value = '';

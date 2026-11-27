@@ -3,8 +3,10 @@ import 'package:get/get.dart';
 
 import 'package:app_faca_festa/domain/entities/sugestao_base_festa.dart';
 import 'package:app_faca_festa/domain/repositories/sugestao_base_festa_repository_contract.dart';
+import 'package:app_faca_festa/core/conectividade/recarregar_ao_reconectar.dart';
 
-class SugestaoBaseFestaController extends GetxController {
+class SugestaoBaseFestaController extends GetxController
+    with RecarregarAoReconectar {
   SugestaoBaseFestaController({
     required SugestaoBaseFestaRepositoryContract repository,
   }) : _repository = repository;
@@ -66,6 +68,7 @@ class SugestaoBaseFestaController extends GetxController {
   }
 
   Future<void> carregarSugestoes() async {
+    repetirAoReconectar('sugestoes', carregarSugestoes);
     try {
       loading.value = true;
       error.value = '';

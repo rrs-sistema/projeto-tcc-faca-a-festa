@@ -4,8 +4,10 @@ import 'package:app_faca_festa/domain/entities/orcamento_admin.dart';
 import 'package:app_faca_festa/domain/usecases/carregar_orcamentos_admin.dart';
 
 import 'package:flutter/foundation.dart';
+import 'package:app_faca_festa/core/conectividade/recarregar_ao_reconectar.dart';
 
-class OrcamentosAdminController extends GetxController {
+class OrcamentosAdminController extends GetxController
+    with RecarregarAoReconectar {
   OrcamentosAdminController({
     required CarregarOrcamentosAdmin carregarOrcamentos,
   }) : _carregarOrcamentos = carregarOrcamentos;
@@ -34,6 +36,7 @@ class OrcamentosAdminController extends GetxController {
       }).length;
 
   Future<void> carregarOrcamentosComEventoDetalhes() async {
+    repetirAoReconectar('orcamentos', carregarOrcamentosComEventoDetalhes);
     try {
       carregando.value = true;
       erro.value = '';

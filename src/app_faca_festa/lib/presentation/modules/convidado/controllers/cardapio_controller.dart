@@ -7,8 +7,10 @@ import 'package:app_faca_festa/domain/entities/cardapio_item.dart';
 import 'package:app_faca_festa/domain/entities/sugestao_cardapio_ia.dart';
 import 'package:app_faca_festa/domain/repositories/cardapio_repository.dart';
 import 'package:app_faca_festa/domain/services/criacao_cardapio_inicial_service.dart';
+import 'package:app_faca_festa/core/conectividade/recarregar_ao_reconectar.dart';
 
-class CardapioController extends GetxController {
+class CardapioController extends GetxController
+    with RecarregarAoReconectar {
   CardapioController({required CardapioRepository repository})
       : _repository = repository;
 
@@ -73,8 +75,13 @@ class CardapioController extends GetxController {
       },
       onError: (Object error, StackTrace stackTrace) {
         if (geracao != _geracao) return;
-        erro.value = 'Não foi possível carregar os cardápios: $error';
+        erro.value = falhaDeConexao(error)
+            ? semInternetPara('Os cardápios atualizam')
+            : 'Não foi possível carregar os cardápios: $error';
         carregando.value = false;
+        refazerAoReconectar('cardapios', () {
+          if (geracao == _geracao) return escutarCardapios(idEvento);
+        });
       },
     );
   }
@@ -96,7 +103,13 @@ class CardapioController extends GetxController {
       },
       onError: (Object error, StackTrace stackTrace) {
         if (geracao != _geracao) return;
-        erro.value = 'Não foi possível carregar os itens do cardápio: $error';
+        erro.value = falhaDeConexao(error)
+            ? semInternetPara('Os itens do cardápio atualizam')
+            : 'Não foi possível carregar os itens do cardápio: $error';
+        _itensSubscriptions.remove(idCardapio);
+        refazerAoReconectar('itens-$idCardapio', () {
+          if (geracao == _geracao) _escutarItensDoCardapio(idCardapio);
+        });
       },
     );
   }

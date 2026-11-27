@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import 'package:app_faca_festa/core/conectividade/escrita_local_primeiro.dart';
+
 import '../../models/endereco/endereco_usuario.dart';
 import '../../models/usuario/usuario_model.dart';
 
@@ -75,8 +77,9 @@ class FirebasePerfilUsuarioRemoteDatasource
 
   @override
   Future<UsuarioModel?> buscarUsuario(String idUsuario) async {
-    final documento =
-        await firestore.collection('usuarios').doc(idUsuario).get();
+    final documento = await LeituraLocalPrimeiro.documento(
+      firestore.collection('usuarios').doc(idUsuario),
+    );
     if (!documento.exists || documento.data() == null) return null;
     return UsuarioModel.fromMap(documento.data()!);
   }
@@ -91,11 +94,9 @@ class FirebasePerfilUsuarioRemoteDatasource
 
   @override
   Future<List<EnderecoUsuarioModel>> listarEnderecos(String idUsuario) async {
-    final snapshot = await firestore
-        .collection('usuarios')
-        .doc(idUsuario)
-        .collection('enderecos')
-        .get();
+    final snapshot = await LeituraLocalPrimeiro.consulta(
+      firestore.collection('usuarios').doc(idUsuario).collection('enderecos'),
+    );
     return snapshot.docs
         .map((documento) => EnderecoUsuarioModel.fromMap(documento.data()))
         .toList();

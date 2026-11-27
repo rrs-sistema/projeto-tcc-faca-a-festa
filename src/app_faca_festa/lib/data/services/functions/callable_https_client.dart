@@ -6,6 +6,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:http/http.dart' as http;
 
+import 'package:app_faca_festa/core/conectividade/conectividade_service.dart';
+import 'package:app_faca_festa/core/conectividade/exigir_conexao.dart';
 import 'package:app_faca_festa/core/platform/plataforma_app.dart';
 
 class CallableHttpsException implements Exception {
@@ -42,6 +44,10 @@ class CallableHttpsClient {
     Duration? timeout,
   ]) {
     return UpdateOperations.run(() async {
+      if (ConectividadeService.offlineAgora) {
+        throw CallableHttpsException(
+            'unavailable', const SemConexaoException('Esta ação').mensagem);
+      }
       final usuario = _auth.currentUser;
       if (usuario == null) {
         throw const CallableHttpsException(

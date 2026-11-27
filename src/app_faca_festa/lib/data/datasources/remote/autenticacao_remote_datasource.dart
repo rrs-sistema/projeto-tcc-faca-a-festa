@@ -5,11 +5,15 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
+import 'package:app_faca_festa/core/conectividade/conectividade_service.dart';
 import 'package:app_faca_festa/core/platform/plataforma_app.dart';
+import 'package:app_faca_festa/data/local/cache_offline_store.dart';
+import 'package:app_faca_festa/data/local/marca_mfa_local.dart';
 import 'package:app_faca_festa/domain/entities/resultados_operacao.dart';
 import 'package:app_faca_festa/domain/repositories/autenticacao_repository.dart';
 import '../../services/functions/callable_https_client.dart';
 
+import 'package:app_faca_festa/data/services/functions/exigir_conexao_functions.dart';
 class AutenticacaoRemoteException implements Exception {
   const AutenticacaoRemoteException(this.codigo, [this.mensagem]);
 
@@ -97,12 +101,15 @@ class FirebaseAutenticacaoRemoteDatasource
     this.auth, {
     required FirebaseFunctions functions,
     required CallableHttpsClient httpsClient,
+    MarcaMfaLocal? marcaMfa,
   })  : _functions = functions,
-        _httpsClient = httpsClient;
+        _httpsClient = httpsClient,
+        _marcaMfa = marcaMfa ?? MarcaMfaLocal();
 
   final FirebaseAuth auth;
   final FirebaseFunctions _functions;
   final CallableHttpsClient _httpsClient;
+  final MarcaMfaLocal _marcaMfa;
   bool _googleInicializado = false;
 
   @override
@@ -430,15 +437,21 @@ class FirebaseAutenticacaoRemoteDatasource
 
   @override
   Future<String> verificarTotpMfa(String codigo) =>
-      _confirmarMfa('verificarTotpMfa', codigo);
+      _verificarMfa('verificarTotpMfa', codigo);
 
   @override
   Future<String> verificarEmailMfa(String codigo) =>
-      _confirmarMfa('verificarEmailMfa', codigo);
+      _verificarMfa('verificarEmailMfa', codigo);
 
   @override
   Future<String> verificarCodigoRecuperacaoMfa(String codigo) =>
-      _confirmarMfa('verificarCodigoRecuperacaoMfa', codigo);
+      _verificarMfa('verificarCodigoRecuperacaoMfa', codigo);
+
+  Future<String> _verificarMfa(String nome, String codigo) async {
+    final autorizacao = await _confirmarMfa(nome, codigo);
+    _marcaMfa.gravar(auth.currentUser);
+    return autorizacao;
+  }
 
   @override
   Future<List<String>> gerarCodigosRecuperacaoMfa(String autorizacao) async {
@@ -473,8 +486,19 @@ class FirebaseAutenticacaoRemoteDatasource
 
   @override
   Future<bool> sessaoMfaVerificada() async {
-    final data = await _chamarFunction('consultarSessaoMfa');
-    return data['verificada'] == true;
+    final usuario = auth.currentUser;
+    if (ConectividadeService.offlineAgora) return _marcaMfa.confere(usuario);
+    try {
+      final data = await _chamarFunction('consultarSessaoMfa');
+      final verificada = data['verificada'] == true;
+      verificada ? _marcaMfa.gravar(usuario) : _marcaMfa.limpar();
+      return verificada;
+    } on AutenticacaoRemoteException catch (erro) {
+      final semServidor = erroDeRede(erro) ||
+          !(await ConectividadeService.instancia?.verificarAgora() ?? true);
+      if (semServidor) return _marcaMfa.confere(usuario);
+      rethrow;
+    }
   }
 
   Future<void> _chamarFunctionSemRetorno(
@@ -489,6 +513,7 @@ class FirebaseAutenticacaoRemoteDatasource
     Map<String, dynamic>? data,
   ]) async {
     try {
+      garantirConexaoFunctions('A verificação de segurança');
       if (CallableHttpsClient.necessarioNaPlataformaAtual &&
           auth.currentUser != null) {
         return await _httpsClient.call(nome, data);
@@ -520,6 +545,7 @@ class FirebaseAutenticacaoRemoteDatasource
 
   @override
   Future<void> sair() async {
+    _marcaMfa.limpar();
     try {
       await _sairDoGoogleSeNecessario();
       await auth.signOut();

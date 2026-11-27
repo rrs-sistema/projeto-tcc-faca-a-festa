@@ -5,8 +5,10 @@ import 'package:uuid/uuid.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:app_faca_festa/data/datasources/remote/jornada_atendimento_remote.dart';
 import 'package:app_faca_festa/data/local/recebimento_pendente_store.dart';
+import 'package:app_faca_festa/core/conectividade/recarregar_ao_reconectar.dart';
 
-class JornadaAtendimentoController extends GetxController {
+class JornadaAtendimentoController extends GetxController
+    with RecarregarAoReconectar {
   JornadaAtendimentoController(
       {required this.idCotacao,
       required this.idFornecedor,
@@ -77,6 +79,7 @@ class JornadaAtendimentoController extends GetxController {
   }
 
   Future<void> carregar() async {
+    repetirAoReconectar('jornada', carregar);
     if (_uid == null || carregando.value) return;
     final g = _g;
     carregando.value = true;

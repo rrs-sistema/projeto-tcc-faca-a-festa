@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:app_faca_festa/data/services/functions/callable_https_client.dart';
 import 'package:app_faca_festa/domain/entities/sugestao_cardapio_ia.dart';
 
+import 'package:app_faca_festa/data/services/functions/exigir_conexao_functions.dart';
 class GerarCardapioIaException implements Exception {
   const GerarCardapioIaException(this.message);
   final String message;
@@ -101,6 +102,7 @@ class GerarCardapioIaService {
     }
 
     try {
+      garantirConexaoFunctions('Gerar o cardápio com IA');
       final callable = functions.httpsCallable(
         functionName,
         options: HttpsCallableOptions(timeout: timeout),

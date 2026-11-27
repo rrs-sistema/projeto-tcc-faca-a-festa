@@ -6,8 +6,10 @@ import 'dart:async';
 import 'package:app_faca_festa/domain/entities/cotacao.dart';
 import 'package:app_faca_festa/domain/repositories/solicitacoes_repository.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_solicitacoes.dart';
+import 'package:app_faca_festa/core/conectividade/recarregar_ao_reconectar.dart';
 
-class SolicitacoesController extends GetxController {
+class SolicitacoesController extends GetxController
+    with RecarregarAoReconectar {
   SolicitacoesController({
     required GerenciarSolicitacoes solicitacoesFornecedor,
     String Function()? nomeUsuarioAtual,
@@ -44,8 +46,15 @@ class SolicitacoesController extends GetxController {
     }, onError: (e) {
       if (g != _geracao) return;
       solicitacoes.clear();
-      erro.value = 'Não foi possível consultar os atendimentos.';
+      erro.value = falhaDeConexao(e)
+          ? semInternetPara('Os atendimentos atualizam')
+          : 'Não foi possível consultar os atendimentos.';
       carregando.value = false;
+      refazerAoReconectar('solicitacoes', () {
+        if (g != _geracao) return;
+        _solicitacoesSub = null;
+        inicializar(idFornecedor);
+      });
     }, onDone: () {
       if (g == _geracao) {
         _fornecedor = null;

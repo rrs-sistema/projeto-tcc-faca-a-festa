@@ -3,8 +3,10 @@ import 'package:get/get.dart';
 import 'package:app_faca_festa/data/datasources/remote/acompanhamento_partes_remote.dart';
 import 'package:app_faca_festa/domain/entities/cobranca_pix_servico.dart';
 import 'package:app_faca_festa/domain/services/acompanhamento_partes_service.dart';
+import 'package:app_faca_festa/core/conectividade/recarregar_ao_reconectar.dart';
 
-class AcompanhamentoPartesController extends GetxController {
+class AcompanhamentoPartesController extends GetxController
+    with RecarregarAoReconectar {
   AcompanhamentoPartesController({
     required this.remote,
     AcompanhamentoPartesService? dominio,
@@ -26,6 +28,7 @@ class AcompanhamentoPartesController extends GetxController {
   int _geracao = 0;
 
   Future<void> carregarOrganizador(String eventoId) async {
+    repetirAoReconectar('partes', () => carregarOrganizador(eventoId));
     final g = ++_geracao;
     idEvento.value = eventoId;
     carregando.value = true;
@@ -57,6 +60,7 @@ class AcompanhamentoPartesController extends GetxController {
   }
 
   Future<void> carregarFornecedor(String fornId) async {
+    repetirAoReconectar('partes', () => carregarFornecedor(fornId));
     final g = ++_geracao;
     idFornecedor.value = fornId;
     carregando.value = true;

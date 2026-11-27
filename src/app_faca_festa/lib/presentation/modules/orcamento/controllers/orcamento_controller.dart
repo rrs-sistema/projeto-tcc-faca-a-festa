@@ -10,8 +10,10 @@ import 'package:app_faca_festa/domain/services/auditoria_registrar.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_orcamentos.dart';
 import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_controller.dart';
 import 'package:app_faca_festa/presentation/modules/orcamento/controllers/orcamento_gasto_controller.dart';
+import 'package:app_faca_festa/core/conectividade/recarregar_ao_reconectar.dart';
 
-class OrcamentoController extends GetxController {
+class OrcamentoController extends GetxController
+    with RecarregarAoReconectar {
   OrcamentoController({
     required GerenciarOrcamentos orcamentos,
     AuditoriaRegistrar? auditoria,
@@ -59,9 +61,12 @@ class OrcamentoController extends GetxController {
       carregandoFinanceiro.value = false;
     }, onError: (Object e) {
       if (geracao != _geracao || usuario != _usuarioAtual?.call()) return;
-      erroFinanceiro.value =
-          'Não foi possível atualizar pagamentos e contratos.';
+      erroFinanceiro.value = falhaDeConexao(e)
+          ? semInternetPara('Pagamentos e contratos atualizam')
+          : 'Não foi possível atualizar pagamentos e contratos.';
       carregandoFinanceiro.value = false;
+      refazerAoReconectar(
+          'orcamentos-evento', () => carregarOrcamentosDoEvento(evento));
     });
   }
 
@@ -116,9 +121,13 @@ class OrcamentoController extends GetxController {
         carregando.value = false;
       }, onError: (e) {
         if (versao != _geracao || usuario != _usuarioAtual?.call()) return;
-        erroFinanceiro.value = 'Não foi possível atualizar o orçamento.';
+        erroFinanceiro.value = falhaDeConexao(e)
+            ? semInternetPara('O orçamento atualiza')
+            : 'Não foi possível atualizar o orçamento.';
         carregando.value = false;
         debugPrint('❌ Erro ao escutar orçamentos por evento: $e');
+        refazerAoReconectar(
+            'orcamentos-evento', () => carregarOrcamentosDoEvento(idEvento));
       });
     } catch (e, s) {
       carregando.value = false;
@@ -156,6 +165,8 @@ class OrcamentoController extends GetxController {
       }, onError: (e) {
         carregando.value = false;
         debugPrint('❌ Erro ao escutar orçamentos do fornecedor: $e');
+        refazerAoReconectar('orcamentos-fornecedor',
+            () => escutarOrcamentos(idFornecedor));
       });
     } catch (e, s) {
       carregando.value = false;
@@ -203,7 +214,10 @@ class OrcamentoController extends GetxController {
   /// 🔹 Valida criação de orçamento
   /// ===========================================================
   Future<(bool ok, String? mensagem, double? excedente, double? limite)>
-      validarCriacaoOrcamento(double novoValor) async {
+      validarCriacaoOrcamento(
+    double novoValor, {
+    String? ignorarIdOrcamento,
+  }) async {
     final eventoController = _resolverEventoController();
     final double limiteEvento =
         eventoController?.eventoAtualEntidade?.custoEstimado ?? 0;
@@ -227,8 +241,9 @@ class OrcamentoController extends GetxController {
       );
     }
 
-    final double totalAtual =
-        orcamentos.fold(0, (s, o) => s + (o.custoEstimado ?? 0));
+    final double totalAtual = orcamentos
+        .where((o) => o.idOrcamento != ignorarIdOrcamento)
+        .fold(0, (s, o) => s + (o.custoEstimado ?? 0));
     final double totalPosInsercao = totalAtual + novoValor;
 
     if (totalPosInsercao > limiteEvento) {
@@ -254,6 +269,65 @@ class OrcamentoController extends GetxController {
       _mostrarSnackbar(
         "Erro",
         "Falha ao salvar orçamento: $e",
+      );
+      rethrow;
+    }
+  }
+
+  /// ===========================================================
+  /// 🔹 Alterar item do orçamento (nome e valor previsto)
+  /// ===========================================================
+  Future<void> atualizarOrcamento({
+    required String idOrcamento,
+    required String anotacoes,
+    required double custoEstimado,
+  }) async {
+    final atual =
+        orcamentos.firstWhereOrNull((o) => o.idOrcamento == idOrcamento);
+    try {
+      await _orcamentos.atualizarOrcamento(
+        idOrcamento: idOrcamento,
+        anotacoes: anotacoes,
+        custoEstimado: custoEstimado,
+      );
+
+      final indice = orcamentos.indexWhere((o) => o.idOrcamento == idOrcamento);
+      if (indice >= 0) {
+        orcamentos[indice] = orcamentos[indice].copyWith(
+          anotacoes: anotacoes,
+          custoEstimado: custoEstimado,
+        );
+        _atualizarContagens();
+      }
+
+      _auditoria.registrar(
+        acao: 'ORCAMENTO_ATUALIZADO',
+        resumo: 'Item do orçamento alterado.',
+        entidadeTipo: 'orcamento',
+        entidadeId: idOrcamento,
+        entidadeNome: anotacoes,
+        idFornecedor: atual?.idFornecedor,
+        idEvento: atual?.idEvento,
+        idOrcamento: idOrcamento,
+        mudancas: [
+          if (atual?.anotacoes != anotacoes)
+            AuditoriaMudanca(
+              campo: 'Nome',
+              de: atual?.anotacoes ?? '',
+              para: anotacoes,
+            ),
+          if (atual?.custoEstimado != custoEstimado)
+            AuditoriaMudanca(
+              campo: 'Valor previsto',
+              de: atual?.custoEstimado?.toStringAsFixed(2) ?? '',
+              para: custoEstimado.toStringAsFixed(2),
+            ),
+        ],
+      );
+    } catch (e) {
+      _mostrarSnackbar(
+        'Erro',
+        'Falha ao alterar o item. Tente novamente.',
       );
       rethrow;
     }

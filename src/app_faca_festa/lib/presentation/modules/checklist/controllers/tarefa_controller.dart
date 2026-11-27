@@ -11,8 +11,10 @@ import 'package:app_faca_festa/domain/repositories/tarefa_repository.dart';
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/controllers/convidado_controller.dart';
 import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_controller.dart';
+import 'package:app_faca_festa/core/conectividade/recarregar_ao_reconectar.dart';
 
-class TarefaController extends GetxController {
+class TarefaController extends GetxController
+    with RecarregarAoReconectar {
   TarefaController({
     required TarefaRepository repository,
     required ConvidadoRepository convidadoRepository,
@@ -109,10 +111,16 @@ class TarefaController extends GetxController {
         carregando.value = false;
       },
       onError: (Object error, StackTrace stackTrace) {
-        erro.value = ordenarPorData
-            ? error.toString()
-            : 'Erro ao carregar tarefas: $error';
+        erro.value = falhaDeConexao(error)
+            ? semInternetPara('O checklist atualiza')
+            : ordenarPorData
+                ? error.toString()
+                : 'Erro ao carregar tarefas: $error';
         carregando.value = false;
+        refazerAoReconectar(
+            'tarefas',
+            () => _iniciarEscuta(idEvento,
+                ordenarPorData: ordenarPorData, idResponsavel: idResponsavel));
       },
     );
   }
@@ -156,8 +164,15 @@ class TarefaController extends GetxController {
           if (!primeiro.isCompleted) primeiro.complete();
         },
         onError: (Object error, StackTrace stackTrace) {
-          erro.value = 'Erro ao carregar usuários: $error';
+          erro.value = falhaDeConexao(error)
+              ? semInternetPara('A lista de responsáveis atualiza')
+              : 'Erro ao carregar usuários: $error';
           if (!primeiro.isCompleted) primeiro.complete();
+          refazerAoReconectar('usuarios', () async {
+            await _convidadosSubscription?.cancel();
+            _convidadosSubscription = null;
+            await carregarUsuarios(idEvento: eventoId);
+          });
         },
       );
 

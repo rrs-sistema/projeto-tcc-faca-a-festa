@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/core/conectividade/recarregar_ao_reconectar.dart';
 import 'package:app_faca_festa/presentation/widgets/festa_scroll_area.dart';
 import 'package:flutter/material.dart';
 
@@ -16,9 +17,15 @@ class AbrangenciaFornecedorPage extends StatefulWidget {
       _AbrangenciaFornecedorPageState();
 }
 
-class _AbrangenciaFornecedorPageState extends State<AbrangenciaFornecedorPage> {
+class _AbrangenciaFornecedorPageState extends State<AbrangenciaFornecedorPage>
+    with RecarregarConsultaAoReconectar {
   late final _datasource = widget.datasource ?? AbrangenciaRemoteDatasource();
-  late var _consulta = _datasource.consultarFornecedor();
+  late var _consulta = acompanharConsulta(_datasource.consultarFornecedor());
+
+  @override
+  void recarregarAoReconectar() => setState(() {
+        _consulta = acompanharConsulta(_datasource.consultarFornecedor());
+      });
 
   @override
   Widget build(BuildContext context) {
@@ -63,7 +70,8 @@ class _AbrangenciaFornecedorPageState extends State<AbrangenciaFornecedorPage> {
                                 'Não foi possível consultar sua cobertura.'),
                             TextButton(
                               onPressed: () => setState(() {
-                                _consulta = _datasource.consultarFornecedor();
+                                _consulta = acompanharConsulta(
+                                    _datasource.consultarFornecedor());
                               }),
                               child: const Text('Tentar novamente'),
                             ),

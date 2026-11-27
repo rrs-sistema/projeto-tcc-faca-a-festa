@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../models/tarefa/tarefa_model.dart';
+import 'package:app_faca_festa/core/conectividade/escrita_local_primeiro.dart';
 import 'package:app_faca_festa/domain/entities/tarefa.dart';
 
 class TarefaRemoteDatasource {
@@ -32,15 +33,29 @@ class TarefaRemoteDatasource {
         );
   }
 
-  Future<void> adicionar(TarefaModel tarefa) =>
-      _tarefas.doc(tarefa.idTarefa).set(tarefa.toMap());
+  Future<void> adicionar(TarefaModel tarefa) => escritaLocalPrimeiro(
+        _tarefas.doc(tarefa.idTarefa).set(tarefa.toMap()),
+        descricao: 'tarefa "${tarefa.titulo}"',
+        chave: tarefa.idTarefa,
+      );
 
-  Future<void> atualizar(TarefaModel tarefa) =>
-      _tarefas.doc(tarefa.idTarefa).update(tarefa.toMap());
+  Future<void> atualizar(TarefaModel tarefa) => escritaLocalPrimeiro(
+        _tarefas.doc(tarefa.idTarefa).update(tarefa.toMap()),
+        descricao: 'tarefa "${tarefa.titulo}"',
+        chave: tarefa.idTarefa,
+      );
 
   Future<void> atualizarStatus(String idTarefa, StatusTarefa status) {
-    return _tarefas.doc(idTarefa).update({'status': status.firestoreValue});
+    return escritaLocalPrimeiro(
+      _tarefas.doc(idTarefa).update({'status': status.firestoreValue}),
+      descricao: 'status de uma tarefa',
+      chave: idTarefa,
+    );
   }
 
-  Future<void> excluir(String idTarefa) => _tarefas.doc(idTarefa).delete();
+  Future<void> excluir(String idTarefa) => escritaLocalPrimeiro(
+        _tarefas.doc(idTarefa).delete(),
+        descricao: 'exclusão de uma tarefa',
+        chave: idTarefa,
+      );
 }

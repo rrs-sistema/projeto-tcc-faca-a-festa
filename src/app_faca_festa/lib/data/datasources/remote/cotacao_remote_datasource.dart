@@ -5,6 +5,7 @@ import '../../models/cotacao/cotacao_chat_model.dart';
 import '../../models/cotacao/cotacao_model.dart';
 import 'cotacao_functions_datasource.dart';
 import 'package:app_faca_festa/domain/entities/cotacao.dart';
+import 'package:app_faca_festa/core/conectividade/escrita_local_primeiro.dart';
 
 abstract interface class CotacaoRemoteDatasource {
   Stream<List<CotacaoModel>> observarMinhasCotacoes(String idUsuario);
@@ -100,7 +101,8 @@ class FirebaseCotacaoRemoteDatasource implements CotacaoRemoteDatasource {
           .collection('cotacao')
           .where('id_usuario_solicitante', isEqualTo: idUsuario)
           .snapshots(includeMetadataChanges: true)
-          .where((snapshot) => !snapshot.metadata.isFromCache)
+          .where((snapshot) =>
+              LeituraLocalPrimeiro.aceitarSnapshot(snapshot.metadata))
           .asyncMap((snapshot) async {
         final lista = <CotacaoModel>[];
 
@@ -108,7 +110,7 @@ class FirebaseCotacaoRemoteDatasource implements CotacaoRemoteDatasource {
           final data = doc.data();
           final fornecedores = (await doc.reference
                   .collection('fornecedores')
-                  .get(const GetOptions(source: Source.server)))
+                  .lerLocalPrimeiro())
               .docs;
           final (itens, totalEstimado) =
               await _carregarServicosCotacao(fornecedores);
@@ -196,7 +198,7 @@ class FirebaseCotacaoRemoteDatasource implements CotacaoRemoteDatasource {
     for (final fornecedorDoc in fornecedores) {
       final servicosSnap = await fornecedorDoc.reference
           .collection('servicos')
-          .get(const GetOptions(source: Source.server));
+          .lerLocalPrimeiro();
       for (final servico in servicosSnap.docs) {
         final data = servico.data();
         final valor = data['valor_estimado'] ?? 0;
@@ -227,7 +229,8 @@ class FirebaseCotacaoRemoteDatasource implements CotacaoRemoteDatasource {
           .doc(idCotacao)
           .collection('fornecedores')
           .snapshots(includeMetadataChanges: true)
-          .where((snapshot) => !snapshot.metadata.isFromCache)
+          .where((snapshot) =>
+              LeituraLocalPrimeiro.aceitarSnapshot(snapshot.metadata))
           .map((snapshot) {
         return snapshot.docs.any((doc) {
           final status = doc.data()['status'];
@@ -249,7 +252,8 @@ class FirebaseCotacaoRemoteDatasource implements CotacaoRemoteDatasource {
           .collectionGroup('fornecedores')
           .where('id_fornecedor', isEqualTo: idFornecedor)
           .snapshots(includeMetadataChanges: true)
-          .where((snapshot) => !snapshot.metadata.isFromCache)
+          .where((snapshot) =>
+              LeituraLocalPrimeiro.aceitarSnapshot(snapshot.metadata))
           .asyncMap((snapshot) async {
         final conversas = <CotacaoConversaModel>[];
         for (final fornecedorDoc in snapshot.docs) {
@@ -288,7 +292,8 @@ class FirebaseCotacaoRemoteDatasource implements CotacaoRemoteDatasource {
       fonte: _mensagensRef(idCotacao, idFornecedor)
           .orderBy('enviado_em')
           .snapshots(includeMetadataChanges: true)
-          .where((snapshot) => !snapshot.metadata.isFromCache)
+          .where((snapshot) =>
+              LeituraLocalPrimeiro.aceitarSnapshot(snapshot.metadata))
           .map(
             (snapshot) => snapshot.docs
                 .map((doc) => _mensagemFromMap(doc.data()))
@@ -310,7 +315,8 @@ class FirebaseCotacaoRemoteDatasource implements CotacaoRemoteDatasource {
           .doc(idCotacao)
           .collection('fornecedores')
           .snapshots(includeMetadataChanges: true)
-          .where((snapshot) => !snapshot.metadata.isFromCache)
+          .where((snapshot) =>
+              LeituraLocalPrimeiro.aceitarSnapshot(snapshot.metadata))
           .asyncMap((snapshot) async {
         final fornecedores = <CotacaoFornecedorResumoModel>[];
         for (final doc in snapshot.docs) {
@@ -334,7 +340,8 @@ class FirebaseCotacaoRemoteDatasource implements CotacaoRemoteDatasource {
       vazio: [],
       fonte: _servicosRef(idCotacao, idFornecedor)
           .snapshots(includeMetadataChanges: true)
-          .where((snapshot) => !snapshot.metadata.isFromCache)
+          .where((snapshot) =>
+              LeituraLocalPrimeiro.aceitarSnapshot(snapshot.metadata))
           .map(
             (snapshot) => snapshot.docs
                 .map((doc) => _servicoResumoFromMap(doc.data()))
@@ -353,7 +360,7 @@ class FirebaseCotacaoRemoteDatasource implements CotacaoRemoteDatasource {
         .doc(idCotacao)
         .collection('fornecedores')
         .doc(idFornecedor)
-        .get(const GetOptions(source: Source.server));
+        .lerLocalPrimeiro();
     if (!doc.exists) return null;
     return _montarConversa(
       fornecedorDoc: doc,
@@ -372,7 +379,7 @@ class FirebaseCotacaoRemoteDatasource implements CotacaoRemoteDatasource {
     }
     final snap = await _mensagensRef(idCotacao, idFornecedor)
         .where('id_usuario', isNotEqualTo: idUsuario)
-        .get(const GetOptions(source: Source.server));
+        .lerLocalPrimeiro();
 
     final pendentes = snap.docs.where((m) => m.data()['lido'] != true).toList();
     for (var inicio = 0; inicio < pendentes.length; inicio += 400) {
@@ -383,7 +390,8 @@ class FirebaseCotacaoRemoteDatasource implements CotacaoRemoteDatasource {
       for (final m in pendentes.skip(inicio).take(400)) {
         batch.update(m.reference, {'lido': true});
       }
-      await batch.commit();
+      await escritaLocalPrimeiro(batch.commit(),
+          descricao: 'leitura das mensagens');
     }
   }
 
@@ -398,13 +406,18 @@ class FirebaseCotacaoRemoteDatasource implements CotacaoRemoteDatasource {
     if (FirebaseAuth.instance.currentUser?.uid != idUsuario) {
       throw StateError('Sessão alterada.');
     }
-    return _mensagensRef(idCotacao, idFornecedor).add({
-      'id_usuario': idUsuario,
-      'nome_usuario': nomeUsuario,
-      'mensagem': mensagem,
-      'enviado_em': FieldValue.serverTimestamp(),
-      'lido': false,
-    });
+    final ref = _mensagensRef(idCotacao, idFornecedor).doc();
+    return escritaLocalPrimeiro(
+      ref.set({
+        'id_usuario': idUsuario,
+        'nome_usuario': nomeUsuario,
+        'mensagem': mensagem,
+        'enviado_em': FieldValue.serverTimestamp(),
+        'lido': false,
+      }),
+      descricao: 'mensagem da cotação',
+      chave: ref.id,
+    );
   }
 
   @override
@@ -504,7 +517,7 @@ class FirebaseCotacaoRemoteDatasource implements CotacaoRemoteDatasource {
 
     final fornecedorData = fornecedorDoc.data() ?? <String, dynamic>{};
     final cotacaoDoc =
-        await cotacaoRef.get(const GetOptions(source: Source.server));
+        await cotacaoRef.lerLocalPrimeiro();
     final cotacaoData = cotacaoDoc.data();
     if (cotacaoData == null) return null;
     final nomeSolicitante =
@@ -512,7 +525,7 @@ class FirebaseCotacaoRemoteDatasource implements CotacaoRemoteDatasource {
     final observacao = (cotacaoData['observacao'] ?? '').toString().trim();
     final mensagens = await _mensagensRef(cotacaoRef.id, idFornecedor)
         .orderBy('enviado_em', descending: true)
-        .get(const GetOptions(source: Source.server));
+        .lerLocalPrimeiro();
 
     final ultima =
         mensagens.docs.isNotEmpty ? mensagens.docs.first.data() : null;
@@ -559,7 +572,7 @@ class FirebaseCotacaoRemoteDatasource implements CotacaoRemoteDatasource {
     final data = doc.data();
     final idFornecedor = (data['id_fornecedor'] ?? doc.id).toString();
     final servicosSnap = await _servicosRef(idCotacao, idFornecedor)
-        .get(const GetOptions(source: Source.server));
+        .lerLocalPrimeiro();
     return CotacaoFornecedorResumoModel(
       idFornecedor: idFornecedor,
       nomeFornecedor: data['nome_fornecedor']?.toString().trim(),

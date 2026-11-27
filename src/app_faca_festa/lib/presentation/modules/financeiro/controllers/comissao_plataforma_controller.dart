@@ -3,8 +3,10 @@ import 'package:get/get.dart';
 import 'package:app_faca_festa/data/datasources/remote/comissao_plataforma_remote_datasource.dart';
 import 'package:app_faca_festa/domain/entities/financeiro/comissao_plataforma.dart';
 import 'package:app_faca_festa/domain/services/comissao_plataforma_service.dart';
+import 'package:app_faca_festa/core/conectividade/recarregar_ao_reconectar.dart';
 
-class ComissaoPlataformaController extends GetxController {
+class ComissaoPlataformaController extends GetxController
+    with RecarregarAoReconectar {
   ComissaoPlataformaController({
     required this.remote,
     String? Function()? usuarioAtual,
@@ -162,6 +164,7 @@ class ComissaoPlataformaController extends GetxController {
   void aoTrocarSessao() => _geracao++;
 
   Future<void> carregar() async {
+    repetirAoReconectar('comissao', carregar);
     final geracao = ++_geracao;
     final uid = _usuarioAtual?.call();
     erro.value = '';

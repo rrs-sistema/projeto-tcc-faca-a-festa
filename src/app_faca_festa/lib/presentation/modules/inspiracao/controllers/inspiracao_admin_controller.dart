@@ -9,6 +9,7 @@ import 'package:app_faca_festa/domain/entities/inspiracao.dart';
 import 'package:app_faca_festa/domain/entities/inspiracao_admin_patch.dart';
 import 'package:app_faca_festa/domain/entities/inspiracao_sugestao.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_inspiracoes.dart';
+import 'package:app_faca_festa/core/conectividade/recarregar_ao_reconectar.dart';
 
 part 'inspiracao_admin_filtros.dart';
 part 'inspiracao_admin_formulario.dart';
@@ -28,7 +29,8 @@ class ImagemGaleriaUploadPendente {
   });
 }
 
-class InspiracaoAdminController extends GetxController {
+class InspiracaoAdminController extends GetxController
+    with RecarregarAoReconectar {
   InspiracaoAdminController({
     required GerenciarInspiracoes inspiracoes,
     bool Function()? usuarioAutenticado,
@@ -186,6 +188,8 @@ class InspiracaoAdminController extends GetxController {
         onError: (Object e, StackTrace s) {
           loading.value = false;
           escutaAtiva.value = false;
+          refazerAoReconectar(
+              'inspiracoes', () => escutarInspiracoes(mostrarLoading: false));
           final mensagem = e.toString();
           final semPermissao = mensagem.contains('permission-denied') ||
               mensagem.contains('PERMISSION_DENIED');

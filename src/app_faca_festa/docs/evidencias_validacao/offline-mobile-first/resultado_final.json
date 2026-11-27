@@ -1,0 +1,478 @@
+{
+  "modo": "final",
+  "aparelho": "SM-X110",
+  "android": "16",
+  "inicio": "2026-11-26T17:32:42.587Z",
+  "fim": "2026-11-26T17:41:12.657Z",
+  "total": 59,
+  "aprovadas": 59,
+  "reprovadas": 0,
+  "etapas": [
+    {
+      "fase": "offline",
+      "jornada": "sessao",
+      "cenario": "online",
+      "etapa": "Login dos três perfis",
+      "ok": true,
+      "ms": 540
+    },
+    {
+      "fase": "offline",
+      "jornada": "organizador",
+      "cenario": "online",
+      "etapa": "Perfil e lista de eventos",
+      "ok": true,
+      "ms": 1653
+    },
+    {
+      "fase": "offline",
+      "jornada": "organizador",
+      "cenario": "online",
+      "etapa": "Checklist, convidados e orçamento",
+      "ok": true,
+      "ms": 925
+    },
+    {
+      "fase": "offline",
+      "jornada": "organizador",
+      "cenario": "online",
+      "etapa": "Presentes no aparelho",
+      "ok": true,
+      "ms": 473
+    },
+    {
+      "fase": "offline",
+      "jornada": "convidado",
+      "cenario": "online",
+      "etapa": "Abrir convite pelo link",
+      "ok": true,
+      "ms": 871
+    },
+    {
+      "fase": "offline",
+      "jornada": "fornecedor",
+      "cenario": "online",
+      "etapa": "Perfil, serviços e painel",
+      "ok": true,
+      "ms": 712
+    },
+    {
+      "fase": "offline",
+      "jornada": "calculadora",
+      "cenario": "online",
+      "etapa": "Catálogo e simulação",
+      "ok": true,
+      "ms": 1510
+    },
+    {
+      "fase": "offline",
+      "jornada": "rede",
+      "cenario": "corte",
+      "etapa": "Servidor inalcançável no aparelho",
+      "ok": true,
+      "ms": 80
+    },
+    {
+      "fase": "offline",
+      "jornada": "rede",
+      "cenario": "corte",
+      "etapa": "App percebe a queda sem ação do usuário",
+      "ok": true,
+      "ms": 56206
+    },
+    {
+      "fase": "offline",
+      "jornada": "organizador",
+      "cenario": "offline",
+      "etapa": "Perfil abre do cache",
+      "ok": true,
+      "ms": 23
+    },
+    {
+      "fase": "offline",
+      "jornada": "organizador",
+      "cenario": "offline",
+      "etapa": "Lista de eventos do cache",
+      "ok": true,
+      "ms": 36
+    },
+    {
+      "fase": "offline",
+      "jornada": "organizador",
+      "cenario": "offline",
+      "etapa": "Editar evento sem travar",
+      "ok": true,
+      "ms": 56
+    },
+    {
+      "fase": "offline",
+      "jornada": "organizador",
+      "cenario": "offline",
+      "etapa": "Criar evento sem travar",
+      "ok": true,
+      "ms": 2
+    },
+    {
+      "fase": "offline",
+      "jornada": "organizador",
+      "cenario": "offline",
+      "etapa": "Evento novo aparece na lista",
+      "ok": true,
+      "ms": 65
+    },
+    {
+      "fase": "offline",
+      "jornada": "organizador",
+      "cenario": "offline",
+      "etapa": "Adicionar tarefa sem travar",
+      "ok": true,
+      "ms": 3
+    },
+    {
+      "fase": "offline",
+      "jornada": "organizador",
+      "cenario": "offline",
+      "etapa": "Tarefa aparece no checklist",
+      "ok": true,
+      "ms": 15
+    },
+    {
+      "fase": "offline",
+      "jornada": "organizador",
+      "cenario": "offline",
+      "etapa": "Adicionar convidado sem travar",
+      "ok": true,
+      "ms": 6
+    },
+    {
+      "fase": "offline",
+      "jornada": "organizador",
+      "cenario": "offline",
+      "etapa": "Convidado aparece na lista",
+      "ok": true,
+      "ms": 58
+    },
+    {
+      "fase": "offline",
+      "jornada": "organizador",
+      "cenario": "offline",
+      "etapa": "Registrar gasto no orçamento",
+      "ok": true,
+      "ms": 53
+    },
+    {
+      "fase": "offline",
+      "jornada": "organizador",
+      "cenario": "offline",
+      "etapa": "Cadastrar presente sem travar",
+      "ok": true,
+      "ms": 39
+    },
+    {
+      "fase": "offline",
+      "jornada": "organizador",
+      "cenario": "offline",
+      "etapa": "Registrar contribuição PIX",
+      "ok": true,
+      "ms": 29
+    },
+    {
+      "fase": "offline",
+      "jornada": "convidado",
+      "cenario": "offline",
+      "etapa": "Reabrir convite sem internet",
+      "ok": true,
+      "ms": 4
+    },
+    {
+      "fase": "offline",
+      "jornada": "convidado",
+      "cenario": "offline",
+      "etapa": "Ver lista de presentes",
+      "ok": true,
+      "ms": 25
+    },
+    {
+      "fase": "offline",
+      "jornada": "convidado",
+      "cenario": "offline",
+      "etapa": "Reservar presente sem travar",
+      "ok": true,
+      "ms": 19
+    },
+    {
+      "fase": "offline",
+      "jornada": "convidado",
+      "cenario": "offline",
+      "etapa": "Outra pessoa reserva o mesmo presente no servidor",
+      "ok": true,
+      "ms": 3001
+    },
+    {
+      "fase": "offline",
+      "jornada": "convidado",
+      "cenario": "offline",
+      "etapa": "Reserva concorrente fica no aparelho",
+      "ok": true,
+      "ms": 13
+    },
+    {
+      "fase": "offline",
+      "jornada": "organizador",
+      "cenario": "offline",
+      "etapa": "Selo conta as alterações pendentes",
+      "ok": true,
+      "ms": 2
+    },
+    {
+      "fase": "offline",
+      "jornada": "fornecedor",
+      "cenario": "offline",
+      "etapa": "Perfil do fornecedor do cache",
+      "ok": true,
+      "ms": 31
+    },
+    {
+      "fase": "offline",
+      "jornada": "fornecedor",
+      "cenario": "offline",
+      "etapa": "Serviços do fornecedor do cache",
+      "ok": true,
+      "ms": 132
+    },
+    {
+      "fase": "offline",
+      "jornada": "fornecedor",
+      "cenario": "offline",
+      "etapa": "Painel da última consulta",
+      "ok": true,
+      "ms": 2
+    },
+    {
+      "fase": "offline",
+      "jornada": "calculadora",
+      "cenario": "offline",
+      "etapa": "Itens por tipo de festa",
+      "ok": true,
+      "ms": 69
+    },
+    {
+      "fase": "offline",
+      "jornada": "calculadora",
+      "cenario": "offline",
+      "etapa": "Catálogo contextual",
+      "ok": true,
+      "ms": 13
+    },
+    {
+      "fase": "offline",
+      "jornada": "calculadora",
+      "cenario": "offline",
+      "etapa": "Simulação com dados do aparelho",
+      "ok": true,
+      "ms": 188
+    },
+    {
+      "fase": "offline",
+      "jornada": "reinicio",
+      "cenario": "reinicio",
+      "etapa": "Fechar e reabrir Firestore e SQLite",
+      "ok": true,
+      "ms": 70
+    },
+    {
+      "fase": "offline",
+      "jornada": "reinicio",
+      "cenario": "reinicio",
+      "etapa": "Eventos e tarefas após reinício",
+      "ok": true,
+      "ms": 105
+    },
+    {
+      "fase": "offline",
+      "jornada": "reinicio",
+      "cenario": "reinicio",
+      "etapa": "Presente offline após reinício",
+      "ok": true,
+      "ms": 7
+    },
+    {
+      "fase": "reabrir",
+      "jornada": "reabrir",
+      "cenario": "processo_novo",
+      "etapa": "Sessões continuam abertas",
+      "ok": true,
+      "ms": 15
+    },
+    {
+      "fase": "reabrir",
+      "jornada": "reabrir",
+      "cenario": "processo_novo",
+      "etapa": "App abre sabendo que está offline",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "fase": "reabrir",
+      "jornada": "reabrir",
+      "cenario": "processo_novo",
+      "etapa": "Selo avisa pendências da sessão anterior",
+      "ok": true,
+      "ms": 813
+    },
+    {
+      "fase": "reabrir",
+      "jornada": "reabrir",
+      "cenario": "processo_novo",
+      "etapa": "Perfil e eventos do cache",
+      "ok": true,
+      "ms": 201
+    },
+    {
+      "fase": "reabrir",
+      "jornada": "reabrir",
+      "cenario": "processo_novo",
+      "etapa": "Pendências locais preservadas",
+      "ok": true,
+      "ms": 173
+    },
+    {
+      "fase": "reabrir",
+      "jornada": "convidado",
+      "cenario": "processo_novo",
+      "etapa": "Convite reabre sem internet",
+      "ok": true,
+      "ms": 24
+    },
+    {
+      "fase": "reabrir",
+      "jornada": "rede",
+      "cenario": "reconexao",
+      "etapa": "Servidor volta a responder",
+      "ok": true,
+      "ms": 20030
+    },
+    {
+      "fase": "reabrir",
+      "jornada": "rede",
+      "cenario": "reconexao",
+      "etapa": "App percebe a volta sem ação do usuário",
+      "ok": true,
+      "ms": 0
+    },
+    {
+      "fase": "reabrir",
+      "jornada": "sincronizacao",
+      "cenario": "reconexao",
+      "etapa": "Selo some quando o servidor confirma",
+      "ok": true,
+      "ms": 415
+    },
+    {
+      "fase": "reabrir",
+      "jornada": "sincronizacao",
+      "cenario": "reconexao",
+      "etapa": "Fila do Firestore enviada",
+      "ok": true,
+      "ms": 16
+    },
+    {
+      "fase": "reabrir",
+      "jornada": "sincronizacao",
+      "cenario": "reconexao",
+      "etapa": "Fila de presentes enviada",
+      "ok": true,
+      "ms": 561
+    },
+    {
+      "fase": "reabrir",
+      "jornada": "sincronizacao",
+      "cenario": "reconexao",
+      "etapa": "Servidor recebeu tudo",
+      "ok": true,
+      "ms": 639
+    },
+    {
+      "fase": "reabrir",
+      "jornada": "convidado",
+      "cenario": "reconexao",
+      "etapa": "Conflito: vale a reserva que chegou primeiro",
+      "ok": true,
+      "ms": 181
+    },
+    {
+      "fase": "servidor",
+      "jornada": "admin_sdk",
+      "cenario": "verificacao",
+      "etapa": "Evento criado offline existe",
+      "ok": true
+    },
+    {
+      "fase": "servidor",
+      "jornada": "admin_sdk",
+      "cenario": "verificacao",
+      "etapa": "Edição offline do evento chegou",
+      "ok": true
+    },
+    {
+      "fase": "servidor",
+      "jornada": "admin_sdk",
+      "cenario": "verificacao",
+      "etapa": "Tarefa offline existe",
+      "ok": true
+    },
+    {
+      "fase": "servidor",
+      "jornada": "admin_sdk",
+      "cenario": "verificacao",
+      "etapa": "Convidado offline existe",
+      "ok": true
+    },
+    {
+      "fase": "servidor",
+      "jornada": "admin_sdk",
+      "cenario": "verificacao",
+      "etapa": "Gasto offline registrado uma única vez",
+      "ok": true,
+      "erro": "encontrados: 1"
+    },
+    {
+      "fase": "servidor",
+      "jornada": "admin_sdk",
+      "cenario": "verificacao",
+      "etapa": "Presente offline existe",
+      "ok": true
+    },
+    {
+      "fase": "servidor",
+      "jornada": "admin_sdk",
+      "cenario": "verificacao",
+      "etapa": "Contribuição PIX sem duplicar",
+      "ok": true,
+      "erro": "encontradas: 1"
+    },
+    {
+      "fase": "servidor",
+      "jornada": "admin_sdk",
+      "cenario": "verificacao",
+      "etapa": "Valor arrecadado coerente",
+      "ok": true,
+      "erro": "valor: 50"
+    },
+    {
+      "fase": "servidor",
+      "jornada": "admin_sdk",
+      "cenario": "verificacao",
+      "etapa": "Reserva do convidado chegou",
+      "ok": true
+    },
+    {
+      "fase": "servidor",
+      "jornada": "admin_sdk",
+      "cenario": "verificacao",
+      "etapa": "Conflito: a primeira reserva foi preservada",
+      "ok": true,
+      "erro": "reservado_por: Outra pessoa"
+    }
+  ]
+}

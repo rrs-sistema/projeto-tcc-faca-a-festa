@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'dart:async';
 
+import 'package:app_faca_festa/core/conectividade/conectividade_service.dart';
+import 'package:app_faca_festa/core/conectividade/estado_sincronizacao.dart';
 import 'package:app_faca_festa/domain/entities/evento.dart';
 import 'package:app_faca_festa/domain/entities/tipo_evento.dart';
 import 'package:app_faca_festa/domain/repositories/evento_repository.dart';
@@ -54,6 +56,7 @@ class EventoController extends GetxController {
   StreamSubscription<Evento?>? _eventoSubscription;
   StreamSubscription<Evento?>? _eventoDocSub;
   StreamSubscription<List<Evento>>? _eventosUsuarioSub;
+  StreamSubscription<void>? _filaEnviadaSub;
   String? _idUsuarioListado;
   String? _idEventoComModulos;
   int _geracaoSessao = 0;
@@ -186,8 +189,12 @@ class EventoController extends GetxController {
       },
     );
 
+    // Offline o cache responde na hora; não há servidor para esperar.
+    final espera = ConectividadeService.offlineAgora
+        ? const Duration(seconds: 4)
+        : const Duration(seconds: 20);
     try {
-      await pronto.future.timeout(const Duration(seconds: 20));
+      await pronto.future.timeout(espera);
     } on TimeoutException {
       debugPrint(
           '⚠️ [EventoController] Timeout ao listar eventos de $usuario.');
@@ -527,11 +534,29 @@ class EventoController extends GetxController {
     return _repository.listarPorUsuario(idUsuario);
   }
 
+  @override
+  void onInit() {
+    super.onInit();
+    _filaEnviadaSub = EstadoSincronizacao.instancia?.filaEnviada
+        .listen((_) => unawaited(_reabrirAposSincronizar()));
+  }
+
+  /// Reabre lista e módulos quando a fila offline chega ao servidor: escutas
+  /// de um evento criado sem internet podem ter sido recusadas no reconectar.
+  Future<void> _reabrirAposSincronizar() async {
+    final uid = _idUsuarioListado;
+    if (uid == null || uid.isEmpty) return;
+    await carregarEventosDoUsuario(uid, forcar: true);
+    final atual = eventoAtual.value;
+    if (atual != null) await _inicializarEvento(atual);
+  }
+
   /// =====================================================
   /// 🔹 Encerramento seguro
   /// =====================================================
   @override
   void onClose() {
+    _filaEnviadaSub?.cancel();
     _eventoSubscription?.cancel();
     _eventosUsuarioSub?.cancel();
     _cancelarEscutas();

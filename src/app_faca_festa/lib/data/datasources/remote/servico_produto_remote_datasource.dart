@@ -1,5 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import 'package:app_faca_festa/core/conectividade/escrita_local_primeiro.dart';
+import 'package:app_faca_festa/core/conectividade/exigir_conexao.dart';
+
 import '../../models/DTO/fornecedor_servico_detalhado_dto.dart';
 import '../../models/servico_produto/fornecedor_produto_servico_model.dart';
 import '../../models/servico_produto/servico_produto_model.dart';
@@ -278,11 +281,13 @@ class ServicoProdutoRemoteDatasource {
     );
   }
 
-  Future<void> excluirServico(String id) {
+  Future<void> excluirServico(String id) async {
+    garantirConexao('Excluir o serviço');
     return _db.collection('servico_produto').doc(id).delete();
   }
 
-  Future<void> salvarServico(ServicoProdutoModel model) {
+  Future<void> salvarServico(ServicoProdutoModel model) async {
+    garantirConexao('Salvar o serviço');
     return _db.collection('servico_produto').doc(model.id).set(model.toMap());
   }
 
@@ -359,6 +364,7 @@ class ServicoProdutoRemoteDatasource {
     String idFornecedor,
     String idSubcategoria,
   ) async {
+    garantirConexao('Adicionar a subcategoria');
     final ref = _db
         .collection('fornecedor_categoria')
         .where('id_fornecedor', isEqualTo: idFornecedor);
@@ -381,7 +387,8 @@ class ServicoProdutoRemoteDatasource {
     }
   }
 
-  Future<void> salvarVinculo(FornecedorProdutoServicoModel model) {
+  Future<void> salvarVinculo(FornecedorProdutoServicoModel model) async {
+    garantirConexao('Salvar o serviço do fornecedor');
     final vinculoId = '${model.idFornecedor}_${model.idProdutoServico}';
     final data = model.toMap();
     data['data_atualizacao'] = FieldValue.serverTimestamp();
@@ -392,7 +399,8 @@ class ServicoProdutoRemoteDatasource {
         .set(data, SetOptions(merge: true));
   }
 
-  Future<void> excluirVinculo(String id) {
+  Future<void> excluirVinculo(String id) async {
+    garantirConexao('Remover o serviço do fornecedor');
     return _db.collection('fornecedor_servico').doc(id).delete();
   }
 
@@ -400,11 +408,7 @@ class ServicoProdutoRemoteDatasource {
   Future<QuerySnapshot<Map<String, dynamic>>> _lerAtual(
     Query<Map<String, dynamic>> consulta,
   ) async {
-    try {
-      return await consulta.get(const GetOptions(source: Source.server));
-    } catch (_) {
-      return consulta.get();
-    }
+    return LeituraLocalPrimeiro.consulta(consulta);
   }
 
   List<List<String>> _dividirChunks(List<String> lista, int tamanho) {

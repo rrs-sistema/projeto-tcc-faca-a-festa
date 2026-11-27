@@ -6,13 +6,15 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:app_faca_festa/domain/entities/auditoria_catalogo.dart';
 import 'package:app_faca_festa/domain/entities/auditoria_evento.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_auditoria.dart';
+import 'package:app_faca_festa/core/conectividade/recarregar_ao_reconectar.dart';
 
 part 'auditoria_controller_helpers.dart';
 part 'auditoria_controller_filtros.dart';
 part 'auditoria_controller_indicadores.dart';
 part 'auditoria_controller_export.dart';
 
-class AuditoriaController extends GetxController {
+class AuditoriaController extends GetxController
+    with RecarregarAoReconectar {
   AuditoriaController({
     required GerenciarAuditoria gerenciarAuditoria,
     required this.escopoAdmin,
@@ -43,6 +45,7 @@ class AuditoriaController extends GetxController {
   DateTime? _proximoCursorCriadoEm;
 
   Future<void> carregar() async {
+    repetirAoReconectar('auditoria', carregar);
     try {
       carregando.value = true;
       temMais.value = false;

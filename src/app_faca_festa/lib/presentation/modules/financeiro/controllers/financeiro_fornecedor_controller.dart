@@ -11,9 +11,11 @@ import 'package:uuid/uuid.dart';
 import 'package:app_faca_festa/data/datasources/remote/financeiro_fornecedor_remote_datasource.dart';
 import 'package:app_faca_festa/domain/entities/financeiro/alerta_financeiro.dart';
 import 'package:app_faca_festa/domain/services/resumo_financeiro_fornecedor_service.dart';
+import 'package:app_faca_festa/core/conectividade/recarregar_ao_reconectar.dart';
 
 /// Financeiro privado da empresa fornecedora (proprietário = uid).
-class FinanceiroFornecedorController extends GetxController {
+class FinanceiroFornecedorController extends GetxController
+    with RecarregarAoReconectar {
   FinanceiroFornecedorController({
     required FirebaseFirestore firestore,
     required this.idFornecedor,
@@ -197,6 +199,7 @@ class FinanceiroFornecedorController extends GetxController {
 
   /// [forcarLimpeza] zera cache local (pull-to-refresh total).
   Future<void> iniciar({bool forcarLimpeza = false}) async {
+    repetirAoReconectar('financeiro', iniciar);
     final geracao = ++_geracao;
     final uid = _usuarioAtual?.call();
     await _cancelar();

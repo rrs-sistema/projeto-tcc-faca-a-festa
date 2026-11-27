@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import 'package:app_faca_festa/core/conectividade/escrita_local_primeiro.dart';
+
 import '../../models/convidado/convidado_model.dart';
 import 'package:app_faca_festa/domain/repositories/convite_convidado_repository.dart';
 
@@ -139,15 +141,19 @@ class FirebaseConviteConvidadoRemoteDatasource
       const ['convite_token', 'token_convite', 'token'],
     );
 
-    await documento.reference.set({
-      'id_usuario': uid,
-      'email_usuario': email.trim(),
-      'email_normalizado': _normalizarEmail(email),
-      'convite_status': 'vinculado',
-      'data_vinculo_usuario': FieldValue.serverTimestamp(),
-      'data_ultimo_acesso': FieldValue.serverTimestamp(),
-      if (tokenExistente.isEmpty) 'convite_token': documento.id,
-    }, SetOptions(merge: true));
+    await escritaLocalPrimeiro(
+      documento.reference.set({
+        'id_usuario': uid,
+        'email_usuario': email.trim(),
+        'email_normalizado': _normalizarEmail(email),
+        'convite_status': 'vinculado',
+        'data_vinculo_usuario': FieldValue.serverTimestamp(),
+        'data_ultimo_acesso': FieldValue.serverTimestamp(),
+        if (tokenExistente.isEmpty) 'convite_token': documento.id,
+      }, SetOptions(merge: true)),
+      descricao: 'vínculo do convite',
+      chave: documento.id,
+    );
 
     final atualizado = await documento.reference.get();
     if (!atualizado.exists || atualizado.data() == null) return null;

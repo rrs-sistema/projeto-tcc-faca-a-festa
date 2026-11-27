@@ -3,6 +3,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 
 import 'package:app_faca_festa/domain/services/convite_email_service.dart';
 
+import 'package:app_faca_festa/data/services/functions/exigir_conexao_functions.dart';
 class EnviarConvitesPorEmailService implements ConviteEmailService {
   EnviarConvitesPorEmailService({required FirebaseFunctions functions})
       : _functions = functions;
@@ -51,6 +52,7 @@ class EnviarConvitesPorEmailService implements ConviteEmailService {
     required List<String> idsConvidados,
   }) {
     return UpdateOperations.run(() async {
+      garantirConexaoFunctions('O envio de convites por e-mail');
       final callable = _functions.httpsCallable(
         'enviarConvitesPorEmail',
         options: HttpsCallableOptions(timeout: const Duration(seconds: 120)),

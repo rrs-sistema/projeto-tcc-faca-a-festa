@@ -6,8 +6,10 @@ import 'package:app_faca_festa/domain/entities/avaliacao.dart';
 import 'package:app_faca_festa/domain/entities/avaliacao_servico.dart';
 import 'package:app_faca_festa/domain/entities/fornecedor.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_avaliacoes_servico.dart';
+import 'package:app_faca_festa/core/conectividade/recarregar_ao_reconectar.dart';
 
-class AvaliacaoServicoController extends GetxController {
+class AvaliacaoServicoController extends GetxController
+    with RecarregarAoReconectar {
   AvaliacaoServicoController({
     required GerenciarAvaliacoesServico avaliacoes,
   }) : _avaliacoes = avaliacoes;
@@ -66,7 +68,13 @@ class AvaliacaoServicoController extends GetxController {
     }, onError: (Object e) {
       avaliacoesServico.clear();
       mediaServico.value = 0;
-      erroAvaliacoes.value = 'Avaliações indisponíveis. Tente novamente.';
+      erroAvaliacoes.value = falhaDeConexao(e)
+          ? semInternetPara('As avaliações aparecem')
+          : 'Avaliações indisponíveis. Tente novamente.';
+      refazerAoReconectar(
+          'avaliacoes-servico',
+          () => carregarAvaliacoesServico(
+              idFornecedor: idFornecedor, idServico: idServico));
     });
   }
 
@@ -139,7 +147,11 @@ class AvaliacaoServicoController extends GetxController {
       fornecedorCarregado.value = false;
       avaliacoesFornecedor.clear();
       mediaFornecedor.value = 0;
-      erroAvaliacoes.value = 'Avaliações indisponíveis. Tente novamente.';
+      erroAvaliacoes.value = falhaDeConexao(e)
+          ? semInternetPara('As avaliações aparecem')
+          : 'Avaliações indisponíveis. Tente novamente.';
+      refazerAoReconectar('avaliacoes-fornecedor',
+          () => carregarAvaliacoesFornecedor(idFornecedor));
     });
   }
 

@@ -3,6 +3,8 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:async';
 
+import 'package:app_faca_festa/core/conectividade/conectividade_service.dart';
+import 'package:app_faca_festa/core/conectividade/escrita_local_primeiro.dart';
 import 'package:app_faca_festa/domain/services/evento_leitura_confirmada.dart';
 
 import '../../models/evento/evento_model.dart';
@@ -22,11 +24,10 @@ class EventoRemoteDatasource {
       firestore.collection('evento');
 
   Future<EventoModel?> buscarPorId(String idEvento) async {
-    final snapshot = await _eventos
+    final snapshot = await LeituraLocalPrimeiro.consulta(_eventos
         .where('id_evento', isEqualTo: idEvento)
         .orderBy('data_cadastro', descending: true)
-        .limit(1)
-        .get();
+        .limit(1));
 
     if (snapshot.docs.isEmpty) {
       return null;
@@ -36,11 +37,10 @@ class EventoRemoteDatasource {
   }
 
   Future<EventoModel?> buscarUltimoPorUsuario(String idUsuario) async {
-    final snapshot = await _eventos
+    final snapshot = await LeituraLocalPrimeiro.consulta(_eventos
         .where('id_usuario', isEqualTo: idUsuario)
         .orderBy('data_cadastro', descending: true)
-        .limit(1)
-        .get();
+        .limit(1));
 
     if (snapshot.docs.isEmpty) {
       return null;
@@ -51,12 +51,10 @@ class EventoRemoteDatasource {
 
   Stream<EventoModel?> observarUltimoPorUsuario(String idUsuario) {
     return EventoLeituraConfirmada.ultimosConfirmados(
-      _eventos
+      _consultas(_eventos
           .where('id_usuario', isEqualTo: idUsuario)
           .orderBy('data_cadastro', descending: true)
-          .limit(1)
-          .snapshots()
-          .map(_consultaDeEventos),
+          .limit(1)),
     );
   }
 
@@ -68,10 +66,17 @@ class EventoRemoteDatasource {
   }
 
   Future<TipoEventoModel?> buscarTipoPorId(String idTipoEvento) async {
-    final document =
-        await firestore.collection('tipo_evento').doc(idTipoEvento).get();
+    DocumentSnapshot<Map<String, dynamic>>? document;
+    try {
+      document = await LeituraLocalPrimeiro.documento(
+        firestore.collection('tipo_evento').doc(idTipoEvento),
+      );
+    } on FirebaseException catch (erro) {
+      // Fora do cache e sem servidor: tenta a consulta abaixo.
+      if (erro.code == 'permission-denied') rethrow;
+    }
 
-    if (document.exists && document.data() != null) {
+    if (document != null && document.exists && document.data() != null) {
       final data = document.data()!;
       return TipoEventoModel.fromMap({
         ...data,
@@ -79,11 +84,10 @@ class EventoRemoteDatasource {
       });
     }
 
-    final snapshot = await firestore
+    final snapshot = await LeituraLocalPrimeiro.consulta(firestore
         .collection('tipo_evento')
         .where('id_tipo_evento', isEqualTo: idTipoEvento)
-        .limit(1)
-        .get();
+        .limit(1));
 
     if (snapshot.docs.isEmpty) {
       return null;
@@ -93,10 +97,9 @@ class EventoRemoteDatasource {
   }
 
   Future<List<TipoEventoModel>> listarTiposAtivos() async {
-    final snapshot = await firestore
-        .collection('tipo_evento')
-        .where('ativo', isEqualTo: true)
-        .get();
+    final snapshot = await LeituraLocalPrimeiro.consulta(
+      firestore.collection('tipo_evento').where('ativo', isEqualTo: true),
+    );
 
     return snapshot.docs
         .map((document) => TipoEventoModel.fromMap(document.data()))
@@ -107,7 +110,11 @@ class EventoRemoteDatasource {
     final data = evento.toMap();
     // Merge preserva metadados fora do formulário; a remoção do término é explícita.
     if (evento.dataFim == null) data['data_fim'] = FieldValue.delete();
-    return _eventos.doc(evento.idEvento).set(data, SetOptions(merge: true));
+    return escritaLocalPrimeiro(
+      _eventos.doc(evento.idEvento).set(data, SetOptions(merge: true)),
+      descricao: 'dados do evento "${evento.nomeEvento}"',
+      chave: evento.idEvento,
+    );
   }
 
   Future<String> enviarCapa({
@@ -139,12 +146,13 @@ class EventoRemoteDatasource {
     String? imagemCapaUrl,
   }) {
     final url = (imagemCapaUrl ?? '').trim();
-    if (url.isEmpty) {
-      return _eventos.doc(idEvento).update({
-        'imagem_capa_url': FieldValue.delete(),
-      });
-    }
-    return _eventos.doc(idEvento).update({'imagem_capa_url': url});
+    return escritaLocalPrimeiro(
+      _eventos.doc(idEvento).update({
+        'imagem_capa_url': url.isEmpty ? FieldValue.delete() : url,
+      }),
+      descricao: 'capa do evento',
+      chave: idEvento,
+    );
   }
 
   Future<void> atualizarRotuloBanner({
@@ -152,16 +160,21 @@ class EventoRemoteDatasource {
     String? rotuloBanner,
   }) {
     final texto = (rotuloBanner ?? '').trim();
-    if (texto.isEmpty) {
-      return _eventos.doc(idEvento).update({
-        'rotulo_banner': FieldValue.delete(),
-      });
-    }
-    return _eventos.doc(idEvento).update({'rotulo_banner': texto});
+    return escritaLocalPrimeiro(
+      _eventos.doc(idEvento).update({
+        'rotulo_banner': texto.isEmpty ? FieldValue.delete() : texto,
+      }),
+      descricao: 'rótulo do banner',
+      chave: idEvento,
+    );
   }
 
   Future<void> excluir(String idEvento) {
-    return _eventos.doc(idEvento).delete();
+    return escritaLocalPrimeiro(
+      _eventos.doc(idEvento).delete(),
+      descricao: 'exclusão do evento',
+      chave: idEvento,
+    );
   }
 
   Stream<List<EventoModel>> listarPorUsuario(String idUsuario) {
@@ -192,10 +205,7 @@ class EventoRemoteDatasource {
     }
 
     final subProprios = EventoLeituraConfirmada.listasConfirmadas(
-      _eventos
-          .where('id_usuario', isEqualTo: uid)
-          .snapshots()
-          .map(_consultaDeEventos),
+      _consultas(_eventos.where('id_usuario', isEqualTo: uid)),
     ).listen(
       (lista) {
         proprios = lista;
@@ -212,10 +222,7 @@ class EventoRemoteDatasource {
     );
 
     final subCo = EventoLeituraConfirmada.listasConfirmadas(
-      _eventos
-          .where('co_organizadores', arrayContains: uid)
-          .snapshots()
-          .map(_consultaDeEventos),
+      _consultas(_eventos.where('co_organizadores', arrayContains: uid)),
     ).listen(
       (lista) {
         comoCo = lista;
@@ -237,10 +244,45 @@ class EventoRemoteDatasource {
     return controller.stream;
   }
 
+  /// Snapshots da consulta, reavaliados quando a conexão cai: o snapshot com
+  /// escrita pendente omitido antes do corte passa a ser publicado.
+  Stream<ConsultaEventos<EventoModel>> _consultas(
+    Query<Map<String, dynamic>> query,
+  ) {
+    StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? snapshots;
+    StreamSubscription<bool>? transicoes;
+    QuerySnapshot<Map<String, dynamic>>? ultimo;
+    late final StreamController<ConsultaEventos<EventoModel>> controller;
+    controller = StreamController(
+      onListen: () {
+        snapshots = query.snapshots().listen(
+          (snapshot) {
+            ultimo = snapshot;
+            controller.add(_consultaDeEventos(snapshot));
+          },
+          onError: controller.addError,
+        );
+        transicoes =
+            ConectividadeService.instancia?.transicoes.listen((online) {
+          final snapshot = ultimo;
+          if (!online && snapshot != null && !controller.isClosed) {
+            controller.add(_consultaDeEventos(snapshot));
+          }
+        });
+      },
+      onCancel: () async {
+        await transicoes?.cancel();
+        await snapshots?.cancel();
+      },
+    );
+    return controller.stream;
+  }
+
   ConsultaEventos<EventoModel> _consultaDeEventos(
     QuerySnapshot<Map<String, dynamic>> snapshot,
   ) {
     return ConsultaEventos(
+      semServidor: ConectividadeService.offlineAgora,
       escritaPendente: snapshot.metadata.hasPendingWrites,
       documentos: [
         for (final document in snapshot.docs)
