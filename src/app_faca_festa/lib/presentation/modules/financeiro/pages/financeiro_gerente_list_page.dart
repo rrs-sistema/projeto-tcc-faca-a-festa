@@ -63,6 +63,7 @@ class _FinanceiroGerenteListPageState extends State<FinanceiroGerenteListPage> {
     var estado = c.filtroEstadoComercial.value;
     DateTime? ini = c.periodoInicio.value;
     DateTime? fim = c.periodoFim.value;
+    final tema = widget.themeController.materialTheme;
     final aplicado = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
@@ -71,7 +72,9 @@ class _FinanceiroGerenteListPageState extends State<FinanceiroGerenteListPage> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) {
-        return StatefulBuilder(
+        return Theme(
+          data: tema,
+          child: StatefulBuilder(
           builder: (ctx, setLocal) {
             return Padding(
               padding: EdgeInsets.fromLTRB(
@@ -218,6 +221,7 @@ class _FinanceiroGerenteListPageState extends State<FinanceiroGerenteListPage> {
               ),
             );
           },
+        ),
         );
       },
     );
@@ -258,9 +262,12 @@ class _FinanceiroGerenteListPageState extends State<FinanceiroGerenteListPage> {
       final lista = c.previsoesFiltradas;
       final loading = busy && c.previsoes.isEmpty;
 
-      return Scaffold(
-        backgroundColor: surface.withValues(alpha: 0.35),
-        appBar: FestaAppBar(
+      final tema = widget.themeController.materialTheme;
+      return Theme(
+        data: tema,
+        child: Scaffold(
+          backgroundColor: surface,
+          appBar: FestaAppBar(
           titulo: 'Financeiro',
           themeController: widget.themeController,
           acoes: [
@@ -332,6 +339,7 @@ class _FinanceiroGerenteListPageState extends State<FinanceiroGerenteListPage> {
                   );
                 },
               ),
+        ),
       );
     });
   }
@@ -424,10 +432,23 @@ class _FinanceiroGerenteListPageState extends State<FinanceiroGerenteListPage> {
               c.eixoTemporal.value = s.first;
             },
             style: ButtonStyle(
+              backgroundColor: WidgetStateProperty.resolveWith((states) {
+                if (states.contains(WidgetState.selected)) {
+                  return primary.withValues(alpha: 0.16);
+                }
+                return Colors.white;
+              }),
               foregroundColor: WidgetStateProperty.resolveWith((states) {
+                if (states.contains(WidgetState.selected)) return primary;
+                return const Color(0xFF475569);
+              }),
+              iconColor: WidgetStateProperty.resolveWith((states) {
                 if (states.contains(WidgetState.selected)) return primary;
                 return const Color(0xFF64748B);
               }),
+              side: WidgetStatePropertyAll(
+                BorderSide(color: primary.withValues(alpha: 0.28)),
+              ),
             ),
           ),
           const SizedBox(height: 8),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:app_faca_festa/presentation/widgets/festa_imagem_rede.dart';
 import 'package:app_faca_festa/presentation/widgets/festa_leitura.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -98,8 +99,7 @@ class InspiracaoDetalheScreen extends StatelessWidget {
                       icon: atual.favorito
                           ? Icons.star_rounded
                           : Icons.star_border_rounded,
-                      iconColor:
-                          atual.favorito ? Colors.amber : Colors.white,
+                      iconColor: atual.favorito ? Colors.amber : Colors.white,
                       onPressed: () =>
                           inspiracaoController.alternarFavorito(atual.id),
                     );
@@ -209,8 +209,7 @@ class InspiracaoDetalheScreen extends StatelessWidget {
                         : Icons.bookmark_add_rounded,
                     size: 18,
                     color: salva ? Colors.grey.shade600 : Colors.white),
-                label: Text(
-                    salva ? 'Guardada no evento' : 'Guardar no evento',
+                label: Text(salva ? 'Guardada no evento' : 'Guardar no evento',
                     style: GoogleFonts.poppins(
                         color: salva ? Colors.grey.shade600 : Colors.white,
                         fontSize: 13,
@@ -277,7 +276,6 @@ class InspiracaoDetalheScreen extends StatelessWidget {
                 ),
               ],
             ),
-
             const Divider(height: 24),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -368,10 +366,9 @@ class InspiracaoDetalheScreen extends StatelessWidget {
                                   child: Icon(Icons.storefront_rounded,
                                       color: primary, size: 26),
                                 )
-                              : Image.network(
+                              : FestaImagemRede(
                                   url,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => Container(
+                                  erro: Container(
                                     color: Colors.grey.shade200,
                                     child: const Icon(Icons.storefront_rounded,
                                         color: Colors.grey),
@@ -469,11 +466,10 @@ class InspiracaoDetalheScreen extends StatelessWidget {
           child: const Icon(Icons.image_not_supported_rounded,
               color: Colors.white, size: 40));
     }
-    return Image.network(url,
+    return FestaImagemRede(url,
         width: double.infinity,
         height: 400,
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => Container(
+        erro: Container(
             width: double.infinity,
             height: 400,
             color: Colors.grey.shade200,
@@ -488,11 +484,10 @@ class InspiracaoDetalheScreen extends StatelessWidget {
           color: Colors.grey.shade200,
           child: const Icon(Icons.image_not_supported_rounded));
     }
-    return Image.network(url,
+    return FestaImagemRede(url,
         width: 120,
         height: 100,
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => Container(
+        erro: Container(
             width: 120,
             color: Colors.grey.shade200,
             child: const Icon(Icons.broken_image_rounded)));
@@ -532,7 +527,8 @@ class _FolhaDetalheInspiracao extends StatefulWidget {
   final void Function(List<String> urls, int indice) onAbrirFotos;
 
   @override
-  State<_FolhaDetalheInspiracao> createState() => _FolhaDetalheInspiracaoState();
+  State<_FolhaDetalheInspiracao> createState() =>
+      _FolhaDetalheInspiracaoState();
 }
 
 class _FolhaDetalheInspiracaoState extends State<_FolhaDetalheInspiracao> {
@@ -642,8 +638,8 @@ class _FolhaDetalheInspiracaoState extends State<_FolhaDetalheInspiracao> {
                       ],
                     ),
                     TextButton.icon(
-                      onPressed: () => host.inspiracaoController
-                          .alternarFavorito(atual.id),
+                      onPressed: () =>
+                          host.inspiracaoController.alternarFavorito(atual.id),
                       style: TextButton.styleFrom(
                         foregroundColor: atual.favorito
                             ? Colors.amber.shade800
@@ -759,8 +755,7 @@ class _FolhaDetalheInspiracaoState extends State<_FolhaDetalheInspiracao> {
                                     margin: const EdgeInsets.only(right: 6),
                                     decoration: BoxDecoration(
                                         color: host._parseColor(cor),
-                                        borderRadius:
-                                            BorderRadius.circular(8),
+                                        borderRadius: BorderRadius.circular(8),
                                         border: Border.all(
                                             color: Colors.black
                                                 .withValues(alpha: 0.05))))))
@@ -843,10 +838,10 @@ class _GaleriaInspiracaoPageState extends State<_GaleriaInspiracaoPage> {
           return FestaGestosProprios(
               child: InteractiveViewer(
             child: Center(
-              child: Image.network(
+              child: FestaImagemRede(
                 widget.urls[index],
                 fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) => const Icon(
+                erro: const Icon(
                   Icons.broken_image_rounded,
                   color: Colors.white54,
                   size: 48,

@@ -13,6 +13,10 @@ class GrupoConvidado {
   final DateTime dataCadastro;
   final DateTime dataAtualizacao;
 
+  /// Exclusão lógica: usada nos grupos iniciais (Geral, Família, Amigos) para
+  /// que não sejam recriados automaticamente depois de removidos.
+  final bool excluido;
+
   const GrupoConvidado({
     required this.idGrupo,
     required this.idEvento,
@@ -27,6 +31,7 @@ class GrupoConvidado {
     this.totalConfirmados = 0,
     required this.dataCadastro,
     required this.dataAtualizacao,
+    this.excluido = false,
   });
 
   GrupoConvidado copyWith({
@@ -43,6 +48,7 @@ class GrupoConvidado {
     int? totalConfirmados,
     DateTime? dataCadastro,
     DateTime? dataAtualizacao,
+    bool? excluido,
   }) {
     return GrupoConvidado(
       idGrupo: idGrupo ?? this.idGrupo,
@@ -58,6 +64,7 @@ class GrupoConvidado {
       totalConfirmados: totalConfirmados ?? this.totalConfirmados,
       dataCadastro: dataCadastro ?? this.dataCadastro,
       dataAtualizacao: dataAtualizacao ?? this.dataAtualizacao,
+      excluido: excluido ?? this.excluido,
     );
   }
 }

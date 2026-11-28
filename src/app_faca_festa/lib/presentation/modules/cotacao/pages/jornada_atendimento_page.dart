@@ -10,11 +10,15 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:app_faca_festa/core/utils/numeric_input.dart';
 import 'package:app_faca_festa/data/datasources/remote/jornada_atendimento_remote.dart';
+import 'package:app_faca_festa/data/datasources/remote/jornada_mudancas_remote.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_cotacoes.dart';
 import 'package:app_faca_festa/domain/entities/financeiro/mediacao_operacional.dart';
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import 'package:app_faca_festa/presentation/modules/fornecedor/pages/chat/chat_mensagens_page.dart';
+import 'package:app_faca_festa/presentation/modules/financeiro/controllers/acompanhamento_partes_controller.dart';
+import 'package:app_faca_festa/presentation/modules/financeiro/controllers/acompanhamento_partes_registro.dart';
+import 'package:app_faca_festa/presentation/modules/financeiro/widgets/pix_pagamento_sheet.dart';
 import '../controllers/jornada_atendimento_controller.dart';
 
 const motivosJornada = {
@@ -60,7 +64,8 @@ class _JornadaAtendimentoPageState extends State<JornadaAtendimentoPage> {
         JornadaAtendimentoController(
             idCotacao: widget.idCotacao,
             idFornecedor: widget.idFornecedor,
-            gateway: FirebaseJornadaGateway());
+            gateway: FirebaseJornadaGateway(),
+            observarMudancas: mudancasJornadaPadrao());
     unawaited(c.iniciar());
   }
 
@@ -110,18 +115,6 @@ class _JornadaAtendimentoPageState extends State<JornadaAtendimentoPage> {
                                         subtitle:
                                             'Proposta, contratação e entrega no mesmo lugar.',
                                         icon: Icons.route_outlined),
-                                    const SizedBox(height: 16),
-                                    Align(
-                                        alignment: Alignment.centerLeft,
-                                        child: OutlinedButton.icon(
-                                            onPressed:
-                                                carregando || c.enviando.value
-                                                ? null
-                                                : () => c.carregar(),
-                                            icon: const Icon(
-                                                Icons.refresh_rounded),
-                                            label: const Text(
-                                                'Atualizar jornada'))),
                                   ])),
                               const SizedBox(height: 16),
                               if (carregando) ...[
@@ -204,7 +197,7 @@ class _JornadaAtendimentoPageState extends State<JornadaAtendimentoPage> {
                                           : 'Proposta sem versão para aceite',
                                       texto: c.fornecedor
                                           ? 'Revise as condições e envie uma nova proposta com validade futura.'
-                                          : 'Combine a atualização pelo chat com o fornecedor. Quando ele enviar a nova versão, toque em Atualizar jornada.',
+                                          : 'Combine a atualização pelo chat com o fornecedor. A jornada atualiza sozinha quando ele enviar a nova versão.',
                                     ),
                                   )
                                 else
@@ -218,6 +211,11 @@ class _JornadaAtendimentoPageState extends State<JornadaAtendimentoPage> {
                                   if (d['idOrcamento'] != null)
                                     _botao('Financeiro deste contrato',
                                         () => _financeiro(d)),
+                                  if (c.contratada &&
+                                      !c.fornecedor &&
+                                      d['idOrcamento'] != null)
+                                    _botao('Pagar com Pix',
+                                        () => _pagarPrimeiraParcela(d)),
                                   if (!fechado && c.fornecedor)
                                     _botao(
                                         p == null
@@ -833,10 +831,60 @@ class _JornadaAtendimentoPageState extends State<JornadaAtendimentoPage> {
                       child: const Text('Confirmar contratação desta versão'))
                 ])));
     if (ok == true && c.ativa(g)) {
-      await c.comandar('fecharCotacao',
+      final contratou = await c.comandar(
+          'fecharCotacao',
           {..._ids, 'versaoProposta': versao, 'assinaturaProposta': assinatura},
           sessao: g);
+      final dadosAtuais = c.dados.value;
+      if (contratou && dadosAtuais != null && c.ativa(g) && mounted) {
+        // Mesmo fluxo: depois de contratar, o organizador já paga a 1ª parcela.
+        await _pagarPrimeiraParcela(dadosAtuais);
+      }
     }
+  }
+
+  /// Abre o Pix da 1ª parcela do contrato recém-criado. Se não der, o contrato
+  /// continua criado e o botão "Pagar com Pix" da jornada leva ao mesmo fluxo.
+  Future<void> _pagarPrimeiraParcela(Map<String, dynamic> d) async {
+    final idOrcamento = d['idOrcamento']?.toString() ?? '';
+    final idEvento = d['idEvento']?.toString() ?? '';
+    if (idOrcamento.isEmpty || idEvento.isEmpty) return;
+
+    final AcompanhamentoPartesController pix;
+    try {
+      pix = garantirAcompanhamentoOrganizador();
+    } catch (_) {
+      _avisar(
+          'Não foi possível abrir o Pix agora. Use Financeiro deste contrato.');
+      return;
+    }
+    await pix.carregarOrganizador(idEvento);
+    if (!mounted) return;
+
+    final linhas =
+        pix.linhasOrg.where((l) => l.idOrcamento == idOrcamento).toList();
+    if (linhas.isEmpty) {
+      _avisar(
+          'O Pix deste contrato ainda não está disponível. Tente o botão Pagar com Pix em instantes.');
+      return;
+    }
+
+    final pago = await mostrarPixPagamento(
+      context: context,
+      primary: Theme.of(context).colorScheme.primary,
+      contrato: linhas.first,
+      controller: pix,
+      cpfPerfil: cpfDoPerfilLogado(),
+    );
+    if (!mounted || !pago) return;
+    _avisar('Pagamento confirmado. O Asaas confirmou o Pix deste serviço.');
+    await c.carregar();
+  }
+
+  void _avisar(String texto) {
+    if (!mounted) return;
+    ScaffoldMessenger.maybeOf(context)
+        ?.showSnackBar(SnackBar(content: Text(texto)));
   }
 
   Future<void> _negociar() async {
@@ -996,6 +1044,14 @@ class _JornadaFormState extends State<_JornadaForm> {
     fuso =
         widget.proposta?['agenda']?['fuso']?.toString() ?? 'America/Sao_Paulo';
     campo('agendaFuso', fuso);
+    // Horários e prazo ficam recolhidos; os controllers existem desde o início
+    // para o envio ler sempre as mesmas chaves, aberto ou fechado.
+    final execucao = ((widget.proposta?['agenda']?['janelas'] as List?) ?? [])
+        .where((j) => j['tipo'] == 'execucao')
+        .firstOrNull;
+    campo('agendaInicio', execucao?['inicio']?.toString() ?? '');
+    campo('agendaFim', execucao?['fim']?.toString() ?? '');
+    campo('prazo', widget.proposta?['prazoEntrega']?.toString() ?? '');
   }
 
   TextEditingController campo(String k, String inicial) =>
@@ -1224,9 +1280,9 @@ class _JornadaFormState extends State<_JornadaForm> {
                                 minimo: 1),
                             ExpansionTile(
                                 title: const Text(
-                                    'Combinar horários do serviço (opcional)'),
+                                    'Horários e prazo de entrega (opcional)'),
                                 subtitle: const Text(
-                                    'Você também pode definir a agenda depois da contratação.'),
+                                    'Não é obrigatório. Dá para combinar depois da contratação.'),
                                 children: [
                                   const Padding(
                                       padding: EdgeInsets.only(bottom: 16),
@@ -1279,10 +1335,11 @@ class _JornadaFormState extends State<_JornadaForm> {
                                       inicial:
                                           execucaoAgenda?['fim']?.toString() ??
                                               ''),
+                                  texto('prazo', 'Prazo de entrega (opcional)',
+                                      data: true,
+                                      inicial:
+                                          p?['prazoEntrega']?.toString() ?? ''),
                                 ]),
-                            texto('prazo', 'Prazo de entrega (opcional)',
-                                data: true,
-                                inicial: p?['prazoEntrega']?.toString() ?? ''),
                           ] else ...[
                             if (tipo == 'negociar' || tipo == 'agendar')
                               texto(

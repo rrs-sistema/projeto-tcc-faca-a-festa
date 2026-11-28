@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:app_faca_festa/core/utils/no_sqflite_cache_manager.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/services.dart';
@@ -184,6 +185,7 @@ class _ServicoDetalheScreenState extends State<ServicoDetalheScreen> {
                       260, // 🔹 Altura reduzida para melhor visualização inicial
                   width: double.infinity,
                   child: CachedNetworkImage(
+                    cacheManager: AdaptiveCacheManager.instance,
                     imageUrl: servico.imagemUrl?.isNotEmpty == true
                         ? servico.imagemUrl!
                         : 'https://firebasestorage.googleapis.com/v0/b/faca-a-festa.firebasestorage.app/o/static%2Fsem-foto.jpg?alt=media',

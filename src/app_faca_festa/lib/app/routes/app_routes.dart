@@ -80,6 +80,7 @@ import 'package:app_faca_festa/presentation/modules/financeiro/controllers/finan
 import 'package:app_faca_festa/presentation/modules/financeiro/controllers/intermediacao_financeira_controller.dart';
 import 'package:app_faca_festa/presentation/modules/financeiro/controllers/central_mediacao_controller.dart';
 import 'package:app_faca_festa/presentation/modules/financeiro/controllers/acompanhamento_partes_controller.dart';
+import 'package:app_faca_festa/presentation/modules/financeiro/controllers/acompanhamento_partes_registro.dart';
 import 'package:app_faca_festa/presentation/modules/financeiro/pages/comissao_plataforma_page.dart';
 import 'package:app_faca_festa/presentation/modules/financeiro/pages/dashboard_financeiro_admin_page.dart';
 import 'package:app_faca_festa/presentation/modules/financeiro/pages/estoque_fornecedor_page.dart';
@@ -568,18 +569,8 @@ GetPage(name:'/fornecedor/planejamento',page:()=>PlanejamentoFinanceiroPage(idOb
         GetPage(
           name: '/acompanhamento-organizador',
           page: () {
-            const tag = 'acompanhamento-org';
-            if (!Get.isRegistered<AcompanhamentoPartesController>(tag: tag)) {
-              Get.put(
-                AcompanhamentoPartesController(
-                  remote: AcompanhamentoPartesRemote(
-                    functions: Get.find<FirebaseFunctions>(),
-                    httpsClient: Get.find<CallableHttpsClient>(),
-                  ),
-                ),
-                tag: tag,
-              );
-            }
+            garantirAcompanhamentoOrganizador();
+            const tag = tagAcompanhamentoOrganizador;
             final args = Get.arguments;
             String idEvento = '';
             String? nome;

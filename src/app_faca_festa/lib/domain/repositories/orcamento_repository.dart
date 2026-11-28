@@ -26,5 +26,11 @@ abstract class OrcamentoRepository {
     required bool fechar,
   });
 
+  Future<void> atualizarOrcamento({
+    required String idOrcamento,
+    required String anotacoes,
+    required double custoEstimado,
+  });
+
   Future<void> excluirOrcamento(String idOrcamento);
 }

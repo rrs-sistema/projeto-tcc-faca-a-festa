@@ -49,68 +49,76 @@ class PainelCotacaoPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final primary = theme.primaryColor.value;
-    final gradient = theme.gradient.value;
-
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.dark,
       statusBarBrightness: Brightness.light,
     ));
 
-    return Scaffold(
-      backgroundColor: Colors.grey.shade100,
-      appBar: _buildElegantAppBar(gradient),
-      body: FestaContent(child: Obx(() {
-        final cotacoes = cotacaoCtrl.cotacoesDoEvento(
-          eventoCtrl.eventoAtualEntidade?.idEvento,
-        );
-        final contratados = cotacoes
-            .where((cotacao) => cotacao.status == StatusCotacao.concluida)
-            .length;
-        final total = cotacoes.length;
-        final progresso = total == 0 ? 0.0 : contratados / total;
+    return Obx(() {
+      final primary = theme.primaryColor.value;
+      final gradient = theme.gradient.value;
+      final surface = theme.surfaceColor.value;
+      final tema = theme.materialTheme;
 
-        return FestaScrollArea(
-            color: primary,
-            maxWidth: double.infinity,
-            child: ListView(
-              primary: true,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-              physics: const AlwaysScrollableScrollPhysics(),
-              children: [
-                _buildHeader(primary, gradient),
-                const SizedBox(height: 14),
-                _buildResumoCard(progresso, contratados, total, gradient),
-                const SizedBox(height: 16),
-                _buildRecomendacoesIAFornecedores(context),
-                if (cotacaoCtrl.carregando.value)
-                  const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(20.0),
-                      child: CircularProgressIndicator(),
-                    ),
-                  )
-                else if (cotacaoCtrl.erroEscuta.value.isNotEmpty)
-                  _buildMensagemVazia(
-                    primary,
-                    cotacaoCtrl.erroEscuta.value,
-                    icone: Icons.cloud_off_rounded,
-                  )
-                else if (cotacoes.isNotEmpty)
-                  _buildMinhasCotacoes(cotacoes, primary)
-                else
-                  _buildMensagemVazia(
-                    primary,
-                    cotacaoCtrl.cotacoes.isEmpty
-                        ? 'Você ainda não pediu preço a nenhum fornecedor neste evento. Use Orçamento ou as recomendações acima para solicitar.'
-                        : 'Há pedidos em outras festas da sua conta, mas nenhum neste evento ainda.',
-                  ),
-                const SizedBox(height: 20),
-              ],
-            ));
-      })),
-    );
+      final cotacoes = cotacaoCtrl.cotacoesDoEvento(
+        eventoCtrl.eventoAtualEntidade?.idEvento,
+      );
+      final contratados = cotacoes
+          .where((cotacao) => cotacao.status == StatusCotacao.concluida)
+          .length;
+      final total = cotacoes.length;
+      final progresso = total == 0 ? 0.0 : contratados / total;
+
+      return Theme(
+        data: tema,
+        child: Scaffold(
+          backgroundColor: surface,
+          appBar: _buildElegantAppBar(gradient),
+          body: FestaContent(
+            child: FestaScrollArea(
+                color: primary,
+                maxWidth: double.infinity,
+                child: ListView(
+                  primary: true,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  children: [
+                    _buildHeader(primary, gradient),
+                    const SizedBox(height: 14),
+                    _buildResumoCard(progresso, contratados, total, gradient),
+                    const SizedBox(height: 16),
+                    _buildRecomendacoesIAFornecedores(context),
+                    if (cotacaoCtrl.carregando.value)
+                      const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(20.0),
+                          child: CircularProgressIndicator(),
+                        ),
+                      )
+                    else if (cotacaoCtrl.erroEscuta.value.isNotEmpty)
+                      _buildMensagemVazia(
+                        primary,
+                        cotacaoCtrl.erroEscuta.value,
+                        icone: Icons.cloud_off_rounded,
+                      )
+                    else if (cotacoes.isNotEmpty)
+                      _buildMinhasCotacoes(cotacoes, primary)
+                    else
+                      _buildMensagemVazia(
+                        primary,
+                        cotacaoCtrl.cotacoes.isEmpty
+                            ? 'Você ainda não pediu preço a nenhum fornecedor neste evento. Use Orçamento ou as recomendações acima para solicitar.'
+                            : 'Há pedidos em outras festas da sua conta, mas nenhum neste evento ainda.',
+                      ),
+                    const SizedBox(height: 20),
+                  ],
+                )),
+          ),
+        ),
+      );
+    });
   }
 
   Widget _buildRecomendacoesIAFornecedores(BuildContext context) {
@@ -132,6 +140,7 @@ class PainelCotacaoPage extends StatelessWidget {
         idEvento: idEvento,
         idUsuario: idUsuario,
         controller: recomendacaoController,
+        themeController: theme,
         tipoEventoId: tipoEventoId,
         tipoEventoNome: tipoEventoNome,
         cidade: cidade,
@@ -412,7 +421,7 @@ class PainelCotacaoPage extends StatelessWidget {
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
             child: Theme(
-              data: Theme.of(Get.context!)
+              data: theme.materialTheme
                   .copyWith(dividerColor: Colors.transparent),
               child: ExpansionTile(
                 initiallyExpanded: cotacao.status.prontoParaContratar ||
@@ -495,8 +504,8 @@ class PainelCotacaoPage extends StatelessWidget {
                         border: Border.all(color: Colors.green.shade200),
                       ),
                       child: Text(
-                        'Quem fecha o negócio: você (organizador). '
-                        'Abra os detalhes e toque em Revisar proposta.',
+                        'Preço recebido. Quem fecha o negócio é você (organizador): '
+                        'toque em Revisar e contratar.',
                         style: GoogleFonts.poppins(
                           fontSize: 11.5,
                           height: 1.35,
@@ -507,7 +516,7 @@ class PainelCotacaoPage extends StatelessWidget {
                     ),
                     _buildAcaoCotacao(
                       Colors.green.shade700,
-                      'Ver preço e contratar',
+                      'Revisar e contratar',
                       Icons.check_circle_outline_rounded,
                       () {
                         mostrarDetalhesCotacao(

@@ -363,7 +363,11 @@ class _Eventos extends Fake implements EventoController {
   Evento? get eventoAtualEntidade => null;
 
   @override
-  Future<void> carregarEventosDoUsuario(String idUsuario) async {}
+  bool get temEventoGerido => false;
+
+  @override
+  Future<void> carregarEventosDoUsuario(String idUsuario,
+      {bool forcar = false}) async {}
 }
 
 class _Push extends Fake implements PushTokenRepository {}

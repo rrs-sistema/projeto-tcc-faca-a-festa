@@ -7,6 +7,7 @@ import 'app/faca_festa_app.dart';
 import 'app/bootstrap/desktop_update_bootstrap.dart';
 import 'app/bootstrap/app_bootstrap.dart';
 import 'app/bootstrap/app_check_bootstrap.dart';
+import 'app/bootstrap/conectividade_bootstrap.dart';
 import 'app/bootstrap/firebase_services_bootstrap.dart';
 import 'app/bootstrap/gift_bootstrap.dart';
 import 'app/bootstrap/gift_offline_bootstrap.dart';
@@ -16,6 +17,12 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await FirebaseServicesBootstrap.initialize();
+  try {
+    await ConectividadeBootstrap.initialize()
+        .timeout(const Duration(milliseconds: 1500));
+  } catch (e) {
+    debugPrint('⚠️ Conectividade: $e');
+  }
   ErrorWidget.builder = (details) {
     debugPrint('ErrorWidget: ${details.exceptionAsString()}');
     return const Material(
@@ -24,7 +31,7 @@ Future<void> main() async {
         child: Padding(
           padding: EdgeInsets.all(24),
           child: Text(
-            'Não foi possível abrir esta tela.\nAtualize a página ou use o link do convite novamente.',
+            'Algo deu errado nesta tela.\nVolte e tente abrir de novo.',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: Color(0xFF880E4F),

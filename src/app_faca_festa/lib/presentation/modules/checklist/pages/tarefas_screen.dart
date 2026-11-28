@@ -15,6 +15,7 @@ import 'package:app_faca_festa/presentation/modules/eventos/home_organizador_cop
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import 'package:app_faca_festa/presentation/widgets/festa_app_bar.dart';
 import 'package:app_faca_festa/presentation/widgets/festa_empty_state.dart';
+import 'package:app_faca_festa/presentation/widgets/selo_sincronizacao.dart';
 
 import 'tarefa_dialog.dart';
 
@@ -516,6 +517,7 @@ class _LinhaTarefa extends StatelessWidget {
                         decorationColor: const Color(0xFF9CA3AF),
                       ),
                     ),
+                    SeloSincronizacao(chave: tarefa.idTarefa),
                     if (!concluida && descricao.isNotEmpty) ...[
                       const SizedBox(height: 2),
                       Text(

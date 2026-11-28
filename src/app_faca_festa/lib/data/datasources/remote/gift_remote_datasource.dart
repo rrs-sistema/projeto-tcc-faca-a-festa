@@ -26,6 +26,18 @@ class GiftRemoteDatasource {
         );
   }
 
+  /// Lista do servidor com a origem: só um snapshot confirmado pelo servidor
+  /// prova que um presente ausente foi excluído.
+  Stream<({List<GiftModel> presentes, bool doServidor})> observarServidor(
+    String eventoId,
+  ) {
+    return _ref(eventoId).snapshots().map((snapshot) => (
+          presentes:
+              snapshot.docs.map((doc) => GiftModel.fromFirestore(doc)).toList(),
+          doServidor: !snapshot.metadata.isFromCache,
+        ));
+  }
+
   // ======================================================
   // CRIAR
   // ======================================================
@@ -36,18 +48,33 @@ class GiftRemoteDatasource {
     await _ref(eventoId).doc(model.id).set(model.toMap());
   }
 
+  /// Envia a versão do aparelho sem sobrescrever o que é do servidor:
+  /// `valor_arrecadado` muda só por contribuição, e uma reserva vazia no
+  /// aparelho não apaga a reserva feita por um convidado.
+  Future<void> enviarDoAparelho(String eventoId, GiftModel model) {
+    final dados = model.toMap()
+      ..remove('valor_arrecadado')
+      ..removeWhere((chave, valor) =>
+          valor == null &&
+          const {'reservado_por', 'reservado_uid', 'data_reserva'}
+              .contains(chave));
+    return _ref(eventoId).doc(model.id).set(dados, SetOptions(merge: true));
+  }
+
 // ======================================================
   // SAVE CONTRIBUTION (REMOTO)
   // ======================================================
+  /// Idempotente: o documento usa o id da contribuição; reenviar a mesma
+  /// contribuição não soma o valor de novo.
   Future<void> saveContribution(
     String eventoId,
     String giftId,
     GiftContribution contribution,
   ) async {
     final presenteRef = _ref(eventoId).doc(giftId);
-
-    // Cria uma referência para um novo documento com ID automático na sub-coleção
-    final contribRef = presenteRef.collection('contributions').doc();
+    final id = contribution.id.trim();
+    final contribRef =
+        presenteRef.collection('contributions').doc(id.isEmpty ? null : id);
 
     // Usamos transaction para garantir que o valor_arrecadado seja atualizado com precisão
     return firestore.runTransaction((transaction) async {
@@ -56,6 +83,7 @@ class GiftRemoteDatasource {
       if (!snap.exists) {
         throw Exception("Presente não encontrado no servidor.");
       }
+      if ((await transaction.get(contribRef)).exists) return;
 
       final atualArrecadado =
           (snap.data()?["valor_arrecadado"] ?? 0).toDouble();

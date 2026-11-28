@@ -45,8 +45,8 @@ class AdaptiveCacheManager {
     return CacheManager(
       Config(
         mobileKey,
-        stalePeriod: const Duration(days: 7),
-        maxNrOfCacheObjects: 100,
+        stalePeriod: const Duration(days: 30),
+        maxNrOfCacheObjects: 400,
       ),
     );
   }

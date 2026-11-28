@@ -2,6 +2,7 @@ import 'package:app_faca_festa/core/utils/numeric_input.dart';
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:flutter/material.dart';
+import 'package:app_faca_festa/presentation/widgets/festa_imagem_rede.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:uuid/uuid.dart';
@@ -17,43 +18,92 @@ void abrirDialogCadastrarPresente(
   required GiftController controller,
   required EventThemeController themeController,
 }) {
-  final uuid = const Uuid();
-  final bool editando = presente != null;
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    isDismissible: false,
+    enableDrag: false,
+    useSafeArea: true,
+    backgroundColor: Colors.transparent,
+    builder: (_) => _CadastrarPresenteSheet(
+      presente: presente,
+      controller: controller,
+      themeController: themeController,
+    ),
+  );
+}
 
-  final formKey = GlobalKey<FormState>();
-  final nomeCtrl = TextEditingController(text: presente?.nome ?? '');
-  final descricaoCtrl = TextEditingController(text: presente?.descricao ?? '');
-  final valorCtrl = TextEditingController(text: _valueToField(presente?.valor));
-  final lojaCtrl = TextEditingController(text: presente?.loja ?? '');
-  final linkCtrl = TextEditingController(text: presente?.link ?? '');
-  final pixCtrl = TextEditingController(text: presente?.pix ?? '');
-  final metaCtrl =
-      TextEditingController(text: _valueToField(presente?.metaValor));
-  final imagemCtrl = TextEditingController(text: presente?.imagem ?? '');
+class _CadastrarPresenteSheet extends StatefulWidget {
+  final Gift? presente;
+  final GiftController controller;
+  final EventThemeController themeController;
 
-  final Rx<GiftType> tipoSelecionado = (presente?.tipo ?? GiftType.fisico).obs;
-  final RxBool salvando = false.obs;
-  final RxString urlPreview = (presente?.imagem ?? '').obs;
+  const _CadastrarPresenteSheet({
+    required this.presente,
+    required this.controller,
+    required this.themeController,
+  });
 
-  final primary = themeController.primaryColor.value;
-  final gradient = themeController.gradient.value;
+  @override
+  State<_CadastrarPresenteSheet> createState() =>
+      _CadastrarPresenteSheetState();
+}
 
-  void syncPreview() => urlPreview.value = imagemCtrl.text.trim();
-  imagemCtrl.addListener(syncPreview);
+class _CadastrarPresenteSheetState extends State<_CadastrarPresenteSheet> {
+  final _uuid = const Uuid();
+  final _formKey = GlobalKey<FormState>();
 
-  void disposeControllers() {
-    imagemCtrl.removeListener(syncPreview);
-    nomeCtrl.dispose();
-    descricaoCtrl.dispose();
-    valorCtrl.dispose();
-    lojaCtrl.dispose();
-    linkCtrl.dispose();
-    pixCtrl.dispose();
-    metaCtrl.dispose();
-    imagemCtrl.dispose();
+  late final TextEditingController _nomeCtrl;
+  late final TextEditingController _descricaoCtrl;
+  late final TextEditingController _valorCtrl;
+  late final TextEditingController _lojaCtrl;
+  late final TextEditingController _linkCtrl;
+  late final TextEditingController _pixCtrl;
+  late final TextEditingController _metaCtrl;
+  late final TextEditingController _imagemCtrl;
+
+  late final Rx<GiftType> _tipoSelecionado;
+  final RxBool _salvando = false.obs;
+  late final RxString _urlPreview;
+
+  bool get _editando => widget.presente != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final presente = widget.presente;
+    _nomeCtrl = TextEditingController(text: presente?.nome ?? '');
+    _descricaoCtrl = TextEditingController(text: presente?.descricao ?? '');
+    _valorCtrl = TextEditingController(text: _valueToField(presente?.valor));
+    _lojaCtrl = TextEditingController(text: presente?.loja ?? '');
+    _linkCtrl = TextEditingController(text: presente?.link ?? '');
+    _pixCtrl = TextEditingController(text: presente?.pix ?? '');
+    _metaCtrl = TextEditingController(text: _valueToField(presente?.metaValor));
+    _imagemCtrl = TextEditingController(text: presente?.imagem ?? '');
+
+    _tipoSelecionado = (presente?.tipo ?? GiftType.fisico).obs;
+    _urlPreview = (presente?.imagem ?? '').obs;
+
+    _imagemCtrl.addListener(_syncPreview);
   }
 
-  void showSnack({
+  void _syncPreview() => _urlPreview.value = _imagemCtrl.text.trim();
+
+  @override
+  void dispose() {
+    _imagemCtrl.removeListener(_syncPreview);
+    _nomeCtrl.dispose();
+    _descricaoCtrl.dispose();
+    _valorCtrl.dispose();
+    _lojaCtrl.dispose();
+    _linkCtrl.dispose();
+    _pixCtrl.dispose();
+    _metaCtrl.dispose();
+    _imagemCtrl.dispose();
+    super.dispose();
+  }
+
+  void _showSnack({
     required String title,
     required String message,
     required Color color,
@@ -76,13 +126,13 @@ void abrirDialogCadastrarPresente(
     );
   }
 
-  Future<void> salvar(BuildContext modalContext) async {
-    if (salvando.value) return;
+  Future<void> _salvar() async {
+    if (_salvando.value) return;
 
     FocusManager.instance.primaryFocus?.unfocus();
 
-    if (!(formKey.currentState?.validate() ?? false)) {
-      showSnack(
+    if (!(_formKey.currentState?.validate() ?? false)) {
+      _showSnack(
         title: 'Atenção',
         message: 'Revise os campos obrigatórios antes de salvar.',
         color: Colors.redAccent,
@@ -90,39 +140,44 @@ void abrirDialogCadastrarPresente(
       return;
     }
 
-    salvando.value = true;
+    final primary = widget.themeController.primaryColor.value;
+    final presente = widget.presente;
+
+    _salvando.value = true;
     try {
-      final tipo = tipoSelecionado.value;
-      final valor = tipo == GiftType.fisico ? 0.0 : _parseMoney(valorCtrl.text);
-      final meta = tipo == GiftType.coletivo ? _parseMoney(metaCtrl.text) : 0.0;
+      final tipo = _tipoSelecionado.value;
+      final valor =
+          tipo == GiftType.fisico ? 0.0 : _parseMoney(_valorCtrl.text);
+      final meta =
+          tipo == GiftType.coletivo ? _parseMoney(_metaCtrl.text) : 0.0;
 
       final model = Gift(
-        id: editando ? presente.id : uuid.v4(),
-        nome: nomeCtrl.text.trim(),
-        descricao: descricaoCtrl.text.trim(),
+        id: _editando ? presente!.id : _uuid.v4(),
+        nome: _nomeCtrl.text.trim(),
+        descricao: _descricaoCtrl.text.trim(),
         tipo: tipo,
         valor: valor,
-        loja: lojaCtrl.text.trim(),
-        link: linkCtrl.text.trim(),
-        pix: pixCtrl.text.trim(),
+        loja: _lojaCtrl.text.trim(),
+        link: _linkCtrl.text.trim(),
+        pix: _pixCtrl.text.trim(),
         metaValor: meta,
-        imagem: imagemCtrl.text.trim(),
+        imagem: _imagemCtrl.text.trim(),
         categoria: presente?.categoria ?? 'geral',
         status: presente?.status ?? GiftStatus.disponivel,
         createdAt: presente?.createdAt ?? DateTime.now(),
       );
 
-      if (editando) {
-        await controller.atualizarPresente(model);
+      if (_editando) {
+        await widget.controller.atualizarPresente(model);
       } else {
-        await controller.criarPresente(model);
+        await widget.controller.criarPresente(model);
       }
 
-      if (modalContext.mounted) Navigator.of(modalContext).pop();
+      if (mounted) Navigator.of(context).pop();
 
-      showSnack(
+      _showSnack(
         title: 'Tudo certo',
-        message: editando
+        message: _editando
             ? 'Presente atualizado com sucesso.'
             : 'Presente adicionado à lista.',
         color: primary,
@@ -130,162 +185,156 @@ void abrirDialogCadastrarPresente(
     } catch (e, s) {
       debugPrint('❌ Erro ao salvar presente: $e');
       debugPrintStack(stackTrace: s);
-      showSnack(
+      _showSnack(
         title: 'Erro',
         message: 'Não foi possível salvar o presente agora.',
         color: Colors.redAccent,
       );
     } finally {
-      salvando.value = false;
+      if (mounted) _salvando.value = false;
     }
   }
 
-  showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    isDismissible: false,
-    enableDrag: false,
-    useSafeArea: true,
-    backgroundColor: Colors.transparent,
-    builder: (modalContext) {
-      return PopScope(
-        canPop: false,
-        child: DraggableScrollableSheet(
-          initialChildSize: 0.92,
-          minChildSize: 0.62,
-          maxChildSize: 0.97,
-          expand: false,
-          shouldCloseOnMinExtent: false,
-          builder: (_, scrollController) {
-            return ClipRRect(
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(30)),
-              child: Material(
-                color: const Color(0xFFF6F8FC),
-                child: Column(
-                  children: [
-                    _GiftFormHeader(
-                      gradient: gradient,
-                      primary: primary,
-                      editando: editando,
-                      onClose: () {
-                        FocusManager.instance.primaryFocus?.unfocus();
-                        Navigator.of(modalContext).pop();
-                      },
-                    ),
-                    Expanded(
-                      child: Form(
-                        key: formKey,
-                        child: ListView(
-                          controller: scrollController,
-                          padding: EdgeInsets.fromLTRB(
-                            16,
-                            16,
-                            16,
-                            MediaQuery.of(modalContext).viewInsets.bottom + 18,
-                          ),
-                          children: [
-                            Obx(
-                              () => _GiftPreviewCard(
-                                primary: primary,
-                                tipo: tipoSelecionado.value,
-                                imageUrl: urlPreview.value,
-                                nome: nomeCtrl.text.trim().isEmpty
-                                    ? 'Prévia do presente'
-                                    : nomeCtrl.text.trim(),
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            _SectionTitle(
-                              title: 'Formato do presente',
-                              subtitle:
-                                  'Escolha como o convidado verá essa sugestão.',
-                            ),
-                            const SizedBox(height: 10),
-                            Obx(
-                              () => _GiftTypeSelector(
-                                primary: primary,
-                                selected: tipoSelecionado.value,
-                                onChanged: (value) =>
-                                    tipoSelecionado.value = value,
-                              ),
-                            ),
-                            const SizedBox(height: 18),
-                            _SectionTitle(
-                              title: 'Dados principais',
-                              subtitle:
-                                  'Use nomes curtos e objetivos para facilitar a escolha.',
-                            ),
-                            const SizedBox(height: 10),
-                            _PremiumTextField(
-                              controller: nomeCtrl,
-                              primary: primary,
-                              label: 'Nome do presente',
-                              hint: 'Ex.: Fralda Pampers G',
-                              icon: Icons.redeem_rounded,
-                              textCapitalization: TextCapitalization.sentences,
-                              validator: (value) => FormValidators.titulo(
-                                value,
-                                campo: 'o nome do presente',
-                                minimo: 2,
-                              ),
-                              onChanged: (_) => urlPreview.refresh(),
-                            ),
-                            const SizedBox(height: 10),
-                            _PremiumTextField(
-                              controller: descricaoCtrl,
-                              primary: primary,
-                              label: 'Descrição curta',
-                              hint:
-                                  'Opcional: cor, tamanho, observação ou preferência.',
-                              icon: Icons.notes_rounded,
-                              maxLines: 3,
-                              textCapitalization: TextCapitalization.sentences,
-                            ),
-                            const SizedBox(height: 10),
-                            Obx(
-                              () => AnimatedSwitcher(
-                                duration: const Duration(milliseconds: 220),
-                                switchInCurve: Curves.easeOut,
-                                switchOutCurve: Curves.easeIn,
-                                child: _TipoCamposDinamicos(
-                                  key: ValueKey(tipoSelecionado.value.name),
-                                  tipo: tipoSelecionado.value,
-                                  primary: primary,
-                                  valorCtrl: valorCtrl,
-                                  lojaCtrl: lojaCtrl,
-                                  linkCtrl: linkCtrl,
-                                  pixCtrl: pixCtrl,
-                                  metaCtrl: metaCtrl,
-                                  imagemCtrl: imagemCtrl,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 14),
-                            _GiftFormHint(primary: primary),
-                          ],
+  void _fechar() {
+    FocusManager.instance.primaryFocus?.unfocus();
+    Navigator.of(context).pop();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = widget.themeController.primaryColor.value;
+    final gradient = widget.themeController.gradient.value;
+
+    return PopScope(
+      canPop: false,
+      child: DraggableScrollableSheet(
+        initialChildSize: 0.92,
+        minChildSize: 0.62,
+        maxChildSize: 0.97,
+        expand: false,
+        shouldCloseOnMinExtent: false,
+        builder: (_, scrollController) {
+          return ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+            child: Material(
+              color: const Color(0xFFF6F8FC),
+              child: Column(
+                children: [
+                  _GiftFormHeader(
+                    gradient: gradient,
+                    primary: primary,
+                    editando: _editando,
+                    onClose: _fechar,
+                  ),
+                  Expanded(
+                    child: Form(
+                      key: _formKey,
+                      child: ListView(
+                        controller: scrollController,
+                        padding: EdgeInsets.fromLTRB(
+                          16,
+                          16,
+                          16,
+                          MediaQuery.of(context).viewInsets.bottom + 18,
                         ),
+                        children: [
+                          Obx(
+                            () => _GiftPreviewCard(
+                              primary: primary,
+                              tipo: _tipoSelecionado.value,
+                              imageUrl: _urlPreview.value,
+                              nome: _nomeCtrl.text.trim().isEmpty
+                                  ? 'Prévia do presente'
+                                  : _nomeCtrl.text.trim(),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          _SectionTitle(
+                            title: 'Formato do presente',
+                            subtitle:
+                                'Escolha como o convidado verá essa sugestão.',
+                          ),
+                          const SizedBox(height: 10),
+                          Obx(
+                            () => _GiftTypeSelector(
+                              primary: primary,
+                              selected: _tipoSelecionado.value,
+                              onChanged: (value) =>
+                                  _tipoSelecionado.value = value,
+                            ),
+                          ),
+                          const SizedBox(height: 18),
+                          _SectionTitle(
+                            title: 'Dados principais',
+                            subtitle:
+                                'Use nomes curtos e objetivos para facilitar a escolha.',
+                          ),
+                          const SizedBox(height: 10),
+                          _PremiumTextField(
+                            controller: _nomeCtrl,
+                            primary: primary,
+                            label: 'Nome do presente',
+                            hint: 'Ex.: Fralda Pampers G',
+                            icon: Icons.redeem_rounded,
+                            textCapitalization: TextCapitalization.sentences,
+                            validator: (value) => FormValidators.titulo(
+                              value,
+                              campo: 'o nome do presente',
+                              minimo: 2,
+                            ),
+                            onChanged: (_) => _urlPreview.refresh(),
+                          ),
+                          const SizedBox(height: 10),
+                          _PremiumTextField(
+                            controller: _descricaoCtrl,
+                            primary: primary,
+                            label: 'Descrição curta',
+                            hint:
+                                'Opcional: cor, tamanho, observação ou preferência.',
+                            icon: Icons.notes_rounded,
+                            maxLines: 3,
+                            textCapitalization: TextCapitalization.sentences,
+                          ),
+                          const SizedBox(height: 10),
+                          Obx(
+                            () => AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 220),
+                              switchInCurve: Curves.easeOut,
+                              switchOutCurve: Curves.easeIn,
+                              child: _TipoCamposDinamicos(
+                                key: ValueKey(_tipoSelecionado.value.name),
+                                tipo: _tipoSelecionado.value,
+                                primary: primary,
+                                valorCtrl: _valorCtrl,
+                                lojaCtrl: _lojaCtrl,
+                                linkCtrl: _linkCtrl,
+                                pixCtrl: _pixCtrl,
+                                metaCtrl: _metaCtrl,
+                                imagemCtrl: _imagemCtrl,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          _GiftFormHint(primary: primary),
+                        ],
                       ),
                     ),
-                    _GiftFormFooter(
-                      primary: primary,
-                      editando: editando,
-                      salvando: salvando,
-                      onCancel: () {
-                        FocusManager.instance.primaryFocus?.unfocus();
-                        Navigator.of(modalContext).pop();
-                      },
-                      onSave: () => salvar(modalContext),
-                    ),
-                  ],
-                ),
+                  ),
+                  _GiftFormFooter(
+                    primary: primary,
+                    editando: _editando,
+                    salvando: _salvando,
+                    onCancel: _fechar,
+                    onSave: _salvar,
+                  ),
+                ],
               ),
-            );
-          },
-        ),
-      );
-    },
-  ).whenComplete(disposeControllers);
+            ),
+          );
+        },
+      ),
+    );
+  }
 }
 
 class _GiftFormHeader extends StatelessWidget {
@@ -439,14 +488,9 @@ class _GiftPreviewCard extends StatelessWidget {
               border: Border.all(color: primary.withValues(alpha: 0.10)),
             ),
             child: hasImage
-                ? Image.network(
+                ? FestaImagemRede(
                     imageUrl,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Icon(
-                      _tipoIcon(tipo),
-                      color: primary,
-                      size: 30,
-                    ),
+                    erro: Icon(_tipoIcon(tipo), color: primary, size: 30),
                   )
                 : Icon(_tipoIcon(tipo), color: primary, size: 32),
           ),
@@ -653,12 +697,8 @@ class _TipoCamposDinamicos extends StatelessWidget {
           primary: primary,
           label: tipo == GiftType.coletivo
               ? 'Valor sugerido por contribuição'
-              : (isPixLivre
-                  ? 'Valor sugerido (opcional)'
-                  : 'Valor sugerido'),
-          hint: isPixLivre
-              ? 'Deixe vazio para valor livre'
-              : 'Ex.: 50,00',
+              : (isPixLivre ? 'Valor sugerido (opcional)' : 'Valor sugerido'),
+          hint: isPixLivre ? 'Deixe vazio para valor livre' : 'Ex.: 50,00',
           icon: Icons.payments_rounded,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           validator: (value) => FormValidators.dinheiro(

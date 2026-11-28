@@ -54,6 +54,18 @@ class GerenciarOrcamentos {
     );
   }
 
+  Future<void> atualizarOrcamento({
+    required String idOrcamento,
+    required String anotacoes,
+    required double custoEstimado,
+  }) {
+    return repository.atualizarOrcamento(
+      idOrcamento: idOrcamento,
+      anotacoes: anotacoes,
+      custoEstimado: custoEstimado,
+    );
+  }
+
   Future<void> excluirOrcamento(String idOrcamento) {
     return repository.excluirOrcamento(idOrcamento);
   }

@@ -314,24 +314,19 @@ class _ProductImage extends StatelessWidget {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(17),
-        child: Image.network(
+        child: FestaImagemRede(
           finalUrl,
-          fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) =>
-              _GiftIconBox(tipo: 'fisico', primary: primary, isError: true),
-          loadingBuilder: (context, child, progress) {
-            if (progress == null) return child;
-            return Center(
-              child: SizedBox(
-                width: 18,
-                height: 18,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: primary.withValues(alpha: 0.55),
-                ),
+          erro: _GiftIconBox(tipo: 'fisico', primary: primary, isError: true),
+          carregando: Center(
+            child: SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: primary.withValues(alpha: 0.55),
               ),
-            );
-          },
+            ),
+          ),
         ),
       ),
     );

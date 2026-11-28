@@ -1,6 +1,8 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
+import '../../core/utils/no_sqflite_cache_manager.dart';
+
 Widget capaRede({
   required String url,
   required BoxFit fit,
@@ -9,6 +11,7 @@ Widget capaRede({
 }) {
   return CachedNetworkImage(
     imageUrl: url,
+    cacheManager: AdaptiveCacheManager.instance,
     fit: fit,
     alignment: alignment,
     fadeInDuration: const Duration(milliseconds: 180),

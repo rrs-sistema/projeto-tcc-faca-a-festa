@@ -27,105 +27,113 @@ Color _corFatoFinanceiro(String fato, Color primary) => switch (fato) {
 Future<void> _abrirConferenciaFinanceira(
   BuildContext context, {
   required OrcamentoController orcamentoController,
-  required Color primary,
+  required EventThemeController themeController,
 }) {
+  final primary = themeController.primaryColor.value;
+  final tema = themeController.materialTheme;
   final resumo = orcamentoController.resumoFinanceiro.value;
   return showDialog<void>(
     context: context,
-    builder: (ctx) => CalculadoraModal(
-      titulo: 'Conferência financeira',
-      icone: Icons.fact_check_outlined,
-      onFechar: () => Navigator.pop(ctx),
-      rodape: calculadoraModalRodape(
-        context: ctx,
-        confirmar: 'Fechar',
-        iconeConfirmar: Icons.check_rounded,
-        onConfirmar: () => Navigator.pop(ctx),
-        onCancelar: null,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          CalculadoraModalBanner(
-            icone: resumo.completo
-                ? Icons.info_outline_rounded
-                : Icons.warning_amber_rounded,
-            texto: resumo.completo
-                ? 'Toque em um total para ver os registros que o compõem.'
-                : 'Consulta incompleta — estes totais não sustentam quitação ou economia.',
+    builder: (ctx) => Theme(
+      data: tema,
+      child: Builder(
+        builder: (dialogCtx) => CalculadoraModal(
+          titulo: 'Conferência financeira',
+          icone: Icons.fact_check_outlined,
+          onFechar: () => Navigator.pop(dialogCtx),
+          rodape: calculadoraModalRodape(
+            context: dialogCtx,
+            confirmar: 'Fechar',
+            iconeConfirmar: Icons.check_rounded,
+            onConfirmar: () => Navigator.pop(dialogCtx),
+            onCancelar: null,
           ),
-          const SizedBox(height: 14),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              color: primary.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.source_outlined, size: 18, color: primary),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Origem: ${_rotuloOrigemFinanceira(resumo.origem)}',
-                    style: GoogleFonts.poppins(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w600,
-                      color: const Color(0xFF0F172A),
-                    ),
-                  ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              CalculadoraModalBanner(
+                icone: resumo.completo
+                    ? Icons.info_outline_rounded
+                    : Icons.warning_amber_rounded,
+                texto: resumo.completo
+                    ? 'Toque em um total para ver os registros que o compõem.'
+                    : 'Consulta incompleta — estes totais não sustentam quitação ou economia.',
+              ),
+              const SizedBox(height: 14),
+              Container(
+                width: double.infinity,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: primary.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          CalculadoraModalSecao(
-            titulo: 'Totais do evento',
-            descricao: 'Valores consolidados do planejamento financeiro.',
-            filhos: [
-              _LinhaConferenciaPremium(
-                rotulo: 'Estimado',
-                valor: resumo.estimado,
-                fato: 'estimado',
-                primary: primary,
-                orcamentoController: orcamentoController,
+                child: Row(
+                  children: [
+                    Icon(Icons.source_outlined, size: 18, color: primary),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Origem: ${_rotuloOrigemFinanceira(resumo.origem)}',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF0F172A),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 8),
-              _LinhaConferenciaPremium(
-                rotulo: 'Cotado',
-                valor: resumo.cotado,
-                fato: 'cotado',
-                primary: primary,
-                orcamentoController: orcamentoController,
-              ),
-              const SizedBox(height: 8),
-              _LinhaConferenciaPremium(
-                rotulo: 'Contratado',
-                valor: resumo.contratado,
-                fato: 'contratado',
-                primary: primary,
-                orcamentoController: orcamentoController,
-              ),
-              const SizedBox(height: 8),
-              _LinhaConferenciaPremium(
-                rotulo: 'Pago líquido',
-                valor: resumo.pagoLiquido,
-                fato: 'pago',
-                primary: primary,
-                orcamentoController: orcamentoController,
-              ),
-              const SizedBox(height: 8),
-              _LinhaConferenciaPremium(
-                rotulo: 'Saldo devido',
-                valor: resumo.saldoDevido,
-                fato: 'saldo',
-                primary: primary,
-                orcamentoController: orcamentoController,
+              const SizedBox(height: 16),
+              CalculadoraModalSecao(
+                titulo: 'Totais do evento',
+                descricao: 'Valores consolidados do planejamento financeiro.',
+                filhos: [
+                  _LinhaConferenciaPremium(
+                    rotulo: 'Estimado',
+                    valor: resumo.estimado,
+                    fato: 'estimado',
+                    themeController: themeController,
+                    orcamentoController: orcamentoController,
+                  ),
+                  const SizedBox(height: 8),
+                  _LinhaConferenciaPremium(
+                    rotulo: 'Cotado',
+                    valor: resumo.cotado,
+                    fato: 'cotado',
+                    themeController: themeController,
+                    orcamentoController: orcamentoController,
+                  ),
+                  const SizedBox(height: 8),
+                  _LinhaConferenciaPremium(
+                    rotulo: 'Contratado',
+                    valor: resumo.contratado,
+                    fato: 'contratado',
+                    themeController: themeController,
+                    orcamentoController: orcamentoController,
+                  ),
+                  const SizedBox(height: 8),
+                  _LinhaConferenciaPremium(
+                    rotulo: 'Pago líquido',
+                    valor: resumo.pagoLiquido,
+                    fato: 'pago',
+                    themeController: themeController,
+                    orcamentoController: orcamentoController,
+                  ),
+                  const SizedBox(height: 8),
+                  _LinhaConferenciaPremium(
+                    rotulo: 'Saldo devido',
+                    valor: resumo.saldoDevido,
+                    fato: 'saldo',
+                    themeController: themeController,
+                    orcamentoController: orcamentoController,
+                  ),
+                ],
               ),
             ],
           ),
-        ],
+        ),
       ),
     ),
   );
@@ -136,18 +144,19 @@ class _LinhaConferenciaPremium extends StatelessWidget {
     required this.rotulo,
     required this.valor,
     required this.fato,
-    required this.primary,
+    required this.themeController,
     required this.orcamentoController,
   });
 
   final String rotulo;
   final double valor;
   final String fato;
-  final Color primary;
+  final EventThemeController themeController;
   final OrcamentoController orcamentoController;
 
   @override
   Widget build(BuildContext context) {
+    final primary = themeController.primaryColor.value;
     final cor = _corFatoFinanceiro(fato, primary);
     return Material(
       color: const Color(0xFFF8FAFC),
@@ -162,7 +171,7 @@ class _LinhaConferenciaPremium extends StatelessWidget {
           rotulo: rotulo,
           fato: fato,
           orcamentoController: orcamentoController,
-          primary: primary,
+          themeController: themeController,
         ),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(12, 12, 10, 12),
@@ -225,123 +234,130 @@ Future<void> _abrirRegistrosConferencia(
   required String rotulo,
   required String fato,
   required OrcamentoController orcamentoController,
-  required Color primary,
+  required EventThemeController themeController,
 }) async {
+  final primary = themeController.primaryColor.value;
+  final tema = themeController.materialTheme;
   final regs = orcamentoController.registrosDaConferencia(fato: fato);
   Navigator.of(context).pop();
   await showDialog<void>(
     context: context,
-    builder: (ctx) => CalculadoraModal(
-      titulo: 'Registros · $rotulo',
-      icone: _iconeFatoFinanceiro(fato),
-      onFechar: () => Navigator.pop(ctx),
-      onVoltar: () {
-        Navigator.pop(ctx);
-        _abrirConferenciaFinanceira(
-          context,
-          orcamentoController: orcamentoController,
-          primary: primary,
-        );
-      },
-      rodape: calculadoraModalRodape(
-        context: ctx,
-        confirmar: 'Fechar',
-        iconeConfirmar: Icons.check_rounded,
-        onConfirmar: () => Navigator.pop(ctx),
-        onCancelar: null,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          CalculadoraModalBanner(
-            texto: regs.isEmpty
-                ? 'Nenhum registro explica este total no momento.'
-                : 'Itens que entram no cálculo de $rotulo.',
+    builder: (ctx) => Theme(
+      data: tema,
+      child: Builder(
+        builder: (dialogCtx) => CalculadoraModal(
+          titulo: 'Registros · $rotulo',
+          icone: _iconeFatoFinanceiro(fato),
+          onFechar: () => Navigator.pop(dialogCtx),
+          onVoltar: () {
+            Navigator.pop(dialogCtx);
+            _abrirConferenciaFinanceira(
+              context,
+              orcamentoController: orcamentoController,
+              themeController: themeController,
+            );
+          },
+          rodape: calculadoraModalRodape(
+            context: dialogCtx,
+            confirmar: 'Fechar',
+            iconeConfirmar: Icons.check_rounded,
+            onConfirmar: () => Navigator.pop(dialogCtx),
+            onCancelar: null,
           ),
-          const SizedBox(height: 14),
-          if (regs.isEmpty)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              CalculadoraModalBanner(
+                texto: regs.isEmpty
+                    ? 'Nenhum registro explica este total no momento.'
+                    : 'Itens que entram no cálculo de $rotulo.',
               ),
-              child: Text(
-                'Sem lançamentos vinculados a este total.',
-                textAlign: TextAlign.center,
-                style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  color: const Color(0xFF64748B),
-                ),
-              ),
-            )
-          else
-            ...regs.map((r) {
-              final desc = (r['descricao'] ?? r['id'] ?? 'Item').toString();
-              final fonte = (r['fonte_financeira'] ?? 'legado').toString();
-              final detalhe = fato == 'pago'
-                  ? r['pago']
-                  : fato == 'contratado'
-                      ? r['valor_contratado']
-                      : fato == 'saldo'
-                          ? r['saldo_devido']
-                          : fato == 'cotado'
-                              ? r['cotado']
-                              : r['estimado'];
-              final cor = _corFatoFinanceiro(fato, primary);
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Container(
+              const SizedBox(height: 14),
+              if (regs.isEmpty)
+                Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: const Color(0xFFF8FAFC),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(color: const Color(0xFFE2E8F0)),
                   ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              desc,
-                              style: GoogleFonts.poppins(
-                                fontSize: 13.5,
-                                fontWeight: FontWeight.w700,
-                                color: const Color(0xFF0F172A),
-                              ),
-                            ),
-                            const SizedBox(height: 3),
-                            Text(
-                              'Fonte: ${_rotuloOrigemFinanceira(fonte)}',
-                              style: GoogleFonts.poppins(
-                                fontSize: 11.5,
-                                color: const Color(0xFF64748B),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Text(
-                        _reais((detalhe as num?)?.toDouble() ?? 0),
-                        style: GoogleFonts.poppins(
-                          fontSize: 13.5,
-                          fontWeight: FontWeight.w800,
-                          color: cor,
-                        ),
-                      ),
-                    ],
+                  child: Text(
+                    'Sem lançamentos vinculados a este total.',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      color: const Color(0xFF64748B),
+                    ),
                   ),
-                ),
-              );
-            }),
-        ],
+                )
+              else
+                ...regs.map((r) {
+                  final desc = (r['descricao'] ?? r['id'] ?? 'Item').toString();
+                  final fonte = (r['fonte_financeira'] ?? 'legado').toString();
+                  final detalhe = fato == 'pago'
+                      ? r['pago']
+                      : fato == 'contratado'
+                          ? r['valor_contratado']
+                          : fato == 'saldo'
+                              ? r['saldo_devido']
+                              : fato == 'cotado'
+                                  ? r['cotado']
+                                  : r['estimado'];
+                  final cor = _corFatoFinanceiro(fato, primary);
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  desc,
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 13.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: const Color(0xFF0F172A),
+                                  ),
+                                ),
+                                const SizedBox(height: 3),
+                                Text(
+                                  'Fonte: ${_rotuloOrigemFinanceira(fonte)}',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 11.5,
+                                    color: const Color(0xFF64748B),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            _reais((detalhe as num?)?.toDouble() ?? 0),
+                            style: GoogleFonts.poppins(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w800,
+                              color: cor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }),
+            ],
+          ),
+        ),
       ),
     ),
   );

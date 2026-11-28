@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../services/functions/callable_sessao_gateway.dart';
+import 'package:app_faca_festa/core/conectividade/escrita_local_primeiro.dart';
 
 /// Somente leituras já autorizadas ao próprio fornecedor. Não calcula dinheiro.
 class PainelFontesDisponiveis {
@@ -27,7 +28,7 @@ class PainelFontesDisponiveis {
         final docs = await db
             .collectionGroup('fornecedores')
             .where('id_fornecedor', isEqualTo: uid)
-            .get(const GetOptions(source: Source.server));
+            .lerLocalPrimeiro();
         final itens = <Map<String, dynamic>>[];
         int? naoLidas = 0;
         for (final doc in docs.docs) {
@@ -36,7 +37,7 @@ class PainelFontesDisponiveis {
             continue;
           }
           final cotacao = await doc.reference.parent.parent!
-              .get(const GetOptions(source: Source.server));
+              .lerLocalPrimeiro();
           if (!cotacao.exists) continue;
           final dados = {
             ...doc.data(),
@@ -48,7 +49,7 @@ class PainelFontesDisponiveis {
           try {
             final mensagens = await doc.reference
                 .collection('mensagens')
-                .get(const GetOptions(source: Source.server));
+                .lerLocalPrimeiro();
             dados['mensagens'] = mensagens.docs.map((m) => m.data()).toList();
             final total = mensagens.docs
                 .where((m) =>
@@ -65,7 +66,7 @@ class PainelFontesDisponiveis {
           try {
             dados['propostas'] = (await doc.reference
                     .collection('propostas')
-                    .get(const GetOptions(source: Source.server)))
+                    .lerLocalPrimeiro())
                 .docs
                 .map((p) => p.data())
                 .toList();
@@ -92,7 +93,7 @@ class PainelFontesDisponiveis {
         final documentos = (await db
                 .collection('orcamento')
                 .where('id_fornecedor', isEqualTo: uid)
-                .get(const GetOptions(source: Source.server)))
+                .lerLocalPrimeiro())
             .docs
             .map((d) => {...d.data(), 'id': d.id})
             .toList();

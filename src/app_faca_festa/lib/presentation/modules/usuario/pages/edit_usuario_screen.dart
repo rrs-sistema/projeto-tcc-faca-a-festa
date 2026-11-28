@@ -2,6 +2,7 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
+import 'package:app_faca_festa/presentation/widgets/festa_imagem_rede.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
@@ -156,7 +157,8 @@ class _EditUsuarioScreenState extends State<EditUsuarioScreen> {
                 physics: const BouncingScrollPhysics(),
                 keyboardDismissBehavior:
                     ScrollViewKeyboardDismissBehavior.onDrag,
-                padding: const EdgeInsets.fromLTRB(14, FestaPageInsets.belowAppBar, 14, 16),
+                padding: const EdgeInsets.fromLTRB(
+                    14, FestaPageInsets.belowAppBar, 14, 16),
                 children: [
                   CadastroPassosBar(
                     atual: _passo,
@@ -339,9 +341,8 @@ class _EditUsuarioScreenState extends State<EditUsuarioScreen> {
               ],
               validator: FormValidators.uf,
               onChanged: (value) {
-                final uf = value
-                    .replaceAll(RegExp(r'[^A-Za-z]'), '')
-                    .toUpperCase();
+                final uf =
+                    value.replaceAll(RegExp(r'[^A-Za-z]'), '').toUpperCase();
                 if (uf != value) {
                   ufCtrl.value = TextEditingValue(
                     text: uf,
@@ -381,7 +382,8 @@ class _EditUsuarioScreenState extends State<EditUsuarioScreen> {
                   child: CircleAvatar(
                     radius: 40,
                     backgroundColor: Colors.grey.shade100,
-                    backgroundImage: url != null ? NetworkImage(url) : null,
+                    backgroundImage:
+                        url != null ? festaImagemProvider(url) : null,
                     child: url == null
                         ? Icon(
                             Icons.person_rounded,

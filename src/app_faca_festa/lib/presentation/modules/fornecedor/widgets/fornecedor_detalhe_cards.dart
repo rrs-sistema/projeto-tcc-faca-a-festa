@@ -138,6 +138,7 @@ Widget _bannerFornecedor(String fotoCapa, Gradient gradient) {
         ),
         clipBehavior: Clip.antiAlias,
         child: CachedNetworkImage(
+          cacheManager: AdaptiveCacheManager.instance,
           imageUrl: fotoCapa,
           fit: BoxFit.cover,
           width: double.infinity,

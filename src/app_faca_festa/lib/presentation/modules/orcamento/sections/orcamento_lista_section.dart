@@ -163,8 +163,10 @@ extension _OrcamentoListaSection on _OrcamentoScreenState {
                 ),
               ...gastos,
               const SizedBox(height: 4),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
+              Wrap(
+                alignment: WrapAlignment.end,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 8,
                 children: [
                   if (mostrarBotaoAddGasto)
                     ElevatedButton.icon(
@@ -194,7 +196,31 @@ extension _OrcamentoListaSection on _OrcamentoScreenState {
                             fontWeight: FontWeight.w600, fontSize: 12),
                       ),
                     ),
-                  const SizedBox(width: 8),
+                  if (mostrarBotaoAddGasto)
+                    TextButton.icon(
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 8),
+                        minimumSize: const Size(44, 40),
+                      ),
+                      onPressed: () => showAddOrcamentoBottomSheet(
+                        context,
+                        orcamento.idEvento,
+                        themeController: themeController,
+                        orcamentoController: orcamentoController,
+                        idSolicitante: orcamento.idSolicitante,
+                        orcamentoExistente: orcamento,
+                      ),
+                      icon: Icon(Icons.edit_outlined, size: 16, color: primary),
+                      label: Text(
+                        'Editar',
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                          color: primary,
+                        ),
+                      ),
+                    ),
                   TextButton.icon(
                     style: TextButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
@@ -299,13 +325,19 @@ extension _OrcamentoListaSection on _OrcamentoScreenState {
                   size: 16, color: Colors.teal.shade700),
               const SizedBox(width: 6),
               Expanded(
-                child: Text(
-                  nome,
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey.shade800,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      nome,
+                      style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey.shade800,
+                      ),
+                    ),
+                    if (idGasto != null) SeloSincronizacao(chave: idGasto),
+                  ],
                 ),
               ),
               if (restante == 0)
@@ -325,8 +357,21 @@ extension _OrcamentoListaSection on _OrcamentoScreenState {
                         final gastoC = gastoController ??
                             orcamentoController.gastoController(idOrcamento);
 
-                        await gastoC.marcarComoPago(
-                            idOrcamento, idGasto, custo);
+                        try {
+                          await gastoC.marcarComoPago(
+                              idOrcamento, idGasto, custo);
+                        } catch (erro) {
+                          EasyLoading.dismiss();
+                          Get.snackbar(
+                            'Não foi possível marcar como pago',
+                            erro is ArgumentError || erro is StateError
+                                ? '${(erro as dynamic).message}'
+                                : 'Tente de novo em instantes.',
+                            backgroundColor: Colors.red.shade600,
+                            colorText: Colors.white,
+                          );
+                          return false;
+                        }
 
                         gastoC.escutarGastos(idOrcamento);
 

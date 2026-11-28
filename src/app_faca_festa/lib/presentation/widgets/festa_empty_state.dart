@@ -58,7 +58,8 @@ class FestaEmptyState extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(extraApertado ? 14 : 20),
-                  border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
+                  border:
+                      Border.all(color: Colors.black.withValues(alpha: 0.05)),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.04),
@@ -128,9 +129,8 @@ class FestaEmptyState extends StatelessWidget {
                             actionLabel!,
                             style: GoogleFonts.poppins(
                               fontWeight: FontWeight.w700,
-                              fontSize: extraApertado
-                                  ? 12
-                                  : (apertado ? 13 : 14),
+                              fontSize:
+                                  extraApertado ? 12 : (apertado ? 13 : 14),
                             ),
                           ),
                         ),

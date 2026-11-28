@@ -6,12 +6,11 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 
-import 'package:app_faca_festa/core/utils/form_validators.dart';
 import 'package:app_faca_festa/core/utils/numeric_input.dart';
 import 'package:app_faca_festa/domain/services/acompanhamento_partes_service.dart';
 import 'package:app_faca_festa/presentation/modules/financeiro/controllers/acompanhamento_partes_controller.dart';
+import 'package:app_faca_festa/presentation/modules/financeiro/controllers/acompanhamento_partes_registro.dart';
 import 'package:app_faca_festa/presentation/modules/financeiro/widgets/pix_pagamento_sheet.dart';
-import 'package:app_faca_festa/presentation/modules/usuario/controllers/usuario_controller.dart';
 import 'package:app_faca_festa/presentation/modules/financeiro/widgets/ajuda_fluxo_financeiro.dart';
 import 'package:app_faca_festa/presentation/modules/financeiro/widgets/abrir_mediacao_sheet.dart';
 import 'package:app_faca_festa/presentation/modules/financeiro/widgets/autorizacao_repasse_modal.dart';
@@ -151,14 +150,7 @@ class _AcompanhamentoOrganizadorPageState
     }
   }
 
-  String? _cpfPerfil() {
-    if (!Get.isRegistered<UsuarioController>()) return null;
-    final digitos = FormValidators.somenteDigitos(
-      Get.find<UsuarioController>().usuario.value?.cpf,
-    );
-    if (FormValidators.cpf(digitos, obrigatorio: true) != null) return null;
-    return digitos;
-  }
+  String? _cpfPerfil() => cpfDoPerfilLogado();
 
   Future<void> _pagarPix(VisaoOrganizadorContrato l) async {
     final pago = await mostrarPixPagamento(
@@ -361,7 +353,7 @@ class _AcompanhamentoOrganizadorPageState
                     ),
                   ],
                   const SizedBox(height: 16),
-                  if (linhas.isEmpty)
+                  if (linhas.isEmpty && c.erro.value.isEmpty)
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(24),
@@ -819,18 +811,21 @@ class _AcompanhamentoOrganizadorPageState
                 ),
               ),
             ),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton(
-              onPressed: c.enviando.value ? null : () => _declarar(l),
-              child: Text(
-                l.valorDeclaradoCentavos > 0
-                    ? 'Atualizar declaração por fora'
-                    : 'Já paguei por fora',
-                style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+          // Com saldo em aberto, o único caminho é o Pix pelo Asaas.
+          // A declaração manual só aparece quando não há mais nada a pagar.
+          if (l.aPagarCentavos <= 0)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(
+                onPressed: c.enviando.value ? null : () => _declarar(l),
+                child: Text(
+                  l.valorDeclaradoCentavos > 0
+                      ? 'Atualizar declaração por fora'
+                      : 'Já paguei por fora',
+                  style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                ),
               ),
             ),
-          ),
           const SizedBox(height: 8),
           Text(
               'O fornecedor recebe após o evento finalizado ou com sua autorização explícita.',

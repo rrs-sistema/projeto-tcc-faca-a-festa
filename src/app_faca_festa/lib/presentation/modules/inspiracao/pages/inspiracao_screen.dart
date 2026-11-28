@@ -3,6 +3,7 @@ import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
+import 'package:app_faca_festa/presentation/widgets/festa_imagem_rede.dart';
 import 'package:get/get.dart';
 
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
@@ -454,9 +455,8 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
                                 color: Colors.grey.shade200,
                                 child: const Icon(Icons.image_not_supported,
                                     color: Colors.grey))
-                            : Image.network(url,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => Container(
+                            : FestaImagemRede(url,
+                                erro: Container(
                                     color: Colors.grey.shade200,
                                     child: const Icon(Icons.broken_image,
                                         color: Colors.grey))),
@@ -634,9 +634,8 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
                       color: Colors.grey.shade200,
                       child: const Center(
                           child: Icon(Icons.image, color: Colors.grey)))
-                  : Image.network(url,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
+                  : FestaImagemRede(url,
+                      erro: Container(
                           height: 160,
                           color: Colors.grey.shade200,
                           child:
@@ -920,10 +919,9 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
                         child: Icon(Icons.storefront_rounded,
                             color: primary, size: 26),
                       )
-                    : Image.network(
+                    : FestaImagemRede(
                         url,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Container(
+                        erro: Container(
                           color: Colors.grey.shade200,
                           child: const Icon(Icons.storefront_rounded,
                               color: Colors.grey),

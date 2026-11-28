@@ -390,7 +390,14 @@ void main() {
       ..propor()
       ..usuario = 'c';
     gateway.estado['proposta']['validade'] = '2026-10-01T00:00:00Z';
-    final jornada = _controller(gateway, _Store());
+    final mudancas = StreamController<void>.broadcast();
+    final jornada = JornadaAtendimentoController(
+        idCotacao: 'q',
+        idFornecedor: 'f',
+        gateway: gateway,
+        store: _Store(),
+        clock: () => DateTime.utc(2026, 10, 26),
+        observarMudancas: (_, __, ___) => mudancas.stream);
     final cotacao = CotacaoController(gerenciarCotacoes: _Cotacoes());
     await t.pumpWidget(GetMaterialApp(
       home: Scaffold(
@@ -443,7 +450,9 @@ void main() {
     expect(find.textContaining('Revisar e contratar versão'), findsNothing);
 
     gateway.propor(versao: 2);
-    await t.tap(find.text('Atualizar jornada'));
+    // O fornecedor enviou a nova versão: o servidor avisa e a jornada se atualiza sozinha.
+    mudancas.add(null);
+    await t.pump(const Duration(seconds: 1));
     await t.pumpAndSettle();
     final revisar = find.text('Revisar e contratar versão 2');
     await t.ensureVisible(revisar);
@@ -464,6 +473,7 @@ void main() {
     await t.pumpAndSettle();
     expect(find.text('Contrato orc-estavel do evento ev'), findsOneWidget);
     expect(t.takeException(), isNull);
+    await mudancas.close();
   });
   testWidgets(
       'proposta expirada não oferece aceite e perda não mostra compromisso',

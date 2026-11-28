@@ -157,6 +157,14 @@ class _AgendaFornecedorPageState extends State<AgendaFornecedorPage> {
                                 mensagem: c.erro.value,
                                 onRetry:
                                     c.carregando.value ? null : c.carregar),
+                          if (d?[FirebaseCallableSessaoGateway
+                                  .chaveAtualizadoEm] !=
+                              null)
+                            const ListTile(
+                                key: Key('agenda_do_aparelho'),
+                                leading: Icon(Icons.cloud_off_rounded),
+                                title: Text(
+                                    'Sem internet: agenda da última consulta salva neste aparelho.')),
                           if (c.pendente.value != null)
                             Card(
                                 child: ListTile(

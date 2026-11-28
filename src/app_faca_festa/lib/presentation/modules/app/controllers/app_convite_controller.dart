@@ -234,6 +234,21 @@ class AppConviteController extends GetxController {
         colorText: Colors.white,
       );
       Get.offAllNamed('/conviteNaoEncontrado');
+    } on AbrirConvitePorTokenException catch (e) {
+      acessoPorLink.value = false;
+      debugPrint('$_logTag Convite: ${e.codigo}');
+      if (e.codigo == 'unavailable') {
+        // Sem internet e sem cópia no aparelho: o convite existe, só não dá
+        // para abrir agora.
+        Get.snackbar(
+          'Sem internet',
+          e.mensagem ?? 'Conecte-se para abrir o convite.',
+          backgroundColor: Colors.blueGrey.shade700,
+          colorText: Colors.white,
+        );
+      } else {
+        Get.offAllNamed('/conviteNaoEncontrado');
+      }
     } catch (e, s) {
       acessoPorLink.value = false;
       debugPrint('$_logTag Erro ao abrir convite como visitante: $e\n$s');

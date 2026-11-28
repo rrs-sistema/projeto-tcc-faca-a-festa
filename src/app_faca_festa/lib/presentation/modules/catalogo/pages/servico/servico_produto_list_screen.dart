@@ -6,6 +6,7 @@ import 'package:app_faca_festa/presentation/widgets/operacao/operacao_skeleton.d
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
+import 'package:app_faca_festa/presentation/widgets/festa_imagem_rede.dart';
 import 'package:get/get.dart';
 
 import 'package:app_faca_festa/presentation/modules/avaliacao/controllers/avaliacao_servico_controller.dart';
@@ -844,12 +845,11 @@ class _ServicoProdutoListScreenState extends State<ServicoProdutoListScreen> {
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(10),
-      child: Image.network(
+      child: FestaImagemRede(
         s.imagemUrl!,
         width: 52,
         height: 52,
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => Container(
+        erro: Container(
           width: 52,
           height: 52,
           color: primary.withValues(alpha: 0.15),

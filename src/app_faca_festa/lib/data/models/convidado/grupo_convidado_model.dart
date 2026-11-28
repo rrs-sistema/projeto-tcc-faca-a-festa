@@ -15,6 +15,7 @@ class GrupoConvidadoModel extends GrupoConvidado {
     super.totalConfirmados,
     required super.dataCadastro,
     required super.dataAtualizacao,
+    super.excluido,
   });
 
   factory GrupoConvidadoModel.fromEntity(GrupoConvidado grupo) {
@@ -32,6 +33,7 @@ class GrupoConvidadoModel extends GrupoConvidado {
       totalConfirmados: grupo.totalConfirmados,
       dataCadastro: grupo.dataCadastro,
       dataAtualizacao: grupo.dataAtualizacao,
+      excluido: grupo.excluido,
     );
   }
 
@@ -50,6 +52,7 @@ class GrupoConvidadoModel extends GrupoConvidado {
       'total_confirmados': totalConfirmados,
       'data_cadastro': dataCadastro,
       'data_atualizacao': dataAtualizacao,
+      'excluido': excluido,
     };
   }
 
@@ -68,6 +71,7 @@ class GrupoConvidadoModel extends GrupoConvidado {
       totalConfirmados: _intValue(map['total_confirmados']),
       dataCadastro: _dateValue(map['data_cadastro']),
       dataAtualizacao: _dateValue(map['data_atualizacao']),
+      excluido: map['excluido'] == true,
     );
   }
 
@@ -91,6 +95,7 @@ class GrupoConvidadoModel extends GrupoConvidado {
     int? totalConfirmados,
     DateTime? dataCadastro,
     DateTime? dataAtualizacao,
+    bool? excluido,
   }) {
     return GrupoConvidadoModel(
       idGrupo: idGrupo ?? this.idGrupo,
@@ -106,6 +111,7 @@ class GrupoConvidadoModel extends GrupoConvidado {
       totalConfirmados: totalConfirmados ?? this.totalConfirmados,
       dataCadastro: dataCadastro ?? this.dataCadastro,
       dataAtualizacao: dataAtualizacao ?? DateTime.now(),
+      excluido: excluido ?? this.excluido,
     );
   }
 }

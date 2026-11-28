@@ -21,6 +21,7 @@ import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_c
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import 'package:app_faca_festa/presentation/widgets/festa_empty_state.dart';
 import 'package:app_faca_festa/presentation/widgets/festa_leitura.dart';
+import 'package:app_faca_festa/presentation/widgets/selo_sincronizacao.dart';
 
 class ListaConvidadosScreen extends StatefulWidget {
   final EventThemeController themeController;
@@ -1020,6 +1021,7 @@ class _GuestCard extends StatelessWidget {
                               icon: _getStatusIcon(convidado.status)),
                         ],
                       ),
+                      SeloSincronizacao(chave: convidado.idConvidado),
                       if (email.isNotEmpty) ...[
                         const SizedBox(height: 4),
                         _InfoLine(icon: Icons.email_outlined, text: email),

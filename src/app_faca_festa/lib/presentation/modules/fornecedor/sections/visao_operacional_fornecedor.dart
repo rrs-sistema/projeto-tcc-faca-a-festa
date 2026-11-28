@@ -280,48 +280,59 @@ class _VisaoOperacionalFornecedorState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  ResponsiveWrapGrid(
-                    minTileWidth:
-                        MediaQuery.textScalerOf(context).scale(14) > 20
-                            ? 220
-                            : 140,
-                    maxColumns: 4,
-                    children: [
-                      indicador(
-                          'Aguardando resposta',
-                          atendimento?['aguardando']?.toString() ?? '—',
-                          'Pedidos novos pendentes de resposta',
-                          Icons.mark_email_unread_outlined,
-                          widget.onPedidos),
-                      indicador(
-                          'Primeira resposta',
-                          duracao(resposta?['media'] as num?),
-                          resposta?['amostra'] == null
-                              ? 'Dados de resposta indisponíveis'
-                              : 'Média · ${resposta!['amostra']} ${resposta['amostra'] == 1 ? 'resposta' : 'respostas'} · últimos 30 dias',
-                          Icons.timer_outlined,
-                          widget.onPedidos),
-                      indicador(
-                          'Reputação',
-                          reputacao == null
-                              ? 'Sem amostra'
-                              : (reputacao['media'] as num)
-                                  .toStringAsFixed(1)
-                                  .replaceAll('.', ','),
-                          reputacao == null
-                              ? reputacaoIndisponivel
-                                  ? 'Dados de reputação indisponíveis'
-                                  : 'Sem avaliações verificadas'
-                              : '${reputacao['quantidade']} ${reputacao['quantidade'] == 1 ? 'avaliação verificada' : 'avaliações verificadas'}',
-                          Icons.star_outline_rounded,
-                          () => abrir('/fornecedor/reputacao')),
-                      indicador(
-                          'Contratações',
-                          locais?['contratos']?.toString() ?? '—',
-                          'Contratos confirmados, sem cancelados',
-                          Icons.handshake_outlined,
-                          () => abrir('/acompanhamento-fornecedor')),
-                    ],
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      // Celular e tablets menores: 2x2. Desktop largo: 4 em linha.
+                      final maxColumns =
+                          FornecedorBreakpoints.desktop(constraints.maxWidth)
+                              ? 4
+                              : 2;
+                      final minTileWidth =
+                          MediaQuery.textScalerOf(context).scale(14) > 20
+                              ? 220.0
+                              : 160.0;
+                      return ResponsiveWrapGrid(
+                        minTileWidth: minTileWidth,
+                        minColumns: 2,
+                        maxColumns: maxColumns,
+                        children: [
+                          indicador(
+                              'Aguardando resposta',
+                              atendimento?['aguardando']?.toString() ?? '—',
+                              'Pedidos novos pendentes de resposta',
+                              Icons.mark_email_unread_outlined,
+                              widget.onPedidos),
+                          indicador(
+                              'Primeira resposta',
+                              duracao(resposta?['media'] as num?),
+                              resposta?['amostra'] == null
+                                  ? 'Dados de resposta indisponíveis'
+                                  : 'Média · ${resposta!['amostra']} ${resposta['amostra'] == 1 ? 'resposta' : 'respostas'} · últimos 30 dias',
+                              Icons.timer_outlined,
+                              widget.onPedidos),
+                          indicador(
+                              'Reputação',
+                              reputacao == null
+                                  ? 'Sem amostra'
+                                  : (reputacao['media'] as num)
+                                      .toStringAsFixed(1)
+                                      .replaceAll('.', ','),
+                              reputacao == null
+                                  ? reputacaoIndisponivel
+                                      ? 'Dados de reputação indisponíveis'
+                                      : 'Sem avaliações verificadas'
+                                  : '${reputacao['quantidade']} ${reputacao['quantidade'] == 1 ? 'avaliação verificada' : 'avaliações verificadas'}',
+                              Icons.star_outline_rounded,
+                              () => abrir('/fornecedor/reputacao')),
+                          indicador(
+                              'Contratações',
+                              locais?['contratos']?.toString() ?? '—',
+                              'Contratos confirmados, sem cancelados',
+                              Icons.handshake_outlined,
+                              () => abrir('/acompanhamento-fornecedor')),
+                        ],
+                      );
+                    },
                   ),
                   const SizedBox(height: 12),
                   AtualizacaoIndicadores(

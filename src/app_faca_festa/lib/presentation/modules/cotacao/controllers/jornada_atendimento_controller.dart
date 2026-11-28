@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:uuid/uuid.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:app_faca_festa/data/datasources/remote/jornada_atendimento_remote.dart';
+import 'package:app_faca_festa/data/datasources/remote/jornada_mudancas_remote.dart';
 import 'package:app_faca_festa/data/local/recebimento_pendente_store.dart';
 import 'package:app_faca_festa/core/conectividade/recarregar_ao_reconectar.dart';
 
@@ -14,14 +15,24 @@ class JornadaAtendimentoController extends GetxController
       required this.idFornecedor,
       required this.gateway,
       RecebimentoPendenteStore? store,
-      DateTime Function()? clock})
+      DateTime Function()? clock,
+      MudancasJornada? observarMudancas,
+      Duration debounceMudancas = const Duration(milliseconds: 600)})
       : store = store ??
             RecebimentoPendenteLocalStore(namespace: 'jornada_pendente_v1'),
-        clock = clock ?? DateTime.now;
+        clock = clock ?? DateTime.now,
+        _observarMudancas = observarMudancas,
+        _debounceMudancas = debounceMudancas;
   final String idCotacao, idFornecedor;
   final JornadaGateway gateway;
   final RecebimentoPendenteStore store;
   final DateTime Function() clock;
+  final MudancasJornada? _observarMudancas;
+  final Duration _debounceMudancas;
+  StreamSubscription<void>? _mudancasSub;
+  String? _idOrcamentoObservado;
+  Timer? _timerRecarga;
+  bool _recargaPendente = false;
   final dados = Rxn<Map<String, dynamic>>(),
       pendente = Rxn<Map<String, dynamic>>();
   final carregando = false.obs, enviando = false.obs;
@@ -54,6 +65,11 @@ class JornadaAtendimentoController extends GetxController
   Future<void> _trocar(String? uid) async {
     final g = ++_g;
     _uid = uid;
+    _timerRecarga?.cancel();
+    _recargaPendente = false;
+    unawaited(_mudancasSub?.cancel());
+    _mudancasSub = null;
+    _idOrcamentoObservado = null;
     dados.value = null;
     pendente.value = null;
     erro.value = '';
@@ -88,7 +104,10 @@ class JornadaAtendimentoController extends GetxController
     try {
       final r = await gateway.chamar('consultarJornadaAtendimentoFn',
           {'idCotacao': idCotacao, 'idFornecedor': idFornecedor});
-      if (ativa(g)) dados.value = r;
+      if (ativa(g)) {
+        dados.value = r;
+        _observarAtualizacoes(r['idOrcamento']?.toString());
+      }
     } catch (e) {
       if (ativa(g)) {
         dados.value = null;
@@ -100,7 +119,41 @@ class JornadaAtendimentoController extends GetxController
       }
     } finally {
       if (ativa(g)) carregando.value = false;
+      if (_recargaPendente && ativa(g)) {
+        _recargaPendente = false;
+        _agendarRecarga();
+      }
     }
+  }
+
+  /// Escuta o servidor e pede nova consulta quando a proposta ou o contrato
+  /// mudam, sem depender de o usuário tocar em atualizar.
+  void _observarAtualizacoes(String? idOrcamento) {
+    final observar = _observarMudancas;
+    if (observar == null || _fechado) return;
+    final alvo =
+        (idOrcamento == null || idOrcamento.isEmpty) ? null : idOrcamento;
+    if (_mudancasSub != null && _idOrcamentoObservado == alvo) return;
+    unawaited(_mudancasSub?.cancel());
+    _idOrcamentoObservado = alvo;
+    _mudancasSub = observar(idCotacao, idFornecedor, alvo).listen(
+        (_) => _agendarRecarga(),
+        onError: (Object _) {});
+  }
+
+  void _agendarRecarga() {
+    if (_fechado || _uid == null) return;
+    _timerRecarga?.cancel();
+    _timerRecarga = Timer(_debounceMudancas, () {
+      if (_fechado || _uid == null) return;
+      // Um comando em andamento já recarrega ao terminar.
+      if (enviando.value) return;
+      if (carregando.value) {
+        _recargaPendente = true;
+        return;
+      }
+      unawaited(carregar());
+    });
   }
 
   Future<bool> comandar(String funcao, Map<String, dynamic> dadosComando,
@@ -199,7 +252,7 @@ class JornadaAtendimentoController extends GetxController
       if (!ativa(g)) return false;
       pendente.value = null;
       mensagem.value = funcao == 'fecharCotacao'
-          ? 'Contrato criado. Acesse o financeiro deste contrato para declarar o pagamento.'
+          ? 'Contrato criado. Pague a 1ª parcela com Pix neste atendimento.'
           : 'Ação registrada com histórico.';
       await carregar();
       return true;
@@ -235,6 +288,8 @@ class JornadaAtendimentoController extends GetxController
   void onClose() {
     _fechado = true;
     ++_g;
+    _timerRecarga?.cancel();
+    unawaited(_mudancasSub?.cancel());
     unawaited(_sub?.cancel());
     super.onClose();
   }

@@ -28,10 +28,14 @@ class ConsultaEventos<T> {
   const ConsultaEventos({
     required this.escritaPendente,
     required this.documentos,
+    this.semServidor = false,
   });
 
   final bool escritaPendente;
   final List<EventoEmTransito<T>> documentos;
+
+  /// Sem conexão: a escrita pendente não vai ser confirmada tão cedo.
+  final bool semServidor;
 }
 
 /// Decide quais eventos já podem abrir orçamento, convidados e tarefas.
@@ -39,18 +43,27 @@ class ConsultaEventos<T> {
 /// Essas listas passam por `eventoDono`, que lê `evento/{id}` no servidor.
 /// Publicar um documento que existe só no cache faz a consulta voltar
 /// `permission-denied` e a escuta não se recupera.
+///
+/// Sem servidor, o evento é publicado mesmo pendente: as consultas vão ao
+/// cache e não passam pelas regras. Ao reconectar, a sessão reabre as escutas
+/// depois que a fila local chega ao servidor.
 class EventoLeituraConfirmada {
   const EventoLeituraConfirmada._();
 
-  static bool podePublicar({required bool escritaPendente}) => !escritaPendente;
+  static bool podePublicar({
+    required bool escritaPendente,
+    bool semServidor = false,
+  }) =>
+      !escritaPendente || semServidor;
 
   static PublicacaoListaEventos<T> daConsulta<T>({
     required bool escritaPendente,
     required List<EventoEmTransito<T>> documentos,
+    bool semServidor = false,
   }) {
     final pendente =
         escritaPendente || documentos.any((item) => item.escritaPendente);
-    if (!podePublicar(escritaPendente: pendente)) {
+    if (!podePublicar(escritaPendente: pendente, semServidor: semServidor)) {
       return PublicacaoListaEventos<T>.omitida();
     }
     return PublicacaoListaEventos<T>.lista(
@@ -64,6 +77,7 @@ class EventoLeituraConfirmada {
     return daConsulta(
       escritaPendente: consulta.escritaPendente,
       documentos: consulta.documentos,
+      semServidor: consulta.semServidor,
     );
   }
 

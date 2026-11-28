@@ -19,7 +19,23 @@ abstract final class FirebaseServicesBootstrap {
     } catch (e, s) {
       debugPrint('⚠️ Firebase.initializeApp: $e\n$s');
     }
+    configurarCacheOffline(FirebaseFirestore.instance);
     register();
+  }
+
+  /// Tamanho do cache local do Firestore, que sustenta o uso sem internet.
+  static const cacheOfflineBytes = 200 * 1024 * 1024;
+
+  /// Precisa rodar antes da primeira leitura ou escrita da instância.
+  static void configurarCacheOffline(FirebaseFirestore firestore) {
+    try {
+      firestore.settings = const Settings(
+        persistenceEnabled: true,
+        cacheSizeBytes: cacheOfflineBytes,
+      );
+    } catch (e) {
+      debugPrint('⚠️ Firestore cache offline: $e');
+    }
   }
 
   static void register() {

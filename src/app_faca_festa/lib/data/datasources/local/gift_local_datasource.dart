@@ -80,6 +80,27 @@ class GiftLocalDatasource {
     );
   }
 
+  /// Marca como enviado só se a linha ainda for a versão que foi enviada: uma
+  /// edição feita durante o envio continua pendente.
+  Future<void> markSyncedSeVersao(String giftId, DateTime versao) async {
+    await (db.update(db.giftLocals)
+          ..where((t) => t.giftId.equals(giftId) & t.updatedAt.equals(versao)))
+        .write(const GiftLocalsCompanion(synced: Value(true)));
+  }
+
+  /// Remove presentes já sincronizados que o servidor não tem mais.
+  Future<void> removerSincronizadosAusentes(
+    String eventoId,
+    Set<String> idsDoServidor,
+  ) async {
+    await (db.delete(db.giftLocals)
+          ..where((t) =>
+              t.eventoId.equals(eventoId) &
+              t.synced.equals(true) &
+              t.giftId.isNotIn(idsDoServidor)))
+        .go();
+  }
+
   Future<void> clear() async {
     await db.delete(db.giftLocals).go();
   }

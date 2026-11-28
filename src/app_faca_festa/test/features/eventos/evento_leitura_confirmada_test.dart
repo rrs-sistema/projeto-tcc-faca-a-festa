@@ -50,6 +50,25 @@ void main() {
     expect(publicacao.eventos, isNull);
   });
 
+  test('sem servidor, o evento criado no aparelho aparece na lista', () async {
+    final recebidas = await EventoLeituraConfirmada.listasConfirmadas(
+      Stream.fromIterable(const [
+        ConsultaEventos(
+          escritaPendente: true,
+          semServidor: true,
+          documentos: [
+            EventoEmTransito(valor: 'evento-antigo', escritaPendente: false),
+            EventoEmTransito(valor: 'criado-offline', escritaPendente: true),
+          ],
+        ),
+      ]),
+    ).toList();
+
+    expect(recebidas, [
+      ['evento-antigo', 'criado-offline'],
+    ]);
+  });
+
   test('listasConfirmadas só emite o snapshot depois do commit', () async {
     final recebidas = await EventoLeituraConfirmada.listasConfirmadas(
       Stream.fromIterable(const [

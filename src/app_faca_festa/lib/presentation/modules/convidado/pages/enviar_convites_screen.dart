@@ -41,6 +41,8 @@ class _EnviarConvitesScreenState extends State<EnviarConvitesScreen> {
 
   final TextEditingController _searchController = TextEditingController();
   final RxMap<String, Convidado> _selecionados = <String, Convidado>{}.obs;
+  // "Selecionar visíveis" ignora quem já confirmou, salvo se o usuário optar.
+  final RxBool _incluirConfirmados = false.obs;
 
   @override
   void initState() {
@@ -73,16 +75,16 @@ class _EnviarConvitesScreenState extends State<EnviarConvitesScreen> {
             Text(
               'Convites',
               style: GoogleFonts.playfairDisplay(
-                fontSize: 18,
+                fontSize: 20,
                 fontWeight: FontWeight.w800,
                 color: Colors.white,
               ),
             ),
             Text(
-              'Marque, copie o link ou envie o e-mail',
+              'Copie o link ou envie o e-mail',
               style: GoogleFonts.poppins(
                 color: Colors.white.withValues(alpha: 0.88),
-                fontSize: 11,
+                fontSize: 14,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -196,7 +198,7 @@ class _EnviarConvitesScreenState extends State<EnviarConvitesScreen> {
                       Text(
                           'Marque as pessoas e escolha: copiar o link ou enviar por e-mail.',
                           style: GoogleFonts.poppins(
-                              fontSize: 11, color: const Color(0xFF6B7280))),
+                              fontSize: 12, color: const Color(0xFF6B7280))),
                     ],
                   ),
                 ),
@@ -273,42 +275,91 @@ class _EnviarConvitesScreenState extends State<EnviarConvitesScreen> {
       final lista = _listaParaEnvio();
       final totalVisivel = lista.length;
       final totalSelecionado = _selecionados.length;
-      final todosSelecionados = totalVisivel > 0 && lista.every(_isSelecionado);
+      final incluirConfirmados = _incluirConfirmados.value;
+      final totalConfirmados =
+          lista.where((c) => c.status == StatusConvidado.confirmado).length;
+      final elegiveis = incluirConfirmados
+          ? lista
+          : lista
+              .where((c) => c.status != StatusConvidado.confirmado)
+              .toList(growable: false);
+      final todosSelecionados =
+          elegiveis.isNotEmpty && elegiveis.every(_isSelecionado);
 
       return Padding(
         padding: const EdgeInsets.fromLTRB(12, 0, 12, 4),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: Text(
-                totalSelecionado == 0
-                    ? '$totalVisivel disponíveis'
-                    : '$totalSelecionado selecionados',
-                style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    color: const Color(0xFF6B7280),
-                    fontWeight: FontWeight.w600),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    totalSelecionado == 0
+                        ? '$totalVisivel disponíveis'
+                        : '$totalSelecionado selecionados',
+                    style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        color: const Color(0xFF6B7280),
+                        fontWeight: FontWeight.w600),
+                  ),
+                ),
+                TextButton.icon(
+                  onPressed: elegiveis.isEmpty
+                      ? null
+                      : () {
+                          _alternarSelecaoVisivel(
+                            lista: elegiveis,
+                            todosSelecionados: todosSelecionados,
+                          );
+                        },
+                  icon: Icon(
+                      todosSelecionados
+                          ? Icons.check_box_rounded
+                          : Icons.check_box_outline_blank_rounded,
+                      size: 18),
+                  label: Text(
+                      todosSelecionados
+                          ? 'Limpar visíveis'
+                          : 'Selecionar visíveis',
+                      style: const TextStyle(fontSize: 12)),
+                  style: TextButton.styleFrom(foregroundColor: primary),
+                ),
+              ],
+            ),
+            if (totalConfirmados > 0)
+              InkWell(
+                borderRadius: BorderRadius.circular(8),
+                onTap: () => _incluirConfirmados.toggle(),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: Checkbox(
+                          value: incluirConfirmados,
+                          activeColor: primary,
+                          visualDensity: VisualDensity.compact,
+                          materialTapTargetSize:
+                              MaterialTapTargetSize.shrinkWrap,
+                          onChanged: (_) => _incluirConfirmados.toggle(),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Incluir quem já confirmou ($totalConfirmados)',
+                        style: GoogleFonts.poppins(
+                            fontSize: 11.5,
+                            color: const Color(0xFF6B7280),
+                            fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ),
-            TextButton.icon(
-              onPressed: totalVisivel == 0
-                  ? null
-                  : () {
-                      _alternarSelecaoVisivel(
-                        lista: lista,
-                        todosSelecionados: todosSelecionados,
-                      );
-                    },
-              icon: Icon(
-                  todosSelecionados
-                      ? Icons.check_box_rounded
-                      : Icons.check_box_outline_blank_rounded,
-                  size: 18),
-              label: Text(
-                  todosSelecionados ? 'Limpar visíveis' : 'Selecionar visíveis',
-                  style: const TextStyle(fontSize: 12)),
-              style: TextButton.styleFrom(foregroundColor: primary),
-            ),
           ],
         ),
       );
@@ -378,6 +429,9 @@ class _EnviarConvitesScreenState extends State<EnviarConvitesScreen> {
   Widget _buildBottomSendBar(Color primary, LinearGradient gradient) {
     return Obx(() {
       final temSelecionados = _selecionados.isNotEmpty;
+      final comEmail =
+          _selecionados.values.where((item) => item.temEmail).length;
+      final semEmail = _selecionados.length - comEmail;
       return AnimatedSwitcher(
         duration: const Duration(milliseconds: 300),
         child: temSelecionados
@@ -476,22 +530,49 @@ class _EnviarConvitesScreenState extends State<EnviarConvitesScreen> {
                             backgroundColor: Colors.white,
                             foregroundColor: primary,
                             iconColor: primary,
+                            disabledBackgroundColor:
+                                Colors.white.withValues(alpha: 0.35),
+                            disabledForegroundColor:
+                                Colors.white.withValues(alpha: 0.85),
+                            disabledIconColor:
+                                Colors.white.withValues(alpha: 0.85),
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
-                          icon: const Icon(Icons.email_outlined, size: 16),
+                          icon: Icon(
+                            comEmail > 0
+                                ? Icons.email_outlined
+                                : Icons.unsubscribe_outlined,
+                            size: 16,
+                          ),
                           label: Text(
-                            'Enviar por e-mail',
+                            comEmail > 0
+                                ? 'Enviar por e-mail ($comEmail)'
+                                : 'Enviar por e-mail',
                             style: GoogleFonts.poppins(
                               fontWeight: FontWeight.w800,
                               fontSize: 13,
                             ),
                           ),
-                          onPressed: _confirmarEnvioEmail,
+                          onPressed: comEmail > 0 ? _confirmarEnvioEmail : null,
                         ),
                       ),
+                      if (semEmail > 0) ...[
+                        const SizedBox(height: 6),
+                        Text(
+                          comEmail == 0
+                              ? 'Nenhum selecionado tem e-mail cadastrado. Use copiar link ou compartilhar.'
+                              : '$semEmail sem e-mail cadastrado não receberá(ão) o e-mail.',
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.poppins(
+                            color: Colors.white.withValues(alpha: 0.92),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -794,9 +875,12 @@ class _InviteGuestCard extends StatelessWidget {
     final initial = convidado.nome.trim().isEmpty
         ? '?'
         : convidado.nome.trim()[0].toUpperCase();
+    final temEmail = convidado.temEmail;
     final email = convidado.email?.trim().isNotEmpty == true
         ? convidado.email!.trim()
-        : 'Sem e-mail';
+        : (convidado.emailUsuario?.trim().isNotEmpty == true
+            ? convidado.emailUsuario!.trim()
+            : 'Sem e-mail');
     final grupo = convidado.nomeGrupo?.trim().isNotEmpty == true
         ? convidado.nomeGrupo!.trim()
         : 'Sem grupo';
@@ -855,16 +939,27 @@ class _InviteGuestCard extends StatelessWidget {
                     const SizedBox(height: 2),
                     Row(
                       children: [
-                        Icon(Icons.email_outlined,
-                            size: 12, color: Colors.grey.shade500),
+                        Icon(
+                            temEmail
+                                ? Icons.email_outlined
+                                : Icons.unsubscribe_outlined,
+                            size: 12,
+                            color: temEmail
+                                ? Colors.grey.shade500
+                                : Colors.orange.shade800),
                         const SizedBox(width: 4),
                         Expanded(
-                            child: Text(email,
+                            child: Text(
+                                temEmail
+                                    ? email
+                                    : 'Sem e-mail (envio indisponível)',
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: GoogleFonts.poppins(
                                     fontSize: 11,
-                                    color: const Color(0xFF6B7280)))),
+                                    color: temEmail
+                                        ? const Color(0xFF6B7280)
+                                        : Colors.orange.shade800))),
                       ],
                     ),
                     const SizedBox(height: 6),

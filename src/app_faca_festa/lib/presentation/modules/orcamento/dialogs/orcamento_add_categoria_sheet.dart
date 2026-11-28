@@ -6,9 +6,16 @@ Future<void> showAddOrcamentoBottomSheet(
   required EventThemeController themeController,
   required OrcamentoController orcamentoController,
   required String? idSolicitante,
+  Orcamento? orcamentoExistente,
 }) async {
-  final nomeCtrl = TextEditingController();
-  final custoEstimadoCtrl = TextEditingController();
+  final bool edicao = orcamentoExistente != null;
+  final nomeCtrl =
+      TextEditingController(text: orcamentoExistente?.anotacoes?.trim() ?? '');
+  final custoEstimadoCtrl = TextEditingController(
+    text: (orcamentoExistente?.custoEstimado ?? 0) > 0
+        ? NumericInput.dinheiro(orcamentoExistente!.custoEstimado!)
+        : '',
+  );
   final formKey = GlobalKey<FormState>();
   final dinheiroMask = FormMasks.dinheiro();
   final RxBool salvando = false.obs;
@@ -32,8 +39,10 @@ Future<void> showAddOrcamentoBottomSheet(
       salvando.value = true;
       final double custo = FormValidators.parseDinheiro(custoTexto);
 
-      final resultado =
-          await orcamentoController.validarCriacaoOrcamento(custo);
+      final resultado = await orcamentoController.validarCriacaoOrcamento(
+        custo,
+        ignorarIdOrcamento: orcamentoExistente?.idOrcamento,
+      );
 
       if (!resultado.$1) {
         Get.snackbar(
@@ -53,17 +62,25 @@ Future<void> showAddOrcamentoBottomSheet(
 
       EasyLoading.show(status: 'Salvando...');
 
-      final novo = Orcamento(
-        idOrcamento: DateTime.now().millisecondsSinceEpoch.toString(),
-        idEvento: idEvento,
-        idServicoFornecido: null,
-        idSolicitante: idSolicitante,
-        custoEstimado: custo,
-        anotacoes: descricao,
-        status: StatusOrcamento.pendente,
-      );
+      if (orcamentoExistente != null) {
+        await orcamentoController.atualizarOrcamento(
+          idOrcamento: orcamentoExistente.idOrcamento,
+          anotacoes: descricao,
+          custoEstimado: custo,
+        );
+      } else {
+        final novo = Orcamento(
+          idOrcamento: DateTime.now().millisecondsSinceEpoch.toString(),
+          idEvento: idEvento,
+          idServicoFornecido: null,
+          idSolicitante: idSolicitante,
+          custoEstimado: custo,
+          anotacoes: descricao,
+          status: StatusOrcamento.pendente,
+        );
 
-      await orcamentoController.criarOrcamento(novo);
+        await orcamentoController.criarOrcamento(novo);
+      }
 
       FocusManager.instance.primaryFocus?.unfocus();
       EasyLoading.dismiss();
@@ -73,7 +90,7 @@ Future<void> showAddOrcamentoBottomSheet(
       }
 
       Get.snackbar(
-        'Item adicionado',
+        edicao ? 'Item atualizado' : 'Item adicionado',
         descricao,
         backgroundColor: primary,
         colorText: Colors.white,
@@ -145,7 +162,7 @@ Future<void> showAddOrcamentoBottomSheet(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Novo item',
+                      edicao ? 'Editar item' : 'Novo item',
                       style: GoogleFonts.poppins(
                         color: Colors.white,
                         fontSize: 18,
@@ -155,7 +172,9 @@ Future<void> showAddOrcamentoBottomSheet(
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Entra no previsto. O pagamento você registra depois, no item.',
+                      edicao
+                          ? 'Altere o nome ou o valor previsto. Os pagamentos já registrados continuam no item.'
+                          : 'Entra no previsto. O pagamento você registra depois, no item.',
                       style: GoogleFonts.poppins(
                         color: Colors.white.withValues(alpha: 0.88),
                         fontSize: 12,
@@ -348,7 +367,11 @@ Future<void> showAddOrcamentoBottomSheet(
                                         color: Colors.white,
                                         size: 18),
                                 label: Text(
-                                  isSaving ? 'Salvando...' : 'Salvar item',
+                                  isSaving
+                                      ? 'Salvando...'
+                                      : (edicao
+                                          ? 'Salvar alterações'
+                                          : 'Salvar item'),
                                   style: GoogleFonts.poppins(
                                     color: Colors.white,
                                     fontSize: 14,

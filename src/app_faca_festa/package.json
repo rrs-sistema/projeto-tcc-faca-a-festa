@@ -6,6 +6,7 @@
     "test:audit": "npm --prefix functions run test:audit-actions && flutter test test/features/auditoria && dart analyze lib/data/models/auditoria lib/domain/entities/auditoria_evento.dart lib/presentation/modules/auditoria/controllers/auditoria_controller.dart lib/presentation/widgets/auditoria lib/presentation/modules/admin/pages/auditoria_admin_screen.dart lib/presentation/modules/admin/pages/auditoria_dashboard_screen.dart lib/presentation/modules/fornecedor/pages/auditoria_fornecedor_screen.dart",
     "test:rules": "firebase emulators:exec --only firestore \"node test/firestore/auditoria.rules.test.js && node test/firestore/tarefa.rules.test.js\"",
     "test:calculadora": "flutter test test/features/calculadora test/features/cardapios && npm --prefix functions run check:calculadora",
+    "test:rules:presentes": "firebase emulators:exec --project demo-presentes-rules --only firestore \"node test/firestore/presentes.rules.test.js\"",
     "test:rules:calculadora": "firebase emulators:exec --only firestore \"node test/firestore/calculadora.rules.test.js\"",
     "test:rules:financeiro": "firebase emulators:exec --project demo-faca-festa-financeiro --only firestore \"node test/firestore/financeiro.rules.test.js\"",
     "test:financeiro": "flutter test test/features/financeiro test/features/admin/orcamentos_admin_conciliacao_test.dart test/features/calculadora/financeiro_real_test.dart && npm --prefix functions run check:financeiro",
@@ -32,7 +33,8 @@
     "test:agenda:fornecedor": "npm --prefix functions run build && firebase emulators:exec --project demo-agenda-fornecedor --only firestore \"node functions/scripts/testAgendaFornecedorEmulator.js && node test/firestore/agenda_fornecedor.rules.test.js\"",
     "test:planejamento:fornecedor": "npm --prefix functions run build && firebase emulators:exec --project demo-planejamento-fornecedor --only firestore \"node functions/scripts/testPlanejamentoFornecedorEmulator.js\"",
     "test:operacao:fornecedor": "node functions/scripts/testExigirEmuladorDemo.js && npm --prefix functions run build && node functions/scripts/testRecebimentosCaixaDominio.js && node functions/scripts/testTransacaoIdempotente.js && firebase emulators:exec --config firebase.operacao-test.json --project demo-operacao-fornecedor --only firestore \"node functions/scripts/testOperacaoFornecedorIntegrada.js\"",
-    "test:painel:fontes": "firebase emulators:exec --project demo-painel-fontes --config firebase.operacao-test.json --only firestore \"node functions/scripts/testPainelFontesDisponiveisEmulator.js\""
+    "test:painel:fontes": "firebase emulators:exec --project demo-painel-fontes --config firebase.operacao-test.json --only firestore \"node functions/scripts/testPainelFontesDisponiveisEmulator.js\"",
+    "check:offline:aparelho": "npm --prefix functions run build && firebase emulators:exec --project demo-offline-mobile --only auth,firestore --config firebase.offline-test.json \"node functions/scripts/testOfflineAparelho.js\""
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "^5.0.0",

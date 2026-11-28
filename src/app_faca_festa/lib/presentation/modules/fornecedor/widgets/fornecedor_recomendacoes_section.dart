@@ -1,15 +1,19 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'package:app_faca_festa/domain/entities/fornecedor_recomendacao.dart';
 import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_recomendacao_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import 'fornecedor_recomendado_card.dart';
 
 class FornecedorRecomendacoesSection extends StatefulWidget {
   final String idEvento;
   final String idUsuario;
   final FornecedorRecomendacaoController controller;
+  final EventThemeController? themeController;
   final String? tipoEventoId;
   final String? tipoEventoNome;
   final String? cidade;
@@ -17,15 +21,16 @@ class FornecedorRecomendacoesSection extends StatefulWidget {
   final bool modoDemo;
   final bool gerarAoIniciar;
   final EdgeInsetsGeometry margin;
-  final ValueChanged<FornecedorRecomendacao>? onAbrirFornecedor;
-  final ValueChanged<FornecedorRecomendacao>? onReservar;
-  final ValueChanged<FornecedorRecomendacao>? onPedirOrcamento;
+  final FutureOr<void> Function(FornecedorRecomendacao)? onAbrirFornecedor;
+  final FutureOr<void> Function(FornecedorRecomendacao)? onReservar;
+  final FutureOr<void> Function(FornecedorRecomendacao)? onPedirOrcamento;
 
   const FornecedorRecomendacoesSection({
     super.key,
     required this.idEvento,
     required this.idUsuario,
     required this.controller,
+    this.themeController,
     this.tipoEventoId,
     this.tipoEventoNome,
     this.cidade,
@@ -46,6 +51,7 @@ class FornecedorRecomendacoesSection extends StatefulWidget {
 class _FornecedorRecomendacoesSectionState
     extends State<FornecedorRecomendacoesSection> {
   FornecedorRecomendacaoController get controller => widget.controller;
+  final Map<String, FornecedorRecomendadoAcao> _acoesEmAndamento = {};
 
   @override
   void initState() {
@@ -98,50 +104,84 @@ class _FornecedorRecomendacoesSectionState
     );
   }
 
-  Future<void> _visualizar(FornecedorRecomendacao item) async {
-    await controller.visualizarFornecedor(
-      idEvento: widget.idEvento,
-      idFornecedor: item.idFornecedor,
-      tipoEventoId: widget.tipoEventoId,
-      tipoEventoNome: widget.tipoEventoNome,
-      cidade: widget.cidade,
-    );
+  Future<void> _executarAcao(
+    FornecedorRecomendacao item,
+    FornecedorRecomendadoAcao acao,
+    Future<void> Function() operacao,
+  ) async {
+    final chave = item.idFornecedor;
+    if (_acoesEmAndamento.containsKey(chave)) return;
 
-    widget.onAbrirFornecedor?.call(item);
+    setState(() {
+      _acoesEmAndamento[chave] = acao;
+    });
+
+    try {
+      await operacao();
+    } finally {
+      if (mounted) {
+        setState(() {
+          _acoesEmAndamento.remove(chave);
+        });
+      }
+    }
   }
 
-  Future<void> _pedirOrcamento(FornecedorRecomendacao item) async {
-    await controller.pedirOrcamentoFornecedor(
-      idEvento: widget.idEvento,
-      idFornecedor: item.idFornecedor,
-      tipoEventoId: widget.tipoEventoId,
-      tipoEventoNome: widget.tipoEventoNome,
-      cidade: widget.cidade,
-    );
+  Future<void> _visualizar(FornecedorRecomendacao item) {
+    return _executarAcao(item, FornecedorRecomendadoAcao.visualizar, () async {
+      await controller.visualizarFornecedor(
+        idEvento: widget.idEvento,
+        idFornecedor: item.idFornecedor,
+        tipoEventoId: widget.tipoEventoId,
+        tipoEventoNome: widget.tipoEventoNome,
+        cidade: widget.cidade,
+      );
 
-    widget.onPedirOrcamento?.call(item);
+      if (!mounted) return;
+      await widget.onAbrirFornecedor?.call(item);
+    });
   }
 
-  Future<void> _reservar(FornecedorRecomendacao item) async {
-    await controller.reservarFornecedor(
-      idEvento: widget.idEvento,
-      idFornecedor: item.idFornecedor,
-      tipoEventoId: widget.tipoEventoId,
-      tipoEventoNome: widget.tipoEventoNome,
-      cidade: widget.cidade,
-    );
+  Future<void> _pedirOrcamento(FornecedorRecomendacao item) {
+    return _executarAcao(item, FornecedorRecomendadoAcao.orcamento, () async {
+      await controller.pedirOrcamentoFornecedor(
+        idEvento: widget.idEvento,
+        idFornecedor: item.idFornecedor,
+        tipoEventoId: widget.tipoEventoId,
+        tipoEventoNome: widget.tipoEventoNome,
+        cidade: widget.cidade,
+      );
 
-    widget.onReservar?.call(item);
+      if (!mounted) return;
+      await widget.onPedirOrcamento?.call(item);
+    });
   }
 
-  Future<void> _dispensar(FornecedorRecomendacao item) async {
-    await controller.dispensarFornecedor(
-      idEvento: widget.idEvento,
-      idFornecedor: item.idFornecedor,
-      tipoEventoId: widget.tipoEventoId,
-      tipoEventoNome: widget.tipoEventoNome,
-      cidade: widget.cidade,
-    );
+  Future<void> _reservar(FornecedorRecomendacao item) {
+    return _executarAcao(item, FornecedorRecomendadoAcao.reservar, () async {
+      await controller.reservarFornecedor(
+        idEvento: widget.idEvento,
+        idFornecedor: item.idFornecedor,
+        tipoEventoId: widget.tipoEventoId,
+        tipoEventoNome: widget.tipoEventoNome,
+        cidade: widget.cidade,
+      );
+
+      if (!mounted) return;
+      await widget.onReservar?.call(item);
+    });
+  }
+
+  Future<void> _dispensar(FornecedorRecomendacao item) {
+    return _executarAcao(item, FornecedorRecomendadoAcao.dispensar, () async {
+      await controller.dispensarFornecedor(
+        idEvento: widget.idEvento,
+        idFornecedor: item.idFornecedor,
+        tipoEventoId: widget.tipoEventoId,
+        tipoEventoNome: widget.tipoEventoNome,
+        cidade: widget.cidade,
+      );
+    });
   }
 
   @override
@@ -150,74 +190,80 @@ class _FornecedorRecomendacoesSectionState
       return const SizedBox.shrink();
     }
 
-    final theme = Theme.of(context);
-    final primary = theme.colorScheme.primary;
-
     return Container(
       margin: widget.margin,
       child: Obx(() {
+        final themeCtrl = widget.themeController ??
+            (Get.isRegistered<EventThemeController>()
+                ? Get.find<EventThemeController>()
+                : null);
+        final tema = themeCtrl?.materialTheme ?? Theme.of(context);
+        final primary = tema.colorScheme.primary;
         final loading = controller.carregando.value || controller.gerando.value;
         final erro = controller.erro.value;
         final lista = controller.recomendacoes.take(widget.limite).toList();
 
+        Widget content;
         if (loading && lista.isEmpty) {
-          return _RecomendacaoSkeleton(primary: primary);
-        }
-
-        if (lista.isEmpty) {
-          return _EmptyRecomendacaoCard(
+          content = _RecomendacaoSkeleton(primary: primary);
+        } else if (lista.isEmpty) {
+          content = _EmptyRecomendacaoCard(
             primary: primary,
             loading: loading,
             erro: erro,
             tipoEventoNome: widget.tipoEventoNome,
             onGerar: _atualizar,
           );
+        } else {
+          content = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _SectionHeader(
+                primary: primary,
+                loading: loading,
+                total: lista.length,
+                tipoEventoNome: widget.tipoEventoNome,
+                cidade: widget.cidade,
+                onRefresh: _atualizar,
+              ),
+              const SizedBox(height: 12),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final largura = lista.length == 1
+                      ? constraints.maxWidth
+                      : constraints.maxWidth * 0.94;
+                  return SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        for (final (index, item) in lista.indexed) ...[
+                          if (index > 0) const SizedBox(width: 12),
+                          SizedBox(
+                            width: largura,
+                            child: FornecedorRecomendadoCard(
+                              key: ValueKey(item.id),
+                              recomendacao: item,
+                              acaoEmAndamento:
+                                  _acoesEmAndamento[item.idFornecedor],
+                              onTap: () => _visualizar(item),
+                              onPedirOrcamento: () => _pedirOrcamento(item),
+                              onReservar: () => _reservar(item),
+                              onDispensar: () => _dispensar(item),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ],
+          );
         }
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _SectionHeader(
-              primary: primary,
-              loading: loading,
-              total: lista.length,
-              tipoEventoNome: widget.tipoEventoNome,
-              cidade: widget.cidade,
-              onRefresh: _atualizar,
-            ),
-            const SizedBox(height: 12),
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final largura = lista.length == 1
-                    ? constraints.maxWidth
-                    : constraints.maxWidth * 0.94;
-                return SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      for (final (index, item) in lista.indexed) ...[
-                        if (index > 0) const SizedBox(width: 12),
-                        SizedBox(
-                          width: largura,
-                          child: FornecedorRecomendadoCard(
-                            key: ValueKey(item.id),
-                            recomendacao: item,
-                            onTap: () => _visualizar(item),
-                            onPedirOrcamento: () => _pedirOrcamento(item),
-                            onReservar: () => _reservar(item),
-                            onDispensar: () => _dispensar(item),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                );
-              },
-            ),
-          ],
-        );
+        return Theme(data: tema, child: content);
       }),
     );
   }
@@ -369,7 +415,7 @@ class _EmptyRecomendacaoCard extends StatelessWidget {
                       : 'Use a IA para encontrar fornecedores compatíveis com $evento.',
                   style: GoogleFonts.poppins(
                     fontSize: 11.5,
-                    color: erro.isNotEmpty
+                    color: erro.isNotEmpty && !erro.startsWith('Sem internet')
                         ? Colors.redAccent
                         : theme.textTheme.bodySmall?.color
                             ?.withValues(alpha: 0.72),

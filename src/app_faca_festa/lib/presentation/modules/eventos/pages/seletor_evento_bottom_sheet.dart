@@ -16,6 +16,7 @@ import 'package:app_faca_festa/presentation/modules/tema/controllers/tema_festa_
 import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_controller.dart';
 import 'welcome_event_screen.dart';
 import 'package:app_faca_festa/presentation/modules/usuario/pages/cadastro_evento_bottom_sheet.dart';
+import 'package:app_faca_festa/presentation/widgets/selo_sincronizacao.dart';
 
 Future<void> showSeletorEventoBottomSheet(
   BuildContext context, {
@@ -402,6 +403,7 @@ class _EventoTile extends StatelessWidget {
                         color: const Color(0xFF64748B),
                       ),
                     ),
+                    SeloSincronizacao(chave: evento.idEvento),
                   ],
                 ),
               ),

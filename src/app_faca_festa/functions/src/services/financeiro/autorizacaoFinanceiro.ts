@@ -47,18 +47,24 @@ export async function exigirAcessoFinanceiroEvento(
       // Admin vê fatos do evento (não custos privados de fornecedor).
       return { idEvento, idOrcamento: opcoes.idOrcamento };
     }
-    throw new HttpsError(
-      "permission-denied",
-      "Sem autorização financeira neste evento.",
-    );
+    throw new HttpsError("permission-denied", mensagemSemAcessoFinanceiro(eventoData));
   }
 
   if (isGestor || (isAdminPlataforma && opcoes?.permitirAdminEvento !== false)) {
     return { idEvento };
   }
 
-  throw new HttpsError(
-    "permission-denied",
-    "Sem autorização financeira neste evento.",
+  throw new HttpsError("permission-denied", mensagemSemAcessoFinanceiro(eventoData));
+}
+
+/** Texto para o organizador entender por que a conta não pode agir neste evento. */
+export function mensagemSemAcessoFinanceiro(eventoData: Record<string, unknown>): string {
+  const nome = String(eventoData.nome_evento ?? "").trim();
+  const alvo = nome ? `"${nome}"` : "esta festa";
+  return (
+    `Sua conta não é dona nem co-organizadora de ${alvo}. ` +
+    "Pagamentos e fechamentos desta festa só podem ser feitos pelo dono " +
+    "ou por um co-organizador cadastrado nela. " +
+    "Peça para ser adicionado(a) pelo dono ou entre com a conta certa."
   );
 }

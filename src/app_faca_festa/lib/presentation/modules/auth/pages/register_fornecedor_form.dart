@@ -2,6 +2,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:app_faca_festa/presentation/widgets/festa_imagem_rede.dart';
 import 'package:get/get.dart';
 import 'package:app_faca_festa/presentation/modules/auth/pages/components/fornecedor_cadastro_erro.dart';
 
@@ -500,7 +501,7 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
                   )
                 : (widget.bannerInicialUrl ?? '').isNotEmpty
                     ? DecorationImage(
-                        image: NetworkImage(widget.bannerInicialUrl!),
+                        image: festaImagemProvider(widget.bannerInicialUrl!),
                         fit: BoxFit.cover,
                         onError: (_, __) {},
                         colorFilter: ColorFilter.mode(

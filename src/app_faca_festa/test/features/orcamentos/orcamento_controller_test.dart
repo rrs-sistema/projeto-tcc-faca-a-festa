@@ -102,6 +102,22 @@ void main() {
     financeiro.dispose();
     await financeiro.financeiro.close();
   });
+  test('atualizarOrcamento altera nome e valor do item', () async {
+    controller.orcamentos
+        .assignAll([_orcamento(id: 'orcamento-1', custoEstimado: 100)]);
+
+    await controller.atualizarOrcamento(
+      idOrcamento: 'orcamento-1',
+      anotacoes: 'Aluguel do terno',
+      custoEstimado: 350,
+    );
+
+    expect(repository.atualizados.single, ('orcamento-1', 'Aluguel do terno', 350.0));
+    expect(controller.orcamentos.single.anotacoes, 'Aluguel do terno');
+    expect(controller.orcamentos.single.custoEstimado, 350);
+    expect(controller.totalCustoEstimado.value, 350);
+  });
+
   test('delegates create, answer and delete operations', () async {
     final orcamento = _orcamento(id: 'orcamento-1');
 
@@ -155,6 +171,7 @@ class _OrcamentoRepositoryFake implements OrcamentoRepository {
   final criados = <Orcamento>[];
   final respostas = <_RespostaOrcamento>[];
   final excluidos = <String>[];
+  final atualizados = <(String, String, double)>[];
 
   void emitirEvento(List<Orcamento> orcamentos) {
     _eventosController.add(orcamentos);
@@ -217,6 +234,15 @@ class _OrcamentoRepositoryFake implements OrcamentoRepository {
         fechar: fechar,
       ),
     );
+  }
+
+  @override
+  Future<void> atualizarOrcamento({
+    required String idOrcamento,
+    required String anotacoes,
+    required double custoEstimado,
+  }) async {
+    atualizados.add((idOrcamento, anotacoes, custoEstimado));
   }
 
   @override

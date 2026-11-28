@@ -186,6 +186,7 @@ extension _FornecedorDetalheServicos on FornecedorDetalheScreen {
                   fit: StackFit.expand,
                   children: [
                     CachedNetworkImage(
+                      cacheManager: AdaptiveCacheManager.instance,
                       imageUrl: fotoUrl,
                       fit: BoxFit.cover,
                       fadeInDuration: const Duration(milliseconds: 500),
@@ -494,6 +495,7 @@ extension _FornecedorDetalheServicos on FornecedorDetalheScreen {
           children: [
             // 🔹 Imagem principal
             CachedNetworkImage(
+              cacheManager: AdaptiveCacheManager.instance,
               imageUrl: fotoUrl,
               fit: BoxFit.cover,
               placeholder: (_, __) => Container(color: Colors.grey.shade200),

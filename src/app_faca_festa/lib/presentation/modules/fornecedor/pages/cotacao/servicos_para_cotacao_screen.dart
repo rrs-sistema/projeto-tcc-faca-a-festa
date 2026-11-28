@@ -1,5 +1,6 @@
 import 'package:app_faca_festa/presentation/widgets/festa_scroll_area.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:app_faca_festa/core/utils/no_sqflite_cache_manager.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/services.dart';
@@ -298,6 +299,7 @@ class _ServicosParaCotacaoScreenState extends State<ServicosParaCotacaoScreen> {
                 width: 90,
                 height: 90,
                 child: CachedNetworkImage(
+                  cacheManager: AdaptiveCacheManager.instance,
                   imageUrl: fotoUrl,
                   fit: BoxFit.cover,
                 ),

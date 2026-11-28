@@ -86,12 +86,12 @@ class RotuloInteiro extends StatelessWidget {
         final cabe = !limite.isFinite || limite <= 0 || natural <= limite + 0.5;
         final visual = tamanhoVisual ??
             MediaQuery.textScalerOf(context).scale(style.fontSize ?? 14);
-        final tamanho =
-            cabe ? visual : visual * (limite / natural) * 0.98;
+        final tamanho = cabe ? visual : visual * (limite / natural) * 0.98;
         final herdaEscala = tamanhoVisual == null && cabe;
         return Text(
           texto,
-          style: style.copyWith(fontSize: herdaEscala ? style.fontSize : tamanho),
+          style:
+              style.copyWith(fontSize: herdaEscala ? style.fontSize : tamanho),
           textAlign: alinhamento,
           textScaler: herdaEscala ? null : TextScaler.noScaling,
           maxLines: 1,

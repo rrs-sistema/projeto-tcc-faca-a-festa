@@ -2,6 +2,8 @@ import 'package:app_faca_festa/presentation/widgets/festa_scroll_area.dart';
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:flutter/material.dart';
+import 'package:app_faca_festa/presentation/widgets/festa_imagem_rede.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -188,9 +190,14 @@ class _GerenciarPresentesPageState extends State<GerenciarPresentesPage> {
                             return const SizedBox(height: 12);
                           }
                           final gift = gifts[index ~/ 2];
+                          final temPix = gift.tipo != GiftType.fisico &&
+                              (gift.pix ?? '').trim().isNotEmpty;
                           return _PremiumGiftCard(
                             gift: gift,
                             primary: primary,
+                            onCopyPix: temPix
+                                ? () => _copiarChavePix(gift, primary)
+                                : null,
                             onEdit: () => abrirDialogCadastrarPresente(
                               context,
                               presente: gift,
@@ -209,6 +216,27 @@ class _GerenciarPresentesPageState extends State<GerenciarPresentesPage> {
             )),
       );
     });
+  }
+
+  Future<void> _copiarChavePix(Gift gift, Color primary) async {
+    final pix = (gift.pix ?? '').trim();
+    if (pix.isEmpty) return;
+
+    await Clipboard.setData(ClipboardData(text: pix));
+    Get.snackbar(
+      'Chave PIX copiada',
+      pix,
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: primary,
+      colorText: Colors.white,
+      margin: const EdgeInsets.all(12),
+      borderRadius: 16,
+      duration: const Duration(seconds: 3),
+      icon: const Icon(
+        Icons.check_circle_outline_rounded,
+        color: Colors.white,
+      ),
+    );
   }
 
   void _confirmarExclusao(BuildContext context, Gift gift, Color primary) {
@@ -684,12 +712,14 @@ class _FilterPanel extends StatelessWidget {
 class _PremiumGiftCard extends StatelessWidget {
   final Gift gift;
   final Color primary;
+  final VoidCallback? onCopyPix;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
   const _PremiumGiftCard({
     required this.gift,
     required this.primary,
+    this.onCopyPix,
     required this.onEdit,
     required this.onDelete,
   });
@@ -739,13 +769,10 @@ class _PremiumGiftCard extends StatelessWidget {
                           Border.all(color: primary.withValues(alpha: 0.10)),
                     ),
                     child: temImagem
-                        ? Image.network(
+                        ? FestaImagemRede(
                             gift.imagem!,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Icon(
-                                _tipoIcon(gift.tipo),
-                                color: primary,
-                                size: 30),
+                            erro: Icon(_tipoIcon(gift.tipo),
+                                color: primary, size: 30),
                           )
                         : Icon(_tipoIcon(gift.tipo), color: primary, size: 32),
                   ),
@@ -808,10 +835,20 @@ class _PremiumGiftCard extends StatelessWidget {
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16)),
                     onSelected: (value) {
+                      if (value == 'copy_pix') onCopyPix?.call();
                       if (value == 'edit') onEdit();
                       if (value == 'delete') onDelete();
                     },
                     itemBuilder: (_) => [
+                      if (onCopyPix != null)
+                        PopupMenuItem(
+                          value: 'copy_pix',
+                          child: _MenuItem(
+                            icon: Icons.copy_rounded,
+                            label: 'Copiar chave PIX',
+                            color: primary,
+                          ),
+                        ),
                       PopupMenuItem(
                         value: 'edit',
                         child: _MenuItem(

@@ -1,5 +1,6 @@
 import 'package:app_faca_festa/presentation/widgets/festa_scroll_area.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:app_faca_festa/core/utils/no_sqflite_cache_manager.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -101,6 +102,8 @@ class _FornecedorLocalizacaoScreenState
     return Obx(() {
       final gradient = themeController.gradient.value;
       final primary = themeController.primaryColor.value;
+      final surface = themeController.surfaceColor.value;
+      final tema = themeController.materialTheme;
       final bool automaticallyImplyLeading = widget.showLeading ?? false;
 
       final fornecedoresBase = _baseFornecedores();
@@ -112,9 +115,11 @@ class _FornecedorLocalizacaoScreenState
       final recomendados =
           _recomendados(fornecedoresFiltrados, fornecedoresDestaque);
 
-      return Scaffold(
-        backgroundColor: const Color(0xFFF8FAFC),
-        appBar: FestaAppBar(
+      return Theme(
+        data: tema,
+        child: Scaffold(
+          backgroundColor: surface,
+          appBar: FestaAppBar(
           titulo: 'Fornecedores',
           automaticamenteImplyLeading: automaticallyImplyLeading,
           themeController: themeController,
@@ -180,6 +185,7 @@ class _FornecedorLocalizacaoScreenState
                   ),
                 ],
               )),
+        ),
         ),
       );
     });
@@ -666,7 +672,7 @@ class _FornecedorLocalizacaoScreenState
     return SizedBox(
       height: _CategoriasHeaderDelegateBuilder.extent,
       child: ColoredBox(
-        color: const Color(0xFFF8FAFC).withValues(alpha: 0.98),
+        color: themeController.surfaceColor.value.withValues(alpha: 0.98),
         child: FestaScrollArea(
             color: primary,
             scrollDirection: Axis.horizontal,
@@ -960,7 +966,10 @@ class _FornecedorLocalizacaoScreenState
 
   Widget _servicoImagem(FornecedorServicoDetalhado s, Color primary) {
     if (s.imagemUrl != null && s.imagemUrl!.isNotEmpty) {
-      return CachedNetworkImage(imageUrl: s.imagemUrl!, fit: BoxFit.cover);
+      return CachedNetworkImage(
+          cacheManager: AdaptiveCacheManager.instance,
+          imageUrl: s.imagemUrl!,
+          fit: BoxFit.cover);
     }
     return Container(
         color: primary.withValues(alpha: 0.1),
@@ -1234,6 +1243,7 @@ class _FornecedorPremiumCard extends StatelessWidget {
                   children: [
                     Positioned.fill(
                       child: CachedNetworkImage(
+                        cacheManager: AdaptiveCacheManager.instance,
                         imageUrl: f.bannerUrl ?? '',
                         fit: BoxFit.cover,
                         errorWidget: (_, __, ___) => Container(
@@ -1361,6 +1371,7 @@ class _FornecedorListCard extends StatelessWidget {
             ClipRRect(
               borderRadius: BorderRadius.circular(10),
               child: CachedNetworkImage(
+                cacheManager: AdaptiveCacheManager.instance,
                 imageUrl: f.bannerUrl ?? '',
                 width: 54, // Mais compacto (era 70)
                 height: 54,

@@ -502,7 +502,7 @@ Um fluxo concreto é a consulta de evento por identificador:
 4. O documento retornado é convertido por EventoModel.fromMap; o modelo é compatível com a entidade Evento.
 5. O resultado retorna ao controller, que atualiza o estado de carregamento e entrega o evento ao consumidor. O acompanhamento contínuo usa métodos com Stream próprios.
 
-No módulo de presentes, GiftRepositoryImpl.getGifts observa o datasource local. A criação grava primeiro o registro local com sincronização pendente e tenta envio remoto. GiftOfflineBootstrap compõe Drift, os datasources e os serviços de sincronização. Essa implementação não permite concluir que todas as operações dos demais módulos funcionem sem rede. [S19]
+No módulo de presentes, GiftRepositoryImpl.getGifts observa o datasource local. A criação grava primeiro o registro local com sincronização pendente e tenta envio remoto. GiftOfflineBootstrap compõe Drift, os datasources e os serviços de sincronização; a observação do servidor também atualiza o banco local, sem sobrescrever alterações ainda pendentes. Nos demais módulos, a continuidade sem rede vem do cache persistente do Firestore, de escritas que retornam ao serem gravadas no aparelho e de um estado de conectividade compartilhado, descritos na seção 11 3. [S19, S32]
 
 ## 8 3 Limites observados e evolução
 
@@ -788,7 +788,11 @@ Dados de convidados, contatos, documentos e histórico financeiro precisam de ac
 
 ## 11 3 Persistência local e conectividade
 
-A arquitetura documenta Drift e sincronização no módulo de presentes. Nos demais módulos, as operações utilizam Firestore e Functions conforme o datasource. Cache e eventuais filas específicas não devem ser interpretados como cobertura offline integral. Antes de apresentar uma funcionalidade sem rede, deve-se verificar o comportamento daquela operação e plataforma. [S04]
+O uso sem internet é tratado como requisito do cliente móvel. ConectividadeService combina o aviso de rede do sistema com uma sonda de alcance do servidor; RedeFirestore desliga e religa a rede do SDK conforme esse estado, para que leituras respondam do cache e escritas entrem na fila local sem esperar o tempo limite. As gravações passam por escritaLocalPrimeiro, que retorna quando o dado está no aparelho e acompanha a confirmação do servidor. EstadoSincronizacao mantém as pendências da sessão, detecta a fila persistida de sessões anteriores e registra recusas; a interface mostra esse estado em uma faixa no topo e em selos por item. [S32]
+
+Presentes usam Drift com fila própria e contribuições identificadas, o que impede duplicidade no reenvio. O último convite aberto, o painel do fornecedor e consultas somente de leitura ficam em cache por usuário. A calculadora tem catálogo empacotado e simulação local. Pagamento Pix, nova configuração de MFA, recursos de IA, envio de convites, auditoria, avaliações, financeiro do evento, cotações por função e exportação de dados dependem do servidor e são bloqueados antes da chamada, com mensagem de que precisam de conexão. O primeiro acesso de uma conta ou convite também exige rede. [S32]
+
+A prova ponta a ponta foi executada em 26/11/2026 em um tablet SM-X110 com Android 16, contra emuladores com as regras reais e dados sintéticos. O corte de rede foi real, entre o aparelho e o servidor. A linha de base aprovou 27 de 49 etapas; depois das correções, 59 de 59 etapas foram aprovadas, nos perfis de organizador, convidado e fornecedor e na calculadora. As fases cobrem uso online, uso offline, reinício com processo novo, reconexão e conflito de reserva, e o servidor foi conferido pelo Admin SDK. O resultado vale para esse aparelho, esses dados e essa compilação; o protocolo manual com modo avião complementa a evidência no aplicativo publicado. [S32]
 
 Falha de consulta deve ser distinguida de ausência de registros. A revisão operacional registra essa separação, nova tentativa e preservação de filtros depois de falhas posteriores ao carregamento. Também registra descarte de estado vinculado à sessão, evitando reaproveitar opções financeiras de outra identidade. [S09]
 
@@ -811,7 +815,7 @@ Solicitações de dados também exigem rastrear a completude do processamento. O
 | Consultas operacionais | Estados de carga, falha e nova tentativa | Indisponibilidade não significa ausência de dados |
 | Comando remoto crítico | Revisões, recibos e transações nos fluxos descritos | Não há promessa de que todo comando use o mesmo protocolo |
 
-Uma demonstração sem rede deve escolher operações cujo mecanismo local foi verificado naquela plataforma. Para recuperação de desastre, não há neste relatório evidência de exercício completo de restauração de Firestore e Storage. Portanto, não são atribuídos RPO ou RTO ao produto; essas métricas dependem de política e ensaio específicos.
+Uma demonstração sem rede deve seguir as operações da matriz de evidências e preparar o aparelho com um primeiro acesso online. [S32] Para recuperação de desastre, não há neste relatório evidência de exercício completo de restauração de Firestore e Storage. Portanto, não são atribuídos RPO ou RTO ao produto; essas métricas dependem de política e ensaio específicos.
 
 # 12 Verificação e rastreabilidade
 
@@ -836,7 +840,7 @@ O registro de 27/10 descreve erro de transação inválida sob concorrência e a
 | Cenário | Critério para a demonstração e revisão final |
 | --- | --- |
 | RF01 a RF04 | Confirmar login, mudança de perfil, criação de evento e resposta por convite no ambiente escolhido |
-| RF05, RF06 e RF10 | Conferir tarefas, catálogo e presentes; testar conectividade do módulo apresentado |
+| RF05, RF06 e RF10 | Conferir tarefas, catálogo e presentes; repetir o protocolo de modo avião da matriz offline [S32] |
 | RF07 a RF09 | Percorrer solicitação, proposta e planejamento sem misturar estimativa com contratação |
 | RF13 e RF15 | Demonstrar bloqueios e histórico com dados fictícios; não executar transferência real |
 | RQ07 e RQ08 | Registrar medições de desempenho e avaliação de acessibilidade antes de alegar conformidade integral |
@@ -952,7 +956,7 @@ O conjunto de componentes documentados sustenta uma solução que relaciona plan
 
 ## 14 1 Evolução em relação à proposta inicial
 
-A atualização documental corrige a promessa ampla de funcionamento offline, distingue representação SQL de persistência Firestore e substitui a descrição de IA apenas planejada pelo ponto de entrada já implementado. Também incorpora operação administrativa, mediação e regras de repasse que precisam ser compreendidas para avaliar o produto atual. [S01, S04, S06, S07]
+A atualização documental substitui a promessa ampla de funcionamento offline por um escopo verificado no aparelho, com matriz por perfil e limites explícitos [S32]; também distingue representação SQL de persistência Firestore e substitui a descrição de IA apenas planejada pelo ponto de entrada já implementado. Também incorpora operação administrativa, mediação e regras de repasse que precisam ser compreendidas para avaliar o produto atual. [S01, S04, S06, S07]
 
 ## 14 2 Limitações e próximos estudos
 
@@ -1008,6 +1012,7 @@ As referências S identificam os artefatos internos que sustentam as afirmaçõe
 - S29. Equipe Faça a Festa. functions/src/functions/financeiro/comandosIntermediacaoFinanceira.ts; functions/src/services/financeiro/liberacaoRepasseService.ts, intermediacaoFinanceiraService.ts e dinheiro.ts. Contratos, divisão financeira, revalidação e representação monetária.
 - S30. Equipe Faça a Festa. functions/src/shared/transacaoIdempotente.ts. Tratamento específico de repetição de transações invalidadas ou expiradas.
 - S31. Equipe Faça a Festa. test/features/calculadora/publico_planejamento_test.dart, agenda_ocorrencias_test.dart, planejador_hibrido_test.dart, plano_execucao_test.dart, plano_execucao_remote_test.dart, calculadora_lista_compras_test.dart e calculadora_porcoes_contexto_test.dart; test/features/cotacoes/jornada_atendimento_test.dart; test/features/agenda; test/features/financeiro/recebimentos_caixa_idempotencia_test.dart. Fontes de rastreabilidade de cenários, sem atribuição automática de aprovação individual.
+- S32. Equipe Faça a Festa. docs/evidencias_validacao/offline-mobile-first/README.md, resultado_linha_base.json, resultado_final.json, protocolo_modo_aviao.md e telas; integration_test/offline_mobile_first_aparelho_test.dart; functions/scripts/testOfflineAparelho.js; lib/core/conectividade. Prova de uso sem internet em 26/11/2026.
 
 # Apêndice A Roteiro de demonstração
 

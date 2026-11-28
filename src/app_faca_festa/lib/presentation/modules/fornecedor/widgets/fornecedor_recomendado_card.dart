@@ -1,7 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:app_faca_festa/presentation/widgets/festa_imagem_rede.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'package:app_faca_festa/domain/entities/fornecedor_recomendacao.dart';
+
+enum FornecedorRecomendadoAcao {
+  visualizar,
+  orcamento,
+  reservar,
+  dispensar,
+}
 
 class FornecedorRecomendadoCard extends StatelessWidget {
   final FornecedorRecomendacao recomendacao;
@@ -9,6 +17,7 @@ class FornecedorRecomendadoCard extends StatelessWidget {
   final VoidCallback? onReservar;
   final VoidCallback? onPedirOrcamento;
   final VoidCallback? onDispensar;
+  final FornecedorRecomendadoAcao? acaoEmAndamento;
 
   const FornecedorRecomendadoCard({
     super.key,
@@ -17,6 +26,7 @@ class FornecedorRecomendadoCard extends StatelessWidget {
     this.onReservar,
     this.onPedirOrcamento,
     this.onDispensar,
+    this.acaoEmAndamento,
   });
 
   @override
@@ -25,10 +35,11 @@ class FornecedorRecomendadoCard extends StatelessWidget {
     final primary = theme.colorScheme.primary;
     final scoreColor = _scoreColor();
     final motivos = recomendacao.motivosVisiveis;
+    final ocupado = acaoEmAndamento != null;
 
     return InkWell(
       borderRadius: BorderRadius.circular(20),
-      onTap: onTap,
+      onTap: ocupado ? null : onTap,
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
@@ -80,10 +91,19 @@ class FornecedorRecomendadoCard extends StatelessWidget {
             ],
             const SizedBox(height: 12),
             _Actions(
+              primary: primary,
+              acaoEmAndamento: acaoEmAndamento,
               onPedirOrcamento: onPedirOrcamento,
               onReservar: onReservar,
               onDispensar: onDispensar,
             ),
+            if (acaoEmAndamento != null) ...[
+              const SizedBox(height: 10),
+              _AcaoLoadingStatus(
+                acao: acaoEmAndamento!,
+                primary: primary,
+              ),
+            ],
           ],
         ),
       ),
@@ -314,11 +334,15 @@ class _MotivoPrincipal extends StatelessWidget {
 }
 
 class _Actions extends StatelessWidget {
+  final Color primary;
+  final FornecedorRecomendadoAcao? acaoEmAndamento;
   final VoidCallback? onReservar;
   final VoidCallback? onPedirOrcamento;
   final VoidCallback? onDispensar;
 
   const _Actions({
+    required this.primary,
+    this.acaoEmAndamento,
     this.onReservar,
     this.onPedirOrcamento,
     this.onDispensar,
@@ -326,14 +350,31 @@ class _Actions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ocupado = acaoEmAndamento != null;
+    final carregandoOrcamento =
+        acaoEmAndamento == FornecedorRecomendadoAcao.orcamento;
+    final carregandoReserva =
+        acaoEmAndamento == FornecedorRecomendadoAcao.reservar;
+    final carregandoDispensa =
+        acaoEmAndamento == FornecedorRecomendadoAcao.dispensar;
+
     return Wrap(
       spacing: 8,
       runSpacing: 6,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         OutlinedButton.icon(
-          onPressed: onPedirOrcamento,
-          icon: const Icon(Icons.request_quote_rounded, size: 15),
+          onPressed: ocupado ? null : onPedirOrcamento,
+          icon: carregandoOrcamento
+              ? SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: primary,
+                  ),
+                )
+              : const Icon(Icons.request_quote_rounded, size: 15),
           label: Text(
             'Orçamento',
             style: GoogleFonts.poppins(
@@ -346,8 +387,17 @@ class _Actions extends StatelessWidget {
           ),
         ),
         ElevatedButton.icon(
-          onPressed: onReservar,
-          icon: const Icon(Icons.bookmark_add_rounded, size: 15),
+          onPressed: ocupado ? null : onReservar,
+          icon: carregandoReserva
+              ? SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: primary,
+                  ),
+                )
+              : const Icon(Icons.bookmark_add_rounded, size: 15),
           label: Text(
             'Reservar',
             style: GoogleFonts.poppins(
@@ -362,10 +412,86 @@ class _Actions extends StatelessWidget {
         ),
         IconButton.filledTonal(
           tooltip: 'Não recomendar',
-          onPressed: onDispensar,
-          icon: const Icon(Icons.close_rounded, size: 18),
+          onPressed: ocupado ? null : onDispensar,
+          icon: carregandoDispensa
+              ? SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: primary,
+                  ),
+                )
+              : const Icon(Icons.close_rounded, size: 18),
         ),
       ],
+    );
+  }
+}
+
+class _AcaoLoadingStatus extends StatelessWidget {
+  final FornecedorRecomendadoAcao acao;
+  final Color primary;
+
+  const _AcaoLoadingStatus({
+    required this.acao,
+    required this.primary,
+  });
+
+  String get _mensagem => switch (acao) {
+        FornecedorRecomendadoAcao.orcamento => 'Abrindo orçamento...',
+        FornecedorRecomendadoAcao.reservar => 'Preparando reserva...',
+        FornecedorRecomendadoAcao.dispensar => 'Removendo sugestão...',
+        FornecedorRecomendadoAcao.visualizar => 'Abrindo fornecedor...',
+      };
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: primary.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              SizedBox(
+                width: 12,
+                height: 12,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: primary,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  _mensagem,
+                  style: GoogleFonts.poppins(
+                    fontSize: 10.8,
+                    fontWeight: FontWeight.w600,
+                    color: primary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(99),
+            child: LinearProgressIndicator(
+              minHeight: 3,
+              backgroundColor: primary.withValues(alpha: 0.14),
+              valueColor: AlwaysStoppedAnimation<Color>(primary),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -473,12 +599,11 @@ class _FornecedorAvatar extends StatelessWidget {
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(14),
-      child: Image.network(
+      child: FestaImagemRede(
         url!,
         width: size,
         height: size,
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => Container(
+        erro: Container(
           width: size,
           height: size,
           color: primary.withValues(alpha: 0.10),

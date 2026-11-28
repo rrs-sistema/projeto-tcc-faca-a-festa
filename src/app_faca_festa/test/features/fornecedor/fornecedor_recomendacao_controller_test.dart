@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
@@ -115,6 +117,56 @@ void main() {
     });
   }
 
+  testWidgets(
+      'exibe loading e bloqueia múltiplos cliques enquanto ação do cartão está em andamento',
+      (tester) async {
+    final carregarFontes = GoogleFonts.config.allowRuntimeFetching;
+    GoogleFonts.config.allowRuntimeFetching = false;
+    addTearDown(() => GoogleFonts.config.allowRuntimeFetching = carregarFontes);
+
+    final completer = Completer<void>();
+    repository.salvas = [_recomendacao(id: 'rec-1', score: 90)];
+    repository.interacaoPendente = completer;
+
+    final acoes = <String>[];
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: ListView(
+          children: [
+            FornecedorRecomendacoesSection(
+              idEvento: 'evento-1',
+              idUsuario: 'usuario-1',
+              tipoEventoNome: 'Formatura',
+              cidade: 'Curitiba',
+              controller: controller,
+              onPedirOrcamento: (item) => acoes.add('orçamento ${item.id}'),
+              onReservar: (item) => acoes.add('reserva ${item.id}'),
+            ),
+          ],
+        ),
+      ),
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Orçamento'));
+    await tester.pump();
+
+    expect(find.text('Abrindo orçamento...'), findsOneWidget);
+    expect(find.byType(CircularProgressIndicator), findsWidgets);
+    expect(find.byType(LinearProgressIndicator), findsNWidgets(2));
+
+    // Tentar clicar novamente enquanto está carregando não dispara nova chamada
+    await tester.tap(find.text('Reservar'));
+    await tester.pump();
+    expect(repository.interacoes, hasLength(1));
+
+    completer.complete();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Abrindo orçamento...'), findsNothing);
+    expect(acoes, ['orçamento rec-1']);
+  });
+
   test('loads saved recommendations through the use case', () async {
     repository.salvas = [
       _recomendacao(id: 'rec-1', score: 80),
@@ -222,6 +274,7 @@ class _FornecedorRecomendacaoRepositoryFake
 
   List<FornecedorRecomendacao> salvas = const [];
   List<FornecedorRecomendacao> geradas = const [];
+  Completer<void>? interacaoPendente;
 
   @override
   Future<List<FornecedorRecomendacao>> carregarRecomendacoesSalvas({
@@ -274,6 +327,9 @@ class _FornecedorRecomendacaoRepositoryFake
         cidade: cidade,
       ),
     );
+    if (interacaoPendente != null) {
+      await interacaoPendente!.future;
+    }
   }
 }
 

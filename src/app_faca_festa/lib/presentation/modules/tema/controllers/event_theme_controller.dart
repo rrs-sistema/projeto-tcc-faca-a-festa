@@ -435,6 +435,27 @@ class EventThemeController extends GetxController {
           color: primary,
         ),
       ),
+      segmentedButtonTheme: SegmentedButtonThemeData(
+        style: ButtonStyle(
+          backgroundColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) {
+              return primary.withValues(alpha: 0.16);
+            }
+            return Colors.white;
+          }),
+          foregroundColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) return primary;
+            return const Color(0xFF475569);
+          }),
+          iconColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) return primary;
+            return const Color(0xFF64748B);
+          }),
+          side: WidgetStatePropertyAll(
+            BorderSide(color: primary.withValues(alpha: 0.28)),
+          ),
+        ),
+      ),
     );
   }
 

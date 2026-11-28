@@ -49,23 +49,27 @@ class _FinanceiroGerenteDetalhePageState
       final p = c.detalheAtual.value;
       final primary = widget.themeController.primaryColor.value;
       final surface = widget.themeController.surfaceColor.value;
+      final tema = widget.themeController.materialTheme;
       c.linhasDetalhe.length;
       c.simulacaoAtual.value;
 
       if (p == null || p.idEvento != widget.idEvento) {
-        return Scaffold(
-          backgroundColor: surface.withValues(alpha: 0.35),
-          appBar: FestaAppBar(
-            titulo: 'Financeiro',
-            themeController: widget.themeController,
-          ),
-          body: Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Text(
-                'Sem dados autorizados deste evento.',
-                textAlign: TextAlign.center,
-                style: GoogleFonts.poppins(fontSize: 14),
+        return Theme(
+          data: tema,
+          child: Scaffold(
+            backgroundColor: surface,
+            appBar: FestaAppBar(
+              titulo: 'Financeiro',
+              themeController: widget.themeController,
+            ),
+            body: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text(
+                  'Sem dados autorizados deste evento.',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.poppins(fontSize: 14),
+                ),
               ),
             ),
           ),
@@ -75,9 +79,11 @@ class _FinanceiroGerenteDetalhePageState
       final w = MediaQuery.sizeOf(context).width;
       final pad = w >= 1100 ? 28.0 : (w >= 720 ? 20.0 : 16.0);
 
-      return Scaffold(
-        backgroundColor: surface.withValues(alpha: 0.35),
-        appBar: FestaAppBar(
+      return Theme(
+        data: tema,
+        child: Scaffold(
+          backgroundColor: surface,
+          appBar: FestaAppBar(
           titulo: p.nomeEvento,
           themeController: widget.themeController,
         ),
@@ -156,6 +162,7 @@ class _FinanceiroGerenteDetalhePageState
                 if (w >= 768) _tabelaLinhas(primary) else _listaLinhas(primary),
               ],
             )),
+        ),
       );
     });
   }

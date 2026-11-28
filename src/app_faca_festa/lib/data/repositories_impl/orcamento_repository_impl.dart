@@ -77,6 +77,21 @@ class OrcamentoRepositoryImpl
   }
 
   @override
+  Future<void> atualizarOrcamento({
+    required String idOrcamento,
+    required String anotacoes,
+    required double custoEstimado,
+  }) {
+    return UpdateOperations.run(() async {
+      return remote.atualizarOrcamento(
+        idOrcamento: idOrcamento,
+        anotacoes: anotacoes,
+        custoEstimado: custoEstimado,
+      );
+    });
+  }
+
+  @override
   Future<void> excluirOrcamento(String idOrcamento) {
     return UpdateOperations.run(() async {
       return remote.excluirOrcamento(idOrcamento);

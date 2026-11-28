@@ -1,6 +1,7 @@
 import 'package:app_faca_festa/domain/services/avaliacao_catalogo_fornecedor_service.dart';
 import 'criterios_catalogo_panel.dart';
 import 'package:flutter/material.dart';
+import 'package:app_faca_festa/presentation/widgets/festa_imagem_rede.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -295,10 +296,8 @@ class _ServicoMiniCard extends StatelessWidget {
             child: possuiFoto
                 ? ClipRRect(
                     borderRadius: BorderRadius.circular(15),
-                    child: Image.network(imagem,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const Icon(
-                            Icons.broken_image_outlined,
+                    child: FestaImagemRede(imagem,
+                        erro: const Icon(Icons.broken_image_outlined,
                             color: FornecedorPremiumPalette.muted)))
                 : Icon(
                     possuiFoto

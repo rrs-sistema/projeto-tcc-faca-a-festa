@@ -11,6 +11,7 @@ Widget resumoCard(
   double contratado = 0,
   double saldoDevido = 0,
   bool pendente = false,
+  bool semInternet = false,
   VoidCallback? onConferir,
 }) {
   final temLimite = limite != null;
@@ -128,7 +129,9 @@ Widget resumoCard(
           ),
           Text(
               pendente
-                  ? 'Cotado e contratado: consulta pendente'
+                  ? semInternet
+                      ? 'Cotado e contratado aparecem quando a internet voltar'
+                      : 'Cotado e contratado: consulta pendente'
                   : 'Cotado: ${_reais(cotado)} · Contratado: ${_reais(contratado)} · Saldo devido: ${_reais(saldoDevido)}',
               style: const TextStyle(color: Colors.white, fontSize: 12)),
           const SizedBox(height: 12),
@@ -137,7 +140,9 @@ Widget resumoCard(
               _metricaResumo('Estimado', _reais(previsto)),
               const SizedBox(width: 8),
               _metricaResumo('Pago líquido',
-                  pendente ? 'Consulta pendente' : _reais(pago)),
+                  pendente
+                      ? (semInternet ? 'Com internet' : 'Consulta pendente')
+                      : _reais(pago)),
             ],
           ),
           if (onConferir != null) ...[

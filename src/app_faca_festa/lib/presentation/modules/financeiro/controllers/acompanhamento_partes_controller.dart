@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 
 import 'package:app_faca_festa/data/datasources/remote/acompanhamento_partes_remote.dart';
+import 'package:app_faca_festa/data/services/functions/financeiro_callable_gateway.dart';
 import 'package:app_faca_festa/domain/entities/cobranca_pix_servico.dart';
 import 'package:app_faca_festa/domain/services/acompanhamento_partes_service.dart';
 import 'package:app_faca_festa/core/conectividade/recarregar_ao_reconectar.dart';
@@ -52,7 +53,7 @@ class AcompanhamentoPartesController extends GetxController
       aviso.value = (r['aviso_integracao'] ?? r['aviso'] ?? '').toString();
     } catch (e) {
       if (g != _geracao) return;
-      erro.value = e.toString();
+      erro.value = _mensagemAmigavel(e);
       linhasOrg.clear();
     } finally {
       if (g == _geracao) carregando.value = false;
@@ -87,11 +88,21 @@ class AcompanhamentoPartesController extends GetxController
       ].where((s) => s.isNotEmpty).join(' ');
     } catch (e) {
       if (g != _geracao) return;
-      erro.value = e.toString();
+      erro.value = _mensagemAmigavel(e);
       linhasForn.clear();
     } finally {
       if (g == _geracao) carregando.value = false;
     }
+  }
+
+  /// Mensagem para o organizador: sem o código técnico entre colchetes.
+  static String _mensagemAmigavel(Object e) {
+    if (e is FinanceiroCallableException) {
+      final texto = e.message?.trim() ?? '';
+      if (texto.isNotEmpty) return texto;
+      return 'Não foi possível concluir esta ação. Tente novamente.';
+    }
+    return e.toString();
   }
 
   void _lerAcoes(Map<String, dynamic> r) {
@@ -124,7 +135,7 @@ class AcompanhamentoPartesController extends GetxController
       await carregarOrganizador(idEvento.value);
       return true;
     } catch (e) {
-      erro.value = e.toString();
+      erro.value = _mensagemAmigavel(e);
       return false;
     } finally {
       enviando.value = false;
@@ -145,7 +156,7 @@ class AcompanhamentoPartesController extends GetxController
           : 'Autorização antecipada revogada. Repasses confirmados permanecem no histórico.';
       return true;
     } catch (e) {
-      erro.value = e.toString();
+      erro.value = _mensagemAmigavel(e);
       return false;
     } finally {
       enviando.value = false;
@@ -167,7 +178,7 @@ class AcompanhamentoPartesController extends GetxController
       }
       return true;
     } catch (e) {
-      erro.value = e.toString();
+      erro.value = _mensagemAmigavel(e);
       return false;
     } finally {
       enviando.value = false;
@@ -195,7 +206,7 @@ class AcompanhamentoPartesController extends GetxController
       }
       return true;
     } catch (e) {
-      erro.value = e.toString();
+      erro.value = _mensagemAmigavel(e);
       return false;
     } finally {
       enviando.value = false;

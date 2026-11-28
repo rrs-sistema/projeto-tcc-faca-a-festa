@@ -113,8 +113,7 @@ flutter:
   assets:
     - assets/
     - assets/fonts/
-    - assets/icons/
     - assets/logo/
     - assets/images/
-    - assets/lottie/
     - assets/animations/
+    - config/calculadora_catalogo_v1.json

@@ -4,6 +4,7 @@ import 'package:app_faca_festa/core/utils/numeric_input.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
+import 'package:app_faca_festa/presentation/widgets/festa_imagem_rede.dart';
 import 'package:get/get.dart';
 
 import 'package:app_faca_festa/domain/entities/subcategoria_servico.dart';
@@ -528,10 +529,8 @@ class _FornecedorServicoSheetState extends State<_FornecedorServicoSheet> {
                                 children: [
                                   ClipRRect(
                                     borderRadius: BorderRadius.circular(16),
-                                    child: Image.network(f.url,
-                                        width: 130,
-                                        height: 120,
-                                        fit: BoxFit.cover),
+                                    child: FestaImagemRede(f.url,
+                                        width: 130, height: 120),
                                   ),
                                   Positioned(
                                     top: 6,

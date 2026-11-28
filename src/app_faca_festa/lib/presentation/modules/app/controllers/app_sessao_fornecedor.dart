@@ -75,7 +75,8 @@ class AppSessaoFornecedor {
 
   Future<void> iniciarPainel(Fornecedor fornecedor) async {
     _fornecedorController.ouvirMensagensNaoLidas(fornecedor.idUsuario);
-    await atualizarFcmToken(fornecedor.idUsuario);
+    // A gravação do token só termina com o servidor; não segura a abertura.
+    unawaited(atualizarFcmToken(fornecedor.idUsuario));
 
     _fornecedorController.iniciarListenerFornecedor(fornecedor.idUsuario);
     _fornecedorController.escutarSolicitacoesPendentes(fornecedor.idUsuario);
